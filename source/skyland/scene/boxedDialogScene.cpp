@@ -12,6 +12,13 @@ Platform::TextureCpMapper locale_texture_map();
 
 
 
+void print_char(Platform& pfrm,
+                utf8::Codepoint c,
+                const OverlayCoord& coord,
+                const std::optional<FontColors>& colors = {});
+
+
+
 namespace skyland {
 
 
@@ -283,7 +290,7 @@ BoxedDialogScene::update(Platform& pfrm, App& app, Microseconds delta)
         break;
 
     case DisplayMode::done:
-        if (expects_answer_y_n_) {
+        if (dialog_prompt_) {
             const auto st = calc_screen_tiles(pfrm);
 
             pfrm.set_tile(Layer::overlay, st.x - 8, st.y - (10 + y_start), 83);
@@ -318,15 +325,15 @@ BoxedDialogScene::update(Platform& pfrm, App& app, Microseconds delta)
                            (int)app.coins(),
                            UIMetric::Align::left);
 
-            yes_text_.emplace(
-                pfrm,
-                "yes",
-                OverlayCoord{u8(st.x - 5), u8(st.y - (9 + y_start))});
+            // yes_text_.emplace(
+            //     pfrm,
+            //     "yes",
+            //     OverlayCoord{u8(st.x - 5), u8(st.y - (9 + y_start))});
 
-            no_text_.emplace(
-                pfrm,
-                "no",
-                OverlayCoord{u8(st.x - 4), u8(st.y - (7 + y_start))});
+            // no_text_.emplace(
+            //     pfrm,
+            //     "no",
+            //     OverlayCoord{u8(st.x - 4), u8(st.y - (7 + y_start))});
 
             display_mode_ = DisplayMode::boolean_choice;
             break;

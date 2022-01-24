@@ -363,9 +363,13 @@ ScenePtr<Scene> WorldScene::update(Platform& pfrm, App& app, Microseconds delta)
     if (app.dialog_buffer()) {
         auto buffer = std::move(*app.dialog_buffer());
         app.dialog_buffer().reset();
-        const bool answer = app.dialog_expects_answer();
-        app.dialog_expects_answer() = false;
-        return scene_pool::alloc<BoxedDialogScene>(std::move(buffer), answer);
+        auto input = app.dialog_menu_prompt_;
+        app.dialog_menu_prompt_.reset();
+        std::optional<lisp::Value*> val;
+        if (input) {
+            val = *input;
+        }
+        return scene_pool::alloc<BoxedDialogScene>(std::move(buffer), val);
     }
 
 

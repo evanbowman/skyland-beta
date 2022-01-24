@@ -218,12 +218,6 @@ public:
     }
 
 
-    bool& dialog_expects_answer()
-    {
-        return dialog_expects_answer_;
-    }
-
-
     bool& exit_level()
     {
         return exit_level_;
@@ -310,7 +304,7 @@ public:
     }
 
 
-    bool dialog_expects_answer_ = false;
+    std::optional<lisp::Protected> dialog_menu_prompt_;
 
 
     time_stream::TimeStream& time_stream()

@@ -120,10 +120,12 @@ static const lisp::Binding script_api[] = {
          }
          return lisp::make_userdata(&*app->opponent_island());
      }},
-    {"dialog-await-y/n",
+    {"dialog-input",
      [](int argc) {
+         L_EXPECT_ARGC(argc, 1);
+         L_EXPECT_OP(1, cons);
          auto app = interp_get_app();
-         app->dialog_expects_answer_ = true;
+         app->dialog_menu_prompt_ = lisp::get_op(0);
          return L_NIL;
      }},
     {"repl",

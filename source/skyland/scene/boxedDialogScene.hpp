@@ -2,6 +2,7 @@
 
 #include "skyland/dialog.hpp"
 #include "worldScene.hpp"
+#include "script/lisp.hpp"
 
 
 
@@ -16,9 +17,13 @@ namespace skyland {
 
 class BoxedDialogScene : public WorldScene {
 public:
-    BoxedDialogScene(DialogBuffer buffer, bool expects_answer_y_n)
-        : buffer_(std::move(buffer)), expects_answer_y_n_(expects_answer_y_n)
+    BoxedDialogScene(DialogBuffer buffer,
+                     std::optional<lisp::Value*> prompt)
+        : buffer_(std::move(buffer))
     {
+        if (prompt) {
+            dialog_prompt_.emplace(*prompt);
+        }
     }
 
 
@@ -58,10 +63,8 @@ private:
 
     DialogBuffer buffer_;
 
-    bool expects_answer_y_n_;
+    std::optional<lisp::Protected> dialog_prompt_;
 
-    std::optional<Text> yes_text_;
-    std::optional<Text> no_text_;
     std::optional<UIMetric> coins_;
     bool choice_sel_ = true;
 };
