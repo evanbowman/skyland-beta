@@ -31,8 +31,24 @@ namespace skyland::weather
 
 
 
+// TODO: code written before I added the Fixnum class. Use fixed-point wrapper
+// classes instead.
 static const int rain_pos_scale = 128;
 static_assert(rain_pos_scale % 2 == 0);
+
+
+
+Storm::Storm() :
+    state_(allocate_dynamic<State>("storm-state-buffer"))
+{
+    const auto scale = rain_pos_scale;
+
+    for (auto& rd : state_->raindrops_) {
+        // FIXME: pass in Platform::screen() and use screen size!
+        rd.x = rng::choice(240 * scale, rng::utility_state);
+        rd.y = rng::choice(160 * scale, rng::utility_state);
+    }
+}
 
 
 
@@ -46,7 +62,7 @@ void Storm::update(Platform& pfrm, App& app, Microseconds delta)
     auto camera_diff_x = camera.x - last_camera_.x;
     auto camera_diff_y = camera.y - last_camera_.y;
 
-    for (auto& rd : raindrops_) {
+    for (auto& rd : state_->raindrops_) {
         if ((rd.x / scale) < 0 or
             (rd.y / scale) > (s16)pfrm.screen().size().y or
             (rd.x / scale) > (s16)pfrm.screen().size().x + 24 or
@@ -65,8 +81,8 @@ void Storm::update(Platform& pfrm, App& app, Microseconds delta)
                 }
             }
         } else {
-            rd.x -= (delta >> 6) + (delta >> 8);
-            rd.y += (delta >> 6) + (delta >> 8);
+            rd.x -= (delta >> 6) + (delta >> 7);
+            rd.y += (delta >> 6) + (delta >> 7);
 
             rd.x -= camera_diff_x * (scale + 48);
             rd.y -= camera_diff_y * (scale + 48);
@@ -86,7 +102,7 @@ void Storm::rewind(Platform& pfrm, App& app, Microseconds delta)
 
     auto& gen = rng::utility_state;
 
-    for (auto& rd : raindrops_) {
+    for (auto& rd : state_->raindrops_) {
         if ((rd.x / scale) > (s16)pfrm.screen().size().x or
             (rd.y / scale) < 0) {
             if (rng::choice<2>(rng::utility_state)) {
@@ -97,8 +113,8 @@ void Storm::rewind(Platform& pfrm, App& app, Microseconds delta)
                 rd.y = pfrm.screen().size().y * scale;
             }
         } else {
-            rd.x += (delta >> 6) + (delta >> 8);
-            rd.y -= (delta >> 6) + (delta >> 8);
+            rd.x += (delta >> 6) + (delta >> 7);
+            rd.y -= (delta >> 6) + (delta >> 7);
         }
     }
 }
@@ -111,7 +127,7 @@ void Storm::display(Platform& pfrm, App& app)
 
     const auto scale = rain_pos_scale;
 
-    for (auto& rd : raindrops_) {
+    for (auto& rd : state_->raindrops_) {
         batch->push_back({rd.x / scale, rd.y / scale});
     }
 
@@ -126,6 +142,13 @@ void Storm::display(Platform& pfrm, App& app)
 const char* Storm::music() const
 {
     return "solecism";
+}
+
+
+
+const char* Storm::ambience() const
+{
+    return "rain_ambience";
 }
 
 

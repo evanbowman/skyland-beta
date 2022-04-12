@@ -33,10 +33,20 @@ namespace skyland::weather
 class Storm : public CleanEnvironment
 {
 private:
-    Vec2<s16> raindrops_[6];
+
+    struct State {
+        Vec2<s16> raindrops_[8];
+    };
+
+    DynamicMemory<State> state_;
+
     Vec2<s16> last_camera_;
 
 public:
+
+    Storm();
+
+
     void update(Platform& pfrm, App& app, Microseconds delta);
 
 
@@ -47,7 +57,7 @@ public:
 
 
     const char* music() const override;
-
+    const char* ambience() const override;
 
     Platform::Screen::Shader shader(App& app) const override;
 };

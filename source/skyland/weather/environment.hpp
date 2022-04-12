@@ -74,6 +74,7 @@ public:
 
 
     virtual const char* music() const = 0;
+    virtual const char* ambience() const = 0;
 };
 
 
@@ -132,6 +133,12 @@ public:
     const char* background_texture() const override
     {
         return "background";
+    }
+
+
+    const char* ambience() const override
+    {
+        return "wind_ambience";
     }
 };
 

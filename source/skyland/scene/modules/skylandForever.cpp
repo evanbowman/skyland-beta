@@ -151,6 +151,7 @@ void SkylandForever::init(Platform& pfrm,
     app.persistent_data().score_.set(0);
 
     pfrm.speaker().play_music(app.environment().music(), 0);
+    pfrm.speaker().play_ambience(app.environment().ambience());
 
     app.invoke_script(pfrm, "/scripts/skyland_forever.lisp");
 

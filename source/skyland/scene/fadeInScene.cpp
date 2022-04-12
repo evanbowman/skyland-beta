@@ -50,6 +50,8 @@ FadeInScene::update(Platform& pfrm, App& app, Microseconds delta)
 
     timer_ += delta;
 
+    app.environment().update(pfrm, app, delta);
+
     constexpr auto fade_duration = milliseconds(800);
     if (timer_ > fade_duration) {
         if (app.game_mode() not_eq App::GameMode::tutorial and
@@ -61,6 +63,8 @@ FadeInScene::update(Platform& pfrm, App& app, Microseconds delta)
             if (node.type_ == WorldGraph::Node::Type::hostile or
                 node.type_ == WorldGraph::Node::Type::hostile_hidden or
                 app.game_mode() == App::GameMode::challenge) {
+
+                // pfrm.speaker().stop_ambience();
                 app.game_speed() = GameSpeed::stopped;
             }
         }
@@ -80,6 +84,7 @@ FadeInScene::update(Platform& pfrm, App& app, Microseconds delta)
             if (not pfrm.speaker().is_music_playing(
                     app.environment().music())) {
                 pfrm.speaker().play_music(app.environment().music(), 0);
+                pfrm.speaker().play_ambience(app.environment().ambience());
             }
         }
 

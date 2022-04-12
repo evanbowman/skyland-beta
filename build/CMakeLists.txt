@@ -330,6 +330,8 @@ if(NINTENDO_DS OR GAMEBOY_ADVANCE)
     ${DATA_DIR}/spritesheet_title_screen.s
     ${DATA_DIR}/spritesheet_intro.s
     ${DATA_DIR}/music_unaccompanied_wind.s
+    ${DATA_DIR}/music_wind_ambience.s
+    ${DATA_DIR}/music_rain_ambience.s
     ${DATA_DIR}/music_isle_of_the_dead.s
     ${DATA_DIR}/music_life_in_silco.s
     ${DATA_DIR}/sb_solecism.s

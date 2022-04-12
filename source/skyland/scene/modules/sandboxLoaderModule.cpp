@@ -126,6 +126,8 @@ void SandboxLoaderModule::enter(Platform& pfrm, App& app, Scene& prev)
 {
     app.game_mode() = App::GameMode::sandbox;
 
+    pfrm.speaker().stop_music();
+
     app.camera()->reset();
     pfrm.screen().set_view({});
 
@@ -168,6 +170,8 @@ void SandboxLoaderModule::enter(Platform& pfrm, App& app, Scene& prev)
         pfrm.screen().set_shader(app.environment().shader(app));
     }
 
+    pfrm.speaker().play_ambience(app.environment().ambience());
+
     for (u32 i = 0; i < settings_text_.capacity(); ++i) {
         settings_text_.emplace_back(pfrm, OverlayCoord{2, u8(4 + i * 2)});
     }
@@ -192,7 +196,13 @@ void SandboxLoaderModule::exit(Platform& pfrm, App& app, Scene& prev)
 
     if (parameters_[2]) {
         pfrm.speaker().play_music(app.environment().music(), 0);
+
+    } else {
+        pfrm.speaker().stop_music();
     }
+
+    pfrm.speaker().play_ambience(app.environment().ambience());
+
 
     app.invoke_script(pfrm, "/scripts/sandbox/new.lisp");
 
@@ -271,6 +281,8 @@ SandboxLoaderModule::update(Platform& pfrm, App& app, Microseconds delta)
             0.7f, ColorConstant::rich_black, false, false);
         pfrm.screen().schedule_fade(
             0.6f, ColorConstant::rich_black, false, false);
+
+        pfrm.speaker().play_ambience(app.environment().ambience());
     };
 
 

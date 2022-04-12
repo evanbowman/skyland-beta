@@ -744,6 +744,11 @@ public:
         void play_music(const char* name, Microseconds offset);
         void stop_music();
 
+        // The ambience track will loop in the background behind the music. For
+        // stuff like rain, wind, etc.
+        void play_ambience(const char* name);
+        void stop_ambience();
+
         void halt_music();
         void resume_music();
 

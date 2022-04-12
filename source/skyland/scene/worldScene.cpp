@@ -109,8 +109,10 @@ void WorldScene::set_gamespeed(Platform& pfrm, App& app, GameSpeed speed)
     app.game_speed() = speed;
     if (speed == GameSpeed::normal) {
         set_pause_icon(pfrm, 0);
+        pfrm.speaker().play_ambience(app.environment().ambience());
     } else {
         set_pause_icon(pfrm, gamespeed_icon(speed));
+        pfrm.speaker().stop_ambience();
     }
 }
 

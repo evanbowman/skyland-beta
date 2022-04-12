@@ -3083,6 +3083,8 @@ void Platform::Logger::flush()
 #include "data/music_unaccompanied_wind.hpp"
 #include "data/sb_solecism.hpp"
 #include "data/shadows.hpp"
+#include "data/music_wind_ambience.hpp"
+#include "data/music_rain_ambience.hpp"
 
 
 static const int null_music_len = AudioBuffer::sample_count * 2;
@@ -3118,6 +3120,8 @@ struct AudioTrack
     DEF_MUSIC(unaccompanied_wind, music_unaccompanied_wind),
     DEF_MUSIC(life_in_silco, music_life_in_silco),
     DEF_MUSIC(solecism, sb_solecism),
+    DEF_MUSIC(wind_ambience, music_wind_ambience),
+    DEF_MUSIC(rain_ambience, music_rain_ambience),
 };
 
 
@@ -3754,6 +3758,8 @@ void Platform::Speaker::resume_music()
 void Platform::Speaker::stop_music()
 {
     ::stop_music();
+
+    stop_ambience();
 }
 
 
@@ -3772,6 +3778,34 @@ static void play_music(const char* name, Microseconds offset)
         snd_ctx.music_track_pos = (sample_offset / 4) % track->length_;
     });
 }
+
+
+
+void Platform::Speaker::play_ambience(const char* name)
+{
+    const auto track = find_music(name);
+    if (track == nullptr) {
+        return;
+    }
+
+    modify_audio([&] {
+        snd_ctx.ambience_track_length = track->length_;
+        snd_ctx.ambience_track = track->data_;
+        snd_ctx.ambience_track_pos = 0;
+    });
+}
+
+
+void Platform::Speaker::stop_ambience()
+{
+    modify_audio([&] {
+        snd_ctx.ambience_track = reinterpret_cast<const AudioSample*>(null_music);
+        snd_ctx.ambience_track_length = null_music_len - 1;
+        snd_ctx.ambience_track_pos = 0;
+    });
+}
+
+
 
 
 void Platform::Speaker::play_music(const char* name, Microseconds offset)
@@ -3918,18 +3952,26 @@ static const VolumeScaleLUT* music_volume_lut = &volume_scale_LUTs[0];
 
 static void audio_update_music_volume_isr()
 {
+    alignas(4) AudioSample music_buffer[4];
     alignas(4) AudioSample mixing_buffer[4];
 
     // NOTE: audio tracks in ROM should therefore have four byte alignment!
-    *((u32*)mixing_buffer) =
+    *((u32*)music_buffer) =
         ((u32*)(snd_ctx.music_track))[snd_ctx.music_track_pos++];
+
+    *((u32*)mixing_buffer) =
+        ((u32*)(snd_ctx.ambience_track))[snd_ctx.ambience_track_pos++];
 
     if (UNLIKELY(snd_ctx.music_track_pos > snd_ctx.music_track_length)) {
         snd_ctx.music_track_pos = 0;
     }
 
-    for (AudioSample& s : mixing_buffer) {
-        s = (*music_volume_lut)[s];
+    if (UNLIKELY(snd_ctx.ambience_track_pos > snd_ctx.ambience_track_length)) {
+        snd_ctx.ambience_track_pos = 0;
+    }
+
+    for (int i = 0; i < 4; ++i) {
+        mixing_buffer[i] = mixing_buffer[i] + (*music_volume_lut)[music_buffer[i]];
     }
 
     for (auto it = snd_ctx.active_sounds.begin();
@@ -3998,14 +4040,26 @@ static void audio_update_rewind_music_isr()
 
 static void audio_update_fast_isr()
 {
+    alignas(4) AudioSample ambience_buffer[4];
     alignas(4) AudioSample mixing_buffer[4];
 
     // NOTE: audio tracks in ROM should therefore have four byte alignment!
     *((u32*)mixing_buffer) =
         ((u32*)(snd_ctx.music_track))[snd_ctx.music_track_pos++];
 
+    *((u32*)ambience_buffer) =
+        ((u32*)(snd_ctx.ambience_track))[snd_ctx.ambience_track_pos++];
+
     if (UNLIKELY(snd_ctx.music_track_pos > snd_ctx.music_track_length)) {
         snd_ctx.music_track_pos = 0;
+    }
+
+    if (UNLIKELY(snd_ctx.ambience_track_pos > snd_ctx.ambience_track_length)) {
+        snd_ctx.ambience_track_pos = 0;
+    }
+
+    for (int i = 0; i < 4; ++i) {
+        mixing_buffer[i] = mixing_buffer[i] + ambience_buffer[i];
     }
 
     for (auto it = snd_ctx.active_sounds.begin();
@@ -4058,6 +4112,10 @@ void Platform::Speaker::set_music_volume(u8 volume)
 
 static void audio_start()
 {
+    snd_ctx.ambience_track = reinterpret_cast<const AudioSample*>(null_music);
+    snd_ctx.ambience_track_length = null_music_len - 1;
+    snd_ctx.ambience_track_pos = 0;
+
     clear_music();
 
     // REG_SOUNDCNT_H =
