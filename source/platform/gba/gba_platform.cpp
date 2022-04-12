@@ -3696,6 +3696,31 @@ void Platform::Speaker::apply_chiptune_effect(Channel channel,
 
 
 
+static Buffer<ActiveSoundInfo, 3> sound_stash;
+
+
+
+void Platform::Speaker::stash_sounds()
+{
+    sound_stash.clear();
+
+    modify_audio([&] {
+                     sound_stash = snd_ctx.active_sounds;
+                     snd_ctx.active_sounds.clear();
+                 });
+}
+
+
+
+void Platform::Speaker::restore_sounds()
+{
+    modify_audio([&] {
+                     snd_ctx.active_sounds = sound_stash;
+                 });
+}
+
+
+
 void Platform::Speaker::play_sound(const char* name,
                                    int priority,
                                    std::optional<Vec2<Float>> position)
