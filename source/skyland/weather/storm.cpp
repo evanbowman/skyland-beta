@@ -41,6 +41,9 @@ static_assert(rain_pos_scale % 2 == 0);
 Storm::Storm() :
     state_(allocate_dynamic<State>("storm-state-buffer"))
 {
+    state_->thunder_timer_ = seconds(6) + rng::choice(seconds(5),
+                                                      rng::utility_state);
+
     const auto scale = rain_pos_scale;
 
     for (auto& rd : state_->raindrops_) {
@@ -61,6 +64,17 @@ void Storm::update(Platform& pfrm, App& app, Microseconds delta)
     auto camera = app.camera()->center().cast<s16>();
     auto camera_diff_x = camera.x - last_camera_.x;
     auto camera_diff_y = camera.y - last_camera_.y;
+
+    state_->thunder_timer_ -= delta;
+    if (state_->thunder_timer_ <= 0) {
+        state_->thunder_timer_ = seconds(8) + rng::choice(seconds(25), gen);
+        if (rng::choice<2>(gen)) {
+            pfrm.speaker().play_sound("thunder_1", 0);
+        } else {
+            pfrm.speaker().play_sound("thunder_2", 0);
+        }
+
+    }
 
     for (auto& rd : state_->raindrops_) {
         if ((rd.x / scale) < 0 or

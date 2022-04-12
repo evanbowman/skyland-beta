@@ -3174,6 +3174,9 @@ static const AudioTrack* find_music(const char* name)
 #include "data/sound_gravel.hpp"
 #include "data/sound_missile.hpp"
 #include "data/sound_missile_explosion.hpp"
+#include "data/sound_thunder_1.hpp"
+#include "data/sound_thunder_2.hpp"
+
 
 
 
@@ -3204,6 +3207,8 @@ static const AudioTrack sounds[] = {DEF_SOUND(explosion1, sound_explosion1),
                                     // DEF_SOUND(heart, sound_heart),
                                     DEF_SOUND(click, sound_scroll),
                                     // DEF_SOUND(thud, sound_thud),
+                                    DEF_SOUND(thunder_1, sound_thunder_1),
+                                    DEF_SOUND(thunder_2, sound_thunder_2),
                                     DEF_SOUND(cannon, sound_cannon),
                                     DEF_SOUND(cling, sound_cling),
                                     DEF_SOUND(coin, sound_coin),
@@ -3952,27 +3957,35 @@ static const VolumeScaleLUT* music_volume_lut = &volume_scale_LUTs[0];
 
 static void audio_update_music_volume_isr()
 {
-    alignas(4) AudioSample music_buffer[4];
+    // alignas(4) AudioSample ambience_buffer[4];
     alignas(4) AudioSample mixing_buffer[4];
 
     // NOTE: audio tracks in ROM should therefore have four byte alignment!
-    *((u32*)music_buffer) =
-        ((u32*)(snd_ctx.music_track))[snd_ctx.music_track_pos++];
-
     *((u32*)mixing_buffer) =
-        ((u32*)(snd_ctx.ambience_track))[snd_ctx.ambience_track_pos++];
+        ((u32*)(snd_ctx.music_track))[snd_ctx.music_track_pos++];
 
     if (UNLIKELY(snd_ctx.music_track_pos > snd_ctx.music_track_length)) {
         snd_ctx.music_track_pos = 0;
     }
 
-    if (UNLIKELY(snd_ctx.ambience_track_pos > snd_ctx.ambience_track_length)) {
-        snd_ctx.ambience_track_pos = 0;
+    // *((u32*)ambience_buffer) =
+    //     ((u32*)(snd_ctx.ambience_track))[snd_ctx.ambience_track_pos++];
+
+    // if (UNLIKELY(snd_ctx.ambience_track_pos > snd_ctx.ambience_track_length)) {
+    //     snd_ctx.ambience_track_pos = 0;
+    // }
+
+    for (AudioSample& s : mixing_buffer) {
+        s = (*music_volume_lut)[s];
     }
 
-    for (int i = 0; i < 4; ++i) {
-        mixing_buffer[i] = mixing_buffer[i] + (*music_volume_lut)[music_buffer[i]];
-    }
+    // for (int i = 0; i < 4; ++i) {
+    //     mixing_buffer[i] = mixing_buffer[i] + ambience_buffer[i];
+    // }
+
+    // for (int i = 0; i < 4; ++i) {
+    //     mixing_buffer[i] = mixing_buffer[i] + (*music_volume_lut)[music_buffer[i]];
+    // }
 
     for (auto it = snd_ctx.active_sounds.begin();
          it not_eq snd_ctx.active_sounds.end();) {

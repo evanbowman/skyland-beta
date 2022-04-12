@@ -36,6 +36,8 @@ private:
 
     struct State {
         Vec2<s16> raindrops_[8];
+
+        Microseconds thunder_timer_ = 0;
     };
 
     DynamicMemory<State> state_;

@@ -73,6 +73,8 @@ void SkylandForever::enter(Platform& pfrm, App& app, Scene& prev)
     environment_init(app, parameters_[1]);
     pfrm.screen().set_shader(app.environment().shader(app));
 
+    pfrm.speaker().play_ambience(app.environment().ambience());
+
     for (u32 i = 0; i < settings_text_.capacity(); ++i) {
         settings_text_.emplace_back(
             pfrm, OverlayCoord{2, u8(settings_start + i * 2)});
@@ -192,6 +194,8 @@ SkylandForever::update(Platform& pfrm, App& app, Microseconds delta)
             0.7f, ColorConstant::rich_black, false, false);
         pfrm.screen().schedule_fade(
             0.6f, ColorConstant::rich_black, false, false);
+
+        pfrm.speaker().play_ambience(app.environment().ambience());
     };
 
     if (app.player().key_down(pfrm, Key::right) or

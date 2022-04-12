@@ -126,8 +126,6 @@ void SandboxLoaderModule::enter(Platform& pfrm, App& app, Scene& prev)
 {
     app.game_mode() = App::GameMode::sandbox;
 
-    pfrm.speaker().stop_music();
-
     app.camera()->reset();
     pfrm.screen().set_view({});
 

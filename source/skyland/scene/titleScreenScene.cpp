@@ -967,7 +967,14 @@ TitleScreenScene::update(Platform& pfrm, App& app, Microseconds delta)
                              module_cursor_->y * modules_per_row;
                 if (auto f = detail::_Module::Factory::get(index)) {
                     if (f->stop_sound()) {
-                        pfrm.speaker().play_music("unaccompanied_wind", 0);
+                        pfrm.speaker().stop_music();
+
+                        // TODO: better effect
+                        pfrm.speaker().play_sound("footstep1", 0);
+                        pfrm.speaker().play_sound("footstep2", 0);
+                        pfrm.speaker().play_sound("footstep3", 0);
+
+                        pfrm.speaker().play_ambience(app.environment().ambience());
                     }
                     pfrm.fill_overlay(0);
                     pfrm.screen().fade(
