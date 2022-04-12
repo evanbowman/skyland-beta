@@ -4084,6 +4084,13 @@ static void audio_update_fast_isr()
             it = snd_ctx.active_sounds.erase(it);
         } else {
             for (int i = 0; i < 4; ++i) {
+                // Overflow... oh well... We have 8 bit samples already, and we
+                // don't want to lose any more precision, so we can't really
+                // shift them, and stuff is going to be clipped either way, so
+                // just don't do anything about it. I've tried to adjust the
+                // gain on all of the sound effectss so that clipping and
+                // overflow won't happen too much, but it'll inevitably happen
+                // sometimes.
                 mixing_buffer[i] += (u8)it->data_[it->position_];
                 ++it->position_;
             }
