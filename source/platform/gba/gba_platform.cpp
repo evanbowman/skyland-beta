@@ -3297,6 +3297,57 @@ static constexpr std::array<VolumeScaleLUT, 20> volume_scale_LUTs = {
 
 
 
+// Am I wasting ROM space for this? Basically, the table stores the result of
+// adding an audio sample, range -127 to 127, to any other audio sample. You may
+// be wondering... why not just add them? You can't just add audio samples,
+// though, you need to do a bounds check, otherwise you end up with overflow and
+// clipping. For entries in the table where adding two samples would result in
+// overflow, this table algorithm performs some rudimentary gain adjustment to
+// the sound signals.
+auto make_mixing_lut = [](s8 lhs) {
+    return detail::generate_array<256>(
+        [lhs](std::size_t current, std::size_t total) -> s8 {
+            s8 rhs = (s8)current;
+
+            const bool sign_equal = (lhs < 0) == (rhs < 0);
+            if (sign_equal) {
+                if (lhs < 0) { // Both negative
+                    const bool sample_overflow = (int)lhs + (int)rhs < -127;
+                    if (sample_overflow) {
+                        return lhs / 2 + rhs / 2;
+                    } else {
+                        return lhs + rhs;
+                    }
+                } else { // Both positive
+                    const bool sample_overflow = (int)lhs + (int)rhs > 127;
+                    if (sample_overflow) {
+                        return lhs / 2 + rhs / 2;
+                    } else {
+                        return lhs + rhs;
+                    }
+                }
+            } else {
+                // Samples have different signs. Overflow isn't possible, simply
+                // add the samples.
+                return lhs + rhs;
+            }
+        });
+};
+
+
+
+using MixingLUT = std::array<s8, 256>;
+
+
+
+static constexpr std::array<MixingLUT, 256> mixing_lut =
+    detail::generate_array<256>([](std::size_t current,
+                                   std::size_t total) -> MixingLUT {
+                                    return make_mixing_lut((s8)current);
+                                });
+
+
+
 static std::optional<ActiveSoundInfo> make_sound(const char* name)
 {
     if (auto sound = get_sound(name)) {
@@ -4109,14 +4160,10 @@ static void audio_update_fast_isr()
             it = snd_ctx.active_sounds.erase(it);
         } else {
             for (int i = 0; i < 4; ++i) {
-                // Overflow... oh well... We have 8 bit samples already, and we
-                // don't want to lose any more precision, so we can't really
-                // shift them, and stuff is going to be clipped either way, so
-                // just don't do anything about it. I've tried to adjust the
-                // gain on all of the sound effectss so that clipping and
-                // overflow won't happen too much, but it'll inevitably happen
-                // sometimes.
-                mixing_buffer[i] += (u8)it->data_[it->position_];
+
+                mixing_buffer[i] =
+                    mixing_lut[(u8)mixing_buffer[i]][(u8)it->data_[it->position_]];
+
                 ++it->position_;
             }
             ++it;
