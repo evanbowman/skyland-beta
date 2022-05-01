@@ -177,6 +177,82 @@ Coins State::coin_yield()
 
 
 
+namespace terrain
+{
+
+
+
+// Due to memory limitations, we need to pack the location of a block's fluid
+// source into a single byte. So we store a coordinate offset rather than a full
+// coordinate, as a block will always be within one block away from its parent.
+struct FluidSource
+{
+    bool valid_ : 1;
+    s8 x_diff_ : 2;
+    s8 y_diff_ : 2;
+    s8 z_diff_ : 2;
+};
+
+
+
+void fluid_source_set(Sector& sector, Vec3<u8> block_pos, Vec3<u8> parent_pos)
+{
+    int x_diff = (int)block_pos.x - parent_pos.x;
+    int y_diff = (int)block_pos.y - parent_pos.y;
+    int z_diff = (int)block_pos.z - parent_pos.z;
+
+    if (x_diff > 1 or x_diff < -1 or y_diff > 1 or y_diff < -1 or z_diff > 1 or
+        z_diff < -1) {
+        Platform::fatal(format("fluid source block is too far away!"
+                               " (% % %) -> (% % %)",
+                               block_pos.x,
+                               block_pos.y,
+                               block_pos.z,
+                               parent_pos.x,
+                               parent_pos.y,
+                               parent_pos.z).c_str());
+    }
+
+    FluidSource s;
+    s.x_diff_ = x_diff;
+    s.y_diff_ = y_diff;
+    s.z_diff_ = z_diff;
+    s.valid_ = true;
+
+    static_assert(sizeof(s) == sizeof(terrain::Block::data_));
+
+    sector.set_block_data(block_pos, *(u8*)&s);
+}
+
+
+
+std::optional<Vec3<u8>> fluid_source_get(Block& block, Vec3<u8> block_pos)
+{
+    FluidSource s;
+    memcpy(&s, &block.data_, sizeof s);
+
+    if (not s.valid_) {
+        return {};
+    }
+
+    const u8 x = (int)block_pos.x - s.x_diff_;
+    const u8 y = (int)block_pos.y - s.y_diff_;
+    const u8 z = (int)block_pos.z - s.z_diff_;
+
+    if (x > 7 or y > 7 or z > Sector::z_limit - 1) {
+        // Log error?
+        return {};
+    }
+
+    return {{x, y, z}};
+}
+
+
+
+} // namespace terrain
+
+
+
 std::pair<Coins, terrain::Sector::Population> State::colony_cost() const
 {
     if (data_->other_sectors_.full()) {
@@ -1030,6 +1106,7 @@ terrain::Categories terrain::categories(Type t)
         return Categories::crop;
 
     case terrain::Type::water:
+    case terrain::Type::water_source:
     case terrain::Type::water_slant_a:
     case terrain::Type::water_slant_b:
     case terrain::Type::water_slant_c:
@@ -1086,6 +1163,7 @@ Coins terrain::cost(Sector& s, Type t)
         return 0;
 
     case terrain::Type::water:
+    case terrain::Type::water_source:
     case terrain::Type::water_slant_a:
     case terrain::Type::water_slant_b:
     case terrain::Type::water_slant_c:
@@ -1176,6 +1254,7 @@ SystemString terrain::name(Type t)
         return SystemString::gs_error;
 
     case terrain::Type::water:
+    case terrain::Type::water_source:
     case terrain::Type::water_slant_a:
     case terrain::Type::water_slant_b:
     case terrain::Type::water_slant_c:
@@ -1327,6 +1406,15 @@ void terrain::Sector::rotate()
                 default:
                     break;
                 }
+
+                if ((terrain::categories(block.type()) &
+                    terrain::Categories::fluid_water) and
+                    block.type() not_eq terrain::Type::water_source) {
+                    Vec3<u8> c{(u8)x, (u8)y, (u8)z};
+                    if (auto s = fluid_source_get(block, c)) {
+                        fluid_source_set(*this, c, rotate_coord(*s));
+                    }
+                }
             }
         }
     }
@@ -1383,6 +1471,7 @@ terrain::Improvements terrain::improvements(Type t)
         break;
     }
 
+    case Type::water_source:
     case Type::water:
         result.push_back(Type::ice);
         result.push_back(Type::shellfish);
@@ -1444,6 +1533,7 @@ std::pair<int, int> terrain::icons(Type t)
     case terrain::Type::saffron:
         return {2952, 2968};
 
+    case terrain::Type::water_source:
     case terrain::Type::water:
     case terrain::Type::water_slant_a:
     case terrain::Type::water_slant_b:
@@ -1646,6 +1736,13 @@ const terrain::Block& terrain::Sector::get_block(const Vec3<u8>& coord) const
 
 
 
+void terrain::Sector::set_block_data(const Vec3<u8>& coord, u8 data)
+{
+    blocks_[coord.z][coord.x][coord.y].data_ = data;
+}
+
+
+
 void terrain::Sector::set_block(const Vec3<u8>& coord, Type type)
 {
     auto& selected = blocks_[coord.z][coord.x][coord.y];
@@ -1658,6 +1755,8 @@ void terrain::Sector::set_block(const Vec3<u8>& coord, Type type)
 
     if (type == Type::selector) {
         selected.data_ = 16;
+    } else {
+        selected.data_ = 0;
     }
 
     selected.type_ = (u8)type;
@@ -1916,6 +2015,17 @@ update_lava_still(terrain::Sector& s, terrain::Block& block, Vec3<u8> position)
 
 
 
+static void water_flow_down(terrain::Sector& s,
+                            terrain::Block& block,
+                            Vec3<u8> position)
+{
+    const Vec3<u8> beneath_coord = {position.x, position.y, u8(position.z - 1)};
+    s.set_block(beneath_coord, terrain::Type::water);
+    terrain::fluid_source_set(s, beneath_coord, position);
+}
+
+
+
 static void update_water_slanted(terrain::Sector& s,
                                  terrain::Block& block,
                                  Vec3<u8> position)
@@ -1931,16 +2041,19 @@ static void update_water_slanted(terrain::Sector& s,
     if (terrain::categories(tp) & terrain::Categories::fluid_lava) {
         s.set_block(beneath_coord, terrain::Type::volcanic_soil);
     } else if (tp == terrain::Type::air) {
-        s.set_block(beneath_coord, terrain::Type::water);
+        water_flow_down(s, block, position);
     } else if ((categories(tp) & terrain::Categories::fluid_water) and
                tp not_eq terrain::Type::water) {
-        s.set_block(beneath_coord, terrain::Type::water);
+        water_flow_down(s, block, position);
     }
 }
 
 
 
-static void water_spread(terrain::Sector& s, Vec3<u8> target, terrain::Type tp)
+static void water_spread(terrain::Sector& s,
+                         Vec3<u8> source,
+                         Vec3<u8> target,
+                         terrain::Type tp)
 {
     auto prev_tp = s.get_block(target).type();
     if (terrain::categories(tp) & terrain::Categories::fluid_lava) {
@@ -1954,6 +2067,7 @@ static void water_spread(terrain::Sector& s, Vec3<u8> target, terrain::Type tp)
         s.set_block(target, terrain::Type::water);
     } else if (prev_tp == terrain::Type::air) {
         s.set_block(target, tp);
+        fluid_source_set(s, target, source);
     }
 }
 
@@ -1979,31 +2093,35 @@ update_water_still(terrain::Sector& s, terrain::Block& block, Vec3<u8> position)
                 beneath_tp == terrain::Type::water_slant_b or
                 beneath_tp == terrain::Type::water_slant_c or
                 beneath_tp == terrain::Type::water_slant_d)) {
-        s.set_block(beneath_coord, terrain::Type::water);
-    } else if (position.z == 0 or beneath_tp not_eq terrain::Type::water) {
+        water_flow_down(s, block, position);
+    } else if (position.z == 0 or
+               (beneath_tp not_eq terrain::Type::water and
+                beneath_tp not_eq terrain::Type::water_source)) {
         auto lp = position;
         lp.x++;
 
+        const auto p = position;
+
         if (position.x < 7) {
-            water_spread(s, lp, terrain::Type::water_slant_a);
+            water_spread(s, p, lp, terrain::Type::water_slant_a);
         }
 
         if (position.y < 7) {
             auto rp = position;
             ++rp.y;
-            water_spread(s, rp, terrain::Type::water_slant_b);
+            water_spread(s, p, rp, terrain::Type::water_slant_b);
         }
 
         if (position.x > 0) {
             auto up = position;
             --up.x;
-            water_spread(s, up, terrain::Type::water_slant_c);
+            water_spread(s, p, up, terrain::Type::water_slant_c);
         }
 
         if (position.y > 0) {
             auto down = position;
             --down.y;
-            water_spread(s, down, terrain::Type::water_slant_d);
+            water_spread(s, p, down, terrain::Type::water_slant_d);
         }
     }
 }
@@ -2043,7 +2161,7 @@ static const UpdateFunction update_functions[(int)terrain::Type::count] = {
     {
         Platform::fatal("invoke hook for invalid block!");
     },
-    // water
+    // water_source
     update_water_still,
     // terrain
     [](terrain::Sector& s, terrain::Block& block, Vec3<u8> position)
@@ -2264,6 +2382,19 @@ static const UpdateFunction update_functions[(int)terrain::Type::count] = {
     {
         revert_if_covered(s, block, position, terrain::Type::volcanic_soil);
     },
+    // water
+    [](terrain::Sector& s, terrain::Block& block, Vec3<u8> position)
+    {
+        update_water_still(s, block, position);
+
+        if (auto source = fluid_source_get(block, position)) {
+            auto& block = s.get_block(*source);
+            if (block.type() not_eq terrain::Type::water_source and
+                not (terrain::categories(block.type()) & terrain::Categories::fluid_water)) {
+                s.set_block(position, terrain::Type::air);
+            }
+        }
+    }
 };
 // clang-format on
 

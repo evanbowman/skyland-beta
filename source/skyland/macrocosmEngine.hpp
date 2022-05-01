@@ -92,7 +92,7 @@ enum class Type {
     air,
     building,
     __invalid,
-    water,
+    water_source,
     terrain,
     masonry,
     selector,
@@ -124,6 +124,7 @@ enum class Type {
     lava_slant_d,
     volcanic_soil,
     cocoa,
+    water,
     count,
 };
 
@@ -270,6 +271,9 @@ public:
 
 
     const Block& get_block(const Vec3<u8>& coord) const;
+
+
+    void set_block_data(const Vec3<u8>& coord, u8 data);
 
 
     Stats stats() const;
