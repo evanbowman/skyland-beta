@@ -112,7 +112,8 @@ template <typename T> struct DynamicMemory
 template <typename T, typename... Args>
 DynamicMemory<T> allocate_dynamic(const ScratchBuffer::Tag& tag, Args&&... args)
 {
-    static_assert(sizeof(T) + alignof(T) <= sizeof ScratchBuffer::data_);
+    static_assert((sizeof(T) <= sizeof ScratchBuffer::data_ and alignof(T) == 1) or
+                  sizeof(T) + alignof(T) <= sizeof ScratchBuffer::data_);
 
     auto sc_buf = make_scratch_buffer(tag);
 

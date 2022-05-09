@@ -61,6 +61,7 @@ with open('fs.bin', 'wb') as filesystem:
     collect_paths(files_list, "misc")
     collect_paths(files_list, "licenses")
     collect_paths(files_list, "tools")
+    collect_paths(files_list, "roms")
 
     files_list.append(["/readme.txt", os.path.join(project_root_path, "readme.txt")])
 

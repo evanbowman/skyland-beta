@@ -6,8 +6,12 @@ project_root_path = os.path.split(os.path.dirname(os.path.realpath(__file__)))[0
 
 
 
-def encode_file(path, real_name, out):
-    with open(path) as test_file:
+def encode_file(path, real_name, out, binary):
+    flags = "r"
+    if binary:
+        flags = "rb"
+
+    with open(path, flags) as test_file:
         encoded_path = real_name.encode('utf-8')
 
         if len(encoded_path) > 63:
@@ -20,7 +24,10 @@ def encode_file(path, real_name, out):
             out.write('\0'.encode('utf-8'))
 
         data = test_file.read()
-        file_contents = data.encode('utf-8')
+        if not binary:
+            file_contents = data.encode('utf-8')
+        else:
+            file_contents = data
 
         # +1 for null terminator
         out.write((len(file_contents) + 1).to_bytes(4, 'little'))
@@ -61,6 +68,7 @@ with open('fs.bin', 'wb') as filesystem:
     collect_paths(files_list, "misc")
     collect_paths(files_list, "licenses")
     collect_paths(files_list, "tools")
+    collect_paths(files_list, "roms")
 
     files_list.append(["/readme.txt", os.path.join(project_root_path, "readme.txt")])
 
@@ -70,6 +78,9 @@ with open('fs.bin', 'wb') as filesystem:
     filesystem.write(fs_count.to_bytes(4, 'little'))
 
     for info in files_list:
-        encode_file(info[1], info[0], filesystem)
+        binary_encoding = False
+        if info[1].split('.')[1] == "gbc":
+            binary_encoding = True
+        encode_file(info[1], info[0], filesystem, binary_encoding)
 
     print('done!')
