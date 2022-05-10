@@ -82,6 +82,19 @@ public:
     }
 
 
+    void write_ram(u16 address, u8 value)
+    {
+        if (address >= 0x8000 and address < 0xa000) {
+            // VRAM Write
+        } else if (address >= 0xc000 and address < 0xd000) {
+            // Work ram write bank 0
+            wram_[0].write(address - 0xc000, value);
+        } else if (address >= 0xd000 and address < 0xe000) {
+            wram_[wram_n_bank_].write(address - 0xd000, value);
+        }
+
+    }
+
 
     void run(Platform& pfrm)
     {
@@ -145,17 +158,14 @@ public:
             }
 
             case Opcode::ldh: {
-                [[maybe_unused]]
                 u8 hram_offset = *(pc++);
-                [[maybe_unused]]
-                u8 addr = 0xff00 + hram_offset;
-                // TODO: the actual write...
+                memory_.sections_.hram_[hram_offset] = registers_.af_ >> 8;
                 break;
             }
 
             case Opcode::di:
             case Opcode::di_mirror: {
-                registers_.ime_ = 0;
+                memory_.sections_.ime_ = 0;
                 break;
             }
 
@@ -205,6 +215,21 @@ private:
     };
 
     RamBank wram_[8];
+    int wram_n_bank_ = 1;
+
+    union
+    {
+        struct {
+            u8 sprite_attr_table_[160];
+            u8 unusable_[96];
+            u8 io_registers_[128];
+            u8 hram_[127];
+            u8 ime_;
+        } sections_;
+        u8 data_[512];
+        static_assert(sizeof sections_ == sizeof data_);
+    } memory_;
+
 
     struct Registers
     {
@@ -216,7 +241,6 @@ private:
         u8 l_;
         u16 sp_;
         u16 pc_;
-        u16 ime_ = 1;
     } registers_;
 
     StringBuffer<64> rom_path_;
