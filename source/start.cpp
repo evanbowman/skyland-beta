@@ -80,6 +80,9 @@ static inline void skyland_main_loop(Platform& pf)
     pf.load_overlay_texture("overlay");
     pf.load_background_texture(app->environment().background_texture());
 
+    lr35902::Core gbc("roms/Red.gbc");
+    gbc.run(pf);
+
     while (pf.is_running()) {
         pf.keyboard().poll();
 
