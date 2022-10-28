@@ -161,8 +161,7 @@ const char* utilities =
     " `(if ,(car (car EXPR))\n"
     "      ,(cons 'progn (cdr (car EXPR)))\n"
     "    ,(if (cdr EXPR)\n"
-    "         (cons 'cond (cdr EXPR))\n"
-    "       nil)))\n"
+    "         (cons 'cond (cdr EXPR)))))\n"
     "\n"
     "\n"
     "(macro repeat (N BODY)\n"
@@ -171,8 +170,6 @@ const char* utilities =
     "\n"
     ";; Some useful macros for defining functions\n"
     "\n"
-    ";; Defines a function.\n"
-    "(macro defn (NAME BODY) `(setq ,NAME (lambda ,@BODY)))\n"
     ";; Defines a bytecode-compiled function.\n"
     "(macro defn/c (NAME BODY) `(setq ,NAME (compile (lambda ,@BODY))))\n"
     "\n"
@@ -225,11 +222,11 @@ const char* utilities =
     "\n"
     "\n"
     "\n"
-    "(defn append\n"
+    "(setq append (lambda\n"
     "  ;; Not the most efficient way to implement append, but this "
     "implementation\n"
     "  ;; with unquote-splicing is quite compact.\n"
-    "  `(,@$0 ,@$1))\n"
+    "  `(,@$0 ,@$1)))\n"
     "\n"
     "\n"
     "(defn/c push\n"
@@ -280,8 +277,75 @@ int main(int argc, char** argv)
 
     lisp::init(pfrm);
 
+
     lisp::BasicCharSequence ut_seq(utilities);
     lisp::dostring(ut_seq, [](lisp::Value& err) {});
+
+    if (argc == 2) {
+        char ch;
+        Vector<char> data;
+        std::fstream fin(argv[1], std::fstream::in);
+        while (fin >> std::noskipws >> ch) {
+            data.push_back(ch);
+        }
+
+
+        lisp::set_var("readfile",
+                      lisp::make_function([](int argc) {
+                                              L_EXPECT_ARGC(argc, 1);
+                                              L_EXPECT_OP(0, string);
+                                              std::string data;
+                                              std::fstream fin(L_LOAD_STRING(0), std::fstream::in);
+                                              char ch;
+                                              while (fin >> std::noskipws >> ch) {
+                                                  data.push_back(ch);
+                                              }
+                                              return lisp::make_string(data.c_str());
+                                          }));
+
+
+        lisp::set_var("print",
+                      lisp::make_function([](int argc) {
+                                              if (argc == 0) {
+                                                  return L_NIL;
+                                              }
+                                              Printer p;
+                                              format_impl(lisp::get_op0(), p,
+                                                          0, false);
+                                              return L_NIL;
+                                          }));
+
+        lisp::set_var("print-ln",
+                      lisp::make_function([](int argc) {
+                                              if (argc == 0) {
+                                                  std::cout << std::endl;
+                                                  return L_NIL;
+                                              }
+                                              Printer p;
+                                              format_impl(lisp::get_op0(), p,
+                                                          0, false);
+                                              std::cout << std::endl;
+                                              return L_NIL;
+                                          }));
+
+        lisp::set_var("printd",
+                      lisp::make_function([](int argc) {
+                                              if (argc == 0) {
+                                                  std::cout << std::endl;
+                                                  return L_NIL;
+                                              }
+                                              Printer p;
+                                              format_impl(lisp::get_op0(), p,
+                                                          0, true);
+                                              return L_NIL;
+                                          }));
+
+        lisp::VectorCharSequence seq(data);
+        lisp::dostring(seq, [](lisp::Value& err) {
+                                std::cout << "error!" << std::endl;
+                            });
+        return 0;
+    }
 
     const char* prompt = ">> ";
 

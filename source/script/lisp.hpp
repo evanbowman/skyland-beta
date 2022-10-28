@@ -820,6 +820,7 @@ using DefaultPrinter = _Printer<StringBuffer<1024>>;
 
 
 void format(Value* value, Printer& p);
+void format_impl(Value* value, Printer& p, int depth, bool wrap_quotes);
 
 
 // Protected objects will not be collected until the Protected wrapper goes out

@@ -25,8 +25,7 @@
  `(if ,(car (car EXPR))
       ,(cons 'progn (cdr (car EXPR)))
     ,(if (cdr EXPR)
-         (cons 'cond (cdr EXPR))
-       nil)))
+         (cons 'cond (cdr EXPR)))))
 
 
 (macro repeat (N BODY)

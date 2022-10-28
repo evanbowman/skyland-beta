@@ -1335,7 +1335,7 @@ Value* dostring(CharSequence& code,
 }
 
 
-void format_impl(Value* value, Printer& p, int depth)
+void format_impl(Value* value, Printer& p, int depth, bool wrap_quotes)
 {
     bool prefix_quote = false;
 
@@ -1362,9 +1362,13 @@ void format_impl(Value* value, Printer& p, int depth)
         break;
 
     case lisp::Value::Type::string:
-        p.put_str("\"");
+        if (wrap_quotes) {
+            p.put_str("\"");
+        }
         p.put_str(value->string().value());
-        p.put_str("\"");
+        if (wrap_quotes) {
+            p.put_str("\"");
+        }
         break;
 
     case lisp::Value::Type::symbol:
@@ -1382,23 +1386,23 @@ void format_impl(Value* value, Printer& p, int depth)
             prefix_quote = true;
         }
         p.put_str("(");
-        format_impl(value->cons().car(), p, depth + 1);
+        format_impl(value->cons().car(), p, depth + 1, wrap_quotes);
         if (value->cons().cdr()->type() == Value::Type::nil) {
             // ...
         } else if (value->cons().cdr()->type() not_eq Value::Type::cons) {
             p.put_str(" . ");
-            format_impl(value->cons().cdr(), p, depth + 1);
+            format_impl(value->cons().cdr(), p, depth + 1, wrap_quotes);
         } else {
             auto current = value;
             while (true) {
                 if (current->cons().cdr()->type() == Value::Type::cons) {
                     p.put_str(" ");
-                    format_impl(
-                        current->cons().cdr()->cons().car(), p, depth + 1);
+                    format_impl(current->cons().cdr()->cons().car(), p, depth + 1,
+                                wrap_quotes);
                     current = current->cons().cdr();
                 } else if (current->cons().cdr() not_eq get_nil()) {
                     p.put_str(" . ");
-                    format_impl(current->cons().cdr(), p, depth + 1);
+                    format_impl(current->cons().cdr(), p, depth + 1, wrap_quotes);
                     break;
                 } else {
                     break;
@@ -1420,7 +1424,7 @@ void format_impl(Value* value, Printer& p, int depth)
         p.put_str("[ERR: ");
         p.put_str(lisp::Error::get_string(value->error().code_));
         p.put_str(" : ");
-        format_impl(dcompr(value->error().context_), p, 0);
+        format_impl(dcompr(value->error().context_), p, 0, true);
         p.put_str("]");
         break;
 
@@ -1450,7 +1454,7 @@ const char* String::value()
 
 void format(Value* value, Printer& p)
 {
-    format_impl(value, p, 0);
+    format_impl(value, p, 0, true);
 }
 
 
@@ -3015,7 +3019,7 @@ static const Binding builtins[] = {
                  }
 
                  DefaultPrinter p;
-                 format(get_op(fmt_arg), p);
+                 format_impl(get_op(fmt_arg), p, 0, false);
                  *builder += p.data_.c_str();
 
                  --fmt_arg;
@@ -3037,7 +3041,7 @@ static const Binding builtins[] = {
              if (val->type() == Value::Type::string) {
                  p.put_str(val->string().value());
              } else {
-                 format_impl(val, p, 0);
+                 format_impl(val, p, 0, false);
              }
          }
 
