@@ -532,7 +532,8 @@ FileBrowserModule::update(Platform& pfrm, App& app, Microseconds delta)
                     auto path = this->cwd();
                     path += selected;
 
-                    if (get_extension(path) == ".dat") {
+                    if (get_extension(path) == ".dat" or
+                        get_extension(path) == ".ch8") {
                         return scene_pool::alloc<HexViewerModule>(
                             pfrm,
                             std::move(user_context_),
@@ -584,6 +585,19 @@ FileBrowserModule::update(Platform& pfrm, App& app, Microseconds delta)
                 } else {
                     auto path = this->cwd();
                     path += selected;
+
+                    if (get_extension(path.c_str()) == ".ch8" or
+                        get_extension(path.c_str()) == ".dat") {
+
+                        auto info = pfrm.load_file("", path.c_str());
+                        pfrm.system_call("chip8-boot", &info);
+
+                        return scene_pool::alloc<HexViewerModule>(
+                            pfrm,
+                            std::move(user_context_),
+                            path.c_str(),
+                            true);
+                    }
 
                     return scene_pool::alloc<TextEditorModule>(
                         pfrm,

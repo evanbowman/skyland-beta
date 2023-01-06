@@ -7,7 +7,7 @@ project_root_path = os.path.split(os.path.dirname(os.path.realpath(__file__)))[0
 
 
 def encode_file(path, real_name, out):
-    with open(path) as test_file:
+    with open(path, 'rb') as test_file:
         encoded_path = real_name.encode('utf-8')
 
         if len(encoded_path) > 63:
@@ -20,7 +20,7 @@ def encode_file(path, real_name, out):
             out.write('\0'.encode('utf-8'))
 
         data = test_file.read()
-        file_contents = data.encode('utf-8')
+        file_contents = data
 
         # +1 for null terminator
         out.write((len(file_contents) + 1).to_bytes(4, 'little'))
@@ -61,6 +61,7 @@ with open('fs.bin', 'wb') as filesystem:
     collect_paths(files_list, "misc")
     collect_paths(files_list, "licenses")
     collect_paths(files_list, "tools")
+    collect_paths(files_list, "roms")
 
     files_list.append(["/readme.txt", os.path.join(project_root_path, "readme.txt")])
     files_list.append(["/boot.ini", os.path.join(project_root_path, "boot.ini")])

@@ -51,8 +51,12 @@ public:
         : path_(file_path), user_context_(std::move(user_context))
     {
         if (rom_file) {
-            // In practice, I'll never bundle binary blobs with the game in the
-            // rom filesystem. There's no reason, really.
+            auto [f, sz] = pfrm.load_file("", file_path);
+            if (f) {
+                for (u32 i = 0; i < sz; ++i) {
+                    data_.push_back(*(f++));
+                }
+            }
         } else {
             flash_filesystem::read_file_data_binary(pfrm, file_path, data_);
         }

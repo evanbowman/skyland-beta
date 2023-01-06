@@ -98,6 +98,15 @@ void blit_tile(u16* out, u16* in)
 }
 
 
+
+// UNSAFE!!!
+void branch_to_address(void* address)
+{
+    asm("BX %0" : : "r"(address));
+}
+
+
+
 //
 // In case you're wondering why I'm not using a better blit function with a
 // pre-generated mask, I actually already tried it. It's not faster enough than

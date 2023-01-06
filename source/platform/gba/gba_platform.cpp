@@ -267,6 +267,9 @@ void memcpy16(void* dst, const void* src, uint hwcount);
 // optimized.
 __attribute__((section(".iwram"), long_call)) void blit_tile(u16* out, u16* in);
 
+// Unconditionally branch to an address. No return.
+__attribute__((long_call)) void branch_to_address(void* address);
+
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -4247,8 +4250,8 @@ void Platform::on_unrecoverrable_error(UnrecoverrableErrorCallback callback)
 }
 
 
-const char* Platform::load_file_contents(const char* folder,
-                                         const char* filename) const
+std::pair<const char*, u32> Platform::load_file(const char* folder,
+                                                const char* filename) const
 {
     StringBuffer<64> path("/");
 
@@ -6854,6 +6857,7 @@ void win_circle(u16 winh[], int x0, int y0, int rr)
 
 #include "incbin.h"
 INCBIN(Skyland_MB_ROM, "SkylandClient_mb.gba");
+INCBIN(Chip8_MB_ROM, "chip8_mb.gba");
 
 
 
@@ -7114,6 +7118,31 @@ void* Platform::system_call(const char* feature_name, void* arg)
         set_gflag(GlobalFlag::watchdog_disabled, false);
     } else if (str_eq(feature_name, "watchdog-off")) {
         set_gflag(GlobalFlag::watchdog_disabled, true);
+    } else if (str_eq(feature_name, "chip8-boot")) {
+        auto info = *(std::pair<const char*, u32>*)arg;
+        REG_IME = 0;
+        RegisterRamReset(RESET_VRAM |
+                         RESET_PALETTE |
+                         RESET_OAM |
+                         RESET_SIO |
+                         RESET_SOUND |
+                         RESET_OTHER);
+
+        // Copy the multiboot emulator rom to ewram
+        memcpy(&__ewram_start, gChip8_MB_ROMData, gChip8_MB_ROMSize);
+
+        // Attach the chip8 rom to the end of the emu rom
+        char* out = &__ewram_start + gChip8_MB_ROMSize;
+        for (u32 i = 0; i < info.second; ++i) {
+            *(out++) = info.first[i];
+        }
+
+        // NOTE: 0xC0 represents the offset into a multiboot header where we can
+        // find the boot instruction.
+        // NOTE: branch_to_address is an arm function. It must be because the
+        // boot instruction in the multiboot header is an arm opcode (usually an
+        // unconditional branch to the start address).
+        branch_to_address(&__ewram_start + 0xC0);
     }
 
     return nullptr;

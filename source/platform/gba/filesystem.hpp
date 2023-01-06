@@ -53,6 +53,7 @@ struct FileHeader
 using NullTerminatedString = const char*;
 using FileContents = NullTerminatedString;
 using FilePath = NullTerminatedString;
+using FileSize = u32;
 
 
 
@@ -60,7 +61,7 @@ bool is_mounted();
 
 
 
-FileContents load(FilePath path);
+std::pair<FileContents, FileSize> load(FilePath path);
 
 
 void walk(Function<8 * sizeof(void*), void(const char* path)> callback);

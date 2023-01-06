@@ -1059,8 +1059,8 @@ void ConstructionScene::display(Platform& pfrm, App& app)
             if (data_->construction_sites_[selector_].y == 15) {
                 // Display a different icon when constructing terrain, as a hint
                 // to the player that he/she can expand an island's terrain.
-                sprite.set_texture_index(73);
-                sprite.set_size(Sprite::Size::w16_h32);
+                sprite.set_size(Sprite::Size::w16_h16);
+                sprite.set_tidx_16x16(73, 0);
             } else {
                 sprite.set_tidx_16x16(12, 0);
                 sprite.set_size(Sprite::Size::w16_h16);
@@ -1109,7 +1109,8 @@ void ConstructionScene::display(Platform& pfrm, App& app)
                 origin.y += 15.0_fixed * 16.0_fixed;
 
                 sprite.set_position(origin);
-                sprite.set_texture_index(101);
+                sprite.set_size(Sprite::Size::w16_h16);
+                sprite.set_tidx_16x16(73, 1);
                 sprite.set_alpha(Sprite::Alpha::translucent);
                 pfrm.screen().draw(sprite);
             }
@@ -1121,7 +1122,8 @@ void ConstructionScene::display(Platform& pfrm, App& app)
 
                 sprite.set_position(origin);
                 sprite.set_flip({true, false});
-                sprite.set_texture_index(101);
+                sprite.set_size(Sprite::Size::w16_h16);
+                sprite.set_tidx_16x16(73, 1);
                 sprite.set_alpha(Sprite::Alpha::translucent);
                 pfrm.screen().draw(sprite);
             }
