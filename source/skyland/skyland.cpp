@@ -60,7 +60,7 @@ Player& player(App& app)
 
 
 
-App::App(Platform& pfrm, bool clean_boot)
+App::App(Platform& pfrm, int boot_mode)
     : level_timer_(0), stat_timer_(0),
       world_state_(allocate_dynamic<WorldState>("env-buffer",
                                                 pfrm,
@@ -75,8 +75,8 @@ App::App(Platform& pfrm, bool clean_boot)
     init_clouds(pfrm);
 
 
-    current_scene_ = initial_scene(clean_boot);
-    next_scene_ = initial_scene(clean_boot);
+    current_scene_ = initial_scene(boot_mode);
+    next_scene_ = initial_scene(boot_mode);
 
     custom_flag_image_.load(pfrm, *this);
 

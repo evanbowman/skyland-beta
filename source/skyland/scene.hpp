@@ -119,7 +119,7 @@ public:
 };
 
 
-ScenePtr<Scene> initial_scene(bool clean_boot);
+ScenePtr<Scene> initial_scene(int boot_mode);
 
 
 using DeferredScene = Function<sizeof(void*) * 4, ScenePtr<Scene>()>;

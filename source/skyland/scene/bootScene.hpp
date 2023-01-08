@@ -6,6 +6,7 @@
 #include "platform/flash_filesystem.hpp"
 #include "skyland/player/coOpTeam.hpp"
 #include "skyland/scene/introCreditsScene.hpp"
+#include "skyland/scene/titleScreenScene.hpp"
 #include "skyland/scene/modules/skylandForever.hpp"
 #include "skyland/scene_pool.hpp"
 #include "skyland/skyland.hpp"
@@ -48,10 +49,11 @@ private:
     Buffer<Text, 8> text_opts_;
 
     bool clean_boot_;
+    int boot_mode_;
 
 public:
-    LanguageSelectScene(Platform& pfrm, bool clean_boot)
-        : opts_(load_language_options(pfrm)), clean_boot_(clean_boot)
+    LanguageSelectScene(Platform& pfrm, bool clean_boot, int boot_mode)
+        : opts_(load_language_options(pfrm)), clean_boot_(clean_boot), boot_mode_(boot_mode)
     {
     }
 
@@ -121,7 +123,11 @@ public:
                     return scene_pool::alloc<MacrocosmFreebuildModule>();
                 }
 
-                return scene_pool::alloc<IntroCreditsScene>();
+                if (boot_mode_ == 1) {
+                    return scene_pool::alloc<TitleScreenScene>(3);
+                } else {
+                    return scene_pool::alloc<IntroCreditsScene>();
+                }
             }
         }
 
@@ -167,10 +173,10 @@ private:
 class BootScene : public Scene
 {
 public:
-    bool clean_boot_;
+    int boot_mode_;
 
 
-    BootScene(bool clean_boot) : clean_boot_(clean_boot)
+    BootScene(int boot_mode) : boot_mode_(boot_mode)
     {
     }
 
@@ -244,6 +250,19 @@ public:
     }
 
 
+    static void init_fastboot(Platform& pfrm)
+    {
+        pfrm.screen().schedule_fade(1.f, ColorConstant::rich_black);
+        pfrm.screen().clear();
+        pfrm.screen().display();
+
+        pfrm.speaker().start();
+        pfrm.system_call("vsync", 0);
+        pfrm.enable_glyph_mode(true);
+        pfrm.load_overlay_texture("overlay");
+    }
+
+
     static void message(Platform& pfrm, const char* text, bool log = true)
     {
         const auto st = calc_screen_tiles(pfrm);
@@ -277,17 +296,25 @@ public:
                          PROGRAM_SUBMINOR_VERSION,
                          PROGRAM_VERSION_REVISION);
 
-        Text boot(pfrm, "booting...", {1, u8(st.y - 2)});
+        Text boot(pfrm, "", {1, u8(st.y - 2)});
         pfrm.screen().clear();
         pfrm.screen().display();
 
 
-        app.init_scripts(pfrm, [&](const char* text) { message(pfrm, text); });
+        auto msg = [&](const char* t, bool log = true) {
+                       if (boot_mode_ not_eq 1) {
+                           message(pfrm, t, log);
+                       }
+                   };
 
-        message(pfrm, "reticulating splines...", false);
+
+        app.init_scripts(pfrm, [&](const char* text) { msg(text); });
+
+
+        msg("reticulating splines...", false);
         skyland::achievements::init(pfrm, app);
 
-        message(pfrm, "lisp gc sweep...");
+        msg("lisp gc sweep...");
         lisp::gc();
 
         pfrm.fill_overlay(0);
@@ -299,7 +326,7 @@ public:
         // Special case: if we're connected to a networked multiplayer peer upon
         // boot, then we've started a multiboot game, and should progress
         // immediately to a co op match after starting up.
-        if (pfrm.network_peer().is_connected()) {
+        if (boot_mode_ not_eq 1 and pfrm.network_peer().is_connected()) {
             state_bit_store(app, StateBit::multiboot, true);
             globals().room_pools_.create("room-mem");
             globals().entity_pools_.create("entity-mem");
@@ -332,9 +359,11 @@ public:
             return scene_pool::alloc<FadeInScene>();
         }
 
-        if (not flash_filesystem::file_exists(pfrm, lang_file) or clean_boot_) {
+        if (not flash_filesystem::file_exists(pfrm, lang_file) or boot_mode_ == 2) {
             info(pfrm, "lang selection...");
-            return scene_pool::alloc<LanguageSelectScene>(pfrm, clean_boot_);
+            return scene_pool::alloc<LanguageSelectScene>(pfrm,
+                                                          boot_mode_ == 2,
+                                                          boot_mode_);
         } else {
             message(pfrm, "bind strings file...");
             Vector<char> data;
@@ -345,6 +374,7 @@ public:
                 }
                 systemstring_bind_file(path.c_str());
             }
+
             return scene_pool::alloc<IntroCreditsScene>();
         }
     }

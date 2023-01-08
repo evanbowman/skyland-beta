@@ -38,7 +38,7 @@
 #include "skyland/rooms/cloak.hpp"
 #include "skyland/rooms/commandModule.hpp"
 #include "skyland/rooms/core.hpp"
-#include "skyland/rooms/crane.hpp"
+// #include "skyland/rooms/crane.hpp"
 #include "skyland/rooms/decimator.hpp"
 #include "skyland/rooms/droneBay.hpp"
 #include "skyland/rooms/escapeBeacon.hpp"
@@ -324,7 +324,7 @@ using RoomMetatableType = RoomMetatable<15,
                                         Bulkhead,
                                         Infirmary,
                                         CargoBay,
-                                        Crane,
+                                        // Crane,
                                         WeatherEngine,
                                         Water,
                                         WaterSource,

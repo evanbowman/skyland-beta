@@ -45,11 +45,11 @@ namespace skyland
 
 
 
-static inline void main_loop(Platform& pf)
+static inline void main_loop(Platform& pf, int boot_mode)
 {
     systemstring_bind_file("strings.txt");
 
-    {
+    if (boot_mode == 0) {
         Conf conf(pf);
         if (conf.expect<Conf::String>("profile", "beta") == "yes") {
             if (auto f = pf.load_file_contents("", "/licenses/user.txt")) {
@@ -86,12 +86,22 @@ static inline void main_loop(Platform& pf)
     }
 
 
-    BootScene::init(pf);
+    if (boot_mode == 0) {
+        BootScene::init(pf);
+    } else {
+        BootScene::init_fastboot(pf);
+    }
 
 
-    BootScene::message(pf, "mount flash filesystem...");
+    auto message =
+        [&](const char* msg) {
+            if (boot_mode > 0) {
+                return;
+            }
+            BootScene::message(pf, msg);
+        };
 
-    bool clean_boot = false;
+    message("mount flash filesystem...");
 
     auto stat = flash_filesystem::initialize(pf, 8);
     if (stat == flash_filesystem::InitStatus::initialized) {
@@ -111,17 +121,16 @@ static inline void main_loop(Platform& pf)
         flash_filesystem::store_file_data(
             pf, "/mods/init.lisp", user_init_file, str_len(user_init_file));
 
-        clean_boot = true;
+        boot_mode = 2; // clean boot
     }
 
-
-    BootScene::message(pf, "init memory pools...");
+    message("init memory pools...");
 
     scene_pool::pool_ = &globals().scene_pool_;
 
-    BootScene::message(pf, "start application...");
+    message("start application...");
 
-    auto app = allocate_dynamic<App>("app-data", pf, clean_boot);
+    auto app = allocate_dynamic<App>("app-data", pf, boot_mode);
 
     while (pf.is_running()) {
         pf.keyboard().poll();
@@ -141,7 +150,7 @@ static inline void main_loop(Platform& pf)
 
 
 
-void start(Platform& pfrm)
+void start(Platform& pfrm, int boot_mode)
 {
-    return skyland::main_loop(pfrm);
+    return skyland::main_loop(pfrm, boot_mode);
 }

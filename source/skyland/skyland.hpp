@@ -58,7 +58,7 @@ namespace skyland
 class App
 {
 public:
-    App(Platform& pfrm, bool clean_boot);
+    App(Platform& pfrm, int boot_mode);
 
     void update(Platform& pfrm, Microseconds delta);
     void render(Platform& pfrm);

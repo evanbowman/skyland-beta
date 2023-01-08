@@ -589,8 +589,8 @@ FileBrowserModule::update(Platform& pfrm, App& app, Microseconds delta)
                     if (get_extension(path.c_str()) == ".ch8" or
                         get_extension(path.c_str()) == ".dat") {
 
-                        auto info = pfrm.load_file("", path.c_str());
-                        pfrm.system_call("chip8-boot", &info);
+                        pfrm.system_call("chip8-boot",
+                                         (char*)path.c_str());
 
                         return scene_pool::alloc<HexViewerModule>(
                             pfrm,

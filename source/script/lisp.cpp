@@ -3697,6 +3697,14 @@ void gc()
 }
 
 
+
+bool is_initialized()
+{
+    return (bool)bound_context;
+}
+
+
+
 void init(Platform& pfrm)
 {
     if (bound_context) {

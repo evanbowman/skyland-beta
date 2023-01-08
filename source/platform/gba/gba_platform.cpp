@@ -350,7 +350,7 @@ static const TextureData* current_overlay_texture = &overlay_textures[1];
 static const TextureData* current_background = &tile_textures[0];
 
 
-void start(Platform&);
+void start(Platform&, int boot_mode);
 
 
 static Platform* platform;
@@ -383,6 +383,19 @@ static std::optional<Platform::UnrecoverrableErrorCallback>
 
 int main(int argc, char** argv)
 {
+    int boot_mode = 0;
+
+    if (REG_DISPCNT & MODE_3) {
+        // Really bad hack. I implemented a chip8 emulator as a multiboot rom,
+        // partly because booting into a separate multiboot program makes it
+        // easier to manage iwram and memory in general for two
+        // largely-unrelated codebases. But the crt0 or some other part of the
+        // runtime erases gba ram upon booting back into the main Skyland
+        // ROM. So, the only way of knowing that we came from a multiboot
+        // program is by checking I/O registers.
+        boot_mode = 1;
+    }
+
     canary_init();
 
     gflags.clear();
@@ -402,7 +415,7 @@ int main(int argc, char** argv)
         on_stack_overflow();
     }
 
-    start(pf);
+    start(pf, boot_mode);
 
     return 0;
 }
@@ -7119,7 +7132,7 @@ void* Platform::system_call(const char* feature_name, void* arg)
     } else if (str_eq(feature_name, "watchdog-off")) {
         set_gflag(GlobalFlag::watchdog_disabled, true);
     } else if (str_eq(feature_name, "chip8-boot")) {
-        auto info = *(std::pair<const char*, u32>*)arg;
+        auto info = load_file("", (const char*)arg);
         REG_IME = 0;
         RegisterRamReset(RESET_VRAM |
                          RESET_PALETTE |
@@ -7131,10 +7144,33 @@ void* Platform::system_call(const char* feature_name, void* arg)
         // Copy the multiboot emulator rom to ewram
         memcpy(&__ewram_start, gChip8_MB_ROMData, gChip8_MB_ROMSize);
 
+        // Pad the emu rom with the branch address to resume execution of the
+        // original skyland rom.
+        static const auto rom_start = (void*)0x8000000;
+        memcpy(&__ewram_start + gChip8_MB_ROMSize,
+               // The first four bytes of the cart header hold the boot
+               // instruction.
+               &rom_start,
+               4);
+
+        auto write_addr = (u8*)&__ewram_start + gChip8_MB_ROMSize + 4;
+
+        // Append keymap to rom
+        u8 keymap[16];
+        memset(keymap, 1, 16);
+
+        keymap[5] = 6;
+        keymap[8] = 7;
+        keymap[9] = 4;
+        keymap[7] = 5;
+
+        for (int i = 0; i < 16; ++i) {
+            *(write_addr++) = keymap[i];
+        }
+
         // Attach the chip8 rom to the end of the emu rom
-        char* out = &__ewram_start + gChip8_MB_ROMSize;
         for (u32 i = 0; i < info.second; ++i) {
-            *(out++) = info.first[i];
+            *(write_addr++) = info.first[i];
         }
 
         // NOTE: 0xC0 represents the offset into a multiboot header where we can
@@ -7165,6 +7201,12 @@ void mb_server_setup_vram(Platform&);
 
 Platform::Platform()
 {
+    bool fastboot = false;
+    if (REG_DISPCNT & MODE_3) {
+        fastboot = true;
+        RegisterRamReset(RESET_VRAM);
+    }
+
     const bool mb_sent = false; // mb_send_rom((u16*)gSkyland_MB_ROMData,
                                 //             (u16*)((u8*)gSkyland_MB_ROMData +
                                 //                    gSkyland_MB_ROMSize),
@@ -7307,12 +7349,12 @@ Platform::Platform()
     irqSet(IRQ_VBLANK, vblank_isr);
 
     CONF_BOOL(show_epilepsy_warning);
-    if (show_epilepsy_warning) {
+    if (not fastboot and show_epilepsy_warning) {
         show_health_and_safety_message(*this);
     }
 
     CONF_BOOL(detect_gbp);
-    if (detect_gbp and unlock_gameboy_player(*this)) {
+    if (not fastboot and detect_gbp and unlock_gameboy_player(*this)) {
         info(*this, "gameboy player unlocked!");
 
         set_gflag(GlobalFlag::gbp_unlocked, true);

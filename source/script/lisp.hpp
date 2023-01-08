@@ -61,6 +61,9 @@ namespace lisp {
 void init(Platform& pfrm);
 
 
+bool is_initialized();
+
+
 struct Value;
 
 
