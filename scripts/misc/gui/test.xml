@@ -1,5 +1,5 @@
 
-<menu>
+<menu id="test">
   <script src="/scripts/misc/gui/test.lisp"/>
   
   <text id="t1" x="3" y="3">
@@ -7,7 +7,7 @@
   </text>
   
   <text id="t2" x="3" y="5">
-    world
+    world...
   </text>
 
   <rect id="r1" x="1" y="1" w="16" h="16">

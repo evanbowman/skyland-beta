@@ -22,9 +22,8 @@
 
 #include "scriptedMenuScene.hpp"
 #include "scriptHookScene.hpp"
-#include "skyland/skyland.hpp"
 #include "skyland/script_defs.hpp"
-#include "xml.hpp"
+#include "skyland/skyland.hpp"
 
 
 
@@ -51,26 +50,41 @@ void ScriptedMenuScene::enter(App& app, Scene& prev)
 
     Vector<char> file;
     if (app.load_file(path.c_str(), file)) {
-        xml::Model model;
-        model.parse(file);
+        model_.parse(file);
 
-        if (auto r = model.root()) {
+        if (auto r = model_.root()) {
             r->foreach_child([&](xml::Node* n) {
-                info(n->tag_);
                 if (str_eq(n->tag_, "script")) {
                     if (auto attr = n->lookup_attr("src")) {
                         app.invoke_script(attr->value_);
                     }
                 }
-
-                // n->foreach_attr([&](xml::Attribute* attr) {
-                //     info(format("%=%", attr->name_, attr->value_));
-                // });
-                // if (n->contents_) {
-                //     info(n->contents_);
-                // }
             });
         }
+    }
+
+    repaint_model();
+}
+
+
+
+void ScriptedMenuScene::repaint_model()
+{
+    PLATFORM.fill_overlay(0);
+
+    if (auto r = model_.root()) {
+        r->foreach_child([&](xml::Node* n) {
+            if (n->dead_) {
+                return;
+            }
+            if (str_eq(n->tag_, "text")) {
+                u8 x = n->attr_intvalue("x");
+                u8 y = n->attr_intvalue("y");
+                if (n->contents_) {
+                    Text::print(n->contents_,
+                                OverlayCoord{x, y});
+                }
+            }});
     }
 }
 
@@ -81,6 +95,7 @@ void ScriptedMenuScene::exit(App& app, Scene& next)
     ActiveWorldScene::exit(app, next);
 
     invoke_hook(app, "on-menu-exit");
+    PLATFORM.fill_overlay(0);
 }
 
 
@@ -123,6 +138,10 @@ ScenePtr<Scene> ScriptedMenuScene::update(App& app, Microseconds delta)
         invoke_hook(app, "on-B");
     }
 
+    if (needs_repaint_) {
+        repaint_model();
+    }
+
     return null_scene();
 }
 
@@ -131,6 +150,62 @@ ScenePtr<Scene> ScriptedMenuScene::update(App& app, Microseconds delta)
 void ScriptedMenuScene::display(App& app)
 {
     ActiveWorldScene::display(app);
+}
+
+
+
+void ScriptedMenuScene::gui_add_node(const char* parent_id,
+                                     const char* id,
+                                     const char* type)
+{
+    xml::Node* n = model_.root();
+    if (parent_id) {
+        n = xml::find_by_attr(model_.root(), "id", parent_id);
+    }
+
+    if (not n) {
+        return;
+    }
+
+    if (auto c = model_.add_child(n, type)) {
+        model_.set_attribute(c, "id", id);
+    }
+
+    needs_repaint_ = true;
+}
+
+
+
+void ScriptedMenuScene::gui_delete_node(const char* id)
+{
+    if (auto n = xml::find_by_attr(model_.root(), "id", id)) {
+        n->dead_ = true;
+        needs_repaint_ = true;
+    }
+}
+
+
+
+void ScriptedMenuScene::gui_set_attr(const char* id,
+                                     const char* attr,
+                                     const char* value)
+{
+    if (auto n = xml::find_by_attr(model_.root(), "id", id)) {
+        model_.set_attribute(n, attr, value);
+        needs_repaint_ = true;
+    } else {
+        Platform::fatal(format("missing id %", id));
+    }
+}
+
+
+
+void ScriptedMenuScene::gui_set_content(const char* id, const char* content)
+{
+    if (auto n = xml::find_by_attr(model_.root(), "id", id)) {
+        model_.set_contents(n, content);
+        needs_repaint_ = true;
+    }
 }
 
 

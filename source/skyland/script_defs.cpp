@@ -1797,18 +1797,33 @@ static const lisp::Binding script_api[] = {
      }},
     {"gui-add-node",
      [](int argc) {
+         L_EXPECT_ARGC(argc, 2);
+         L_EXPECT_OP(0, string);
+         L_EXPECT_OP(1, string);
+         auto app = interp_get_app();
+         app->scene().gui_add_node(nullptr,
+                                   L_LOAD_STRING(1),
+                                   L_LOAD_STRING(0));
          return L_NIL;
      }},
     {"gui-delete-node",
      [](int argc) {
+         L_EXPECT_ARGC(argc, 1);
+         L_EXPECT_OP(0, string);
+         auto app = interp_get_app();
+         app->scene().gui_delete_node(L_LOAD_STRING(0));
          return L_NIL;
      }},
     {"gui-set-attr",
      [](int argc) {
-         return L_NIL;
-     }},
-    {"gui-set-content",
-     [](int argc) {
+         L_EXPECT_ARGC(argc, 3);
+         L_EXPECT_OP(0, string);
+         L_EXPECT_OP(1, string);
+         L_EXPECT_OP(2, string);
+         auto app = interp_get_app();
+         app->scene().gui_set_attr(L_LOAD_STRING(2),
+                                   L_LOAD_STRING(1),
+                                   L_LOAD_STRING(0));
          return L_NIL;
      }},
     {"construction-sites",

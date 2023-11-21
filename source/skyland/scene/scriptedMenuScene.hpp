@@ -22,8 +22,10 @@
 
 #pragma once
 
-#include "worldScene.hpp"
+#include "allocator.hpp"
 #include "graphics/overlay.hpp"
+#include "worldScene.hpp"
+#include "script/lisp.hpp"
 
 
 
@@ -48,19 +50,29 @@ public:
     void display(App&) override;
 
 
+    void gui_add_node(const char* parent_id,
+                      const char* id,
+                      const char* type) override;
+
+
+    void gui_delete_node(const char* id) override;
+
+
+    void
+    gui_set_attr(const char* id, const char* attr, const char* value) override;
+
+
+    void gui_set_content(const char* id, const char* content) override;
+
+
 private:
     StringBuffer<32> menu_name_;
 
-    struct Data
-    {
-        struct TextObj
-        {
-            Text t_;
-            StringBuffer<7> id_;
-        };
+    std::optional<lisp::Protected> model_;
 
-        Buffer<TextObj, 20> text;
-    };
+    bool needs_repaint_ = false;
+
+    void repaint_model();
 };
 
 
