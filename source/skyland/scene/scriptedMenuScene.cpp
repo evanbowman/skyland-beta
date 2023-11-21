@@ -70,7 +70,11 @@ void ScriptedMenuScene::enter(App& app, Scene& prev)
 
 void ScriptedMenuScene::repaint_model()
 {
-    PLATFORM.fill_overlay(0);
+    for (int x = 0; x < 30; ++x) {
+        for (int y = 0; y < 20; ++y) {
+            PLATFORM.set_tile(Layer::overlay, x, y, 0);
+        }
+    }
 
     if (auto r = model_.root()) {
         r->foreach_child([&](xml::Node* n) {
@@ -84,7 +88,47 @@ void ScriptedMenuScene::repaint_model()
                     Text::print(n->contents_,
                                 OverlayCoord{x, y});
                 }
-            }});
+            } else if (str_eq(n->tag_, "rect")) {
+                u8 x = n->attr_intvalue("x");
+                u8 y = n->attr_intvalue("y");
+                u8 w = n->attr_intvalue("w");
+                u8 h = n->attr_intvalue("h");
+                u16 t = n->attr_intvalue("t");
+
+                for (int i = x; i < x + w; ++i) {
+                    for (int j = y; j < y + h; ++j) {
+                        PLATFORM.set_tile(Layer::overlay, i, j, t);
+                    }
+                }
+            } else if (str_eq(n->tag_, "md-icon")) {
+                u8 x = n->attr_intvalue("x");
+                u8 y = n->attr_intvalue("y");
+                int icon = n->attr_intvalue("icon");
+                int mem = n->attr_intvalue("mem");
+                draw_image(mem, x, y, 4, 4, Layer::overlay);
+                PLATFORM.load_overlay_chunk(mem, icon, 16);
+            } else if (str_eq(n->tag_, "row")) {
+                u8 x = n->attr_intvalue("x");
+                u8 y = n->attr_intvalue("y");
+                int t = n->attr_intvalue("t");
+                u8 w = n->attr_intvalue("w");
+                u8 p = n->attr_intvalue("p");
+
+                for (int i = x; i < x + w; i += p) {
+                    PLATFORM.set_tile(Layer::overlay, i, y, t);
+                }
+            } else if (str_eq(n->tag_, "col")) {
+                u8 x = n->attr_intvalue("x");
+                u8 y = n->attr_intvalue("y");
+                int t = n->attr_intvalue("t");
+                u8 h = n->attr_intvalue("w");
+                u8 p = n->attr_intvalue("p");
+
+                for (int i = y; i < y + h; i += p) {
+                    PLATFORM.set_tile(Layer::overlay, x, i, t);
+                }
+            }
+        });
     }
 }
 

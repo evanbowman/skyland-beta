@@ -25,7 +25,7 @@
 #include "allocator.hpp"
 #include "graphics/overlay.hpp"
 #include "worldScene.hpp"
-#include "script/lisp.hpp"
+#include "xml.hpp"
 
 
 
@@ -68,7 +68,7 @@ public:
 private:
     StringBuffer<32> menu_name_;
 
-    std::optional<lisp::Protected> model_;
+    xml::Model model_;
 
     bool needs_repaint_ = false;
 

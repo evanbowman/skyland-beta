@@ -2,6 +2,8 @@
 <menu id="test">
   <script src="/scripts/misc/gui/test.lisp"/>
   
+  <rect id="r1" x="1" y="1" w="20" h="16" t="112"/>
+
   <text id="t1" x="3" y="3">
     hello
   </text>
@@ -10,8 +12,7 @@
     world...
   </text>
 
-  <rect id="r1" x="1" y="1" w="16" h="16">
-    
-  </rect>
-  
+  <md-icon id="ic3" x="10" y="6" icon="520" mem="181"/>
+
+  <row id="r1" x="1" y="0" t="424" w="8" p="1"/>
 </menu>

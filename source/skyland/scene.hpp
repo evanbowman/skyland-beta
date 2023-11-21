@@ -31,14 +31,6 @@
 class Platform;
 
 
-
-namespace lisp
-{
-    struct Value;
-}
-
-
-
 namespace skyland
 {
 
@@ -113,7 +105,7 @@ public:
 
 
     virtual void
-    gui_set_attr(const char* id, const char* attr, lisp::Value* v);
+    gui_set_attr(const char* id, const char* attr, const char* value);
 
 
     virtual void gui_set_content(const char* id, const char* content);

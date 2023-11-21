@@ -501,19 +501,10 @@ o----------------------------o
 
 o----------------------------o
 
- (rname type-sym)
+ (room-meta type-sym)
 
- Returns the string name of
- a room. Different than the
- type sym due to localization.
-
-
-o----------------------------o
-
- (rsz type-sym)
-
- Returns the size of a room
- in the form '(x . y).
+ Accessor for metadata
+ describing a type of room.
 
 
 o----------------------------o

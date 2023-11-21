@@ -755,23 +755,32 @@ static const lisp::Binding script_api[] = {
 
          return lisp::make_integer(count);
      }},
-    {"rsz",
+    {"room-meta",
      [](int argc) {
          L_EXPECT_ARGC(argc, 1);
          L_EXPECT_OP(0, symbol);
 
          auto mt = load_metaclass(lisp::get_op(0)->symbol().name());
+
+         lisp::ListBuilder b;
+         b.push_back(L_CONS(L_SYM("name"),
+                            lisp::make_string((*mt)->ui_name()->c_str())));
+
          auto sz = (*mt)->size();
 
-         return L_CONS(L_INT(sz.x), L_INT(sz.y));
-     }},
-    {"rname",
-     [](int argc) {
-         L_EXPECT_ARGC(argc, 1);
-         L_EXPECT_OP(0, symbol);
+         b.push_back(L_CONS(L_SYM("size"),
+                            L_CONS(L_INT(sz.x), L_INT(sz.y))));
 
-         auto mt = load_metaclass(lisp::get_op(0)->symbol().name());
-         return lisp::make_string((*mt)->ui_name()->c_str());
+         b.push_back(L_CONS(L_SYM("ico1"),
+                            L_INT((*mt)->icon())));
+
+         b.push_back(L_CONS(L_SYM("ico2"),
+                            L_INT((*mt)->unsel_icon())));
+
+         b.push_back(L_CONS(L_SYM("pwr"),
+                            L_INT((*mt)->consumes_power())));
+
+         return b.result();
      }},
     {"cart-add",
      [](int argc) {
@@ -1804,6 +1813,16 @@ static const lisp::Binding script_api[] = {
          app->scene().gui_add_node(nullptr,
                                    L_LOAD_STRING(1),
                                    L_LOAD_STRING(0));
+         return L_NIL;
+     }},
+    {"gui-set-content",
+     [](int argc) {
+         L_EXPECT_ARGC(argc, 2);
+         L_EXPECT_OP(0, string);
+         L_EXPECT_OP(1, string);
+         auto app = interp_get_app();
+         app->scene().gui_set_content(L_LOAD_STRING(1),
+                                      L_LOAD_STRING(0));
          return L_NIL;
      }},
     {"gui-delete-node",
