@@ -1,0 +1,11 @@
+
+<menu>
+  <script src="/script/gui/test.lisp"></script>
+  
+  <text id="t1" x="3" y="3">
+  </text>
+  
+  <text id="t2" x="3" y="5">
+  </text>
+  
+</menu>
