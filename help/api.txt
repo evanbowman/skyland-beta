@@ -413,7 +413,8 @@ o----------------------------o
  be passed to push-menu for
  certain menus. See below:
 
- Menu names:
+ Builtin menu names:
+ "ready", no params
  "item-shop", no params
  "glossary", room type symbol
  "repl", no params
@@ -425,9 +426,10 @@ o----------------------------o
  (push-menu "item-shop" '())
 
  etc. See scripts for details.
- NOTE: the item-shop menu
- expects the global shop-items
- variable to be assigned.
+
+ You may also script custom
+ menus. See
+ /scripts/misc/gui/
 
 
 o----------------------------o

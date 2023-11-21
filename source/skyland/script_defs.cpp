@@ -610,7 +610,9 @@ static const lisp::Binding script_api[] = {
 
          using scene_pool::make_deferred_scene;
 
-         if (str_eq(menu_name, "item-shop")) {
+         if (str_eq(menu_name, "ready")) {
+             push_menu_queue.push_back(make_deferred_scene<ReadyScene>());
+         } else if (str_eq(menu_name, "item-shop")) {
              push_menu_queue.push_back(make_deferred_scene<ItemShopScene>());
          } else if (str_eq(menu_name, "glossary")) {
              auto sym = param_list->cons().car()->symbol().name();
@@ -1792,6 +1794,22 @@ static const lisp::Binding script_api[] = {
 
          return L_CONS(L_INT(app->zone() - 1),
                        L_CONS(L_INT(node.coord_.x), L_INT(node.coord_.y)));
+     }},
+    {"gui-add-node",
+     [](int argc) {
+         return L_NIL;
+     }},
+    {"gui-delete-node",
+     [](int argc) {
+         return L_NIL;
+     }},
+    {"gui-set-attr",
+     [](int argc) {
+         return L_NIL;
+     }},
+    {"gui-set-content",
+     [](int argc) {
+         return L_NIL;
      }},
     {"construction-sites",
      [](int argc) {

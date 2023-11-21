@@ -148,6 +148,7 @@ struct Context {
     int string_intern_pos_ = 0;
     int eval_depth_ = 0;
     int interp_entry_count_ = 0;
+    int alloc_highwater_ = 0;
 
     struct GensymState {
         u8 char_1_ : 6;
@@ -1657,6 +1658,7 @@ static int gc_sweep()
     }
 
     int collect_count = 0;
+    int used_count = 0;
 
     for (int i = 0; i < VALUE_POOL_SIZE; ++i) {
 
@@ -1665,12 +1667,18 @@ static int gc_sweep()
         if (val->hdr_.alive_) {
             if (val->hdr_.mark_bit_) {
                 val->hdr_.mark_bit_ = false;
+                ++used_count;
             } else {
                 invoke_finalizer(val);
                 value_pool_free(val);
                 ++collect_count;
             }
         }
+    }
+
+    if (used_count > bound_context->alloc_highwater_) {
+        bound_context->alloc_highwater_ = used_count;
+        info(::format("LISP mem %", used_count));
     }
 
     return collect_count;

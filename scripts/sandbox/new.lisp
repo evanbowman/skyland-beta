@@ -86,4 +86,4 @@
 (unbind 'conf 'mkch)
 
 
-(push-menu "test" '())
+(push-menu "test" nil)
