@@ -31,6 +31,14 @@
 class Platform;
 
 
+
+namespace lisp
+{
+    struct Value;
+}
+
+
+
 namespace skyland
 {
 
@@ -64,58 +72,51 @@ public:
     virtual ~Scene(){};
 
 
-    virtual ScenePtr<Scene> update(App&, Microseconds delta)
-    {
-        return null_scene();
-    }
+    virtual ScenePtr<Scene> update(App&, Microseconds delta);
 
 
-    virtual void display(App&)
-    {
-    }
+    virtual void display(App&);
 
 
-    virtual void enter(App&, Scene& prev_scene){};
+    virtual void enter(App&, Scene& prev_scene);
 
 
-    virtual void exit(App&, Scene& next_scene){};
+    virtual void exit(App&, Scene& next_scene);
 
 
     // Yeah, I should be using a visitor.
-    virtual WorldScene* cast_world_scene()
-    {
-        return nullptr;
-    }
+    virtual WorldScene* cast_world_scene();
 
 
-    virtual macro::MacrocosmScene* cast_macrocosm_scene()
-    {
-        return nullptr;
-    }
+    virtual macro::MacrocosmScene* cast_macrocosm_scene();
 
 
-    virtual ConstructionScene* cast_construction_scene()
-    {
-        return nullptr;
-    }
+    virtual ConstructionScene* cast_construction_scene();
 
 
-    virtual BoxedDialogSceneWS* cast_boxed_dialog_scene_ws()
-    {
-        return nullptr;
-    }
+    virtual BoxedDialogSceneWS* cast_boxed_dialog_scene_ws();
 
 
-    virtual MultiplayerCoOpAwaitLockScene* cast_co_op_await_lock_scene()
-    {
-        return nullptr;
-    }
+    virtual MultiplayerCoOpAwaitLockScene* cast_co_op_await_lock_scene();
 
 
-    virtual MultiplayerCoOpAwaitChrLockScene* cast_co_op_await_chr_lock_scene()
-    {
-        return nullptr;
-    }
+    virtual MultiplayerCoOpAwaitChrLockScene* cast_co_op_await_chr_lock_scene();
+
+
+    // NOTE: gui nodes: one scene subclass in particular supports scripting menu
+    // logic with an xml-styled DOM.
+    virtual void
+    gui_add_node(const char* parent_id, const char* id, const char* type);
+
+
+    virtual void gui_delete_node(const char* id);
+
+
+    virtual void
+    gui_set_attr(const char* id, const char* attr, lisp::Value* v);
+
+
+    virtual void gui_set_content(const char* id, const char* content);
 };
 
 
