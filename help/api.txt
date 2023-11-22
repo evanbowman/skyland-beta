@@ -626,7 +626,7 @@ o----------------------------o
 
 o----------------------------o
 
- (gui-delete-node)
+ (gui-delete-node id)
 
  Delete a gui node.
 
