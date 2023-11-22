@@ -608,6 +608,29 @@ o----------------------------o
  to group specified by symbol
  group.
 
+
+o----------------------------o
+
+ (gui-add-node id type)
+
+ Add a node to the gui tree.
+
+
+o----------------------------o
+
+ (gui-set-attr id name value)
+
+ Assign an attribute in a
+ gui element.
+
+
+o----------------------------o
+
+ (gui-delete-node)
+
+ Delete a gui node.
+
+
 o----------------------------o
 
  (syscall string ...)

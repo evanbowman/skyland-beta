@@ -630,10 +630,10 @@ static const lisp::Binding script_api[] = {
              push_menu_queue.push_back(
                  make_deferred_scene<ConstructionScene>());
          } else if (str_eq(menu_name, "qrcode")) {
-             lisp::Protected str_param(param_list->cons().car());
-             push_menu_queue.push_back([str_param]() mutable {
+             auto tmp = save_str(param_list->cons().car()->string().value());
+             push_menu_queue.emplace_back([tmp]() mutable {
                  auto next = scene_pool::alloc<QRViewerScene>(
-                     str_param->string().value(),
+                     tmp->data_,
                      "",
                      make_deferred_scene<ReadyScene>(),
                      ColorConstant::rich_black);
@@ -641,10 +641,12 @@ static const lisp::Binding script_api[] = {
                  return next;
              });
          } else {
-             lisp::Protected mname(lisp::get_op(1));
-             push_menu_queue.push_back([mname]() mutable {
-                 auto menu_name = mname->string().value();
-                 return scene_pool::alloc<ScriptedMenuScene>(menu_name);
+             auto tmp = save_str(lisp::get_op(1)->string().value());
+             // NOTE: because lisp::Protected is not copyable, there is no way
+             // to hide a pure lisp string from the garbage collector when
+             // passed through a lambda capture clause.
+             push_menu_queue.push_back([tmp]() {
+                 return scene_pool::alloc<ScriptedMenuScene>(tmp->data_);
              });
          }
          return L_NIL;
@@ -1815,16 +1817,6 @@ static const lisp::Binding script_api[] = {
                                    L_LOAD_STRING(0));
          return L_NIL;
      }},
-    {"gui-set-content",
-     [](int argc) {
-         L_EXPECT_ARGC(argc, 2);
-         L_EXPECT_OP(0, string);
-         L_EXPECT_OP(1, string);
-         auto app = interp_get_app();
-         app->scene().gui_set_content(L_LOAD_STRING(1),
-                                      L_LOAD_STRING(0));
-         return L_NIL;
-     }},
     {"gui-delete-node",
      [](int argc) {
          L_EXPECT_ARGC(argc, 1);
@@ -1836,13 +1828,12 @@ static const lisp::Binding script_api[] = {
     {"gui-set-attr",
      [](int argc) {
          L_EXPECT_ARGC(argc, 3);
-         L_EXPECT_OP(0, string);
          L_EXPECT_OP(1, string);
          L_EXPECT_OP(2, string);
          auto app = interp_get_app();
          app->scene().gui_set_attr(L_LOAD_STRING(2),
                                    L_LOAD_STRING(1),
-                                   L_LOAD_STRING(0));
+                                   lisp::get_op0());
          return L_NIL;
      }},
     {"construction-sites",

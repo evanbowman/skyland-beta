@@ -25,6 +25,7 @@
 #include "function.hpp"
 #include "memory/uniquePtr.hpp"
 #include "number/numeric.hpp"
+#include "script/lisp.hpp"
 
 
 
@@ -105,10 +106,7 @@ public:
 
 
     virtual void
-    gui_set_attr(const char* id, const char* attr, const char* value);
-
-
-    virtual void gui_set_content(const char* id, const char* content);
+    gui_set_attr(const char* id, const char* attr, lisp::Value* val);
 };
 
 
@@ -119,4 +117,4 @@ using DeferredScene = Function<sizeof(void*) * 4, ScenePtr<Scene>()>;
 
 
 
-} // namespace skyland
+} // namespace skylan

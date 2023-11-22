@@ -90,7 +90,6 @@ set(SOURCES
   ${SOURCE_DIR}/base32.cpp
   ${SOURCE_DIR}/string.cpp
   ${SOURCE_DIR}/start.cpp
-  ${SOURCE_DIR}/xml.cpp
   ${SOURCE_DIR}/rle.cpp
   ${SOURCE_DIR}/qr.cpp)
 

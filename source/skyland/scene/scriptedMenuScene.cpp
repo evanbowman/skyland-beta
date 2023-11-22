@@ -24,6 +24,7 @@
 #include "scriptHookScene.hpp"
 #include "skyland/script_defs.hpp"
 #include "skyland/skyland.hpp"
+#include "script/listBuilder.hpp"
 
 
 
@@ -39,6 +40,86 @@ ScriptedMenuScene::ScriptedMenuScene(const char* script_name)
 
 
 
+static void set_attr(lisp::Value* lat, const char* key, lisp::Value* v)
+{
+    bool found = false;
+
+    lisp::foreach(lat->cons().cdr(),
+                  [&](lisp::Value* val) {
+                      if (str_eq(val->cons().car()->symbol().name(), key)) {
+                          val->cons().set_cdr(v);
+                          found = true;
+                      }
+                  });
+
+    if (not found) {
+        auto new_mapping = L_CONS(L_SYM(key), v);
+        lat->cons().set_cdr(L_CONS(new_mapping, lat->cons().cdr()));
+    }
+
+}
+
+
+
+static lisp::Value* get_attr(lisp::Value* lat, const char* key)
+{
+    lisp::Value* ret = nullptr;
+
+    lisp::foreach(lat->cons().cdr(),
+                  [&](lisp::Value* val) {
+                      if (ret) {
+                          return;
+                      }
+                      if (str_eq(val->cons().car()->symbol().name(), key)) {
+                          ret = val->cons().cdr();
+                      }
+                  });
+
+    if (not ret) {
+        Platform::fatal(format("missing attr %", key));
+    }
+    return ret;
+}
+
+
+
+static int get_int_attr(lisp::Value* lat, const char* key)
+{
+    return get_attr(lat, key)->integer().value_;
+}
+
+
+
+static const char* get_str_attr(lisp::Value* lat, const char* key)
+{
+    return get_attr(lat, key)->string().value();
+}
+
+
+
+static lisp::Value* get_elem_by_id(lisp::Value* root, const char* id)
+{
+    lisp::Value* elem = nullptr;
+    foreach(root,
+            [&](lisp::Value* v) {
+                if (elem) {
+                    return;
+                }
+                if (str_eq(get_str_attr(v, "id"), id)) {
+                    elem = v;
+                    return;
+                }
+            });
+
+    if (not elem) {
+        Platform::fatal(format("id lookup failed for %", id));
+    }
+
+    return elem;
+}
+
+
+
 void ScriptedMenuScene::enter(App& app, Scene& prev)
 {
     ActiveWorldScene::enter(app, prev);
@@ -46,21 +127,23 @@ void ScriptedMenuScene::enter(App& app, Scene& prev)
     StringBuffer<96> path;
     path = "/scripts/misc/gui/";
     path += menu_name_;
-    path += ".xml";
+    path += ".menu.lisp";
 
     Vector<char> file;
     if (app.load_file(path.c_str(), file)) {
-        model_.parse(file);
+        lisp::VectorCharSequence seq(file);
+        lisp::read(seq);
+        model_ = lisp::get_op0();
+        lisp::pop_op();
 
-        if (auto r = model_.root()) {
-            r->foreach_child([&](xml::Node* n) {
-                if (str_eq(n->tag_, "script")) {
-                    if (auto attr = n->lookup_attr("src")) {
-                        app.invoke_script(attr->value_);
-                    }
-                }
-            });
-        }
+        lisp::foreach(*model_,
+                      [&](lisp::Value* v) {
+                          auto front = v->cons().car()->symbol().name();
+                          if (str_eq(front, "code")) {
+                              auto src = get_str_attr(v, "src");
+                              app.invoke_script(src);
+                          }
+                      });
     }
 
     repaint_model();
@@ -76,59 +159,56 @@ void ScriptedMenuScene::repaint_model()
         }
     }
 
-    if (auto r = model_.root()) {
-        r->foreach_child([&](xml::Node* n) {
-            if (n->dead_) {
-                return;
-            }
-            if (str_eq(n->tag_, "text")) {
-                u8 x = n->attr_intvalue("x");
-                u8 y = n->attr_intvalue("y");
-                if (n->contents_) {
-                    Text::print(n->contents_,
-                                OverlayCoord{x, y});
-                }
-            } else if (str_eq(n->tag_, "rect")) {
-                u8 x = n->attr_intvalue("x");
-                u8 y = n->attr_intvalue("y");
-                u8 w = n->attr_intvalue("w");
-                u8 h = n->attr_intvalue("h");
-                u16 t = n->attr_intvalue("t");
+    if (model_) {
+        using lisp::foreach;
+        foreach(*model_,
+                [&](lisp::Value* v) {
+                    auto front = v->cons().car()->symbol().name();
+                    if (str_eq(front, "text")) {
+                        u8 x = get_int_attr(v, "x");
+                        u8 y = get_int_attr(v, "y");
+                        auto str = get_str_attr(v, "val");
+                        Text::print(str, {x, y});
+                    } else if (str_eq(front, "rect")) {
+                        u8 x = get_int_attr(v, "x");
+                        u8 y = get_int_attr(v, "y");
+                        u8 w = get_int_attr(v, "w");
+                        u8 h = get_int_attr(v, "h");
+                        u8 t = get_int_attr(v, "tile");
+                        for (int i = x; i < x + w; ++i) {
+                            for (int j = y; j < y + h; ++j) {
+                                PLATFORM.set_tile(Layer::overlay, i, j, t);
+                            }
+                        }
+                    } else if (str_eq(front, "md-icon")) {
+                        u8 x = get_int_attr(v, "x");
+                        u8 y = get_int_attr(v, "y");
+                        int icon = get_int_attr(v, "icon");
+                        int mem = get_int_attr(v, "mem");
+                        draw_image(mem, x, y, 4, 4, Layer::overlay);
+                        PLATFORM.load_overlay_chunk(mem, icon, 16);
+                    } else if (str_eq(front, "row")) {
+                        u8 x = get_int_attr(v, "x");
+                        u8 y = get_int_attr(v, "y");
+                        int t = get_int_attr(v, "t");
+                        u8 w = get_int_attr(v, "w");
+                        u8 p = get_int_attr(v, "p");
 
-                for (int i = x; i < x + w; ++i) {
-                    for (int j = y; j < y + h; ++j) {
-                        PLATFORM.set_tile(Layer::overlay, i, j, t);
+                        for (int i = x; i < x + w; i += p) {
+                            PLATFORM.set_tile(Layer::overlay, i, y, t);
+                        }
+                    } else if (str_eq(front, "col")) {
+                        u8 x = get_int_attr(v, "x");
+                        u8 y = get_int_attr(v, "y");
+                        int t = get_int_attr(v, "t");
+                        u8 h = get_int_attr(v, "w");
+                        u8 p = get_int_attr(v, "p");
+
+                        for (int i = y; i < y + h; i += p) {
+                            PLATFORM.set_tile(Layer::overlay, x, i, t);
+                        }
                     }
-                }
-            } else if (str_eq(n->tag_, "md-icon")) {
-                u8 x = n->attr_intvalue("x");
-                u8 y = n->attr_intvalue("y");
-                int icon = n->attr_intvalue("icon");
-                int mem = n->attr_intvalue("mem");
-                draw_image(mem, x, y, 4, 4, Layer::overlay);
-                PLATFORM.load_overlay_chunk(mem, icon, 16);
-            } else if (str_eq(n->tag_, "row")) {
-                u8 x = n->attr_intvalue("x");
-                u8 y = n->attr_intvalue("y");
-                int t = n->attr_intvalue("t");
-                u8 w = n->attr_intvalue("w");
-                u8 p = n->attr_intvalue("p");
-
-                for (int i = x; i < x + w; i += p) {
-                    PLATFORM.set_tile(Layer::overlay, i, y, t);
-                }
-            } else if (str_eq(n->tag_, "col")) {
-                u8 x = n->attr_intvalue("x");
-                u8 y = n->attr_intvalue("y");
-                int t = n->attr_intvalue("t");
-                u8 h = n->attr_intvalue("w");
-                u8 p = n->attr_intvalue("p");
-
-                for (int i = y; i < y + h; i += p) {
-                    PLATFORM.set_tile(Layer::overlay, x, i, t);
-                }
-            }
-        });
+                });
     }
 }
 
@@ -202,18 +282,15 @@ void ScriptedMenuScene::gui_add_node(const char* parent_id,
                                      const char* id,
                                      const char* type)
 {
-    xml::Node* n = model_.root();
-    if (parent_id) {
-        n = xml::find_by_attr(model_.root(), "id", parent_id);
-    }
-
-    if (not n) {
+    if (not model_) {
         return;
     }
 
-    if (auto c = model_.add_child(n, type)) {
-        model_.set_attribute(c, "id", id);
-    }
+    lisp::Protected attr = L_CONS(L_SYM("id"), lisp::make_string(id));
+    lisp::ListBuilder elem;
+    elem.push_back(L_SYM(type));
+    elem.push_back(attr);
+    model_ = L_CONS(elem.result(), *model_);
 
     needs_repaint_ = true;
 }
@@ -222,34 +299,23 @@ void ScriptedMenuScene::gui_add_node(const char* parent_id,
 
 void ScriptedMenuScene::gui_delete_node(const char* id)
 {
-    if (auto n = xml::find_by_attr(model_.root(), "id", id)) {
-        n->dead_ = true;
-        needs_repaint_ = true;
-    }
+    // if (auto n = xml::find_by_attr(model_.root(), "id", id)) {
+    //     n->dead_ = true;
+    //     needs_repaint_ = true;
+    // }
 }
 
 
 
 void ScriptedMenuScene::gui_set_attr(const char* id,
                                      const char* attr,
-                                     const char* value)
+                                     lisp::Value* v)
 {
-    if (auto n = xml::find_by_attr(model_.root(), "id", id)) {
-        model_.set_attribute(n, attr, value);
-        needs_repaint_ = true;
-    } else {
-        Platform::fatal(format("missing id %", id));
+    if (not model_) {
+        return;
     }
-}
-
-
-
-void ScriptedMenuScene::gui_set_content(const char* id, const char* content)
-{
-    if (auto n = xml::find_by_attr(model_.root(), "id", id)) {
-        model_.set_contents(n, content);
-        needs_repaint_ = true;
-    }
+    set_attr(get_elem_by_id(*model_, id), attr, v);
+    needs_repaint_ = true;
 }
 
 

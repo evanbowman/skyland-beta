@@ -25,7 +25,6 @@
 #include "allocator.hpp"
 #include "graphics/overlay.hpp"
 #include "worldScene.hpp"
-#include "xml.hpp"
 
 
 
@@ -59,16 +58,13 @@ public:
 
 
     void
-    gui_set_attr(const char* id, const char* attr, const char* value) override;
-
-
-    void gui_set_content(const char* id, const char* content) override;
+    gui_set_attr(const char* id, const char* attr, lisp::Value* v) override;
 
 
 private:
     StringBuffer<32> menu_name_;
 
-    xml::Model model_;
+    std::optional<lisp::Protected> model_;
 
     bool needs_repaint_ = false;
 
