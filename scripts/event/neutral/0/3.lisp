@@ -3,7 +3,7 @@
 ;;;
 
 
-(dialog "Some merchants broadcast an advertisement for advanced technology! Let's see if they have anything useful!")
+(load-dialog "zone1" "mc_intro")
 
 
 (opponent-init 5 'neutral)
@@ -37,12 +37,10 @@
 
   (setq on-converge
         (lambda
-          (dialog "<c:merchant:7> We ordered too many "
-                  (rinfo 'name item)
-                  "s and we're having a big sale today! Much cheaper than if you built them yourself. 1300@ for two, "
+          (dialog (format (get-dialog "zone1" "mc_offer1") (rinfo 'name item))
                   (if (< (coins) 1300)
-                      "...but you don't seem to have enough. Do you want to salvage some stuff to come up with the funds? I'll check back in 15 seconds?"
-                    "what do you say?"))
+                      (get-dialog "zone1" "mc_retry1")
+                    (get-dialog "zone1" "mc_offer_end")))
           (dialog-await-y/n)
           (setq on-converge nil)))
 
@@ -59,7 +57,7 @@
                   (defn fut
                     (if (> (coins) 1299)
                         (progn
-                          (dialog "<c:merchant:7> Seems like you have enough now!")
+                          (load-dialog "zone1" "mc_retry_done")
                           (setq on-dialog-closed f))
                       (f))))
 
@@ -68,7 +66,7 @@
                       (setq skip 0)
                       (on-timeout 15000 'fut))
                   (progn
-                    (dialog "<c:merchant:7> Sorry, that's not enough money! Do you want to salvage some stuff to come up with the funds? I'll check back in in 15 seconds?")
+                    (load-dialog "zone1" "mc_retry2")
                     (dialog-await-y/n)
                     (setq on-dialog-accepted (lambda (on-timeout 15000 'fut)))
                     (setq on-dialog-declined (lambda (unbind 'fut) (exit))))))
@@ -78,21 +76,21 @@
               (alloc-space item)
               (sel-input
                item
-               (string
-                "place first "
-                (rinfo 'name item)
-                (format " (%x%):" (car (rinfo 'size item)) (cdr (rinfo 'size item))))
+               (format (get-dialog "zone1" "mc_place1")
+                       (symbol (rinfo 'name item))
+                       (car (rinfo 'size item)) (cdr (rinfo 'size item)))
                (lambda
                  (room-new (player) (list item $1 $2))
                  (sound "build0")
                  (alloc-space item)
                  (sel-input
                   item
-                  (string "place second " (rinfo 'name item) ":")
+                  (format (get-dialog "zone1" "mc_place2")
+                          (symbol (rinfo 'name item)))
                   (lambda
                     (room-new (player) (list item $1 $2))
                     (sound "build0")
-                    (dialog "<c:merchant:7> Looks great! You made a fine choice!")
+                    (load-dialog "zone1" "mc_done")
                     (setq on-dialog-closed exit))))))))))
 
 (gc) ;; just in case, no harm in running it.
