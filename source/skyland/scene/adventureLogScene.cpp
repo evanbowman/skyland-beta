@@ -164,7 +164,10 @@ StringBuffer<128> AdventureLogScene::format_logentry(int entry)
     if (auto v = load_logentry(entry)) {
 
         auto line = lisp::get_list(v, 0)->integer().value_;
-        auto str = get_line_from_file("/strings/adventure_log.txt", line);
+        auto path = format("/strings/adventure_log/%",
+                           systemstring_bound_file()).c_str();
+
+        auto str = get_line_from_file(path, line);
 
         Buffer<StringBuffer<20>, 8> args;
         lisp::foreach (v->cons().cdr(), [&](lisp::Value* val) {

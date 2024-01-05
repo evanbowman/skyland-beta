@@ -100,15 +100,15 @@
            varg)))
 
 ;; Higher level dialog API (for future localization purposes)
-(defn/c get-dialog [2] ; (ini-sector ini-key)
+(defn/c get-dialog [1] ; (ini-key)
   (let ((l (car (split (lang) "."))))
     (read-ini (string "/strings/dialog/" l ".ini")
-              $0
-              $1)))
+              (string "zone" (zone))
+              $0)))
 
-(defn/c load-dialog [2] ; (ini-sector ini-key substitution-args...)
-  (let ((str (get-dialog $0 $1))
+(defn/c load-dialog [1] ; (ini-sector ini-key substitution-args...)
+  (let ((str (get-dialog $0))
         (va $V))
-    (if (> (length va) 2)
+    (if (> (length va) 1)
         (setq str (apply format (cons str (cddr va)))))
     (dialog str)))

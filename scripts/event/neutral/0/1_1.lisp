@@ -5,7 +5,7 @@
 
 (dialog
  "<b:/scripts/misc/img/toll_station.img.bin> "
- "An ancient imperial missile platform contacts you and demands payment...")
+ (get-dialog "ts-intro"))
 
 
 (opponent-init 5 'neutral)
@@ -42,10 +42,7 @@
 
 
 (defn on-converge [0]
-  (dialog
-   "While the old empire is now fragmented and most of its weapons systems are offline, "
-   "this automated vessel seems to still be functioning. <B:0>"
-   "The station's computers demand a toll of 600@. Pay?")
+  (load-dialog "ts-greet")
   (dialog-opts-reset)
   (dialog-await-y/n)
   (setq on-converge nil))
@@ -60,15 +57,15 @@
           (if (< (coins) 600)
               (progn
                 (adventure-log-add 59 '())
-                (scr "Insufficient funds! The station begins charging its weapons!"))
+                (scr (get-dialog "ts-low-funds")))
             (progn
               (adventure-log-add 60 (list 600))
               (coins-add -600)
-              (dialog "The station deactivates and allows you to pass.")
+              (load-dialog "ts-paid")
               (exit)))))
 
 
   (setq on-dialog-declined
         (lambda
           (adventure-log-add 61 '())
-          (scr "The station begins charging its weapons!"))))
+          (scr (get-dialog "ts-charge-weapon")))))
