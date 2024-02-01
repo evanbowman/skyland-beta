@@ -405,6 +405,7 @@ if(NINTENDO_DS OR GAMEBOY_ADVANCE)
     ${DATA_DIR}/flags.s
     ${DATA_DIR}/character_art.s
     ${DATA_DIR}/boot_img_flattened.s
+    ${DATA_DIR}/button_hint_flattened.s
     ${DATA_DIR}/savegame_flattened.s
     ${DATA_DIR}/ending_img_flattened.s
     ${DATA_DIR}/macro_rendertexture.s
@@ -764,6 +765,7 @@ if(GAMEBOY_ADVANCE OR NINTENDO_DS)
     add_tilesheet(skyland_title_2 0 0 YES YES)
     add_tilesheet(skyland_title_1 0 0 YES YES)
     add_tilesheet(skyland_title_0 0 0 YES YES)
+    add_tilesheet(button_hint 0 0 YES YES)
     add_tilesheet(boot_img 0 0 YES YES)
     add_tilesheet(savegame 0 0 YES YES)
     add_tilesheet(ending_img 0 0 YES YES)

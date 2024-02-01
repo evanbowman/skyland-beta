@@ -37,6 +37,7 @@
 #include "fadeInScene.hpp"
 #include "modules/datetimeModule.hpp"
 #include "modules/macrocosmFreebuildModule.hpp"
+#include "platform/conf.hpp"
 #include "platform/flash_filesystem.hpp"
 #include "script/lisp.hpp"
 #include "skyland/latency.hpp"
@@ -226,7 +227,6 @@ public:
         PLATFORM.system_call("vsync", 0);
         PLATFORM.enable_glyph_mode(true);
         PLATFORM.load_overlay_texture("overlay");
-        PLATFORM.load_tile1_texture("boot_img_flattened");
 
         auto fc = FontColors{amber_color, back_color};
 
@@ -239,8 +239,10 @@ public:
             }
         }
 
-
         __draw_image(1, 0, 0, 30, 12, Layer::map_1);
+        PLATFORM.load_tile1_texture("boot_img_flattened");
+
+
 
         PLATFORM.screen().schedule_fade(0.f);
 
@@ -385,47 +387,71 @@ public:
 
         info(format("boot took %", t2 - t1));
 
+        Conf conf;
+#define CONF_STR(NAME) (*conf.expect<Conf::String>("startup", #NAME))
+
+        const bool show_button_hint = CONF_STR(show_button_hint) == "yes";
+
         PLATFORM.fill_overlay(0);
-        PLATFORM.screen().schedule_fade(1.f);
+        if (show_button_hint) {
+            PLATFORM.system_call("vsync", 0);
+            for (int y = 0; y < 20; ++y) {
+                for (int x = 0; x < 30; ++x) {
+                    PLATFORM.set_raw_tile(Layer::map_1, x, y, 0);
+                }
+            }
+            PLATFORM.screen().schedule_fade(1.f, back_color, true, true, true, true);
+        } else {
+            PLATFORM.screen().schedule_fade(1.f);
+        }
+
         PLATFORM.screen().clear();
         PLATFORM.screen().display();
         PLATFORM.sleep(10);
 
-        // Special case: if we're connected to a networked multiplayer peer upon
-        // boot, then we've started a multiboot game, and should progress
-        // immediately to a co op match after starting up.
-        if (PLATFORM.network_peer().is_connected()) {
-            state_bit_store(StateBit::multiboot, true);
-            globals().room_pools_.create("room-mem");
-            globals().entity_pools_.create("entity-mem");
-            APP.time_stream().enable_pushes(false);
-            APP.invoke_script("/scripts/config/rooms.lisp");
-            APP.invoke_script("/scripts/config/damage.lisp");
-            APP.invoke_script("/scripts/config/timing.lisp");
-            init_clouds();
-            PLATFORM.load_tile0_texture(
-                APP.environment().player_island_texture());
-            PLATFORM.load_tile1_texture(
-                APP.environment().opponent_island_texture());
-            PLATFORM.load_sprite_texture(APP.environment().sprite_texture());
-            PLATFORM.load_background_texture(
-                APP.environment().background_texture());
-            PLATFORM.system_call("v-parallax", (void*)true);
-            SkylandForever::init(1, rng::get(rng::critical_state));
-            APP.persistent_data().score_.set(0);
-            APP.set_coins(std::max(0, APP.coins() - 1000));
-            APP.swap_player<CoOpTeam>();
-            APP.game_mode() = App::GameMode::co_op;
+        auto fc = FontColors{amber_color, back_color};
 
-            for (auto& room : APP.player_island().rooms()) {
-                network::packet::RoomConstructed packet;
-                packet.metaclass_index_.set(room->metaclass_index());
-                packet.x_ = room->position().x;
-                packet.y_ = room->position().y;
-                network::transmit(packet);
+        if (show_button_hint) {
+            PLATFORM.load_tile1_texture("button_hint_flattened");
+
+            PLATFORM.screen().schedule_fade(0.f, back_color, true, false, true, false);
+            PLATFORM.screen().schedule_fade(1.f, back_color, true, false, true, false);
+            __draw_image(1, 0, 3, 30, 12, Layer::map_1);
+
+            Text::print(CONF_STR(default_btns).c_str(), {6, 1}, fc);
+            Text::print(CONF_STR(next).c_str(), {6, 18}, fc);
+            Text::print(CONF_STR(btn_A).c_str(), {23, 8}, fc);
+            Text::print(CONF_STR(btn_B).c_str(), {23, 10}, fc);
+            Text::print(CONF_STR(btn_L).c_str(), {5, 4}, fc);
+            Text::print(CONF_STR(btn_R).c_str(), {23, 4}, fc);
+            Text::print(CONF_STR(btn_SEL).c_str(), {9, 14}, fc);
+            Text::print(CONF_STR(btn_START).c_str(), {0, 11}, fc);
+            Text::print(CONF_STR(btn_DPAD).c_str(), {0, 9}, fc);
+
+            while (1) {
+                PLATFORM.keyboard().poll();
+                PLATFORM.system_call("feed-watchdog", nullptr);
+
+                if (PLATFORM.keyboard().down_transition<
+                    Key::action_1,
+                    Key::action_2,
+                    Key::up,
+                    Key::down,
+                    Key::left,
+                    Key::right,
+                    Key::start,
+                    Key::select,
+                    Key::alt_1,
+                    Key::alt_2>()) {
+                    break;
+                }
+
+                PLATFORM.screen().clear();
+                PLATFORM.screen().display();
             }
 
-            return scene_pool::alloc<FadeInScene>();
+            PLATFORM.fill_overlay(0);
+            PLATFORM.screen().schedule_fade(1.f);
         }
 
         if (not flash_filesystem::file_exists(lang_file) or clean_boot_) {
