@@ -46,7 +46,7 @@ include_directories(${SOURCE_DIR})
 include_directories(${ROOT_DIR}/external/)
 
 
-if(APPLE)
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   set(EMACS_FLYCHECK_FRONTEND clang)
 else()
   set(EMACS_FLYCHECK_FRONTEND gcc)
@@ -514,8 +514,11 @@ elseif(GAMEBOY_ADVANCE)
 
   set(SOURCES
     ${SOURCES}
-    ${SOURCE_DIR}/platform/gba/mixer.cpp
     ${SOURCE_DIR}/platform/gba/gba_platform.cpp
+    ${SOURCE_DIR}/platform/gba/gba_platform_audio.cpp
+    ${SOURCE_DIR}/platform/gba/gba_platform_network.cpp
+    ${SOURCE_DIR}/platform/gba/gba_platform_console.cpp
+    ${SOURCE_DIR}/platform/gba/gba_platform_deltaclock.cpp
     ${SOURCE_DIR}/platform/gba/skyland_mgba.cpp
     ${SOURCE_DIR}/platform/gba/gbp_logo.cpp
     ${SOURCE_DIR}/platform/gba/memcpy.s

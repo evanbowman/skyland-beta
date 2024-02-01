@@ -1,33 +1,26 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Copyright (C) 2023  Evan Bowman. Some rights reserved.
+// MIT License
 //
-// This program is source-available; the source code is provided for educational
-// purposes. All copies of the software must be distributed along with this
-// license document.
+// Copyright (c) 2020-2024 Evan Bowman
 //
-// 1. DEFINITION OF SOFTWARE: The term "Software" refers to SKYLAND,
-// including any updates, modifications, or associated documentation provided by
-// Licensor.
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
 //
-// 2. DERIVATIVE WORKS: Licensee is permitted to modify the source code.
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
 //
-// 3. COMMERCIAL USE: Commercial use is not allowed.
-//
-// 4. ATTRIBUTION: Licensee is required to provide attribution to Licensor.
-//
-// 5. INTELLECTUAL PROPERTY RIGHTS: All intellectual property rights in the
-// Software shall remain the property of Licensor. The Licensee does not acquire
-// any rights to the Software except for the limited use rights specified in
-// this Agreement.
-//
-// 6. WARRANTY AND LIABILITY: The Software is provided "as is" without warranty
-// of any kind. Licensor shall not be liable for any damages arising out of or
-// related to the use or inability to use the Software.
-//
-// 7. TERMINATION: This Agreement shall terminate automatically if Licensee
-// breaches any of its terms and conditions. Upon termination, Licensee must
-// cease all use of the Software and destroy all copies.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -44,11 +37,20 @@
 
 
 #include "gba.h"
-#include "mixer.hpp"
+#include "number/numeric.hpp"
+#include "memory/buffer.hpp"
+#include "gba_platform_audio.hpp"
 
 
 s16 parallax_table[280];
 s16 vertical_parallax_table[280];
+
+
+extern "C" {
+__attribute__((section(".iwram"), long_call)) void
+memcpy32(void* dst, const void* src, unsigned wcount);
+void memcpy16(void* dst, const void* src, unsigned hwcount);
+}
 
 
 
@@ -178,6 +180,36 @@ static constexpr int vram_tile_size()
 }
 
 
+// Note: I know the blit function below looks bad, but the output is already
+// branchless and it's not really that terrible. This blits 8 pixels:
+//
+// blit:
+//         ands    r3, r1, #-268435456
+//         andeq   r3, r0, #-268435456
+//         ands    r2, r1, #251658240
+//         andeq   r2, r0, #251658240
+//         orr     r3, r2, r3
+//         ands    r2, r1, #15728640
+//         andeq   r2, r0, #15728640
+//         orr     r3, r2, r3
+//         ands    r2, r1, #983040
+//         andeq   r2, r0, #983040
+//         orr     r3, r2, r3
+//         ands    r2, r1, #61440
+//         andeq   r2, r0, #61440
+//         orr     r3, r2, r3
+//         ands    r2, r1, #3840
+//         andeq   r2, r0, #3840
+//         orr     r3, r2, r3
+//         ands    r2, r1, #240
+//         andeq   r2, r0, #240
+//         orr     r3, r2, r3
+//         ands    r1, r1, #15
+//         orrne   r0, r1, r3
+//         andeq   r0, r0, #15
+//         orreq   r0, r0, r3
+//         bx      lr
+
 
 // Accepts two vectors of four colors (indexed 4bpp).
 static inline u32 blit(u32 current_color, u32 add_color)
@@ -238,7 +270,7 @@ static inline u32 blit(u32 current_color, u32 add_color)
 
 
 IWRAM_CODE
-void blit_tile(u16* out, u16* in)
+void blit_tile(u16* __restrict__ out, u16* __restrict__ in)
 {
     auto out32 = (u32*)out;
     auto in32 = (u32*)in;

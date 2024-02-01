@@ -28,54 +28,60 @@
 #pragma once
 
 
-#include "function.hpp"
-#include "number/endian.hpp"
-#include "number/int.h"
+#include "memory/buffer.hpp"
 
 
 
-namespace filesystem
+struct SoundMixerCallback
 {
-
-
-
-struct Root
-{
-    char magic_[4];
-    host_u32 file_count_;
+    void (*isr_)();
+    int output_words_per_callback_;
 };
 
 
 
-struct FileHeader
+void audio_start();
+
+
+
+void audio_update_swap(const SoundMixerCallback& cb);
+
+
+
+extern const SoundMixerCallback audio_update_fast_cb;
+
+
+
+using AudioSample = s8;
+
+
+
+using VolumeScaleLUT = std::array<AudioSample, 256>;
+
+
+
+struct ActiveSoundInfo
 {
-    char path_[62]; // Must be null-terminated.
-    host_u16 flags_;
-    host_u32 size_;
+    s32 position_;
+    const s32 length_;
+    const AudioSample* data_;
+    s32 priority_;
+    const char* name_;
 };
 
 
 
-using NullTerminatedString = const char*;
-using FileContents = NullTerminatedString;
-using FilePath = NullTerminatedString;
-using FileSize = u32;
+struct SoundContext
+{
+    // Only three sounds will play at a time... hey, sound mixing's expensive!
+    Buffer<ActiveSoundInfo, 3> active_sounds;
+
+    const AudioSample* music_track = nullptr;
+    const char* music_track_name;
+    s32 music_track_length = 0;
+    s32 music_track_pos = 0;
+};
 
 
 
-bool is_mounted();
-
-
-
-std::pair<FileContents, FileSize> load(FilePath path);
-
-
-void walk(Function<8 * sizeof(void*), void(const char* path)> callback);
-
-
-
-u32 size();
-
-
-
-} // namespace filesystem
+extern SoundContext snd_ctx;

@@ -606,8 +606,7 @@ void terrain::Sector::render()
     }
 
     [[maybe_unused]] auto stop = PLATFORM.delta_clock().sample();
-    // PLATFORM.fatal(stringify(stop - start).c_str());
-
+    //PLATFORM.fatal(stringify(stop - start).c_str());
 
     globalstate::_changed = false;
     globalstate::_shrunk = false;
