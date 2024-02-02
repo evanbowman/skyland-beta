@@ -120,7 +120,7 @@ void DatetimeModule::repaint()
     auto highlight = Text::OptColors{
         {ColorConstant::rich_black, ColorConstant::spanish_crimson}};
 
-    auto noclr = std::nullopt;
+    auto noclr = nullopt();
 
     Text heading(OverlayCoord{margin, 2});
     heading.append(mstr.c_str(),
@@ -171,7 +171,7 @@ void DatetimeModule::repaint()
     u8 row = 5;
 
     int k = 0;
-    std::optional<Text> t_;
+    Optional<Text> t_;
     t_.emplace(OverlayCoord{1, row});
 
 

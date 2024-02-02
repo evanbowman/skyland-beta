@@ -49,7 +49,7 @@
 
 void print_char(utf8::Codepoint c,
                 const OverlayCoord& coord,
-                const std::optional<FontColors>& colors = {});
+                const Optional<FontColors>& colors = {});
 
 
 
@@ -591,7 +591,7 @@ void ComposeSynthScene::repaint()
     auto put_char = [&](char c,
                         int x,
                         int y,
-                        const std::optional<FontColors>& colors = {}) {
+                        const Optional<FontColors>& colors = {}) {
         auto clr = colors;
 
         if (not colors) {
@@ -605,7 +605,7 @@ void ComposeSynthScene::repaint()
     auto put_str = [&](const char* str,
                        int x,
                        int y,
-                       const std::optional<FontColors>& colors = {}) {
+                       const Optional<FontColors>& colors = {}) {
         auto clr = colors;
 
         if (not colors) {
@@ -880,17 +880,17 @@ void ComposeSynthScene::repaint()
             }(),
             19,
             5,
-            (cursor_.x == 5 and cursor_.y == 2) ? highlight : std::nullopt);
+            (cursor_.x == 5 and cursor_.y == 2) ? highlight : nullopt());
 
         put_str(str_fill(s.length_).c_str(),
                 19,
                 7,
-                (cursor_.x == 5 and cursor_.y == 3) ? highlight : std::nullopt);
+                (cursor_.x == 5 and cursor_.y == 3) ? highlight : nullopt());
 
         put_str(str_fill(s.volume_).c_str(),
                 19,
                 9,
-                (cursor_.x == 5 and cursor_.y == 4) ? highlight : std::nullopt);
+                (cursor_.x == 5 and cursor_.y == 4) ? highlight : nullopt());
     };
 
     switch (channel_) {

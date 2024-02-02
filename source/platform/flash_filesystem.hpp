@@ -181,7 +181,7 @@ inline bool store_file_data_binary(const char* path,
 
 
 
-template <typename T> std::optional<T> read_file_blob(const char* path)
+template <typename T> Optional<T> read_file_blob(const char* path)
 {
     Vector<char> data;
     if (flash_filesystem::read_file_data_binary(path, data)) {
@@ -193,7 +193,7 @@ template <typename T> std::optional<T> read_file_blob(const char* path)
             return result;
         }
     }
-    return std::nullopt;
+    return nullopt();
 }
 
 

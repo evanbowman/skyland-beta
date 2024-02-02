@@ -40,14 +40,14 @@ struct RemoteConsoleState
     // dealing with keystrokes, which happen on a human timescale, the
     // probability of anything getting messed up is pretty small.
 
-    std::optional<DynamicMemory<ConsoleLine>> rx_in_progress_;
+    Optional<DynamicMemory<ConsoleLine>> rx_in_progress_;
     Buffer<DynamicMemory<ConsoleLine>, 4> rx_full_lines_;
 
-    std::optional<DynamicMemory<ConsoleLine>> tx_msg_;
+    Optional<DynamicMemory<ConsoleLine>> tx_msg_;
 };
 
 
-static EWRAM_DATA std::optional<RemoteConsoleState> remote_console_state;
+static EWRAM_DATA Optional<RemoteConsoleState> remote_console_state;
 
 
 
@@ -204,7 +204,7 @@ auto Platform::RemoteConsole::peek_buffer() -> Line*
 
 
 
-auto Platform::RemoteConsole::readline() -> std::optional<Line>
+auto Platform::RemoteConsole::readline() -> Optional<Line>
 {
     auto& state = *::remote_console_state;
 
@@ -231,7 +231,7 @@ bool Platform::RemoteConsole::printline(const char* text, const char* prompt)
 
     state.tx_msg_ = allocate_dynamic<ConsoleLine>("uart-console-output");
 
-    std::optional<char> first_char;
+    Optional<char> first_char;
 
     if (*text not_eq '\0') {
         first_char = *text;

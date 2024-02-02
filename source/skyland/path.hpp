@@ -58,7 +58,7 @@ using Path = DynamicMemory<PathBuffer>;
 class BasicCharacter;
 
 
-std::optional<Path> find_path(Island* island,
+Optional<Path> find_path(Island* island,
                               BasicCharacter* chr,
                               const RoomCoord& start,
                               const RoomCoord& end);

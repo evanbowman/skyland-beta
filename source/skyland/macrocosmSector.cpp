@@ -620,7 +620,7 @@ void terrain::Sector::render()
 
 
 
-std::optional<QRCode> terrain::Sector::qr_encode(
+Optional<QRCode> terrain::Sector::qr_encode(
 
 
     Function<4 * sizeof(void*), void(const char*)> msg) const

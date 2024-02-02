@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Copyright (C) 2023  Evan Bowman. Some rights reserved.
+// Copyright (C) 2024  Evan Bowman. Some rights reserved.
 //
 // This program is source-available; the source code is provided for educational
 // purposes. All copies of the software must be distributed along with this
@@ -32,63 +32,17 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#pragma once
-
-#include "graphics/overlay.hpp"
-#include "skyland/macrocosmEngine.hpp"
-#include "skyland/scene/module.hpp"
+#include "optional.hpp"
+#include "skyland/skyland.hpp"
 
 
-
-namespace skyland
+#if 0
+void OptionalBase::bad_access_error()
 {
+    using namespace skyland;
 
-
-
-class CheckersModule : public Module<CheckersModule>
-{
-public:
-    static SystemString module_name()
-    {
-        return SystemString::module_checkers;
+    if (APP.is_developer_mode()) {
+        PLATFORM.fatal("access to uninitialized optional value!");
     }
-
-
-    static u16 icon()
-    {
-        return 3336;
-    }
-
-
-    static bool run_scripts()
-    {
-        return false;
-    }
-
-
-    void enter(Scene& prev) override;
-    void exit(Scene& next) override;
-
-
-    ScenePtr<Scene> update(Time delta) override;
-
-
-    void init();
-
-
-    static Factory factory_;
-
-    float scroll_ = 0;
-
-    Vec3<u8> cursor_;
-
-    bool large_board_ = false;
-
-    Optional<Text> board_size_text_;
-    Optional<Text> small_text_;
-    Optional<Text> large_text_;
-};
-
-
-
-} // namespace skyland
+}
+#endif

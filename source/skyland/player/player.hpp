@@ -38,7 +38,7 @@
 #include "number/numeric.hpp"
 #include "platform/key.hpp"
 #include "skyland/coord.hpp"
-#include <optional>
+#include "optional.hpp"
 #include <tuple>
 
 
@@ -158,7 +158,7 @@ public:
     }
 
 
-    virtual std::optional<std::tuple<Vec2<u32>, Time>> touch_released()
+    virtual Optional<std::tuple<Vec2<u32>, Time>> touch_released()
     {
         return {};
     }
@@ -171,7 +171,7 @@ public:
     }
 
 
-    std::optional<Vec2<u32>> tap_released()
+    Optional<Vec2<u32>> tap_released()
     {
         auto info = touch_released();
         if (info and std::get<1>(*info) < milliseconds(100)) {
@@ -190,7 +190,7 @@ public:
     }
 
 
-    virtual std::optional<Vec2<u32>> touch_current()
+    virtual Optional<Vec2<u32>> touch_current()
     {
         return {};
     }

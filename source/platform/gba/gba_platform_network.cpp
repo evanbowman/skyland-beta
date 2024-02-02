@@ -455,7 +455,7 @@ static void multiplayer_serial_isr()
 
 
 
-std::optional<Platform::NetworkPeer::Message>
+Optional<Platform::NetworkPeer::Message>
 Platform::NetworkPeer::poll_message()
 {
     auto& mc = multiplayer_comms;

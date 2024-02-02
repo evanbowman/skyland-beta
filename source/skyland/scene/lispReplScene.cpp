@@ -119,7 +119,7 @@ void LispReplScene::repaint_entry(bool show_cursor)
         switch (display_mode_) {
         default:
         case DisplayMode::entry:
-            return std::nullopt;
+            return nullopt();
 
         case DisplayMode::show_result:
             return {{ColorConstant::med_blue_gray, ColorConstant::rich_black}};
@@ -380,7 +380,7 @@ TOP:
 
             if (not command_->empty() and
                 not is_delimiter((*command_)[command_->length() - 1])) {
-                std::optional<int> ident_start;
+                Optional<int> ident_start;
 
                 for (int i = command_->length() - 1; i >= 0; --i) {
                     if (is_delimiter((*command_)[i])) {

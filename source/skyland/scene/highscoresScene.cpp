@@ -114,19 +114,19 @@ const char* highscore_island_file = "/save/hs_isle.dat";
 
 
 
-std::optional<HighscoreIslandInfo> highscore_island_info_load()
+Optional<HighscoreIslandInfo> highscore_island_info_load()
 {
     HighscoreIslandInfo result;
 
     if (not flash_filesystem::file_exists(highscore_island_file)) {
-        return std::nullopt;
+        return nullopt();
     }
 
     Vector<char> data;
     flash_filesystem::read_file_data_binary(highscore_island_file, data);
 
     if (data.size() not_eq sizeof result) {
-        return std::nullopt;
+        return nullopt();
     }
 
     auto it = (u8*)&result;

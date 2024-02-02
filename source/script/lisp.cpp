@@ -199,7 +199,7 @@ struct Context {
 };
 
 
-static std::optional<Context> bound_context;
+static Optional<Context> bound_context;
 
 
 static void push_callstack(Value* function)
@@ -3998,7 +3998,7 @@ BUILTIN_TABLE(
        [](int argc) {
            L_EXPECT_OP(0, cons);
 
-           std::optional<int> index;
+           Optional<int> index;
 
            int i = 0;
            foreach (get_op0(), [&](Value* v) {
@@ -4716,7 +4716,7 @@ Value* __get_local(LocalVariableOffset off)
 }
 
 
-std::optional<LocalVariableOffset> __find_local(const char* intern_str)
+Optional<LocalVariableOffset> __find_local(const char* intern_str)
 {
     LocalVariableOffset ret{0, 0};
 
@@ -4746,7 +4746,7 @@ std::optional<LocalVariableOffset> __find_local(const char* intern_str)
         }
     }
 
-    return std::nullopt;
+    return nullopt();
 }
 
 

@@ -727,7 +727,7 @@ Microseconds Platform::Speaker::track_length(const char* name)
 
 
 
-static std::optional<ActiveSoundInfo> make_sound(const char* name)
+static Optional<ActiveSoundInfo> make_sound(const char* name)
 {
     if (auto sound = get_sound(name)) {
         return ActiveSoundInfo{
@@ -1191,7 +1191,7 @@ void Platform::Speaker::apply_chiptune_effect(Channel channel,
 
 void Platform::Speaker::play_sound(const char* name,
                                    int priority,
-                                   std::optional<Vec2<Float>> position)
+                                   Optional<Vec2<Float>> position)
 {
     (void)position; // We're not using position data, because on the gameboy
                     // advance, we aren't supporting spatial audio.

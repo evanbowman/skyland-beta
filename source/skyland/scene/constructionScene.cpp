@@ -196,7 +196,7 @@ bool tapped_topleft_corner();
 
 
 
-std::optional<RoomCoord> get_local_tapclick(Island* island,
+Optional<RoomCoord> get_local_tapclick(Island* island,
                                             const Vec2<u32>& pos)
 {
     const auto view_offset = PLATFORM.screen().get_view().int_center();
@@ -310,7 +310,7 @@ ScenePtr<Scene> ConstructionScene::update(Time delta)
     }
 
 
-    auto tapclick = [&]() -> std::optional<Vec2<s8>> {
+    auto tapclick = [&]() -> Optional<Vec2<s8>> {
         if (auto pos = APP.player().tap_released()) {
             auto clk = get_local_tapclick(island(), *pos);
 
@@ -318,7 +318,7 @@ ScenePtr<Scene> ConstructionScene::update(Time delta)
                 return clk->cast<s8>();
             }
         }
-        return std::nullopt;
+        return nullopt();
     }();
 
 
