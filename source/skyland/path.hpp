@@ -59,9 +59,9 @@ class BasicCharacter;
 
 
 Optional<Path> find_path(Island* island,
-                              BasicCharacter* chr,
-                              const RoomCoord& start,
-                              const RoomCoord& end);
+                         BasicCharacter* chr,
+                         const RoomCoord& start,
+                         const RoomCoord& end);
 
 
 

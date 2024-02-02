@@ -138,8 +138,7 @@ private:
 
 
     Vector<char>::Iterator insert_pos();
-    void insert_char(char c,
-                     Optional<Vector<char>::Iterator> insert_hint = {});
+    void insert_char(char c, Optional<Vector<char>::Iterator> insert_hint = {});
     void erase_char(Optional<Vector<char>::Iterator> erase_hint = {});
 
 

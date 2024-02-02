@@ -35,8 +35,8 @@
 #pragma once
 
 #include "number/numeric.hpp"
-#include "pool.hpp"
 #include "optional.hpp"
+#include "pool.hpp"
 
 
 //

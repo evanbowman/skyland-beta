@@ -588,19 +588,17 @@ void ComposeSynthScene::repaint()
         {ColorConstant::silver_white, ColorConstant::aerospace_orange}};
 
 
-    auto put_char = [&](char c,
-                        int x,
-                        int y,
-                        const Optional<FontColors>& colors = {}) {
-        auto clr = colors;
+    auto put_char =
+        [&](char c, int x, int y, const Optional<FontColors>& colors = {}) {
+            auto clr = colors;
 
-        if (not colors) {
-            clr = Text::OptColors{
-                {ColorConstant::steel_blue, ColorConstant::silver_white}};
-        }
+            if (not colors) {
+                clr = Text::OptColors{
+                    {ColorConstant::steel_blue, ColorConstant::silver_white}};
+            }
 
-        print_char(c, {u8(start_x + x), u8(start_y + y)}, clr);
-    };
+            print_char(c, {u8(start_x + x), u8(start_y + y)}, clr);
+        };
 
     auto put_str = [&](const char* str,
                        int x,

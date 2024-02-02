@@ -34,9 +34,9 @@
 
 #pragma once
 
+#include "optional.hpp"
 #include "platform/conf.hpp"
 #include "string.hpp"
-#include "optional.hpp"
 
 
 

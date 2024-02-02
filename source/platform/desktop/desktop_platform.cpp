@@ -2078,8 +2078,7 @@ void Platform::NetworkPeer::update()
 }
 
 
-Optional<Platform::NetworkPeer::Message>
-Platform::NetworkPeer::poll_message()
+Optional<Platform::NetworkPeer::Message> Platform::NetworkPeer::poll_message()
 {
     auto impl = (NetworkPeerImpl*)impl_;
 

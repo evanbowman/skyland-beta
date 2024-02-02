@@ -400,7 +400,8 @@ public:
                     PLATFORM.set_raw_tile(Layer::map_1, x, y, 0);
                 }
             }
-            PLATFORM.screen().schedule_fade(1.f, back_color, true, true, true, true);
+            PLATFORM.screen().schedule_fade(
+                1.f, back_color, true, true, true, true);
         } else {
             PLATFORM.screen().schedule_fade(1.f);
         }
@@ -414,8 +415,10 @@ public:
         if (show_button_hint) {
             PLATFORM.load_tile1_texture("button_hint_flattened");
 
-            PLATFORM.screen().schedule_fade(0.f, back_color, true, false, true, false);
-            PLATFORM.screen().schedule_fade(1.f, back_color, true, false, true, false);
+            PLATFORM.screen().schedule_fade(
+                0.f, back_color, true, false, true, false);
+            PLATFORM.screen().schedule_fade(
+                1.f, back_color, true, false, true, false);
             __draw_image(1, 0, 3, 30, 12, Layer::map_1);
 
             Text::print(CONF_STR(default_btns).c_str(), {6, 1}, fc);
@@ -432,17 +435,17 @@ public:
                 PLATFORM.keyboard().poll();
                 PLATFORM.system_call("feed-watchdog", nullptr);
 
-                if (PLATFORM.keyboard().down_transition<
-                    Key::action_1,
-                    Key::action_2,
-                    Key::up,
-                    Key::down,
-                    Key::left,
-                    Key::right,
-                    Key::start,
-                    Key::select,
-                    Key::alt_1,
-                    Key::alt_2>()) {
+                if (PLATFORM.keyboard()
+                        .down_transition<Key::action_1,
+                                         Key::action_2,
+                                         Key::up,
+                                         Key::down,
+                                         Key::left,
+                                         Key::right,
+                                         Key::start,
+                                         Key::select,
+                                         Key::alt_1,
+                                         Key::alt_2>()) {
                     break;
                 }
 

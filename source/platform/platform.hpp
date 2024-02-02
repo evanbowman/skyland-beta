@@ -33,12 +33,12 @@
 #include "memory/buffer.hpp"
 #include "memory/rc.hpp"
 #include "number/numeric.hpp"
+#include "optional.hpp"
 #include "scratch_buffer.hpp"
 #include "severity.hpp"
 #include "sound.hpp"
 #include "unicode.hpp"
 #include <array>
-#include "optional.hpp"
 
 
 using TileDesc = u16;

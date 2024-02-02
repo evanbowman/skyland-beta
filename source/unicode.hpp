@@ -38,9 +38,9 @@
 #include "function.hpp"
 #include "number/endian.hpp"
 #include "number/numeric.hpp"
+#include "optional.hpp"
 #include "platform/libc.hpp"
 #include "string.hpp"
-#include "optional.hpp"
 
 
 

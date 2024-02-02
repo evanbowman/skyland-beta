@@ -34,8 +34,8 @@
 
 #pragma once
 
-#include <new>
 #include "optional.hpp"
+#include <new>
 
 #include "binaryNode.hpp"
 #include "memory/pool.hpp"

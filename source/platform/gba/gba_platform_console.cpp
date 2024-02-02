@@ -25,9 +25,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "platform/platform.hpp"
-#include "gba.h"
 #include "allocator.hpp"
+#include "gba.h"
+#include "platform/platform.hpp"
 
 
 

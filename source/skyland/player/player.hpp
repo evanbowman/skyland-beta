@@ -36,9 +36,9 @@
 
 
 #include "number/numeric.hpp"
+#include "optional.hpp"
 #include "platform/key.hpp"
 #include "skyland/coord.hpp"
-#include "optional.hpp"
 #include <tuple>
 
 

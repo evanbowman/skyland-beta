@@ -25,9 +25,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "platform/platform.hpp"
 #include "gba_platform_audio.hpp"
 #include "gba.h"
+#include "platform/platform.hpp"
 #include <array>
 #include <limits>
 
@@ -145,7 +145,7 @@ EWRAM_DATA static u8 audio_update_new_freq;
 
 
 #define SOUND_MIXER_CALLBACK(NAME, RATE)                                       \
-    const SoundMixerCallback NAME##_cb                                  \
+    const SoundMixerCallback NAME##_cb                                         \
     {                                                                          \
         NAME##_isr, RATE                                                       \
     }
@@ -905,7 +905,6 @@ struct AnalogChannel
 
 
 static EWRAM_DATA AnalogChannel analog_channel[4];
-
 
 
 

@@ -61,7 +61,9 @@ class Optional : public OptionalBase
 {
 public:
 
-#define CHECK_INIT() if (not initialized_) bad_access_error();
+#define CHECK_INIT()                                                           \
+    if (not initialized_)                                                      \
+        bad_access_error();
 
 
     Optional() = default;
@@ -233,8 +235,7 @@ private:
 
 #include <optional>
 
-template <typename T>
-using Optional = std::optional<T>;
+template <typename T> using Optional = std::optional<T>;
 
 
 inline auto nullopt()

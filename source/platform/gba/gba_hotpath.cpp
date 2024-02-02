@@ -37,9 +37,9 @@
 
 
 #include "gba.h"
-#include "number/numeric.hpp"
-#include "memory/buffer.hpp"
 #include "gba_platform_audio.hpp"
+#include "memory/buffer.hpp"
+#include "number/numeric.hpp"
 
 
 s16 parallax_table[280];

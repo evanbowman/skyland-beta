@@ -76,7 +76,7 @@ inline void deleter(Scene* scene)
 template <typename T, typename... Args> ScenePtr<T> alloc(Args&&... args)
 {
     static_assert(sizeof(T) <= max_scene_size);
-#if defined(__GBA__) or defined (__ALIGN_CHECK__)
+#if defined(__GBA__) or defined(__ALIGN_CHECK__)
     // NOTE: flycheck clang in emacs raises warnings about this for whatever
     // reason. Supress warnings, but still use this code during actual
     // compilation.

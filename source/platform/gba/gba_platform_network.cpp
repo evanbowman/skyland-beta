@@ -25,10 +25,10 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "platform/platform.hpp"
 #include "gba.h"
-#include "platform_flags.hpp"
 #include "gba_platform_audio.hpp"
+#include "platform/platform.hpp"
+#include "platform_flags.hpp"
 
 
 
@@ -455,8 +455,7 @@ static void multiplayer_serial_isr()
 
 
 
-Optional<Platform::NetworkPeer::Message>
-Platform::NetworkPeer::poll_message()
+Optional<Platform::NetworkPeer::Message> Platform::NetworkPeer::poll_message()
 {
     auto& mc = multiplayer_comms;
 

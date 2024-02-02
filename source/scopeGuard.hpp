@@ -1,12 +1,11 @@
 #pragma once
 
-#include <utility>
 #include <concepts>
+#include <utility>
 
 
 
-template <typename F>
-class ScopeGuard
+template <typename F> class ScopeGuard
 {
 public:
     ScopeGuard(F&& fn) : fn_(std::move(fn))
