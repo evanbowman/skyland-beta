@@ -86,6 +86,7 @@ set(SOURCES
   ${SOURCE_DIR}/compression.cpp
   ${SOURCE_DIR}/memory/pool.cpp
   ${SOURCE_DIR}/collision.cpp
+  ${SOURCE_DIR}/optional.cpp
   ${SOURCE_DIR}/globals.cpp
   ${SOURCE_DIR}/base32.cpp
   ${SOURCE_DIR}/string.cpp
@@ -559,6 +560,10 @@ else()
 endif()
 
 
+# Saves a few seconds when building. Most of the time savings comes from the
+# bloated STL headers. Eventually I'd like to replace some of these headers with
+# my own implementations. But some STL includes would be very difficult to
+# replace in a portable way, so I'm stuck with these libraries.
 target_precompile_headers(${EXECUTABLE_NAME}
   PRIVATE
   <limits>
@@ -568,11 +573,22 @@ target_precompile_headers(${EXECUTABLE_NAME}
   <variant>
   <type_traits>
   <initializer_list>
+  <ciso646>
+  <stddef.h>
+  <optional>
   ../source/optional.hpp
   ../source/unicode.hpp
   ../source/allocator.hpp
+  ../source/containers/vector.hpp
+  ../source/graphics/overlay.hpp
+  ../source/globals.hpp
+  ../source/memory/buffer.hpp
+  ../source/number/numeric.hpp
+  ../source/number/fixnum.hpp
   ../source/skyland/room.hpp
   ../source/skyland/island.hpp
+  ../source/skyland/entity.hpp
+  ../source/skyland/timeStreamEvent.hpp
   ../source/platform/platform.hpp
   ../source/skyland/skyland.hpp)
 

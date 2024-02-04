@@ -175,6 +175,7 @@ MetaclassIndex Room::metaclass_index() const
 }
 
 
+
 Power Room::power_usage() const
 {
     if (powerdown_) {
@@ -184,10 +185,74 @@ Power Room::power_usage() const
 }
 
 
+
 bool Room::is_decoration() const
 {
     return (*metaclass())->category() == Room::Category::decoration;
 }
+
+
+
+void Room::append_name_suffix(StringBuffer<32>& result)
+{
+    return;
+}
+
+
+
+void Room::__unsafe__ignore_finalizer()
+{
+    finalized_ = true;
+}
+
+
+
+Optional<RoomCoord> Room::get_target() const
+{
+    return {};
+}
+
+
+
+void Room::set_target(const RoomCoord& target, bool pinned)
+{
+}
+
+
+
+void Room::unset_target()
+{
+}
+
+
+
+Time Room::reload_time_remaining() const
+{
+    return 0;
+}
+
+
+
+Time Room::reload_interval() const
+{
+    return 1;
+}
+
+
+
+void Room::override_reload_timer(Time new_time)
+{
+    // ...
+}
+
+
+
+void Room::__set_health(Health amount)
+{
+    health_ = amount;
+    update_description();
+}
+
 
 
 void Room::display(Platform::Screen& screen)

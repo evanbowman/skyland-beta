@@ -60,21 +60,13 @@ struct TimeBuffer
     Time elapsed_ = 0;
 
 
-    TimeBuffer(TimeTracker& begin) : time_window_begin_(begin.total())
-    {
-    }
+    TimeBuffer(TimeTracker& begin);
 
 
-    void update(Time delta)
-    {
-        elapsed_ += delta;
-    }
+    void update(Time delta);
 
 
-    void rewind(Time delta)
-    {
-        elapsed_ -= delta;
-    }
+    void rewind(Time delta);
 
 
     char data_[1960];
@@ -105,21 +97,10 @@ struct TimeBuffer
     }
 
 
-    void pop(u32 bytes)
-    {
-        if (end_ + bytes <= data_ + sizeof data_) {
-            end_ += bytes;
-        }
-    }
+    void pop(u32 bytes);
 
 
-    event::Header* end()
-    {
-        if (end_ == data_ + sizeof data_) {
-            return nullptr;
-        }
-        return reinterpret_cast<event::Header*>(end_);
-    }
+    event::Header* end();
 
 
     Optional<DynamicMemory<TimeBuffer>> next_;
@@ -162,13 +143,7 @@ public:
     }
 
 
-    void free_single_buffer()
-    {
-        if (buffers_ and (*buffers_)->next_) {
-            --buffer_count_;
-            buffers_ = std::move(*(*buffers_)->next_);
-        }
-    }
+    void free_single_buffer();
 
 
     bool has_multiple_buffers() const

@@ -930,6 +930,7 @@ bool BasicCharacter::reassign_room(const RoomCoord& old_coord,
             if (it->get() == this) {
                 self = std::move(*it);
                 it = room->edit_characters().erase(it);
+                break;
             } else {
                 ++it;
             }
