@@ -46,6 +46,7 @@
 #include "skyland/systemString.hpp"
 #include "skyland/worldGraph.hpp"
 #include "titleScreenScene.hpp"
+#include <algorithm>
 
 
 

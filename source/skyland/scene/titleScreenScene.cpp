@@ -56,6 +56,7 @@
 #include "skyland/skyland.hpp"
 #include "skyland/systemString.hpp"
 #include "zoneImageScene.hpp"
+#include <limits>
 
 
 
@@ -768,8 +769,7 @@ ScenePtr<Scene> TitleScreenScene::update(Time delta)
     case State::macro_island_enter:
         timer_ += delta;
 
-        if (PLATFORM.keyboard().pressed<Key::action_1>() or
-            APP.player().tap_released()) {
+        if (PLATFORM.keyboard().pressed<Key::action_1>()) {
             timer_ = 0;
             state_ = State::macro_island_exit;
             repeat_action1_ = true;
@@ -831,8 +831,7 @@ ScenePtr<Scene> TitleScreenScene::update(Time delta)
 
     case State::macro_island:
 
-        if (PLATFORM.keyboard().pressed<Key::action_1>() or
-            APP.player().tap_released()) {
+        if (PLATFORM.keyboard().pressed<Key::action_1>()) {
             timer_ = 0;
             state_ = State::macro_island_exit;
             repeat_action1_ = true;
@@ -977,8 +976,7 @@ ScenePtr<Scene> TitleScreenScene::update(Time delta)
             }
         }
 
-        if (repeat_action1_ or PLATFORM.keyboard().pressed<Key::action_1>() or
-            APP.player().tap_released()) {
+        if (repeat_action1_ or PLATFORM.keyboard().pressed<Key::action_1>()) {
             state_ = State::fade_out;
             if (menu_selection_ == 3) {
                 state_ = State::fade_modules_1;
@@ -1003,10 +1001,7 @@ ScenePtr<Scene> TitleScreenScene::update(Time delta)
         }
 
         if (repeat_right_ or APP.player().key_pressed(Key::right) or
-            APP.player().key_pressed(Key::down) or
-            (APP.player().touch_held(milliseconds(150)) and
-             APP.player().touch_velocity().x and
-             APP.player().touch_velocity().x * delta < -0.08f)) {
+            APP.player().key_pressed(Key::down)) {
             repeat_right_ = false;
             if (menu_selection_ == 0) {
                 menu_selection_ = 1;
@@ -1040,8 +1035,7 @@ ScenePtr<Scene> TitleScreenScene::update(Time delta)
             }
         }
         if (repeat_left_ or APP.player().key_pressed(Key::left) or
-            APP.player().key_pressed(Key::up) or
-            APP.player().touch_velocity().x * delta > 0.08f) {
+            APP.player().key_pressed(Key::up)) {
             repeat_left_ = false;
             if (menu_selection_ == 1) {
                 menu_selection_ = 0;
@@ -1874,7 +1868,7 @@ void TitleScreenScene::Pong::display(int x_scroll)
     PLATFORM.screen().draw(sprite);
 
     u8 blend = 0;
-    for (auto& p : reversed(pad1_trail_)) {
+    foreach_reversed(pad1_trail_, [&](auto& p) {
         blend += 48;
         sprite.set_position(
             Vec2<Fixnum>{
@@ -1887,7 +1881,7 @@ void TitleScreenScene::Pong::display(int x_scroll)
             scl);
         sprite.set_mix({custom_color(0x236f5b), blend});
         PLATFORM.screen().draw(sprite);
-    }
+    });
 
     sprite.set_mix({});
 
@@ -1901,7 +1895,7 @@ void TitleScreenScene::Pong::display(int x_scroll)
     PLATFORM.screen().draw(sprite);
 
     blend = 0;
-    for (auto& p : reversed(pad2_trail_)) {
+    foreach_reversed(pad2_trail_, [&](auto& p) {
         blend += 48;
         sprite.set_position(
             Vec2<Fixnum>{Fixnum((anchor.x + 24.0_fixed) -
@@ -1912,7 +1906,7 @@ void TitleScreenScene::Pong::display(int x_scroll)
 
         sprite.set_mix({custom_color(0x236f5b), blend});
         PLATFORM.screen().draw(sprite);
-    }
+    });
 
     sprite.set_mix({});
 
@@ -1926,7 +1920,7 @@ void TitleScreenScene::Pong::display(int x_scroll)
     PLATFORM.screen().draw(sprite);
 
     blend = 0;
-    for (auto& b : reversed(ball_trail_)) {
+    foreach_reversed(ball_trail_, [&](auto& b) {
         blend += 48;
         sprite.set_position(
             Vec2<Fixnum>{(Fixnum::from_integer(b.x) + anchor.x) -
@@ -1935,7 +1929,7 @@ void TitleScreenScene::Pong::display(int x_scroll)
             scl);
         sprite.set_mix({custom_color(0x236f5b), blend});
         PLATFORM.screen().draw(sprite);
-    }
+    });
 }
 
 

@@ -43,6 +43,7 @@
 #include "skyland/scene/constructionScene.hpp"
 #include "skyland/sharedVariable.hpp"
 #include "skyland/skyland.hpp"
+#include <algorithm>
 
 
 
@@ -187,10 +188,10 @@ void ProcgenEnemyAI::generate_level()
     levelgen_size_.y = 4 + rng::choice<5>(rng_source_);
 
     if (levelgen_enemy_count_ < 4) {
-        levelgen_size_.y = std::min(u8(5), levelgen_size_.y);
+        levelgen_size_.y = util::min(u8(5), levelgen_size_.y);
     }
 
-    levelgen_size_.x = std::min(13, std::max(3, area / levelgen_size_.y));
+    levelgen_size_.x = std::min(13, util::max(3, area / levelgen_size_.y));
 
 
     APP.create_opponent_island(levelgen_size_.x);
@@ -436,7 +437,7 @@ void ProcgenEnemyAI::generate_weapons(int max)
         for (u8 x = (int)APP.player_island().terrain().size() - 1; x > 1; --x) {
             if (auto room = APP.player_island().get_room({x, y})) {
                 if ((*room->metaclass())->category() == Room::Category::wall) {
-                    min_present_y = std::min(min_present_y, (int)y);
+                    min_present_y = util::min(min_present_y, (int)y);
                     ++player_avg_forward_hull_thickness;
                 } else {
                     break;
@@ -1021,7 +1022,7 @@ void ProcgenEnemyAI::generate_hull()
     }
 
     const int max_identical =
-        std::max({cannon_count, flak_count, arc_count, fire_count});
+        util::max({cannon_count, flak_count, arc_count, fire_count});
 
     bool missile_defense = false;
 
@@ -1271,7 +1272,7 @@ void ProcgenEnemyAI::generate_stairwells()
                     // For a column the size of a stairwell room: how many
                     // walkable tiles would it connect if we placed it starting
                     // at (x,y)?
-                    for (int yy = y; yy < std::min(y + 4, 15); ++yy) {
+                    for (int yy = y; yy < util::min(y + 4, 15); ++yy) {
                         if (APP.opponent_island()->rooms_plot().get(x, yy)) {
                             continue;
                         }

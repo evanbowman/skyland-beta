@@ -74,7 +74,7 @@ ScenePtr<Scene> NextTurnScene::update(Time delta)
     }
 
     int current = m.data_->p().day_night_cyc_.get();
-    m.data_->p().day_night_cyc_.set(std::max(current, day_frames - 256));
+    m.data_->p().day_night_cyc_.set(util::max(current, day_frames - 256));
 
     return scene_pool::alloc<DayTransitionScene>();
 }

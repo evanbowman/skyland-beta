@@ -952,9 +952,9 @@ void Platform::Screen::display()
 
     display_map(view_.get_center() * 2.f);
 
-    for (auto& spr : reversed(::sprite_queue)) {
+    foreach_reversed(::sprite_queue, [&](auto& spr) {
         display_sprite(*this, spr);
-    }
+    });
 
     sprite_queue.clear();
 

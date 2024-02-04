@@ -38,6 +38,7 @@
 #include "skyland/skyland.hpp"
 #include "skyland/systemString.hpp"
 #include "worldMapScene.hpp"
+#include <array>
 
 
 

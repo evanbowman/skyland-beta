@@ -38,7 +38,7 @@
 #include "severity.hpp"
 #include "sound.hpp"
 #include "unicode.hpp"
-#include <array>
+#include "containers/array.hpp"
 
 
 using TileDesc = u16;
@@ -602,7 +602,7 @@ public:
     class Keyboard
     {
     public:
-        using KeyStates = std::array<bool, int(Key::count)>;
+        using KeyStates = Array<bool, int(Key::count)>;
 
 
         void poll();

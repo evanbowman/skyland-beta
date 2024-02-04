@@ -41,6 +41,7 @@
 #include "skyland/rooms/transporter.hpp"
 #include "skyland/scene/multiplayerCoOpAwaitLockScene.hpp"
 #include "skyland/skyland.hpp"
+#include <limits>
 
 
 

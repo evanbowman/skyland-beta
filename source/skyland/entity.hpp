@@ -131,7 +131,7 @@ public:
 
     virtual void apply_damage(Health amount)
     {
-        health_ = std::max(0, health_ - amount);
+        health_ = util::max(0, health_ - amount);
     }
 
 

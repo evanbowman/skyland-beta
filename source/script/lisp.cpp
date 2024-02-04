@@ -3491,9 +3491,9 @@ BUILTIN_TABLE(
                v >>= 4;
            }
            StringBuffer<10> result("0x");
-           for (char c : reversed(stack)) {
+           foreach_reversed(stack, [&](char c) {
                result.push_back(c);
-           }
+           });
            return make_string(result.c_str());
        }}},
      {"+",
@@ -3984,10 +3984,11 @@ BUILTIN_TABLE(
 
            while (index < len) {
 
-               for (auto& lat : reversed(inp_lats)) {
+               foreach_reversed(inp_lats, [&](auto& lat) {
                    push_op(lat->cons().car());
                    lat = lat->cons().cdr();
-               }
+               });
+
                funcall(fn, inp_lats.size());
                auto fc_result = get_op0();
 

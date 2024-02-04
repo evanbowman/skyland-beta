@@ -310,7 +310,7 @@ public:
                   auto ssize = sf::VideoMode::getDesktopMode();
                   auto x_scale = ssize.width / resolution.x;
                   auto y_scale = ssize.height / resolution.y;
-                  return static_cast<int>(std::max(x_scale, y_scale));
+                  return static_cast<int>(util::max(x_scale, y_scale));
               } else {
                   return
                       // lisp::loadv<lisp::Integer>("window-scale").value_
@@ -491,7 +491,7 @@ Platform::DeltaClock::~DeltaClock()
 std::queue<sf::Event> event_queue;
 
 
-std::array<sf::Keyboard::Key, static_cast<int>(Key::count)> keymap;
+Array<sf::Keyboard::Key, static_cast<int>(Key::count)> keymap;
 
 
 void Platform::Keyboard::rumble(bool enabled)
@@ -953,9 +953,9 @@ void Platform::Screen::display()
     // Draw sprites
     //
 
-    for (auto& spr : reversed(draw_queue)) {
+    foreach_reversed(draw_queue, [&](auto& spr) {
         if (spr.get_alpha() == Sprite::Alpha::transparent) {
-            continue;
+            return;
         }
 
         const auto& pos = spr.get_position();
@@ -1006,7 +1006,7 @@ void Platform::Screen::display()
         } else {
             window.draw(sf_spr);
         }
-    }
+    });
 
 
     ////////////////////////////////////////////////////////////////////////////
@@ -2059,7 +2059,7 @@ void Platform::NetworkPeer::update()
 
     impl->poll_consume_position_ = 0;
 
-    std::array<char, 1024> buffer = {0};
+    Array<char, 1024> buffer = {0};
     std::size_t received = 0;
 
     while (true) {

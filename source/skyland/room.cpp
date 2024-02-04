@@ -47,6 +47,7 @@
 #include "skyland/scene/notificationScene.hpp"
 #include "skyland/tile.hpp"
 #include "timeStreamEvent.hpp"
+#include <limits>
 
 
 
@@ -962,7 +963,14 @@ void Room::heal(Health amount)
     }
 
     const Health new_health = health_ + amount;
-    health_ = std::min((*metaclass())->full_health(), new_health);
+    health_ = util::min((*metaclass())->full_health(), new_health);
+}
+
+
+
+Health Room::health_upper_limit()
+{
+    return std::numeric_limits<Health>::max();
 }
 
 

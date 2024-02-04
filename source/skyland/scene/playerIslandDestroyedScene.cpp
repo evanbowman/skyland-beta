@@ -274,7 +274,7 @@ redden_shader(ShaderPalette p, ColorConstant k, int var, int index)
         return k;
     }
 
-    auto k1 = contrast_shader(p, k, std::max(-(var / 2), -64), index);
+    auto k1 = contrast_shader(p, k, util::max(-(var / 2), -64), index);
 
     static constexpr const Color ao(ColorConstant::aerospace_orange);
     const Color input(k1);
@@ -937,8 +937,7 @@ ScenePtr<Scene> PlayerIslandDestroyedScene::update(Time delta)
     case AnimState::idle:
         coins_.reset();
         power_.reset();
-        if (APP.player().key_down(Key::action_1) or
-            APP.player().tap_released()) {
+        if (APP.player().key_down(Key::action_1)) {
             timer_ = 0;
             PLATFORM.fill_overlay(0);
 
@@ -1106,7 +1105,7 @@ void PlayerIslandDestroyedScene::enter(Scene& prev)
 
     auto lv_score = APP.score().get() - APP.level_begin_score();
     auto score_time_penalty =
-        0.5f * (lv_score - (lv_score / (std::max(1, level_seconds_ / 60))));
+        0.5f * (lv_score - (lv_score / (util::max(1, level_seconds_ / 60))));
     APP.score().set(APP.score().get() - score_time_penalty);
 
     if (lv_score < 0) {

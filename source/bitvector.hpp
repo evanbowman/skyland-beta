@@ -35,18 +35,19 @@
 #pragma once
 
 #include "number/numeric.hpp"
-#include <array>
+#include "containers/array.hpp"
 
 
 template <u32 bits> class Bitvector
 {
 public:
-    explicit constexpr Bitvector(u8 init) : data_{init}
+    explicit constexpr Bitvector(u8 init)
     {
+        data_[0] = init;
         static_assert(sizeof(init) * 8 == bits);
     }
 
-    constexpr Bitvector(const std::array<bool, bits> init) : data_({})
+    constexpr Bitvector(const Array<bool, bits> init) : data_({})
     {
         for (std::size_t bit = 0; bit < init.size(); ++bit) {
             this->set(bit, init[bit]);
@@ -57,7 +58,7 @@ public:
     {
     }
 
-    using Data = std::array<u8, (bits / 8) + ((bits % 8) ? 1 : 0)>;
+    using Data = Array<u8, (bits / 8) + ((bits % 8) ? 1 : 0)>;
 
     Bitvector(const Data& data)
     {
@@ -146,7 +147,7 @@ public:
     {
     }
 
-    constexpr Bitmatrix(const std::array<std::array<bool, height>, width>& init)
+    constexpr Bitmatrix(const Array<Array<bool, height>, width>& init)
     {
         for (int x = 0; x < width; ++x) {
             for (int y = 0; y < height; ++y) {

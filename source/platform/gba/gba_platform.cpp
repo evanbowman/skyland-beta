@@ -60,7 +60,6 @@
 #include "skyland_mgba.hpp"
 #include "string.hpp"
 #include "util.hpp"
-#include <algorithm>
 #include <limits>
 #include <setjmp.h>
 
@@ -306,8 +305,8 @@ Platform::DeviceName Platform::device_name() const
 // code.
 extern "C" {
 __attribute__((section(".iwram"), long_call)) void
-memcpy32(void* dst, const void* src, uint wcount);
-void memcpy16(void* dst, const void* src, uint hwcount);
+memcpy32(void* dst, const void* src, unsigned int wcount);
+void memcpy16(void* dst, const void* src, unsigned int hwcount);
 }
 
 
@@ -1710,12 +1709,12 @@ TileDesc Platform::map_tile1_chunk(TileDesc src)
 
 #define BIT_MASK(len) ((1 << (len)) - 1)
 
-static void __toncset(void* dst, u32 fill, uint size)
+static void __toncset(void* dst, u32 fill, unsigned int size)
 {
     if (size == 0 || dst == NULL)
         return;
 
-    uint left = (u32)dst & 3;
+    unsigned int left = (u32)dst & 3;
     u32* dst32 = (u32*)((char*)dst - left);
     u32 count, mask;
 
@@ -1736,7 +1735,7 @@ static void __toncset(void* dst, u32 fill, uint size)
 
     // Main stint.
     count = size / 4;
-    uint tmp = count & 3;
+    unsigned int tmp = count & 3;
     count /= 4;
 
     switch (tmp) {
@@ -1988,7 +1987,7 @@ const Platform::Screen::Touch* Platform::Screen::touch() const
 
 
 
-using OptDmaBufferData = std::array<u16, 161>;
+using OptDmaBufferData = Array<u16, 161>;
 EWRAM_DATA Optional<DynamicMemory<OptDmaBufferData>> opt_dma_buffer_;
 EWRAM_DATA int dma_effect_params[3];
 
@@ -3001,7 +3000,7 @@ void Platform::load_sprite_texture(const char* name)
             // end of the tile memory.
             memcpy16((void*)&MEM_TILE[4][1],
                      info.tile_data_,
-                     std::min((u32)16128, info.tile_data_length_ / 2));
+                     util::min((u32)16128, info.tile_data_length_ / 2));
 
             // We need to do this, otherwise whatever screen fade is currently
             // active will be overwritten by the copy.
@@ -3119,8 +3118,8 @@ void Platform::load_tile0_texture(const char* name)
             } else {
                 memcpy16((void*)&MEM_SCREENBLOCKS[sbb_t0_texture][0],
                          info.tile_data_,
-                         std::min((int)charblock_size / 2,
-                                  (int)info.tile_data_length_ / 2));
+                         util::min((int)charblock_size / 2,
+                                   (int)info.tile_data_length_ / 2));
             }
 
             return;
@@ -3168,8 +3167,8 @@ void Platform::load_tile1_texture(const char* name)
             } else {
                 memcpy16((void*)&MEM_SCREENBLOCKS[sbb_t1_texture][0],
                          info.tile_data_,
-                         std::min((int)charblock_size / 2,
-                                  (int)info.tile_data_length_ / 2));
+                         util::min((int)charblock_size / 2,
+                                   (int)info.tile_data_length_ / 2));
             }
 
             return;
@@ -4037,8 +4036,8 @@ bool Platform::load_overlay_texture(const char* name)
             } else {
                 memcpy16((void*)&MEM_SCREENBLOCKS[sbb_overlay_texture][0],
                          info.tile_data_,
-                         std::min((size_t)info.tile_data_length_ / 2,
-                                  charblock_size / 2));
+                         util::min((size_t)info.tile_data_length_ / 2,
+                                   charblock_size / 2));
             }
 
             if (get_gflag(GlobalFlag::glyph_mode)) {
@@ -4641,7 +4640,7 @@ static auto rtc_get_datetime()
 
 
 
-static void rtc_set_datetime(std::array<u8, 7> vals)
+static void rtc_set_datetime(Array<u8, 7> vals)
 {
     GPIO_PORT_DATA = 1;
     GPIO_PORT_DATA = 5;
@@ -4723,7 +4722,7 @@ Optional<DateTime> Platform::SystemClock::initial_time()
 
 void Platform::SystemClock::configure(DateTime dt)
 {
-    std::array<u8, 7> data;
+    Array<u8, 7> data;
     data[0] = BCD_ENCODE(dt.date_.year_);
     data[1] = BCD_ENCODE(dt.date_.month_);
     data[2] = BCD_ENCODE(dt.date_.day_);

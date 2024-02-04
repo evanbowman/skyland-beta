@@ -1620,7 +1620,7 @@ void Platform::load_sprite_texture(const char* name)
             // skipping two tiles).
             memcpy16(SPRITE_GFX + vram_tile_size(),
                      (u16*)info.tile_data_,
-                     std::min((u32)16128, info.tile_data_length_ / 2) -
+                     util::min((u32)16128, info.tile_data_length_ / 2) -
                          vram_tile_size());
 
             // We need to do this, otherwise whatever screen fade is currently
@@ -1992,8 +1992,8 @@ bool Platform::load_overlay_texture(const char* name)
 
             memcpy16(bgGetGfxPtr(0),
                      (u16*)info.tile_data_,
-                     std::min((size_t)info.tile_data_length_ / 2,
-                              (size_t)0x4000 / 2));
+                     util::min((size_t)info.tile_data_length_ / 2,
+                               (size_t)0x4000 / 2));
 
 
             if (get_gflag(GlobalFlag::glyph_mode)) {

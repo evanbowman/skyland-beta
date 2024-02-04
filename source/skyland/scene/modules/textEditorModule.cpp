@@ -780,7 +780,7 @@ ScenePtr<Scene> TextEditorModule::update(Time delta)
     };
 
     auto center_view = [&] {
-        start_line_ = std::max(0, cursor_.y - ((y_max() - 2) / 2));
+        start_line_ = util::max(0, cursor_.y - ((y_max() - 2) / 2));
         if (cursor_.x > 15) {
             column_offset_ = cursor_.x - 15;
         } else {
@@ -832,7 +832,7 @@ ScenePtr<Scene> TextEditorModule::update(Time delta)
                 unshade_cursor();
                 bool do_render = false;
                 cursor_.x += skip_word();
-                cursor_.x = std::min(cursor_.x, line_length());
+                cursor_.x = util::min(cursor_.x, line_length());
                 ideal_cursor_right_ = cursor_.x;
                 if (cursor_.x < column_offset_) {
                     column_offset_ = cursor_.x;
@@ -852,7 +852,7 @@ ScenePtr<Scene> TextEditorModule::update(Time delta)
                 unshade_cursor();
                 bool do_render = false;
                 cursor_.x -= back_word();
-                cursor_.x = std::max(cursor_.x, 0);
+                cursor_.x = util::max(cursor_.x, 0);
                 ideal_cursor_right_ = cursor_.x;
                 if (cursor_.x > column_offset_ + (calc_screen_tiles().x - 1)) {
                     ++column_offset_;
@@ -889,7 +889,7 @@ ScenePtr<Scene> TextEditorModule::update(Time delta)
                 bool do_render = false;
 
                 if (cursor_.y > start_line_ + (calc_screen_tiles().y - 3)) {
-                    start_line_ = std::max(0, cursor_.y - ((y_max() - 2) / 2));
+                    start_line_ = util::max(0, cursor_.y - ((y_max() - 2) / 2));
                     do_render = true;
                 }
 
@@ -934,7 +934,7 @@ ScenePtr<Scene> TextEditorModule::update(Time delta)
                 bool do_render = false;
 
                 if (cursor_.y < start_line_) {
-                    start_line_ = std::max(0, cursor_.y - ((y_max() - 2) / 2));
+                    start_line_ = util::max(0, cursor_.y - ((y_max() - 2) / 2));
                     do_render = true;
                 }
 
@@ -1043,7 +1043,7 @@ ScenePtr<Scene> TextEditorModule::update(Time delta)
                 cursor_.y = line_count_;
                 column_offset_ = 0;
                 start_line_ =
-                    std::max(0, line_count_ - (calc_screen_tiles().y - 3));
+                    util::max(0, line_count_ - (calc_screen_tiles().y - 3));
                 bool dummy;
                 sel_forward(dummy);
                 render(start_line_);
@@ -1070,7 +1070,7 @@ ScenePtr<Scene> TextEditorModule::update(Time delta)
             bool do_render = false;
 
             if (cursor_.y < start_line_) {
-                start_line_ = std::max(0, cursor_.y - ((y_max() - 2) / 2));
+                start_line_ = util::max(0, cursor_.y - ((y_max() - 2) / 2));
                 do_render = true;
             }
             cursor_.x = ideal_cursor_right_;
@@ -1109,7 +1109,7 @@ ScenePtr<Scene> TextEditorModule::update(Time delta)
             APP.player().key_held_reset(Key::down, milliseconds(60));
 
             if (cursor_.y > start_line_ + (calc_screen_tiles().y - 3)) {
-                start_line_ = std::max(0, cursor_.y - ((y_max() - 2) / 2));
+                start_line_ = util::max(0, cursor_.y - ((y_max() - 2) / 2));
                 do_render = true;
             }
             cursor_.x = ideal_cursor_right_;
@@ -1288,7 +1288,7 @@ ScenePtr<Scene> TextEditorModule::update(Time delta)
                     filesystem_ == FileSystem::rom);
             }
         } else if (APP.player().key_down(Key::action_1)) {
-            start_line_ = std::max(0, cursor_.y - ((y_max() - 2) / 2));
+            start_line_ = util::max(0, cursor_.y - ((y_max() - 2) / 2));
             show_keyboard_ = true;
             mode_ = Mode::edit;
             keyboard_cursor_ = {5, 4};
@@ -1568,7 +1568,7 @@ void TextEditorModule::delete_selection()
 
     if (cursor_.y > start_line_ + (calc_screen_tiles().y - 3) or
         cursor_.y < start_line_) {
-        start_line_ = std::max(0, cursor_.y - ((y_max() - 2) / 2));
+        start_line_ = util::max(0, cursor_.y - ((y_max() - 2) / 2));
     }
 
     if (cursor_.x < column_offset_) {

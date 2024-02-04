@@ -232,32 +232,6 @@ ScenePtr<Scene> InspectP2Scene::update(Time delta)
     }
 
 
-    if (APP.player().touch_held(milliseconds(200))) {
-        if (auto pos = APP.player().touch_current()) {
-            const auto view_offset =
-                PLATFORM.screen().get_view().get_center().cast<s32>();
-            auto island_pos = APP.opponent_island()->get_position();
-            island_pos.x -= Fixnum::from_integer(view_offset.x);
-            island_pos.y -= Fixnum::from_integer(view_offset.y);
-
-            if (Fixnum::from_integer(pos->x) >= island_pos.x and
-                Fixnum::from_integer(pos->x) <=
-                    island_pos.x +
-                        Fixnum::from_integer(
-                            APP.opponent_island()->terrain().size() * 16)) {
-
-                int x_tile = -((island_pos.x.as_integer() - pos->x) / 16);
-                int y_tile = -((island_pos.y.as_integer() - pos->y) / 16);
-
-                y_tile += 31; // FIXME!
-
-                cursor_loc = {(u8)x_tile, (u8)y_tile};
-                camera_update_timer_ = milliseconds(500);
-            }
-        }
-    }
-
-
     if (APP.game_mode() == App::GameMode::sandbox and
         (tapped_topleft_corner() or APP.player().key_down(Key::alt_2))) {
         return scene_pool::alloc<ConstructionScene>(false);
@@ -274,34 +248,6 @@ ScenePtr<Scene> InspectP2Scene::update(Time delta)
         APP.player().network_sync_cursor(near_cursor, 0, true);
 
         return scene_pool::alloc<ReadyScene>();
-    }
-
-
-    if (auto pos = APP.player().tap_released()) {
-        auto [x, y, island] = check_island_tapclick(*pos);
-
-        if (is_player_island(island)) {
-            if (auto scene = player_island_onclick(
-                    camera_update_timer_, room_description_, {x, y})) {
-                return scene;
-            } else {
-                globals().near_cursor_loc_ = {x, y};
-                return scene_pool::alloc<ReadyScene>();
-            }
-        } else if (island == APP.opponent_island()) {
-            camera_update_timer_ = milliseconds(500);
-            globals().far_cursor_loc_ = {x, y};
-        } else if (island == nullptr) {
-            const auto view_offset =
-                PLATFORM.screen().get_view().get_center().cast<s32>();
-            auto island_pos = APP.opponent_island()->get_position();
-            island_pos.x -= Fixnum::from_integer(view_offset.x);
-
-            if (Fixnum::from_integer(pos->x) < island_pos.x) {
-                globals().near_cursor_loc_ = {0, cursor_loc.y};
-                return scene_pool::alloc<ReadyScene>();
-            }
-        }
     }
 
     if (APP.player().key_down(Key::action_1)) {

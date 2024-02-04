@@ -34,16 +34,14 @@
 #pragma once
 
 #include "../number/int.h"
-#include <new>
 #include "../optional.hpp"
+#include <new>
 
 
 
-template <typename T, int capacity>
-class CircularBuffer
+template <typename T, int capacity> class CircularBuffer
 {
 public:
-
     static_assert(capacity % 2 == 0);
 
 
@@ -57,7 +55,8 @@ public:
 
     ~CircularBuffer()
     {
-        while (pop()) ;
+        while (pop())
+            ;
     }
 
 

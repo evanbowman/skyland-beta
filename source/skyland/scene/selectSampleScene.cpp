@@ -40,6 +40,7 @@
 #include "skyland/scene_pool.hpp"
 #include "skyland/skyland.hpp"
 #include "startMenuScene.hpp"
+#include <limits>
 
 
 

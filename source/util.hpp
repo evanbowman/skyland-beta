@@ -37,13 +37,13 @@
 #define COLD [[gnu::cold]]
 #define HOT [[gnu::hot]]
 
+#include <initializer_list>
+
 #ifdef __GNUC__
 #define UNLIKELY(COND) __builtin_expect((COND), false)
 #else
 #define UNLIKELY(COND) (COND)
 #endif
-
-#include <iterator>
 
 
 #if defined(__GBA__) or defined(__NDS__)
@@ -53,34 +53,31 @@
 #endif
 
 
-namespace _detail
-{
 
-template <typename T> struct reversion_wrapper
+template <typename F>
+void foreach_reversed(auto& iterable, F&& callback)
 {
-    T& iterable;
-};
+    auto end = iterable.end();
+    auto first = iterable.begin();
 
+    if (end == first) {
+        return;
+    }
 
-template <typename T> auto begin(reversion_wrapper<T> w)
-{
-    return std::rbegin(w.iterable);
+    --end;
+
+    for (;;) {
+
+        callback(*end);
+
+        if (end == iterable.begin()) {
+            break;
+        } else {
+            --end;
+        }
+    }
 }
 
-
-template <typename T> auto end(reversion_wrapper<T> w)
-{
-    return std::rend(w.iterable);
-}
-
-
-} // namespace _detail
-
-
-template <typename T> _detail::reversion_wrapper<T> reversed(T&& iterable)
-{
-    return {iterable};
-}
 
 
 template <typename T, typename U> bool contains(const T& t, const U& u)
@@ -97,3 +94,73 @@ template <typename T, typename U> bool contains(const T& t, const U& u)
 
 void logic_error(const char* file, int line);
 #define LOGIC_ERROR() logic_error(__FILE__, __LINE__)
+
+
+namespace util
+{
+
+
+
+template <class T> const T& max(const T& a, const T& b)
+{
+    return (a < b) ? b : a;
+}
+
+
+
+template <class ForwardIt>
+ForwardIt max_element(ForwardIt first, ForwardIt last)
+{
+    if (first == last)
+        return last;
+
+    ForwardIt largest = first;
+
+    while (++first != last)
+        if (*largest < *first)
+            largest = first;
+
+    return largest;
+}
+
+
+
+template <class T> T max(std::initializer_list<T> ilist)
+{
+    return *max_element(ilist.begin(), ilist.end());
+}
+
+
+
+template <class T> const T& min(const T& a, const T& b)
+{
+    return (b < a) ? b : a;
+}
+
+
+
+template <class ForwardIt>
+ForwardIt min_element(ForwardIt first, ForwardIt last)
+{
+    if (first == last)
+        return last;
+
+    ForwardIt smallest = first;
+
+    while (++first != last)
+        if (*first < *smallest)
+            smallest = first;
+
+    return smallest;
+}
+
+
+
+template <class T> T min(std::initializer_list<T> ilist)
+{
+    return *min_element(ilist.begin(), ilist.end());
+}
+
+
+
+} // namespace util

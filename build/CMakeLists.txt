@@ -246,6 +246,7 @@ set(SOURCES
 add_library(FASTPATH
   ${SOURCE_DIR}/skyland/room.cpp
   ${SOURCE_DIR}/skyland/island.cpp
+  ${SOURCE_DIR}/skyland/roomTable.cpp
   ${SOURCE_DIR}/skyland/rooms/ice.cpp
   ${SOURCE_DIR}/skyland/rooms/tnt.cpp
   ${SOURCE_DIR}/skyland/rooms/core.cpp

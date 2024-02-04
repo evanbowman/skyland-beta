@@ -35,6 +35,8 @@
 #include "path.hpp"
 #include "island.hpp"
 #include "skyland/scene/constructionScene.hpp"
+#include <algorithm>
+#include <limits>
 
 
 

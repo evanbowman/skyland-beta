@@ -34,8 +34,8 @@
 
 #pragma once
 
+#include "allocator.hpp"
 #include "optional.hpp"
-#include "platform/conf.hpp"
 #include "string.hpp"
 
 
@@ -60,7 +60,7 @@ public:
     using LabelString = StringBuffer<32>;
     using Name = LabelString;
     using Subheading = LabelString;
-    using ContentString = Conf::String;
+    using ContentString = DynamicMemory<StringBuffer<2000>>;
 
 
     LabelString get_label_string(const char* field) const;

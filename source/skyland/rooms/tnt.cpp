@@ -271,7 +271,7 @@ void Explosive::ignite(int range, Health damage, bool spread_fire)
 
         if (room->cast<TNT>()) {
             auto d = clamp((int)damage, 0, (int)tnt_damage);
-            room->apply_damage(std::min(room->health() + 1, d));
+            room->apply_damage(util::min(room->health() + 1, d));
         } else {
             room->apply_damage(damage);
         }

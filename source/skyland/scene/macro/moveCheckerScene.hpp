@@ -40,6 +40,7 @@
 #include "selectorScene.hpp"
 #include "skyland/scene/modules/checkersModule.hpp"
 #include "skyland/scene_pool.hpp"
+#include <algorithm>
 
 
 
@@ -378,11 +379,11 @@ inline MinimaxResult checkers_minimax(CheckerBoard& board,
             auto result =
                 checkers_minimax(board, depth + 1, alpha, beta, next_move);
             if (minimize) {
-                best = std::min(best, result);
-                beta = std::min(best, beta);
+                best = util::min(best, result);
+                beta = util::min(best, beta);
             } else {
-                best = std::max(best, result);
-                alpha = std::max(best, alpha);
+                best = util::max(best, result);
+                alpha = util::max(best, alpha);
             }
 
             // Undo each state change, as we're doing everything

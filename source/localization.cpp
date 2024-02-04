@@ -542,7 +542,7 @@ void locale_set_language(int language_id)
 
 // I had to add this code during chinese translation, for places where I needed
 // to use traditional chinese numbers rather than arabic numerals.
-const char* locale_repr_smallnum(u8 num, std::array<char, 40>& buffer)
+const char* locale_repr_smallnum(u8 num, Array<char, 40>& buffer)
 {
     auto languages = lisp::get_var(lisp::make_symbol("languages"));
 

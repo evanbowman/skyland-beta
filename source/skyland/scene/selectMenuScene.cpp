@@ -350,7 +350,7 @@ void SelectMenuScene::enter(Scene& scene)
                 line->c_str(), specific ? specific_colors : Text::OptColors{});
         }
         opts_->longest_line_ =
-            std::max(utf8::len(line->c_str()), size_t(opts_->longest_line_));
+            util::max(utf8::len(line->c_str()), size_t(opts_->longest_line_));
         opts_->strings_.push_back(str);
         opts_->callbacks_.push_back(callback);
     };

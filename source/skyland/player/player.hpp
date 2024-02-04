@@ -39,7 +39,6 @@
 #include "optional.hpp"
 #include "platform/key.hpp"
 #include "skyland/coord.hpp"
-#include <tuple>
 
 
 
@@ -154,50 +153,6 @@ public:
             key_held_reset(k, held_decrement);
             return true;
         }
-        return false;
-    }
-
-
-    virtual Optional<std::tuple<Vec2<u32>, Time>> touch_released()
-    {
-        return {};
-    }
-
-
-    // Only valid if touch_held()
-    virtual Vec2<Float> touch_velocity()
-    {
-        return {};
-    }
-
-
-    Optional<Vec2<u32>> tap_released()
-    {
-        auto info = touch_released();
-        if (info and std::get<1>(*info) < milliseconds(100)) {
-            return std::get<0>(*info);
-        }
-        return {};
-    }
-
-
-    // This method should be implemented (if applicable) to detach whatever
-    // touch event is currently attached to the player. Used to prevent multiple
-    // codepaths from registering a touch event which already triggered some
-    // other behavior.
-    virtual void touch_consume()
-    {
-    }
-
-
-    virtual Optional<Vec2<u32>> touch_current()
-    {
-        return {};
-    }
-
-
-    virtual bool touch_held(Time duration)
-    {
         return false;
     }
 

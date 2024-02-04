@@ -68,6 +68,7 @@
 #include "skyland/sound.hpp"
 #include "skyland/tile.hpp"
 #include "version.hpp"
+#include "platform/conf.hpp"
 
 
 
@@ -1494,9 +1495,9 @@ BINDING_TABLE({
               // auto current = macrocosm(*app).data_->p().coins_.get();
               // current += L_LOAD_INT(0);
               // macrocosm(*app).data_->p().coins_.set(
-              //     std::min(std::numeric_limits<macro::Coins>::max(), current));
+              //     util::min(std::numeric_limits<macro::Coins>::max(), current));
           } else {
-              APP.set_coins(std::max(0, (int)(L_LOAD_INT(0) + APP.coins())));
+              APP.set_coins(util::max(0, (int)(L_LOAD_INT(0) + APP.coins())));
           }
 
           return L_NIL;
@@ -1509,7 +1510,7 @@ BINDING_TABLE({
           if (APP.macrocosm()) {
               // auto val = L_LOAD_INT(0);
               // macrocosm(*app).data_->p().coins_.set(
-              //     std::min(std::numeric_limits<macro::Coins>::max(), val));
+              //     util::min(std::numeric_limits<macro::Coins>::max(), val));
           } else {
               APP.set_coins(L_LOAD_INT(0));
           }

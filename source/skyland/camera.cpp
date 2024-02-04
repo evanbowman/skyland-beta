@@ -36,6 +36,7 @@
 #include "island.hpp"
 #include "platform/platform.hpp"
 #include "skyland/skyland.hpp"
+#include <limits>
 
 
 

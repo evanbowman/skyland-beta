@@ -59,7 +59,7 @@ public:
     Island(const Island&) = delete;
 
 
-    using Rooms = RoomTable<92, 16>;
+    using Rooms = RoomTable;
 
 
     bool add_room(RoomPtr<Room> insert, bool do_repaint = true)

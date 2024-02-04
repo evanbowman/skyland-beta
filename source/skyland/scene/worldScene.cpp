@@ -530,7 +530,7 @@ ScenePtr<Scene> WorldScene::update(Time delta)
         // We scale game updates based on frame delta. But if the game starts to
         // lag a lot, the logic can start to get screwed up, so at some point,
         // the player will in fact start to notice the lag.
-        delta = std::min(delta, seconds(1) / 18);
+        delta = util::min(delta, seconds(1) / 18);
     }
 
 
@@ -610,12 +610,7 @@ ScenePtr<Scene> WorldScene::update(Time delta)
 
 
     auto tapped_topright_corner = [&] {
-        if (auto pos = APP.player().tap_released()) {
-            auto sz = PLATFORM.screen().size();
-            if (pos->x > sz.x - 36 and pos->y < 36) {
-                return true;
-            }
-        }
+        // ...
         return false;
     };
 
@@ -681,7 +676,6 @@ ScenePtr<Scene> WorldScene::update(Time delta)
                 set_gamespeed(GameSpeed::normal);
             }
         }
-        APP.player().touch_consume();
     } else if (not noreturn_ and APP.player().key_pressed(Key::alt_1) and
                not PLATFORM.network_peer().is_connected()) {
         set_gamespeed_keyheld_timer_ += delta;
@@ -749,10 +743,10 @@ ScenePtr<Scene> WorldScene::update(Time delta)
     }
 
     if (APP.camera()->is_shaking() or camera_update_timer_ > 0 or
-        APP.player().touch_current() or APP.camera()->always_update()) {
+        APP.camera()->always_update()) {
 
         camera_update_timer_ -= delta;
-        camera_update_timer_ = std::max((int)camera_update_timer_, 0);
+        camera_update_timer_ = util::max((int)camera_update_timer_, 0);
 
         // You may be wondering, why are we setting a timer to determine whether
         // to update the camera? Because we're using a floating point value

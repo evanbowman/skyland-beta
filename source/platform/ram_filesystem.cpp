@@ -623,7 +623,7 @@
 //     remaining -= path_len + 1;
 
 //     const auto initial_data_copy =
-//         std::min((int)FileContents::capacity - (path_len + 1), (int)length);
+//         util::min((int)FileContents::capacity - (path_len + 1), (int)length);
 
 
 //     for (int i = 0; i < initial_data_copy; ++i) {
@@ -663,7 +663,7 @@
 //         file = next_file;
 
 //         const auto copy_len =
-//             std::min((int)FileContents::capacity, (int)remaining);
+//             util::min((int)FileContents::capacity, (int)remaining);
 
 //         for (int i = 0; i < copy_len; ++i) {
 //             contents.data_[i] = data[offset + i];

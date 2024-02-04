@@ -363,7 +363,7 @@ void BasicCharacter::update(Time delta, Room* room)
 
     if (radiation_counter_) {
         if (radiation_counter_) {
-            radiation_counter_ -= std::min((u8)4, radiation_counter_);
+            radiation_counter_ -= util::min((u8)4, radiation_counter_);
             sprite_.set_mix({custom_color(0xe81858), radiation_counter_});
         }
     } else {

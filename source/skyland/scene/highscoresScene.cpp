@@ -47,6 +47,8 @@
 #include "textEntryScene.hpp"
 #include "titleScreenScene.hpp"
 #include "version.hpp"
+#include <algorithm>
+#include <iterator>
 
 
 
@@ -299,9 +301,9 @@ void HighscoresScene::enter(Scene& prev)
             highscore_island_info_store();
         }
 
-        for (auto& highscore : reversed(highscores.values_)) {
-            if (highscore.get() < (u32)score) {
-                highscore.set(score);
+        for (int i = Highscores::count - 1; i > -1; --i) {
+            if (highscores.values_[i].get() < (u32)score) {
+                highscores.values_[i].set(score);
                 changed = true;
                 break;
             }

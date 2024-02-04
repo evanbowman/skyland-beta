@@ -36,7 +36,6 @@
 
 #include "numeric.hpp"
 #include "platform/libc.hpp"
-#include <bit>
 
 
 // Because most processors are little endian, I am using little endian byte

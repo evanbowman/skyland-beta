@@ -228,10 +228,10 @@ void shift_rooms_right(Island& island)
     for (auto& room : island.rooms()) {
         tmp->push_back(room.get());
     }
-    for (auto& r : reversed(*tmp)) {
+    foreach_reversed(*tmp, [&](auto& r) {
         island.move_room(r->position(),
                          {(u8)(r->position().x + 1), r->position().y});
-    }
+    });
     // NOTE: because we shifted all blocks to the right by one
     // coordinate, a drone may now be inside of a block, which we
     // don't want to deal with at the moment, so just destroy them
@@ -309,16 +309,7 @@ ScenePtr<Scene> ConstructionScene::update(Time delta)
     }
 
 
-    auto tapclick = [&]() -> Optional<Vec2<s8>> {
-        if (auto pos = APP.player().tap_released()) {
-            auto clk = get_local_tapclick(island(), *pos);
-
-            if (clk) {
-                return clk->cast<s8>();
-            }
-        }
-        return nullopt();
-    }();
+    auto tapclick = [&]() -> Optional<Vec2<s8>> { return nullopt(); }();
 
 
     auto test_key = [&](Key k) {
@@ -461,17 +452,7 @@ ScenePtr<Scene> ConstructionScene::update(Time delta)
                     show_current_building_text();
                 }
             }
-        } else if (tapclick or APP.player().touch_held(milliseconds(200))) {
-
-            if (APP.player().touch_held(milliseconds(200))) {
-                // If the player presses and holds the touch screen, scroll
-                // through available construction sites.
-                if (auto pos = APP.player().touch_current()) {
-                    if (auto t = get_local_tapclick(island(), *pos)) {
-                        tapclick = t->cast<s8>();
-                    }
-                }
-            }
+        } else if (tapclick) {
 
             if (tapclick) {
                 // First try to find an exact match. If not, try a loose match
@@ -542,25 +523,9 @@ ScenePtr<Scene> ConstructionScene::update(Time delta)
                 show_current_building_text();
             }
         };
-        if (APP.player().touch_held(milliseconds(200))) {
-            if (auto p = APP.player().touch_current()) {
-                if (last_touch_x_) {
-                    touchscroll_ += p->x - last_touch_x_;
-                    last_touch_x_ = p->x;
-                } else {
-                    last_touch_x_ = p->x;
-                }
-            }
-            if (touchscroll_ < -16) {
-                touchscroll_ = 0;
-                scroll_right();
-            } else if (touchscroll_ > 16) {
-                touchscroll_ = 0;
-                scroll_left();
-            }
-        } else if (APP.player().key_down(Key::action_2) or
-                   (tapclick and
-                    *tapclick not_eq data_->construction_sites_[selector_])) {
+        if (APP.player().key_down(Key::action_2) or
+            (tapclick and
+             *tapclick not_eq data_->construction_sites_[selector_])) {
             find_construction_sites();
             state_ = State::select_loc;
             category_label_.reset();

@@ -46,7 +46,6 @@
 #include "scene.hpp"
 #include "script/value.hpp"
 #include "tileId.hpp"
-#include <limits>
 
 
 
@@ -402,10 +401,7 @@ public:
     Health max_health() const;
 
 
-    static Health health_upper_limit()
-    {
-        return std::numeric_limits<Health>::max();
-    }
+    static Health health_upper_limit();
 
 
     void heal(Health amount);

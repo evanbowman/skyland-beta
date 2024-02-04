@@ -235,7 +235,7 @@ ScenePtr<Scene> SandboxLoaderModule::update(Time delta)
 
     APP.player().update(delta);
 
-    if (APP.player().key_down(Key::action_1) or APP.player().tap_released()) {
+    if (APP.player().key_down(Key::action_1)) {
         PLATFORM.screen().fade(1.f, ColorConstant::rich_black, {}, true, true);
         return scene_pool::alloc<FadeInScene>();
     } else if (APP.player().key_down(Key::action_2)) {

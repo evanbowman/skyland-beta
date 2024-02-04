@@ -44,6 +44,7 @@
 #include "skyland/scene_pool.hpp"
 #include "skyland/skyland.hpp"
 #include "skyland/timeStreamEvent.hpp"
+#include <algorithm>
 
 
 
@@ -370,18 +371,6 @@ ScenePtr<Scene> WeaponSetTargetScene::update(Time delta)
     if (test_key(Key::action_1)) {
         if (auto scene = onclick(cursor_loc)) {
             return scene;
-        }
-    }
-    if (auto pos = APP.player().tap_released()) {
-        auto [x, y, island] = check_island_tapclick(*pos);
-        if (island == APP.opponent_island()) {
-            if (auto scene = onclick({x, y})) {
-                return scene;
-            } else {
-                return scene_pool::alloc<ReadyScene>();
-            }
-        } else {
-            return scene_pool::alloc<ReadyScene>();
         }
     }
 

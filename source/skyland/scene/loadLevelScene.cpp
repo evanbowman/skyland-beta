@@ -48,6 +48,7 @@
 #include "skyland/weather/blizzard.hpp"
 #include "skyland/weather/slightlyOvercast.hpp"
 #include "skyland/weather/typhoon.hpp"
+#include <limits>
 
 
 
@@ -140,7 +141,7 @@ void prep_level()
     }
 
     APP.persistent_data().score_.set(
-        std::max((s32)0, APP.persistent_data().score_.get()));
+        util::max((s32)0, APP.persistent_data().score_.get()));
 
 
     APP.level_begin_score() = APP.persistent_data().score_.get();

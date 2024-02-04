@@ -100,7 +100,7 @@ public:
         base_stats_cache_->happiness_ = s.happiness_;
 
         base_stats_cache_->commodity_count_ =
-            std::min((int)commodities_max, (int)s.commodities_.size());
+            util::min((int)commodities_max, (int)s.commodities_.size());
 
         for (u32 i = 0; i < base_stats_cache_->commodity_count_; ++i) {
             base_stats_cache_->commodities_[i] = s.commodities_[i];

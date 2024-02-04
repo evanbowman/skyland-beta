@@ -196,11 +196,11 @@ void UIMetric::display()
 
 u32 integer_text_length(int n)
 {
-    std::array<char, 40> buffer = {0};
+    char buffer[40] = {0};
 
-    locale_num2str(n, buffer.data(), 10);
+    locale_num2str(n, buffer, 10);
 
-    return strlen(buffer.data());
+    return strlen(buffer);
 }
 
 
@@ -265,10 +265,10 @@ void Text::print(const char* msg,
 
 void Text::assign(int val, const OptColors& colors)
 {
-    std::array<char, 40> buffer = {0};
+    char buffer[40] = {0};
 
-    locale_num2str(val, buffer.data(), 10);
-    this->assign(buffer.data(), colors);
+    locale_num2str(val, buffer, 10);
+    this->assign(buffer, colors);
 }
 
 
@@ -474,10 +474,10 @@ void Text::append(const char* str, const OptColors& colors)
 
 void Text::append(int num, const OptColors& colors)
 {
-    std::array<char, 40> buffer = {0};
+    char buffer[40] = {0};
 
-    locale_num2str(num, buffer.data(), 10);
-    this->append(buffer.data(), colors);
+    locale_num2str(num, buffer, 10);
+    this->append(buffer, colors);
 }
 
 

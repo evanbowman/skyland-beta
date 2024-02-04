@@ -126,7 +126,7 @@ void LispReplScene::repaint_entry(bool show_cursor)
         }
     }();
     const int scroll =
-        std::max(0, (int)command_->length() - (screen_tiles.x - 1));
+        util::max(0, (int)command_->length() - (screen_tiles.x - 1));
 
 
     const int balance = paren_balance(command_->c_str());

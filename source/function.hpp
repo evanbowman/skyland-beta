@@ -9,20 +9,21 @@
 
 #pragma once
 
-#include <array>
+#include "containers/array.hpp"
 #include <ciso646>
-#include <stdint.h>
+#include "number/int.h"
+#include <utility>
 
 
 // A fixed-space version of std::function, does not allocate.
 
 
-template <std::size_t storage, typename T> class Function
+template <u32 storage, typename T> class Function
 {
 };
 
 
-template <std::size_t storage, typename R, typename... Args>
+template <u32 storage, typename R, typename... Args>
 class Function<storage, R(Args...)>
 {
 public:
@@ -153,5 +154,5 @@ private:
     DestroyPolicy destroy_policy_;
     // TODO: 16 Or higher alignment is a somewhat unusual edge case, but the
     // code _should_ be updated to handle it.
-    alignas(8) std::array<uint8_t, storage> internal_storage_;
+    alignas(8) Array<uint8_t, storage> internal_storage_;
 };

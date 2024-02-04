@@ -35,6 +35,7 @@
 #include "creditsModule.hpp"
 #include "skyland/player/playerP1.hpp"
 #include "skyland/scene/titleScreenScene.hpp"
+#include <array>
 
 
 

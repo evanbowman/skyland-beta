@@ -31,38 +31,60 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-
-#pragma once
-
-#include "number/numeric.hpp"
-#include "platform/platform.hpp"
+#include "roomTable.hpp"
+#include <algorithm>
+#include <limits>
 
 
-class Rumble
+
+namespace skyland
 {
-public:
-    void update(Microseconds dt)
-    {
-        if (duration_ > 0) {
-            duration_ -= dt;
-            if (duration_ <= 0) {
-                duration_ = 0;
-                enabled_ = false;
-                PLATFORM.keyboard().rumble(false);
+
+
+
+void RoomTable::reindex(bool re_sort)
+{
+    if (rooms_.empty()) {
+        for (auto& elem : x_jump_table_) {
+            elem = 0;
+        }
+        return;
+    }
+
+    static const auto uninit_index = std::numeric_limits<IndexType>::max();
+
+    for (auto& elem : x_jump_table_) {
+        // Initialize to an arbitrarily high number.
+        elem = uninit_index;
+    }
+
+    if (re_sort) {
+        std::sort(rooms_.begin(), rooms_.end(), [](auto& lhs, auto& rhs) {
+            return lhs->position().x < rhs->position().x;
+        });
+    }
+
+    for (u32 i = 0; i < rooms_.size(); ++i) {
+        int room_min_x = rooms_[i]->position().x;
+
+        for (int x = room_min_x; x < room_min_x + rooms_[i]->size().x; ++x) {
+            if (x_jump_table_[x] > i) {
+                x_jump_table_[x] = i;
             }
         }
     }
 
-    void activate(Microseconds duration)
-    {
-        if (not enabled_) {
-            PLATFORM.keyboard().rumble(true);
+    for (int i = 0; i < map_width; ++i) {
+        if (x_jump_table_[i] == uninit_index) {
+            if (i > 0) {
+                x_jump_table_[i] = x_jump_table_[i - 1];
+            } else {
+                x_jump_table_[i] = 0;
+            }
         }
-        duration_ = util::max(duration, duration_);
-        enabled_ = true;
     }
+}
 
-private:
-    bool enabled_ = false;
-    Microseconds duration_ = 0;
-};
+
+
+} // namespace skyland

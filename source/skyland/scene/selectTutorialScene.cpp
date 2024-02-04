@@ -39,6 +39,7 @@
 #include "skyland/skyland.hpp"
 #include "skyland/timeStreamEvent.hpp"
 #include "titleScreenScene.hpp"
+#include <limits>
 
 
 

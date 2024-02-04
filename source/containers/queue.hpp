@@ -41,7 +41,6 @@ template <typename T, int capacity>
 class Queue : public CircularBuffer<T, capacity>
 {
 public:
-
     bool push(T&& val)
     {
         if (this->full()) {
@@ -70,6 +69,4 @@ public:
     {
         return CircularBuffer<T, capacity>::pop();
     }
-
-
 };

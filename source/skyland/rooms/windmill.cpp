@@ -36,6 +36,7 @@
 #include "skyland/latency.hpp"
 #include "skyland/room_metatable.hpp"
 #include "skyland/skyland.hpp"
+#include <array>
 
 
 

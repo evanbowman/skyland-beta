@@ -35,7 +35,7 @@
 #pragma once
 
 #include "number/numeric.hpp"
-#include <array>
+#include "containers/array.hpp"
 #include <new>
 
 
@@ -111,11 +111,11 @@ template <u32 size, u32 count, u32 align = size> class Pool : public GenericPool
 public:
     struct Cell
     {
-        alignas(align) std::array<u8, size> mem_;
+        alignas(align) Array<u8, size> mem_;
         Cell* next_;
     };
 
-    using Cells = std::array<Cell, count>;
+    using Cells = Array<Cell, count>;
 
 
     u32 pooled_element_size() const override

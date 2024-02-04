@@ -91,7 +91,7 @@ public:
 
     StringAdapter(char c, int fill_count)
     {
-        for (int i = 0; i < std::min((int)Capacity - 1, fill_count); ++i) {
+        for (int i = 0; i < util::min((int)Capacity - 1, fill_count); ++i) {
             mem_.push_back(c);
         }
         mem_.push_back('\0');

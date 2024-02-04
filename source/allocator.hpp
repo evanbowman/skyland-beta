@@ -153,7 +153,9 @@ DynamicMemory<T> allocate_dynamic(const ScratchBuffer::Tag& tag, Args&&... args)
 
         return {sc_buf, {result, deleter}};
     }
-    return {sc_buf, {nullptr, deleter}};
+
+    Platform::fatal("allocate_dynamic failed!?");
+    while (1);
 }
 
 

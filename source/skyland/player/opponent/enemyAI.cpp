@@ -60,6 +60,7 @@
 #include "skyland/rooms/warhead.hpp"
 #include "skyland/scene/constructionScene.hpp"
 #include "skyland/skyland.hpp"
+#include <algorithm>
 
 
 

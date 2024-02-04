@@ -52,6 +52,8 @@
 #include "skyland/rooms/synth.hpp"
 #include "skyland/timeStreamEvent.hpp"
 #include "tile.hpp"
+#include <algorithm>
+#include <limits>
 
 
 
@@ -2305,9 +2307,7 @@ bool speaker_data_load(Island& island, const char* path)
                         ++current;
                     }
 
-                    memcpy(
-                        speaker->effect_flags().vector_.data(), &v, sizeof v);
-
+                    speaker->effect_flags().vector_ = v;
 
                     Speaker::Settings settings;
 

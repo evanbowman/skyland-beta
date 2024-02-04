@@ -858,7 +858,7 @@ static void add_sound(Buffer<ActiveSoundInfo, 3>& sounds,
 
 
 
-static constexpr const uint __snd_rates[13] = {
+static constexpr const unsigned int __snd_rates[13] = {
     0,
     8013, // C
     7566, // C#
