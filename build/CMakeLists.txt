@@ -559,6 +559,24 @@ else()
 endif()
 
 
+target_precompile_headers(${EXECUTABLE_NAME}
+  PRIVATE
+  <limits>
+  <utility>
+  <new>
+  <tuple>
+  <variant>
+  <type_traits>
+  <initializer_list>
+  ../source/optional.hpp
+  ../source/unicode.hpp
+  ../source/allocator.hpp
+  ../source/skyland/room.hpp
+  ../source/skyland/island.hpp
+  ../source/platform/platform.hpp
+  ../source/skyland/skyland.hpp)
+
+
 set(IMAGE_INCLUDES "")
 set(IMAGE_SPR_STUBS "")
 set(IMAGE_TILE_STUBS "")
