@@ -62,19 +62,7 @@ public:
     using Rooms = RoomTable;
 
 
-    bool add_room(RoomPtr<Room> insert, bool do_repaint = true)
-    {
-        if (rooms().full()) {
-            return false;
-        }
-        auto result = rooms_.insert_room(std::move(insert));
-        if (do_repaint) {
-            repaint();
-        }
-        recalculate_power_usage();
-        on_layout_changed(insert->position());
-        return result;
-    }
+    bool add_room(RoomPtr<Room> insert, bool do_repaint = true);
 
 
     template <typename T, typename... Args>
@@ -145,10 +133,7 @@ public:
     void destroy_room(const RoomCoord& coord);
 
 
-    s8 get_ambient_movement()
-    {
-        return ambient_movement_;
-    }
+    s8 get_ambient_movement();
 
 
     Layer layer() const
@@ -237,22 +222,9 @@ public:
     }
 
 
-    u8 workshop_count() const
-    {
-        return workshop_count_;
-    }
-
-
-    u8 manufactory_count() const
-    {
-        return manufactory_count_;
-    }
-
-
-    u8 core_count() const
-    {
-        return core_count_;
-    }
+    u8 workshop_count() const;
+    u8 manufactory_count() const;
+    u8 core_count() const;
 
 
     EntityList<Entity>& projectiles()
@@ -270,46 +242,25 @@ public:
     }
 
 
-    bool is_destroyed()
-    {
-        return destroyed_;
-    }
+    bool is_destroyed();
 
 
-    Optional<RoomCoord> chimney_loc() const
-    {
-        return chimney_loc_;
-    }
+    Optional<RoomCoord> chimney_loc() const;
 
 
-    Power power_supply() const
-    {
-        return power_supply_;
-    }
+    Power power_supply() const;
 
 
-    Power power_drain() const
-    {
-        return power_drain_;
-    }
+    Power power_drain() const;
 
 
-    void set_owner(Player& player)
-    {
-        owner_ = &player;
-    }
+    void set_owner(Player& player);
 
 
-    bool has_radar() const
-    {
-        return has_radar_;
-    }
+    bool has_radar() const;
 
 
-    bool is_boarded() const
-    {
-        return is_boarded_;
-    }
+    bool is_boarded() const;
 
 
     void on_layout_changed(const RoomCoord& room_added_removed_coord);
@@ -321,20 +272,13 @@ public:
     }
 
 
-
     HitBox hitbox() const;
 
 
-    Optional<RoomCoord> flag_pos()
-    {
-        return flag_pos_;
-    }
+    Optional<RoomCoord> flag_pos();
 
 
-    const Bitmatrix<16, 16>& rooms_plot() const
-    {
-        return rooms_plot_;
-    }
+    const Bitmatrix<16, 16>& rooms_plot() const;
 
 
     void dispatch_room(Room* room);

@@ -1489,6 +1489,113 @@ void Island::recalculate_power_usage()
 
 
 
+Optional<RoomCoord> Island::flag_pos()
+{
+    return flag_pos_;
+}
+
+
+
+const Bitmatrix<16, 16>& Island::rooms_plot() const
+{
+    return rooms_plot_;
+}
+
+
+
+bool Island::is_destroyed()
+{
+    return destroyed_;
+}
+
+
+
+Optional<RoomCoord> Island::chimney_loc() const
+{
+    return chimney_loc_;
+}
+
+
+
+Power Island::power_supply() const
+{
+    return power_supply_;
+}
+
+
+
+Power Island::power_drain() const
+{
+    return power_drain_;
+}
+
+
+
+void Island::set_owner(Player& player)
+{
+    owner_ = &player;
+}
+
+
+
+bool Island::has_radar() const
+{
+    return has_radar_;
+}
+
+
+
+bool Island::is_boarded() const
+{
+    return is_boarded_;
+}
+
+
+
+s8 Island::get_ambient_movement()
+{
+    return ambient_movement_;
+}
+
+
+
+u8 Island::workshop_count() const
+{
+    return workshop_count_;
+}
+
+
+
+u8 Island::manufactory_count() const
+{
+    return manufactory_count_;
+}
+
+
+
+u8 Island::core_count() const
+{
+    return core_count_;
+}
+
+
+
+bool Island::add_room(RoomPtr<Room> insert, bool do_repaint)
+{
+    if (rooms().full()) {
+        return false;
+    }
+    auto result = rooms_.insert_room(std::move(insert));
+    if (do_repaint) {
+        repaint();
+    }
+    recalculate_power_usage();
+    on_layout_changed(insert->position());
+    return result;
+}
+
+
+
 bool Island::add_character(EntityRef<BasicCharacter> character)
 {
     if (auto room = get_room(character->grid_position())) {
