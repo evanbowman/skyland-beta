@@ -53,7 +53,7 @@ Skyland is jam-packed with stuff, some of the highlights:
 5) run ./build.sh
 
 ## Releases
-[See here](https://github.com/evanbowman/skyland-beta/releases). Why so many releases? I like to have build artifacts in case something breaks. The program takes a few minutes to compile, so it's nice to have old builds when tracking down issues.
+[See here](https://github.com/evanbowman/skyland-beta/releases). Why so many releases? I like to have build artifacts in case something breaks. The program takes a few minutes to compile, so it's nice to have old builds when tracking down issues. (EDIT: newer builds take about 20 seconds to compile, but old builds weren't that optimized and took almost a minute! I'm impatient and that's too long to wait when stepping through releases for bugfix purposes)
 
 
 # Modding (no C++ toolchain required!)
