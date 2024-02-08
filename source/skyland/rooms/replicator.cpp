@@ -156,13 +156,10 @@ ScenePtr<Scene> Replicator::select_impl(const RoomCoord& cursor)
         return null_scene();
     }
 
-    int character_count = 0;
-
     BasicCharacter* found_chr = nullptr;
 
     for (auto& chr : characters()) {
         if (chr->owner() == &parent()->owner()) {
-            character_count++;
             found_chr = chr.get();
         }
     }
