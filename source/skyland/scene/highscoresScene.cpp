@@ -183,6 +183,7 @@ void highscore_island_info_store()
 
                     auto mt = metaclass_index(rname.name());
                     HighscoreIslandInfo::BlockData bd;
+                    memset(&bd, 0, sizeof bd);
                     bd.type_ = mt + 1; // 0 used as null room
                     bd.set_xpos(rx.value_);
                     bd.set_ypos(ry.value_);

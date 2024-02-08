@@ -2367,7 +2367,7 @@ bool speaker_data_store(Island& island, const char* path)
         }
     }
 
-    if (not data.size() == 0) {
+    if (data.size() not_eq 0) {
         return flash_filesystem::store_file_data_binary(path, data);
     } else {
         flash_filesystem::unlink_file(path);
@@ -2468,7 +2468,7 @@ bool synth_notes_store(Island& island, const char* path)
         }
     }
 
-    if (not data.size() == 0) {
+    if (data.size() not_eq 0) {
         return flash_filesystem::store_file_data_binary(path, data);
     } else {
         flash_filesystem::unlink_file(path);

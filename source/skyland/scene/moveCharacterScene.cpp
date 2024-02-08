@@ -79,7 +79,9 @@ void ModifyCharacterScene::exit(Scene& next)
         island = APP.opponent_island();
     }
 
-    island->render_interior_fast();
+    if (island) {
+        island->render_interior_fast();
+    }
 
     if (APP.game_mode() == App::GameMode::co_op) {
 
@@ -112,6 +114,10 @@ void ModifyCharacterScene::enter(Scene& prev)
     }
 
     auto found = BasicCharacter::find_by_id(chr_id_);
+
+    if (not island) {
+        return;
+    }
 
     island->plot_walkable_zones(*matrix_, found.first);
 
@@ -189,6 +195,8 @@ ScenePtr<Scene> ModifyCharacterScene::update(Time delta)
         island = &APP.player_island();
     } else if (APP.opponent_island()) {
         island = APP.opponent_island();
+    } else {
+        return scene_pool::alloc<ReadyScene>();
     }
 
     RoomCoord* cursor_loc = nullptr;

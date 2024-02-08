@@ -72,7 +72,7 @@ void ZoneImageScene::enter(Scene& prev)
     PLATFORM.set_scroll(Layer::map_1_ext, 0, 8);
     PLATFORM.set_scroll(Layer::map_0_ext, 0, 0);
 
-    if (not APP.current_world_location() == 0) {
+    if (APP.current_world_location() not_eq 0) {
         return;
     }
 

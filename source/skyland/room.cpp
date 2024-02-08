@@ -876,11 +876,6 @@ void Room::apply_damage(Health damage)
         }
     }
 
-    auto diff = damage;
-    if (diff > health_) {
-        diff -= diff - health_;
-    }
-
     if (damage > health_) {
         health_ = 0;
     } else {
@@ -1573,8 +1568,6 @@ void Room::render_scaffolding(TileId buffer[16][16])
                 placed_strut = true;
             }
         }
-        placed_strut = false;
-
         return;
     }
 
