@@ -1606,7 +1606,7 @@ void Room::render_scaffolding(TileId buffer[16][16])
 
 
 
-bool Room::has_prop(RoomProperties prop)
+bool Room::has_prop(RoomProperties::Value prop)
 {
     return (*metaclass())->properties() & prop;
 }

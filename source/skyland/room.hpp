@@ -262,7 +262,7 @@ public:
     }
 
 
-    bool has_prop(RoomProperties prop);
+    bool has_prop(RoomProperties::Value prop);
 
 
     void set_injured();
