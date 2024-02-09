@@ -55,7 +55,7 @@ Synth::Synth(Island* parent, const RoomCoord& position)
     : Decoration(parent, name(), position)
 {
     for (auto& note : notes_) {
-        note.regular_.note_ = Platform::Speaker::Note::invalid;
+        note.regular_.note_ = Platform::Speaker::PSG::Note::invalid;
         note.regular_.octave_ = 0;
     }
 
@@ -82,7 +82,7 @@ Synth::Synth(Island* parent, const RoomCoord& position)
 
 
 
-Platform::Speaker::Channel Synth::channel() const
+Platform::Speaker::PSG::Channel Synth::channel() const
 {
     for (int x = 0; x < 4; ++x) {
         int coord = position().x;
@@ -90,13 +90,13 @@ Platform::Speaker::Channel Synth::channel() const
         if (coord > 0) {
             if (auto room = parent()->get_room({u8(coord), position().y})) {
                 if (str_eq(room->name(), "speaker")) {
-                    return (Platform::Speaker::Channel)(x);
+                    return (Platform::Speaker::PSG::Channel)(x);
                 }
             }
         }
     }
 
-    return Platform::Speaker::Channel::invalid;
+    return Platform::Speaker::PSG::Channel::invalid;
 }
 
 

@@ -38,6 +38,7 @@
 #ifndef __TEST__
 #include "platform/platform.hpp"
 #endif
+#include "logger.hpp"
 #include "platform/scratch_buffer.hpp"
 #include <new>
 

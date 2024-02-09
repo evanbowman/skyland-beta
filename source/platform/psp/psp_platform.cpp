@@ -1121,7 +1121,7 @@ void Platform::Keyboard::poll()
         states_[int(Key::down)] = true;
     }
 
-    if (UNLIKELY(static_cast<bool>(::missed_keys))) {
+    if (static_cast<bool>(::missed_keys)) [[unlikely]] {
         for (int i = 0; i < (int)Key::count; ++i) {
             if ((*::missed_keys)[i]) {
                 states_[i] = true;

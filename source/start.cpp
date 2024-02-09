@@ -149,10 +149,15 @@ void draw_approx_fps(Time delta)
 
 
 
+void test_platform_compat(Platform& pfrm);
+
+
+
 void start(Platform& pfrm)
 {
-    using namespace skyland;
+    test_platform_compat(pfrm);
 
+    using namespace skyland;
 
     malloc_compat::Heap heap;
 
@@ -164,7 +169,6 @@ void start(Platform& pfrm)
     if (app->is_developer_mode()) {
         state_bit_store(StateBit::verbose_boot, true);
     }
-
 
     while (PLATFORM.is_running()) {
         PLATFORM.keyboard().poll();

@@ -1141,10 +1141,14 @@ void PlayerIslandDestroyedScene::exit(Scene& next)
     PLATFORM.load_overlay_texture("overlay");
     PLATFORM.screen().pixelate(0);
 
-    PLATFORM.speaker().stop_chiptune_note(Platform::Speaker::Channel::square_1);
-    PLATFORM.speaker().stop_chiptune_note(Platform::Speaker::Channel::square_2);
-    PLATFORM.speaker().stop_chiptune_note(Platform::Speaker::Channel::noise);
-    PLATFORM.speaker().stop_chiptune_note(Platform::Speaker::Channel::wave);
+    using Channel = Platform::Speaker::PSG::Channel;
+
+    if (PLATFORM.speaker().psg()) {
+        PLATFORM.speaker().psg()->stop_note(Channel::square_1);
+        PLATFORM.speaker().psg()->stop_note(Channel::square_2);
+        PLATFORM.speaker().psg()->stop_note(Channel::noise);
+        PLATFORM.speaker().psg()->stop_note(Channel::wave);
+    }
 
     if (restore_volume_) {
         PLATFORM.speaker().set_music_volume(

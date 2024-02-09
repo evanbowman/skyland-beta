@@ -87,7 +87,7 @@ ScratchBufferPtr make_scratch_buffer(const ScratchBuffer::Tag& tag)
 
             if (not scratch_buffers_remaining()) {
 #ifndef __TEST__
-                Platform::instance().logger().clear();
+                log_clear();
 #endif
             }
         }

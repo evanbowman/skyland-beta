@@ -1809,11 +1809,11 @@ static void update_lava_slanted(terrain::Sector& s,
 static void lava_spread(terrain::Sector& s, Vec3<u8> target, terrain::Type tp)
 {
     auto prev_tp = s.get_block(target).type();
-    if (UNLIKELY(prev_tp not_eq tp and
-                 (prev_tp == terrain::Type::lava_slant_a or
-                  prev_tp == terrain::Type::lava_slant_b or
-                  prev_tp == terrain::Type::lava_slant_c or
-                  prev_tp == terrain::Type::lava_slant_d))) {
+    if (prev_tp not_eq tp and (prev_tp == terrain::Type::lava_slant_a or
+                               prev_tp == terrain::Type::lava_slant_b or
+                               prev_tp == terrain::Type::lava_slant_c or
+                               prev_tp == terrain::Type::lava_slant_d))
+        [[unlikely]] {
         switch (tp) {
         case terrain::Type::lava_slant_a:
             s.set_block(target, terrain::Type::lava_spread_laterally_a);
@@ -1925,11 +1925,11 @@ static void water_spread(terrain::Sector& s, Vec3<u8> target, terrain::Type tp)
     if (terrain::categories(tp) & terrain::Categories::fluid_lava) {
         s.set_block(target, terrain::Type::basalt);
     }
-    if (UNLIKELY(prev_tp not_eq tp and
-                 (prev_tp == terrain::Type::water_slant_a or
-                  prev_tp == terrain::Type::water_slant_b or
-                  prev_tp == terrain::Type::water_slant_c or
-                  prev_tp == terrain::Type::water_slant_d))) {
+    if (prev_tp not_eq tp and (prev_tp == terrain::Type::water_slant_a or
+                               prev_tp == terrain::Type::water_slant_b or
+                               prev_tp == terrain::Type::water_slant_c or
+                               prev_tp == terrain::Type::water_slant_d))
+        [[unlikely]] {
         switch (tp) {
         case terrain::Type::water_slant_a:
             s.set_block(target, terrain::Type::water_spread_laterally_a);

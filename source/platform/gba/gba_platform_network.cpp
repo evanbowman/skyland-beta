@@ -442,7 +442,7 @@ static void multiplayer_schedule_tx()
 
 static void multiplayer_serial_isr()
 {
-    if (UNLIKELY(multiplayer_error())) {
+    if (multiplayer_error()) [[unlikely]] {
         ::__platform__->network_peer().disconnect();
         return;
     }
@@ -484,7 +484,7 @@ Optional<Platform::NetworkPeer::Message> Platform::NetworkPeer::poll_message()
         return {};
     }
     if (auto msg = rx_ring_pop()) {
-        if (UNLIKELY(mc.poller_current_message not_eq nullptr)) {
+        if (mc.poller_current_message not_eq nullptr) [[unlikely]] {
             // failure to deallocate/consume message!
             mc.rx_message_pool.free(msg);
             disconnect();

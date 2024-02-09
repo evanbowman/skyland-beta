@@ -527,7 +527,7 @@ void Platform::Keyboard::poll()
 
     poll_keys(states_);
 
-    if (UNLIKELY(static_cast<bool>(::missed_keys))) {
+    if (static_cast<bool>(::missed_keys)) [[unlikely]] {
         for (int i = 0; i < (int)Key::count; ++i) {
             if ((*::missed_keys)[i]) {
                 states_[i] = true;
@@ -1110,13 +1110,13 @@ static PaletteBank color_mix(ColorConstant k, u8 amount)
 
     // Skip over any palettes that are in use
     while (palette_info[palette_counter].locked_) {
-        if (UNLIKELY(palette_counter == palette_count)) {
+        if (palette_counter == palette_count) [[unlikely]] {
             return 0;
         }
         ++palette_counter;
     }
 
-    if (UNLIKELY(palette_counter == palette_count)) {
+    if (palette_counter == palette_count) [[unlikely]] {
         // Ok, so in this instance, we ran out of unused palettes, but there may
         // be a palette that was used in the last frame, and which has not yet
         // been referenced while rendering the current frame. Unlock that
@@ -1246,7 +1246,7 @@ void Platform::Screen::draw(const FastSpriteMatrix mat)
     for (auto& spr : mat.data_[0]) {
         const auto target_index = 2 + spr.tile_ * tx_scale;
 
-        if (UNLIKELY(oam_write_index == oam_count)) {
+        if (oam_write_index == oam_count) [[unlikely]] {
             return;
         }
 
@@ -1320,7 +1320,7 @@ void Platform::Screen::draw_batch(TextureIndex t,
     const auto target_index = 2 + t * tx_scale;
 
     for (auto& c : coords) {
-        if (UNLIKELY(oam_write_index == oam_count)) {
+        if (oam_write_index == oam_count) [[unlikely]] {
             return;
         }
 
@@ -1355,7 +1355,7 @@ void Platform::Screen::draw_batch(TextureIndex t,
 
 void Platform::Screen::draw(const Sprite& spr)
 {
-    if (UNLIKELY(spr.get_alpha() == Sprite::Alpha::transparent)) {
+    if (spr.get_alpha() == Sprite::Alpha::transparent) [[unlikely]] {
         return;
     }
 
@@ -1368,7 +1368,7 @@ void Platform::Screen::draw(const Sprite& spr)
 
 
     auto pb = [&]() -> PaletteBank {
-        if (UNLIKELY(mix.color_ not_eq ColorConstant::null)) {
+        if (mix.color_ not_eq ColorConstant::null) [[unlikely]] {
             if (const auto pal_bank = color_mix(mix.color_, mix.amount_)) {
                 return ATTR2_PALBANK(pal_bank);
             } else {
@@ -1388,7 +1388,7 @@ void Platform::Screen::draw(const Sprite& spr)
                            int scale,
                            int shape,
                            int size) {
-        if (UNLIKELY(oam_write_index == oam_count)) {
+        if (oam_write_index == oam_count) [[unlikely]] {
             return;
         }
         const auto position =
@@ -1979,14 +1979,6 @@ Platform::EncodedTile Platform::encode_tile(u8 tile_data[16][16])
 
 
 
-const Platform::Screen::Touch* Platform::Screen::touch() const
-{
-    // No touchscreen on the gba!
-    return nullptr;
-}
-
-
-
 using OptDmaBufferData = Array<u16, 161>;
 EWRAM_DATA Optional<DynamicMemory<OptDmaBufferData>> opt_dma_buffer_;
 EWRAM_DATA int dma_effect_params[3];
@@ -2526,7 +2518,7 @@ static void vblank_isr()
     rumble_update();
 
     const auto ten_seconds = 600; // approx. 60 fps
-    if (UNLIKELY(::watchdog_counter > ten_seconds)) {
+    if (::watchdog_counter > ten_seconds) [[unlikely]] {
 
         ::watchdog_counter = 0;
 
@@ -3559,96 +3551,6 @@ void Platform::erase_save_sector()
         bootleg_flash_erase(bootleg_flash_type);
     }
 }
-
-
-
-////////////////////////////////////////////////////////////////////////////////
-// Logger
-////////////////////////////////////////////////////////////////////////////////
-
-
-
-Platform::Logger::Logger()
-{
-}
-
-
-
-static Severity log_threshold;
-
-
-
-void Platform::Logger::set_threshold(Severity severity)
-{
-    log_threshold = severity;
-}
-
-
-
-Optional<Vector<char>> log_data_;
-
-
-
-Vector<char>* Platform::Logger::data()
-{
-    if (log_data_) {
-        return &*log_data_;
-    }
-
-    return nullptr;
-}
-
-
-
-void Platform::Logger::log(Severity level, const char* msg)
-{
-    if (::__platform__ == nullptr) {
-        return;
-    }
-
-    ScratchBuffer::Tag t = "syslog_data";
-
-    if (not log_data_) {
-        log_data_.emplace(t);
-    }
-
-    if (mgba_detect()) {
-        mgba_log(msg);
-    }
-
-    while (*msg not_eq '\0') {
-        log_data_->push_back(*msg, t);
-        ++msg;
-    }
-
-    log_data_->push_back('\n', t);
-}
-
-
-
-void Platform::Logger::clear()
-{
-    log_data_.reset();
-}
-
-
-
-void Platform::Logger::flush()
-{
-    if (not log_data_) {
-        return;
-    }
-
-    flash_filesystem::store_file_data_binary("/log.txt", *log_data_);
-
-    // log_data_.reset();
-}
-
-
-
-// NOTE: Between remixing the audio track down to 8-bit 16kHz signed, generating
-// assembly output, adding the file to CMake, adding the include, and adding the
-// sound to the sounds array, it's just too tedious to keep working this way...
 
 
 
@@ -5190,8 +5092,6 @@ Platform::Platform()
     ::__platform__ = this;
 
     const auto tm1 = system_clock_.now();
-
-    logger().set_threshold(Severity::fatal);
 
     // if (skyland_mgba_invoke_command(Command::identify, "HELLO.") == "ACKNOWLEDGED.") {
     //     info("skyland-mgba detected!");

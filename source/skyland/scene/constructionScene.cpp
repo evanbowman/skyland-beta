@@ -530,10 +530,7 @@ ScenePtr<Scene> ConstructionScene::update(Time delta)
             state_ = State::select_loc;
             category_label_.reset();
             msg(SYSTR(construction_build)->c_str());
-            last_touch_x_ = 0;
             break;
-        } else {
-            last_touch_x_ = 0;
         }
 
         if (APP.player().key_down(Key::down)) {

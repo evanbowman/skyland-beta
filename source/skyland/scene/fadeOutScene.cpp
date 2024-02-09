@@ -101,13 +101,17 @@ ScenePtr<Scene> FadeOutScene::update(Time delta)
         }
 
 
-        PLATFORM.speaker().stop_chiptune_note(
-            Platform::Speaker::Channel::square_1);
-        PLATFORM.speaker().stop_chiptune_note(
-            Platform::Speaker::Channel::square_2);
-        PLATFORM.speaker().stop_chiptune_note(
-            Platform::Speaker::Channel::noise);
-        PLATFORM.speaker().stop_chiptune_note(Platform::Speaker::Channel::wave);
+        if (PLATFORM.speaker().psg()) {
+            PLATFORM.speaker().psg()->stop_note(
+                Platform::Speaker::PSG::Channel::square_1);
+            PLATFORM.speaker().psg()->stop_note(
+                Platform::Speaker::PSG::Channel::square_2);
+            PLATFORM.speaker().psg()->stop_note(
+                Platform::Speaker::PSG::Channel::noise);
+            PLATFORM.speaker().psg()->stop_note(
+                Platform::Speaker::PSG::Channel::wave);
+        }
+
 
         APP.player_island().set_hidden(false);
         if (APP.opponent_island()) {

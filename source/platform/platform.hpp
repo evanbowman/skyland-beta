@@ -36,7 +36,6 @@
 #include "number/numeric.hpp"
 #include "optional.hpp"
 #include "scratch_buffer.hpp"
-#include "severity.hpp"
 #include "sound.hpp"
 #include "unicode.hpp"
 
@@ -87,7 +86,6 @@ class Platform
 public:
     class Screen;
     class Keyboard;
-    class Logger;
     class Speaker;
     class NetworkPeer;
     class DeltaClock;
@@ -169,12 +167,6 @@ public:
     Keyboard& keyboard()
     {
         return keyboard_;
-    }
-
-
-    Logger& logger()
-    {
-        return logger_;
     }
 
     Speaker& speaker()
@@ -462,35 +454,6 @@ public:
         static constexpr u32 sprite_limit = 128;
 
 
-        class Touch
-        {
-        public:
-            Optional<Vec2<u32>> read() const
-            {
-                return current_;
-            }
-
-
-            Optional<Vec2<u32>> up_transition() const
-            {
-                if (not current_ and previous_) {
-                    return previous_;
-                }
-
-                return {};
-            }
-
-
-        private:
-            friend class Screen;
-            Optional<Vec2<u32>> current_;
-            Optional<Vec2<u32>> previous_;
-        };
-
-
-        const Touch* touch() const;
-
-
         void draw(const Sprite& spr);
 
         struct SpriteBatchOptions
@@ -590,7 +553,6 @@ public:
 
         View view_;
         void* userdata_;
-        Touch touch_;
     };
 
 
@@ -689,31 +651,6 @@ public:
 
 
     ////////////////////////////////////////////////////////////////////////////
-    // Logger
-    ////////////////////////////////////////////////////////////////////////////
-
-
-    class Logger
-    {
-    public:
-        void log(Severity severity, const char* msg);
-
-        void flush();
-
-        void clear();
-
-        Vector<char>* data();
-
-        void set_threshold(Severity severity);
-
-    private:
-        Logger();
-
-        friend class Platform;
-    };
-
-
-    ////////////////////////////////////////////////////////////////////////////
     // Speaker
     ////////////////////////////////////////////////////////////////////////////
 
@@ -723,89 +660,93 @@ public:
     public:
         void start();
 
-        enum Note : u8 {
-            invalid,
-            C,
-            CIS,
-            D,
-            DIS,
-            E,
-            F,
-            FIS,
-            G,
-            GIS,
-            A,
-            AIS,
-            B,
-            count,
-        };
-
-
-        enum class Channel {
-            square_1,
-            square_2,
-            noise,
-            wave,
-            invalid,
-        };
-
-
-        struct NoteDesc
+        struct PSG
         {
-            struct RegularNote
-            {
-                Platform::Speaker::Note note_ : 4;
-                u8 octave_ : 4;
+            enum Note : u8 {
+                invalid,
+                C,
+                CIS,
+                D,
+                DIS,
+                E,
+                F,
+                FIS,
+                G,
+                GIS,
+                A,
+                AIS,
+                B,
+                count,
             };
 
-            struct NoiseFrequency
-            {
-                u8 frequency_select_ : 7;
-                u8 wide_mode_ : 1;
+
+            enum class Channel {
+                square_1,
+                square_2,
+                noise,
+                wave,
+                invalid,
             };
 
-            union
+            struct NoteDesc
             {
-                RegularNote regular_;
-                NoiseFrequency noise_freq_;
+                struct RegularNote
+                {
+                    Platform::Speaker::PSG::Note note_ : 4;
+                    u8 octave_ : 4;
+                };
+
+                struct NoiseFrequency
+                {
+                    u8 frequency_select_ : 7;
+                    u8 wide_mode_ : 1;
+                };
+
+                union
+                {
+                    RegularNote regular_;
+                    NoiseFrequency noise_freq_;
+                };
             };
+
+
+            void play_note(Channel channel, NoteDesc note);
+
+
+            void stop_note(Channel channel);
+
+
+            enum class Effect {
+                none,
+                vibrato,
+                duty,
+                envelope,
+            };
+
+
+            void apply_effect(Channel channel,
+                              Effect effect,
+                              u8 argument,
+                              Microseconds delta);
+
+
+            struct ChannelSettings
+            {
+                u8 length_ : 6;
+                u8 duty_ : 2;
+                u8 envelope_step_ : 3;
+                u8 envelope_direction_ : 1;
+                u8 volume_ : 4;
+            };
+
+
+            void init_square_1(ChannelSettings settings);
+            void init_square_2(ChannelSettings settings);
+            void init_wave(u16 config);
+            void init_noise(ChannelSettings settings);
         };
 
-
-        void play_chiptune_note(Channel channel, NoteDesc note);
-
-
-        void stop_chiptune_note(Channel channel);
-
-
-        enum class Effect {
-            none,
-            vibrato,
-            duty,
-            envelope,
-        };
-
-
-        void apply_chiptune_effect(Channel channel,
-                                   Effect effect,
-                                   u8 argument,
-                                   Microseconds delta);
-
-
-        struct ChannelSettings
-        {
-            u8 length_ : 6;
-            u8 duty_ : 2;
-            u8 envelope_step_ : 3;
-            u8 envelope_direction_ : 1;
-            u8 volume_ : 4;
-        };
-
-
-        void init_chiptune_square_1(ChannelSettings settings);
-        void init_chiptune_square_2(ChannelSettings settings);
-        void init_chiptune_wave(u16 config);
-        void init_chiptune_noise(ChannelSettings settings);
+        PSG* psg();
 
 
         // NOTE: All music will loop. It's just more efficient to implement the
@@ -1001,7 +942,6 @@ private:
     Screen screen_;
     Keyboard keyboard_;
     Speaker speaker_;
-    Logger logger_;
     Data* data_ = nullptr;
 };
 
@@ -1050,39 +990,4 @@ inline void draw_image(TileDesc start_tile,
 template <Key k> bool key_down()
 {
     return PLATFORM.keyboard().down_transition<k>();
-}
-
-
-inline void debug(const char* msg)
-{
-    PLATFORM.logger().log(Severity::debug, msg);
-}
-inline void info(const char* msg)
-{
-    PLATFORM.logger().log(Severity::info, msg);
-}
-inline void warning(const char* msg)
-{
-    PLATFORM.logger().log(Severity::warning, msg);
-}
-inline void error(const char* msg)
-{
-    PLATFORM.logger().log(Severity::error, msg);
-}
-
-template <u32 size> void debug(const StringBuffer<size>& buffer)
-{
-    PLATFORM.logger().log(Severity::debug, buffer.c_str());
-}
-template <u32 size> void info(const StringBuffer<size>& buffer)
-{
-    PLATFORM.logger().log(Severity::debug, buffer.c_str());
-}
-template <u32 size> void warning(const StringBuffer<size>& buffer)
-{
-    PLATFORM.logger().log(Severity::debug, buffer.c_str());
-}
-template <u32 size> void error(const StringBuffer<size>& buffer)
-{
-    PLATFORM.logger().log(Severity::debug, buffer.c_str());
 }

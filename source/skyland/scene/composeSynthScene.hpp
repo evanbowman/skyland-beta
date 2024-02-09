@@ -81,9 +81,9 @@ private:
 
     bool init_ = true;
 
-    Platform::Speaker::ChannelSettings square_1_settings_;
-    Platform::Speaker::ChannelSettings square_2_settings_;
-    Platform::Speaker::ChannelSettings noise_settings_;
+    Platform::Speaker::PSG::ChannelSettings square_1_settings_;
+    Platform::Speaker::PSG::ChannelSettings square_2_settings_;
+    Platform::Speaker::PSG::ChannelSettings noise_settings_;
     u16 wave_settings_;
 
     u8 last_octave_ = 0;
@@ -95,7 +95,7 @@ private:
     Time note_demo_timer_ = 0;
 
 
-    Platform::Speaker::Channel channel_;
+    Platform::Speaker::PSG::Channel channel_;
 };
 
 

@@ -145,9 +145,6 @@ private:
 
     int building_selector_ = 0;
 
-    int touchscroll_ = 0;
-    int last_touch_x_ = 0;
-
     Time flicker_timer_ = 0;
 
     Island::BlockChecksum checksum_;

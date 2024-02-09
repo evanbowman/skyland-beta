@@ -2251,7 +2251,7 @@ void Island::resolve_cancelled_dispatch()
     // If a room was destroyed, we could try to fix dangling pointer issues
     // around the dispatch list, but it's simpler just to destroy the list and
     // recreate it.
-    if (UNLIKELY(dispatch_cancelled_)) {
+    if (dispatch_cancelled_) [[unlikely]] {
         dispatch_list_ = nullptr;
         drawfirst_ = nullptr;
         for (auto& room : rooms_) {

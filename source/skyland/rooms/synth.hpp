@@ -113,7 +113,7 @@ public:
     ScenePtr<Scene> select_impl(const RoomCoord& cursor) override;
 
 
-    using Note = Platform::Speaker::NoteDesc;
+    using Note = Platform::Speaker::PSG::NoteDesc;
 
 
     struct EffectParameter
@@ -134,7 +134,7 @@ public:
     }
 
 
-    Platform::Speaker::Channel channel() const;
+    Platform::Speaker::PSG::Channel channel() const;
 
 
     Speaker* speaker() const;

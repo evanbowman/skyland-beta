@@ -579,8 +579,8 @@ TextEditorModule::TextEditorModule(UserContext&& context)
 {
     state_->file_path_ = "/";
 
-    if (PLATFORM.logger().data()) {
-        for (char c : *PLATFORM.logger().data()) {
+    if (log_data()) {
+        for (char c : *log_data()) {
             text_buffer_.push_back(c);
         }
         text_buffer_.push_back('\n');
@@ -657,10 +657,6 @@ void TextEditorModule::tabs_to_spaces()
 void TextEditorModule::enter(Scene& prev)
 {
     PLATFORM.load_overlay_texture("overlay_editor");
-
-    while (PLATFORM.screen().touch()) {
-        PLATFORM.system_call("swap-screens", nullptr);
-    }
 
     header_.emplace(OverlayCoord{});
     StringBuffer<32> temp("  text editor  ");

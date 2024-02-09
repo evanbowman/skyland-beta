@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Copyright (C) 2023  Evan Bowman. Some rights reserved.
+// Copyright (C) 2024  Evan Bowman. Some rights reserved.
 //
 // This program is source-available; the source code is provided for educational
 // purposes. All copies of the software must be distributed along with this
@@ -31,93 +31,59 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-
 #pragma once
 
-
-#include "allocator.hpp"
-#include "memory/buffer.hpp"
-#include "player.hpp"
-#include "skyland/characterId.hpp"
+#include "containers/vector.hpp"
+#include "severity.hpp"
 
 
 
-namespace skyland
+void log_write(Severity s, const char* msg);
+
+
+
+void log_flush();
+
+
+
+void log_clear();
+
+
+
+Vector<char>* log_data();
+
+
+
+inline void debug(const char* msg)
 {
-
-
-
-// An implementation of Player, controlled directly by a player via the device's
-// physical buttons.
-
-
-
-class PlayerP1 : public Player
+    log_write(Severity::debug, msg);
+}
+inline void info(const char* msg)
 {
-public:
-    PlayerP1();
+    log_write(Severity::info, msg);
+}
+inline void warning(const char* msg)
+{
+    log_write(Severity::warning, msg);
+}
+inline void error(const char* msg)
+{
+    log_write(Severity::error, msg);
+}
 
-
-    void update(Time delta) override;
-
-
-    void on_room_destroyed(Room& room) override;
-
-
-    void on_room_damaged(Room& room);
-
-
-    void on_room_plundered(Room& room) override;
-
-
-    bool key_down(Key k) override;
-
-
-    bool key_up(Key k) override;
-
-
-    bool key_pressed(Key k) override;
-
-
-    bool key_held(Key k, Time duration) override;
-
-
-    void key_held_reset(Key k, Time decrement) override;
-
-
-    void key_held_distribute(const Key* include_list) override;
-
-
-protected:
-    virtual void update_chr_ai(Time delta);
-
-
-private:
-    struct ChrAIState
-    {
-        using IdBuffer = Buffer<CharacterId, 80>;
-
-        Time next_action_timer_ = seconds(1);
-
-        IdBuffer local_chrs_;
-        IdBuffer boarded_chrs_;
-
-        u32 local_buffer_index_ = 0;
-        u32 boarded_buffer_index_ = 0;
-
-        bool any_chr_moved_ = false;
-
-        void update(Time delta);
-
-        void run();
-    };
-
-    DynamicMemory<ChrAIState> chr_ai_;
-
-    Time last_key_ = 0;
-    Time key_held_timers_[static_cast<int>(Key::count)];
-};
-
-
-
-} // namespace skyland
+template <u32 size> void debug(const StringBuffer<size>& buffer)
+{
+    log_write(Severity::debug, buffer.c_str());
+}
+template <u32 size> void info(const StringBuffer<size>& buffer)
+{
+    log_write(Severity::debug, buffer.c_str());
+}
+template <u32 size> void warning(const StringBuffer<size>& buffer)
+{
+    log_write(Severity::debug, buffer.c_str());
+}
+template <u32 size> void error(const StringBuffer<size>& buffer)
+{
+    log_write(Severity::debug, buffer.c_str());
+}

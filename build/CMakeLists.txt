@@ -74,6 +74,7 @@ set(SOURCES
   ${SOURCE_DIR}/platform/flash_filesystem.cpp
   ${SOURCE_DIR}/platform/ram_filesystem.cpp
   ${SOURCE_DIR}/platform/scratch_buffer.cpp
+  ${SOURCE_DIR}/compatibility_tests.cpp
   ${SOURCE_DIR}/platform/conf.cpp
   ${SOURCE_DIR}/graphics/overlay.cpp
   ${SOURCE_DIR}/graphics/sprite.cpp
@@ -88,6 +89,7 @@ set(SOURCES
   ${SOURCE_DIR}/collision.cpp
   ${SOURCE_DIR}/optional.cpp
   ${SOURCE_DIR}/globals.cpp
+  ${SOURCE_DIR}/logger.cpp
   ${SOURCE_DIR}/base32.cpp
   ${SOURCE_DIR}/string.cpp
   ${SOURCE_DIR}/start.cpp

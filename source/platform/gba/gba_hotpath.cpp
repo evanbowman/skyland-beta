@@ -138,7 +138,7 @@ void audio_update_fast_isr()
 
         // Aha! __builtin_expect actually results in measurably better latency
         // for once!
-        if (UNLIKELY(it->position_ >= it->length_)) {
+        if (it->position_ >= it->length_) [[unlikely]] {
             if (not completed_sounds_lock) {
                 completed_sounds_buffer.push_back(it->name_);
             }

@@ -998,7 +998,7 @@ Platform::DeltaClock::DeltaClock()
 
 void Platform::Screen::draw(const Sprite& spr)
 {
-    if (UNLIKELY(spr.get_alpha() == Sprite::Alpha::transparent)) {
+    if (spr.get_alpha() == Sprite::Alpha::transparent) [[unlikely]] {
         return;
     }
 
@@ -1022,7 +1022,7 @@ void Platform::Screen::draw(const Sprite& spr)
     }
 
     auto draw_sprite = [&](int tex_off, int x_off, int scale) {
-        if (UNLIKELY(oam_write_index == oam_count)) {
+        if (oam_write_index == oam_count) [[unlikely]] {
             return;
         }
         const auto position =
@@ -1232,17 +1232,6 @@ void Platform::Screen::display()
 
     last_oam_write_index = oam_write_index;
     oam_write_index = 0;
-}
-
-
-
-const Platform::Screen::Touch* Platform::Screen::touch() const
-{
-    if (not main_on_top) {
-        return &touch_;
-    } else {
-        return nullptr;
-    }
 }
 
 

@@ -616,13 +616,6 @@ Platform::ModelName Platform::model_name() const
 
 
 
-const Platform::Screen::Touch* Platform::Screen::touch() const
-{
-    return nullptr;
-}
-
-
-
 Vec2<u32> Platform::Screen::size() const
 {
     const auto data = PLATFORM.data();
@@ -1360,91 +1353,11 @@ bool Platform::RemoteConsole::printline(const char* text, const char* prompt)
 }
 
 
-////////////////////////////////////////////////////////////////////////////////
-// Logger
-////////////////////////////////////////////////////////////////////////////////
-
-
-static const char* const logfile_name = "logfile.txt";
-static std::ofstream logfile_out(logfile_name);
-
-
-static Severity log_threshold;
-
-
-Optional<Vector<char>> log_data_;
-
-
-void Platform::Logger::clear()
-{
-    log_data_.reset();
-}
-
-
-void Platform::Logger::set_threshold(Severity severity)
-{
-    log_threshold = severity;
-}
-
-
-void Platform::Logger::flush()
-{
-    if (not log_data_) {
-        return;
-    }
-
-    flash_filesystem::store_file_data_binary("/log.txt", *log_data_);
-
-    log_data_.reset();
-}
-
-
 
 void Platform::walk_filesystem(
     Function<8 * sizeof(void*), void(const char* path)> callback)
 {
     // TODO...
-}
-
-
-
-void Platform::Logger::log(Severity level, const char* msg)
-{
-    if (::__platform__ == nullptr) {
-        return;
-    }
-
-    ScratchBuffer::Tag t = "syslog_data";
-
-    if (not log_data_) {
-        log_data_.emplace(t);
-    }
-
-    while (*msg not_eq '\0') {
-        log_data_->push_back(*msg, t);
-        std::cout << *msg;
-        ++msg;
-    }
-
-    log_data_->push_back('\n', t);
-    std::cout << '\n';
-}
-
-
-
-Platform::Logger::Logger()
-{
-}
-
-
-
-Vector<char>* Platform::Logger::data()
-{
-    if (log_data_) {
-        return &*log_data_;
-    }
-
-    return nullptr;
 }
 
 

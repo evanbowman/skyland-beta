@@ -178,14 +178,14 @@ static void audio_update_halfspeed_isr()
     *((u32*)mixing_buffer) =
         ((u32*)(snd_ctx.music_track))[snd_ctx.music_track_pos++];
 
-    if (UNLIKELY(snd_ctx.music_track_pos > snd_ctx.music_track_length)) {
+    if (snd_ctx.music_track_pos > snd_ctx.music_track_length) [[unlikely]] {
         snd_ctx.music_track_pos = 0;
         completed_music = snd_ctx.music_track_name;
     }
 
     for (auto it = snd_ctx.active_sounds.begin();
          it not_eq snd_ctx.active_sounds.end();) {
-        if (UNLIKELY(it->position_ + 4 >= it->length_)) {
+        if (it->position_ + 4 >= it->length_) [[unlikely]] {
             if (not completed_sounds_lock) {
                 completed_sounds_buffer.push_back(it->name_);
             }
@@ -229,7 +229,7 @@ static void audio_update_music_volume_isr()
     *((u32*)mixing_buffer) =
         ((u32*)(snd_ctx.music_track))[snd_ctx.music_track_pos++];
 
-    if (UNLIKELY(snd_ctx.music_track_pos > snd_ctx.music_track_length)) {
+    if (snd_ctx.music_track_pos > snd_ctx.music_track_length) [[unlikely]] {
         snd_ctx.music_track_pos = 0;
         completed_music = snd_ctx.music_track_name;
     }
@@ -244,7 +244,7 @@ static void audio_update_music_volume_isr()
         auto pos = it->position_;
         it->position_ += 4;
 
-        if (UNLIKELY(it->position_ >= it->length_)) {
+        if (it->position_ >= it->length_) [[unlikely]] {
             it = snd_ctx.active_sounds.erase(it);
         } else {
             auto buf = mixing_buffer;
@@ -279,10 +279,10 @@ static void audio_update_slow_rewind_music_isr()
 
     for (auto it = snd_ctx.active_sounds.begin();
          it not_eq snd_ctx.active_sounds.end();) {
-        if (UNLIKELY(it->position_ == 0)) {
+        if (it->position_ == 0) [[unlikely]] {
             it->position_ = it->length_ - 1;
             ++it;
-        } else if (UNLIKELY(it->position_ - 4 <= 0)) {
+        } else if (it->position_ - 4 <= 0) [[unlikely]] {
             it = snd_ctx.active_sounds.erase(it);
         } else {
             for (int i = 0; i < 4; ++i) {
@@ -326,10 +326,10 @@ static void audio_update_rewind_music_isr()
 
     for (auto it = snd_ctx.active_sounds.begin();
          it not_eq snd_ctx.active_sounds.end();) {
-        if (UNLIKELY(it->position_ == 0)) {
+        if (it->position_ == 0) [[unlikely]] {
             it->position_ = it->length_ - 1;
             ++it;
-        } else if (UNLIKELY(it->position_ - 8 <= 0)) {
+        } else if (it->position_ - 8 <= 0) [[unlikely]] {
             it = snd_ctx.active_sounds.erase(it);
         } else {
             for (int i = 0; i < 4; ++i) {
@@ -366,10 +366,10 @@ static void audio_update_rewind4x_music_isr()
 
     for (auto it = snd_ctx.active_sounds.begin();
          it not_eq snd_ctx.active_sounds.end();) {
-        if (UNLIKELY(it->position_ == 0)) {
+        if (it->position_ == 0) [[unlikely]] {
             it->position_ = it->length_ - 1;
             ++it;
-        } else if (UNLIKELY(it->position_ - 16 <= 0)) {
+        } else if (it->position_ - 16 <= 0) [[unlikely]] {
             it = snd_ctx.active_sounds.erase(it);
         } else {
             for (int i = 0; i < 4; ++i) {
@@ -410,10 +410,10 @@ static void audio_update_rewind8x_music_isr()
 
     for (auto it = snd_ctx.active_sounds.begin();
          it not_eq snd_ctx.active_sounds.end();) {
-        if (UNLIKELY(it->position_ == 0)) {
+        if (it->position_ == 0) [[unlikely]] {
             it->position_ = it->length_ - 1;
             ++it;
-        } else if (UNLIKELY(it->position_ - 32 <= 0)) {
+        } else if (it->position_ - 32 <= 0) [[unlikely]] {
             it = snd_ctx.active_sounds.erase(it);
         } else {
             for (int i = 0; i < 4; ++i) {
@@ -448,14 +448,14 @@ static void audio_update_doublespeed_isr()
 
     snd_ctx.music_track_pos += 2;
 
-    if (UNLIKELY(snd_ctx.music_track_pos > snd_ctx.music_track_length + 2)) {
+    if (snd_ctx.music_track_pos > snd_ctx.music_track_length + 2) [[unlikely]] {
         snd_ctx.music_track_pos = 0;
         completed_music = snd_ctx.music_track_name;
     }
 
     for (auto it = snd_ctx.active_sounds.begin();
          it not_eq snd_ctx.active_sounds.end();) {
-        if (UNLIKELY(it->position_ + 8 >= it->length_)) {
+        if (it->position_ + 8 >= it->length_) [[unlikely]] {
             if (not completed_sounds_lock) {
                 completed_sounds_buffer.push_back(it->name_);
             }
@@ -897,7 +897,7 @@ static constexpr const struct NoiseFrequencyTableEntry
 
 struct AnalogChannel
 {
-    Platform::Speaker::Note last_note_;
+    Platform::Speaker::PSG::Note last_note_;
     u8 last_octave_;
     Microseconds effect_timer_;
 };
@@ -908,7 +908,7 @@ static EWRAM_DATA AnalogChannel analog_channel[4];
 
 
 
-void Platform::Speaker::init_chiptune_square_1(ChannelSettings settings)
+void Platform::Speaker::PSG::init_square_1(ChannelSettings settings)
 {
     REG_SND1CNT = SSQR_BUILD(settings.volume_,
                              settings.envelope_direction_,
@@ -919,7 +919,7 @@ void Platform::Speaker::init_chiptune_square_1(ChannelSettings settings)
 
 
 
-void Platform::Speaker::init_chiptune_square_2(ChannelSettings settings)
+void Platform::Speaker::PSG::init_square_2(ChannelSettings settings)
 {
     REG_SND2CNT = SSQR_BUILD(settings.volume_,
                              settings.envelope_direction_,
@@ -930,13 +930,13 @@ void Platform::Speaker::init_chiptune_square_2(ChannelSettings settings)
 
 
 
-void Platform::Speaker::init_chiptune_wave(u16 config)
+void Platform::Speaker::PSG::init_wave(u16 config)
 {
 }
 
 
 
-void Platform::Speaker::init_chiptune_noise(ChannelSettings settings)
+void Platform::Speaker::PSG::init_noise(ChannelSettings settings)
 {
     REG_SND4CNT = SSQR_BUILD(settings.volume_,
                              settings.envelope_direction_,
@@ -947,7 +947,7 @@ void Platform::Speaker::init_chiptune_noise(ChannelSettings settings)
 
 
 
-void Platform::Speaker::stop_chiptune_note(Channel channel)
+void Platform::Speaker::PSG::stop_note(Channel channel)
 {
     switch (channel) {
     case Channel::square_1:
@@ -983,7 +983,7 @@ void Platform::Speaker::stop_chiptune_note(Channel channel)
 
 
 
-void Platform::Speaker::play_chiptune_note(Channel channel, NoteDesc note_desc)
+void Platform::Speaker::PSG::play_note(Channel channel, NoteDesc note_desc)
 {
     auto note = note_desc.regular_.note_;
     u8 octave = note_desc.regular_.octave_;
@@ -1051,10 +1051,10 @@ void Platform::Speaker::play_chiptune_note(Channel channel, NoteDesc note_desc)
 
 
 
-void Platform::Speaker::apply_chiptune_effect(Channel channel,
-                                              Effect effect,
-                                              u8 argument,
-                                              Microseconds delta)
+void Platform::Speaker::PSG::apply_effect(Channel channel,
+                                          Effect effect,
+                                          u8 argument,
+                                          Microseconds delta)
 {
     if (channel == Channel::invalid) {
         return;
@@ -1461,4 +1461,15 @@ void Platform::Speaker::start()
     audio_start();
     clear_music();
     play_music("unaccompanied_wind", 0);
+}
+
+
+
+Platform::Speaker::PSG psg;
+
+
+
+Platform::Speaker::PSG* Platform::Speaker::psg()
+{
+    return &::psg;
 }

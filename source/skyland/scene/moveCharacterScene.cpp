@@ -379,7 +379,7 @@ u32 flood_fill(u8 matrix[16][16], u8 replace, u8 x, u8 y)
 
     auto stack = mem.alloc<Buffer<Coord, 16 * 16>>();
 
-    if (UNLIKELY(not stack)) {
+    if (not stack) [[unlikely]] {
         PLATFORM.fatal("fatal error in floodfill");
     }
 

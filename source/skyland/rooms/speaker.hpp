@@ -125,9 +125,9 @@ public:
 
     struct Settings
     {
-        Platform::Speaker::ChannelSettings square_1_;
-        Platform::Speaker::ChannelSettings square_2_;
-        Platform::Speaker::ChannelSettings noise_;
+        Platform::Speaker::PSG::ChannelSettings square_1_;
+        Platform::Speaker::PSG::ChannelSettings square_2_;
+        Platform::Speaker::PSG::ChannelSettings noise_;
         u16 wave_;
     } settings_;
 
@@ -149,14 +149,15 @@ public:
         }
 
 
-        void store(int channel, int location, Platform::Speaker::Effect effect)
+        void
+        store(int channel, int location, Platform::Speaker::PSG::Effect effect)
         {
             vector_.set(index(channel, location), (u8)effect & 1);
             vector_.set(index(channel, location) + 1, (u8)effect & 2);
         }
 
 
-        Platform::Speaker::Effect load(int channel, int location)
+        Platform::Speaker::PSG::Effect load(int channel, int location)
         {
             u8 val = 0;
 
@@ -168,7 +169,7 @@ public:
                 val |= 2;
             }
 
-            return (Platform::Speaker::Effect)val;
+            return (Platform::Speaker::PSG::Effect)val;
         }
     };
 
@@ -189,7 +190,7 @@ private:
     void process_effects();
 
 
-    Platform::Speaker::Effect load_effect(int channel);
+    Platform::Speaker::PSG::Effect load_effect(int channel);
 
 
     EffectFlags effect_flags_;
