@@ -141,12 +141,6 @@ template <typename T> struct InfoImpl : public RoomMeta::Info
         parent->add_room<T>(position, do_repaint);
     }
 
-    // RoomPtr<Room> create(Island* parent,
-    //                      const RoomCoord& position) const override
-    // {
-    //     return room_pool::alloc<T>(parent, position);
-    // }
-
     const char* name() const override
     {
         return T::name();

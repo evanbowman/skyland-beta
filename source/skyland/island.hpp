@@ -82,7 +82,6 @@ public:
                 return true;
             }
         }
-        PLATFORM.fatal("room pool exhausted");
         return false;
     }
 
@@ -227,10 +226,10 @@ public:
     u8 core_count() const;
 
 
-    EntityList<Entity>& projectiles()
-    {
-        return projectiles_;
-    }
+    EntityList<Entity>& projectiles();
+
+
+    SharedEntityList<Drone>& drones();
 
 
     void test_collision(Entity& entity);
@@ -264,12 +263,6 @@ public:
 
 
     void on_layout_changed(const RoomCoord& room_added_removed_coord);
-
-
-    SharedEntityList<Drone>& drones()
-    {
-        return drones_;
-    }
 
 
     HitBox hitbox() const;
@@ -322,10 +315,7 @@ public:
     void fires_extinguish();
 
 
-    const EntityList<BasicCharacter>& outdoor_characters()
-    {
-        return characters_;
-    }
+    const EntityList<BasicCharacter>& outdoor_characters();
 
 
     RoomCoord critical_core_loc() const

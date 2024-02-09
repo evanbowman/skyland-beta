@@ -55,14 +55,14 @@ static constexpr const int max_room_size = 64;
 #else
 static constexpr const int max_room_size = 128;
 #endif
-static constexpr const int pool_capacity = 207;
+static constexpr const int pool_capacity = 181;
 static constexpr const int alignment = 8;
 
 
 
 using RoomPools = SegmentedPool<max_room_size, pool_capacity, 26, 8>;
 
-static_assert(RoomPools::segment_count() < 8);
+static_assert(RoomPools::segment_count() < 7);
 
 
 

@@ -171,18 +171,18 @@ void Lava::update(Time delta)
                 if (auto w = room->cast<Lava>()) {
                     w->set_flood_parent(position());
                 }
-            }
 
-            if (is_player_island(parent())) {
-                time_stream::event::PlayerRoomCreated p;
-                p.x_ = x;
-                p.y_ = y;
-                APP.time_stream().push(APP.level_timer(), p);
-            } else {
-                time_stream::event::OpponentRoomCreated p;
-                p.x_ = x;
-                p.y_ = y;
-                APP.time_stream().push(APP.level_timer(), p);
+                if (is_player_island(parent())) {
+                    time_stream::event::PlayerRoomCreated p;
+                    p.x_ = x;
+                    p.y_ = y;
+                    APP.time_stream().push(APP.level_timer(), p);
+                } else {
+                    time_stream::event::OpponentRoomCreated p;
+                    p.x_ = x;
+                    p.y_ = y;
+                    APP.time_stream().push(APP.level_timer(), p);
+                }
             }
         };
 

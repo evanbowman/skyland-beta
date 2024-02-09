@@ -1489,6 +1489,27 @@ void Island::recalculate_power_usage()
 
 
 
+const EntityList<BasicCharacter>& Island::outdoor_characters()
+{
+    return characters_;
+}
+
+
+
+EntityList<Entity>& Island::projectiles()
+{
+    return projectiles_;
+}
+
+
+
+SharedEntityList<Drone>& Island::drones()
+{
+    return drones_;
+}
+
+
+
 Optional<RoomCoord> Island::flag_pos()
 {
     return flag_pos_;
