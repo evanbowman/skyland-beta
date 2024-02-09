@@ -247,8 +247,7 @@ void Antimatter::on_collision(Room& room, Vec2<u8> origin)
         for (auto& room : *targets) {
             room->apply_damage(damage);
 
-            if (not((*room->metaclass())->properties() &
-                    RoomProperties::fireproof)) {
+            if (not room->has_prop(RoomProperties::fireproof)) {
                 if (room->health() > 0) {
                     room->parent()->fire_create(room->position());
                 }

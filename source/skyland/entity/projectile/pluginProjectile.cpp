@@ -138,7 +138,7 @@ void PluginProjectile::on_collision(Room& room, Vec2<u8> origin)
         return;
     }
 
-    if ((*room.metaclass())->properties() & RoomProperties::fragile and
+    if (room.has_prop(RoomProperties::fragile) and
         room.max_health() < damage_) {
         room.apply_damage(Room::health_upper_limit());
         return;

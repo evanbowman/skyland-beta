@@ -326,7 +326,7 @@ void EnemyAI::update_room(Room& room,
     } else if (auto fire_charge = room.cast<FireCharge>()) {
         set_target(matrix, *fire_charge, owner, ai_island, target_island);
     } else if (category == Room::Category::weapon or
-               (*room.metaclass())->properties() & RoomProperties::plugin) {
+               room->has_prop(RoomProperties::plugin)) {
         // NOTE: if we haven't hit any of the cases above, assume that the
         // weapon is a generic cannon-type weapon.
         set_target(matrix, room, owner, ai_island, target_island);
@@ -440,8 +440,7 @@ void EnemyAI::resolve_insufficient_power()
             // supply.
             continue;
         }
-        if ((*room->metaclass())->properties() &
-            RoomProperties::salvage_disallowed) {
+        if (room.has_prop(RoomProperties::salvage_disallowed)) {
             continue;
         }
         auto pwr = room->power_usage();
@@ -527,7 +526,7 @@ void EnemyAI::assign_local_character(BasicCharacter& character,
 
     for (auto& room : ai_island_->rooms()) {
         if (room->health() not_eq room->max_health() and
-            (*room->metaclass())->properties() & RoomProperties::habitable) {
+            room.has_prop(RoomProperties::habitable)) {
             damaged_habitable_rooms = true;
         }
         if (room->metaclass() == cannon_mt) {
@@ -1930,7 +1929,7 @@ void EnemyAI::set_target(const Bitmatrix<16, 16>& matrix,
     for (auto& room : target_island->rooms()) {
         auto pos = room->position();
         auto weight = room->get_atp();
-        if ((*room->metaclass())->properties() & RoomProperties::habitable) {
+        if (room.has_prop(RoomProperties::habitable)) {
             for (auto& chr : room->characters()) {
                 (void)chr;
                 weight -= 250.0_atp;

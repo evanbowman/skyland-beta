@@ -412,9 +412,7 @@ ScenePtr<Scene> RewindScene::update(Time)
             (*load_metaclass(e->type_))
                 ->create(&APP.player_island(), {e->x_, e->y_});
             if (auto room = APP.player_island().get_room({e->x_, e->y_})) {
-                const bool quiet = (*room->metaclass())->properties() &
-                                   RoomProperties::destroy_quietly;
-                if (not quiet) {
+                if (not room->has_prop(RoomProperties::destroy_quietly)) {
                     medium_explosion_inv(room->origin());
                 }
             }
@@ -428,9 +426,7 @@ ScenePtr<Scene> RewindScene::update(Time)
             (*load_metaclass(e->type_))
                 ->create(&APP.player_island(), {e->x_, e->y_});
             if (auto room = APP.player_island().get_room({e->x_, e->y_})) {
-                const bool quiet = (*room->metaclass())->properties() &
-                                   RoomProperties::destroy_quietly;
-                if (not quiet) {
+                if (not room->has_prop(RoomProperties::destroy_quietly)) {
                     medium_explosion_inv(room->origin());
                 }
                 room->set_group((Room::Group)e->group_);
@@ -446,9 +442,7 @@ ScenePtr<Scene> RewindScene::update(Time)
             (*load_metaclass(e->type_))
                 ->create(APP.opponent_island(), {e->x_, e->y_});
             if (auto room = APP.opponent_island()->get_room({e->x_, e->y_})) {
-                const bool quiet = (*room->metaclass())->properties() &
-                                   RoomProperties::destroy_quietly;
-                if (not quiet) {
+                if (not room->has_prop(RoomProperties::destroy_quietly)) {
                     medium_explosion_inv(room->origin());
                 }
             }
@@ -1679,64 +1673,6 @@ ScenePtr<Scene> RewindScene::update(Time)
             auto e = (time_stream::event::ScoreDecreased*)end;
             int amount = e->amount_.get();
             APP.score().set(APP.score().get() + amount);
-            APP.time_stream().pop(sizeof *e);
-            break;
-        }
-
-        case time_stream::event::mind_control_started: {
-            auto e = (time_stream::event::MindControlStarted*)end;
-            // Island* ctrl_island = nullptr;
-            // if (e->controller_near_) {
-            //     ctrl_island = &APP.player_island();
-            // } else {
-            //     ctrl_island = APP.opponent_island();
-            // }
-            // if (ctrl_island) {
-            //     Vec2<u8> pos{e->controller_x_,
-            //                  e->controller_y_};
-            //     if (auto room = ctrl_island->get_room(pos)) {
-            //         if (auto ctrl = room->cast<MindControl>()) {
-            //             auto current = ctrl->bound_character();
-            //             ctrl->bind_character(e->prev_id_.get());
-            //             auto [chr, room] = BasicCharacter::find_by_id(current);
-            //             if (chr) {
-            //                 Player* owner = &APP.opponent();
-            //                 if (ctrl_island == APP.opponent_island()) {
-            //                     owner = &APP.player();
-            //                 }
-            //                 chr->stop_mind_control(owner, room);
-            //             }
-            //         }
-            //     }
-            // }
-            APP.time_stream().pop(sizeof *e);
-            break;
-        }
-
-        case time_stream::event::mind_control_stopped: {
-            auto e = (time_stream::event::MindControlStopped*)end;
-            // Island* ctrl_island = nullptr;
-            // if (e->controller_near_) {
-            //     ctrl_island = &APP.player_island();
-            // } else {
-            //     ctrl_island = APP.opponent_island();
-            // }
-            // if (ctrl_island) {
-            //     Vec2<u8> pos{e->controller_x_, e->controller_y_};
-            //     if (auto room = ctrl_island->get_room(pos)) {
-            //         if (auto ctrl = room->cast<MindControl>()) {
-            //             ctrl->bind_character(e->id_.get());
-            //             auto [chr, room] = BasicCharacter::find_by_id(e->id_.get());
-            //             if (chr) {
-            //                 Player* owner = &APP.player();
-            //                 if (ctrl_island == APP.opponent_island()) {
-            //                     owner = &APP.opponent();
-            //                 }
-            //                 chr->start_mind_control(owner, room);
-            //             }
-            //         }
-            //     }
-            // }
             APP.time_stream().pop(sizeof *e);
             break;
         }

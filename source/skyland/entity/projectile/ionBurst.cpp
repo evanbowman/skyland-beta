@@ -185,15 +185,13 @@ void IonBurst::on_collision(Room& room, Vec2<u8> origin)
         return;
     }
 
-    if (not((*room.metaclass())->properties() &
-            RoomProperties::accepts_ion_damage)) {
+    if (not room.has_prop(RoomProperties::accepts_ion_damage)) {
         return;
     }
 
     destroy(true);
 
-    if ((*room.metaclass())->properties() &
-        RoomProperties::cancels_ion_damage) {
+    if (room.has_prop(RoomProperties::cancels_ion_damage)) {
         sound_fizzle.play(1);
     } else {
         room.apply_damage(ion_burst_damage);

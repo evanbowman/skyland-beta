@@ -620,8 +620,7 @@ ScenePtr<Scene> ReadyScene::update(Time delta)
 
     if (APP.player().key_down(Key::action_2)) {
         if (auto room = APP.player_island().get_room(cursor_loc)) {
-            const auto props = (*room->metaclass())->properties();
-            if (not(props & RoomProperties::salvage_disallowed)) {
+            if (not room->has_prop(RoomProperties::salvage_disallowed)) {
 
                 auto next = scene_pool::make_deferred_scene<SalvageRoomScene>();
 

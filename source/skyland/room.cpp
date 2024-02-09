@@ -1606,6 +1606,13 @@ void Room::render_scaffolding(TileId buffer[16][16])
 
 
 
+bool Room::has_prop(RoomProperties prop)
+{
+    return (*metaclass())->properties() & prop;
+}
+
+
+
 ScenePtr<Scene> Room::co_op_acquire_lock(DeferredScene next)
 {
     if (co_op_locked_) {

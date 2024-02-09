@@ -215,7 +215,7 @@ void Lava::update(Time delta)
 void Lava::render_interior(App* app, TileId buffer[16][16])
 {
     auto above = parent()->get_room({position().x, (u8)(position().y - 1)});
-    if (above and (*above->metaclass())->properties() & RoomProperties::fluid) {
+    if (above and above->has_prop(RoomProperties::fluid)) {
         buffer[position().x][position().y] = InteriorTile::lava_column;
     } else {
         u8 x = position().x;
@@ -237,7 +237,7 @@ void Lava::render_interior(App* app, TileId buffer[16][16])
 void Lava::render_exterior(App* app, TileId buffer[16][16])
 {
     auto above = parent()->get_room({position().x, (u8)(position().y - 1)});
-    if (above and (*above->metaclass())->properties() & RoomProperties::fluid) {
+    if (above and above->has_prop(RoomProperties::fluid)) {
         buffer[position().x][position().y] = Tile::lava_column;
     } else {
         u8 x = position().x;

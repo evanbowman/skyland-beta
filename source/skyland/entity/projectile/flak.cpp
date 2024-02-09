@@ -282,7 +282,7 @@ void Flak::on_collision(Room& room, Vec2<u8> origin)
         return;
     }
 
-    if ((*room.metaclass())->properties() & RoomProperties::fragile and
+    if (room.has_prop(RoomProperties::fragile) and
         room.max_health() < flak_r1_damage) {
         room.apply_damage(Room::health_upper_limit());
         return;

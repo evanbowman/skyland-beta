@@ -269,7 +269,7 @@ void Missile::on_collision(Room& room, Vec2<u8> origin)
         return;
     }
 
-    if ((*room.metaclass())->properties() & RoomProperties::fragile and
+    if (room.has_prop(RoomProperties::fragile) and
         room.max_health() < missile_damage) {
         room.apply_damage(Room::health_upper_limit());
         return;
@@ -434,7 +434,7 @@ void RocketBomb::on_collision(Room& room, Vec2<u8> origin)
         return;
     }
 
-    if ((*room.metaclass())->properties() & RoomProperties::fragile and
+    if (room.has_prop(RoomProperties::fragile) and
         room.max_health() < missile_damage) {
         room.apply_damage(Room::health_upper_limit());
         return;
@@ -562,7 +562,7 @@ void ClumpMissile::on_collision(Room& room, Vec2<u8> origin)
         return;
     }
 
-    if ((*room.metaclass())->properties() & RoomProperties::fragile and
+    if (room.has_prop(RoomProperties::fragile) and
         room.max_health() < missile_damage) {
         room.apply_damage(Room::health_upper_limit());
         return;
@@ -624,8 +624,7 @@ void AtomicMissile::burst(const Vec2<Fixnum>& position, Room& origin_room)
         const int y = grid_y_start + y_off;
         if (x >= 0 and x < 16 and y >= 0 and y < 16) {
             if (auto room = island->get_room({u8(x), u8(y)})) {
-                if ((*room->metaclass())->properties() &
-                    RoomProperties::habitable) {
+                if (room->has_prop(RoomProperties::habitable)) {
                     room->apply_damage(12);
                 } else {
                     room->apply_damage(damage);
@@ -666,7 +665,7 @@ void AtomicMissile::on_collision(Room& room, Vec2<u8> origin)
         return;
     }
 
-    if ((*room.metaclass())->properties() & RoomProperties::fragile and
+    if (room.has_prop(RoomProperties::fragile) and
         room.max_health() < missile_damage) {
         room.apply_damage(Room::health_upper_limit());
         return;

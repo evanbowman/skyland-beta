@@ -276,8 +276,7 @@ void Explosive::ignite(int range, Health damage, bool spread_fire)
             room->apply_damage(damage);
         }
 
-        if (spread_fire and not((*room->metaclass())->properties() &
-                                RoomProperties::fireproof)) {
+        if (spread_fire and not room->has_prop(RoomProperties::fireproof)) {
             if (room->health() > 0) {
                 room->parent()->fire_create(room->position());
             }
@@ -480,7 +479,7 @@ void Cesium::update(Time delta)
         u8 y = position().y;
 
         if (auto room = parent()->get_room({x, u8(y - 1)})) {
-            if ((*room->metaclass())->properties() & RoomProperties::fluid) {
+            if (room->has_prop(RoomProperties::fluid)) {
                 ignition_ = true;
                 apply_damage(1);
                 return;
@@ -488,7 +487,7 @@ void Cesium::update(Time delta)
         }
 
         if (auto room = parent()->get_room({x, u8(y + 1)})) {
-            if ((*room->metaclass())->properties() & RoomProperties::fluid) {
+            if (room->has_prop(RoomProperties::fluid)) {
                 ignition_ = true;
                 apply_damage(1);
                 return;
@@ -496,7 +495,7 @@ void Cesium::update(Time delta)
         }
 
         if (auto room = parent()->get_room({u8(x + 1), y})) {
-            if ((*room->metaclass())->properties() & RoomProperties::fluid) {
+            if (room->has_prop(RoomProperties::fluid)) {
                 ignition_ = true;
                 apply_damage(1);
                 return;
@@ -504,7 +503,7 @@ void Cesium::update(Time delta)
         }
 
         if (auto room = parent()->get_room({u8(x - 1), y})) {
-            if ((*room->metaclass())->properties() & RoomProperties::fluid) {
+            if (room->has_prop(RoomProperties::fluid)) {
                 ignition_ = true;
                 apply_damage(1);
                 return;

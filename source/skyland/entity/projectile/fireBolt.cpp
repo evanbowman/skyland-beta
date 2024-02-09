@@ -182,8 +182,7 @@ void FireBolt::on_collision(Room& room, Vec2<u8> origin)
 
     room.parent()->fire_create(room.position());
 
-    if ((*room.metaclass())->properties() & RoomProperties::fragile and
-        room.max_health() < 30) {
+    if (room.has_prop(RoomProperties::fragile) and room.max_health() < 30) {
         room.apply_damage(Room::health_upper_limit());
         return;
     }
