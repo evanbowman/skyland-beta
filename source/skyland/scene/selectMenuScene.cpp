@@ -255,7 +255,7 @@ public:
     }
 
 
-    ScenePtr<Scene> update(Time delta)
+    ScenePtr<Scene> update(Time delta) override
     {
         if (auto next = ActiveWorldScene::update(delta)) {
             return next;

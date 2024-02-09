@@ -875,6 +875,7 @@ void ComposeSynthScene::repaint()
                 case 3:
                     return "75";
                 }
+                return "ERR";
             }(),
             19,
             5,

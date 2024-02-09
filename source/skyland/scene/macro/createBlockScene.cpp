@@ -555,7 +555,7 @@ public:
     }
 
 
-    ScenePtr<Scene> update(Player& player, macro::EngineImpl& state)
+    ScenePtr<Scene> update(Player& player, macro::EngineImpl& state) override
     {
         if (key_down<Key::action_1>() or key_down<Key::action_2>()) {
             return scene_pool::alloc<SelectorScene>();

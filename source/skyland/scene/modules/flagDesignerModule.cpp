@@ -116,7 +116,7 @@ public:
 
 
 
-    ScenePtr<Scene> update(Time delta);
+    ScenePtr<Scene> update(Time delta) override;
 
 
 
@@ -185,7 +185,7 @@ public:
     }
 
 
-    ScenePtr<Scene> update(Time delta)
+    ScenePtr<Scene> update(Time delta) override
     {
         player().update(delta);
 

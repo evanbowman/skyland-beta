@@ -514,10 +514,6 @@ void BoxedDialogScene::exit(Scene& prev)
 
 
 
-static const auto hold_time = milliseconds(300);
-
-
-
 static lisp::Value* get_dialog_opt_list()
 {
     // See init.lisp for structure of dialog-opts. The option list consists of a

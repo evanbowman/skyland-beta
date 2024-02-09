@@ -212,7 +212,7 @@ public:
     Buffer<CharacterId, 40> boarded_chrs_;
 
 
-    void enter(Scene& prev)
+    void enter(Scene& prev) override
     {
         ActiveWorldScene::enter(prev);
 

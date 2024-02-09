@@ -169,7 +169,7 @@ public:
     }
 
 
-    virtual ScenePtr<Scene> update(Player& player, macro::EngineImpl& state)
+    ScenePtr<Scene> update(Player& player, macro::EngineImpl& state) override
     {
         auto& sector = state.sector();
 

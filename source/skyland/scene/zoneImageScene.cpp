@@ -142,7 +142,7 @@ void ZoneImageScene::exit(Scene& next)
 
 ScenePtr<Scene> ZoneImageScene::update(Time delta)
 {
-    if (not APP.current_world_location() == 0) {
+    if (APP.current_world_location() not_eq 0) {
         return scene_pool::alloc<WorldMapScene>();
     } else if (APP.zone() == 5) {
         return scene_pool::alloc<HighscoresScene>(true, 1);

@@ -34,11 +34,6 @@ fluid_shader(ShaderPalette p, ColorConstant k, int var, int index);
 
 
 
-static const auto sel_colors =
-    FontColors{custom_color(0x000010), custom_color(0xffffff)};
-
-
-
 void CheckersModule::enter(Scene& prev)
 {
 }
