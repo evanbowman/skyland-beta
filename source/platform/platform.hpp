@@ -23,6 +23,7 @@
 #pragma once
 
 
+#include "containers/array.hpp"
 #include "dateTime.hpp"
 #include "function.hpp"
 #include "graphics/contrast.hpp"
@@ -38,7 +39,6 @@
 #include "severity.hpp"
 #include "sound.hpp"
 #include "unicode.hpp"
-#include "containers/array.hpp"
 
 
 using TileDesc = u16;

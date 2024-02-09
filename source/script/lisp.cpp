@@ -3491,9 +3491,7 @@ BUILTIN_TABLE(
                v >>= 4;
            }
            StringBuffer<10> result("0x");
-           foreach_reversed(stack, [&](char c) {
-               result.push_back(c);
-           });
+           foreach_reversed(stack, [&](char c) { result.push_back(c); });
            return make_string(result.c_str());
        }}},
      {"+",

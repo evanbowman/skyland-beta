@@ -1,12 +1,9 @@
 #pragma once
 
 
-template <typename T, unsigned int count>
-class Array
+template <typename T, unsigned int count> class Array
 {
 public:
-
-
     constexpr auto capacity() const
     {
         return count;

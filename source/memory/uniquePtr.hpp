@@ -45,18 +45,15 @@
 
 
 
-template <typename ValueType, typename DeleterType>
-class UniquePtr
+template <typename ValueType, typename DeleterType> class UniquePtr
 {
 private:
-
     class Pointer
     {
-        template<typename Src>
+        template <typename Src>
         static typename Src::pointer ptr_type(typename Src::pointer*);
 
-        template<typename Src>
-        static ValueType* ptr_type(...);
+        template <typename Src> static ValueType* ptr_type(...);
 
         typedef typename std::remove_reference<DeleterType>::type _Del;
 
@@ -70,8 +67,6 @@ private:
 
 
 public:
-
-
     using pointer = typename Pointer::type;
     using element = ValueType;
     using deleter = DeleterType;
@@ -91,7 +86,8 @@ public:
 
     UniquePtr(pointer p,
               typename std::conditional<std::is_reference<deleter>::value,
-              deleter, const deleter&>::type d)
+                                        deleter,
+                                        const deleter&>::type d)
         : ptr_(p), del_(d)
     {
     }
@@ -105,8 +101,7 @@ public:
     }
 
 
-    constexpr UniquePtr(std::nullptr_t)
-        : ptr_(), del_()
+    constexpr UniquePtr(std::nullptr_t) : ptr_(), del_()
     {
         static_assert(not std::is_pointer<deleter>::value,
                       "non-ptr value type cannot be init'd with nullptr");
@@ -114,7 +109,8 @@ public:
 
 
     UniquePtr(UniquePtr&& other)
-        : ptr_(other.release()), del_(std::forward<deleter>(other.get_deleter()))
+        : ptr_(other.release()),
+          del_(std::forward<deleter>(other.get_deleter()))
     {
     }
 
@@ -125,18 +121,18 @@ public:
     UniquePtr& operator=(const UniquePtr&) = delete;
 
 
-    template<typename Src, typename SrcDel, typename = typename
-             std::enable_if
-             <std::is_convertible<typename UniquePtr<Src, SrcDel>::pointer,
-                                  pointer>::value
-              and not std::is_array<Src>::value
-              and ((std::is_reference<DeleterType>::value
-                    and std::is_same<SrcDel, DeleterType>::value)
-                   or (not std::is_reference<DeleterType>::value
-                       and std::is_convertible<SrcDel, DeleterType>::value))>
-             ::type>
+    template <typename Src,
+              typename SrcDel,
+              typename = typename std::enable_if<
+                  std::is_convertible<typename UniquePtr<Src, SrcDel>::pointer,
+                                      pointer>::value and
+                  not std::is_array<Src>::value and
+                  ((std::is_reference<DeleterType>::value and
+                    std::is_same<SrcDel, DeleterType>::value) or
+                   (not std::is_reference<DeleterType>::value and
+                    std::is_convertible<SrcDel, DeleterType>::value))>::type>
     UniquePtr(UniquePtr<Src, SrcDel>&& other)
-    : ptr_(other.release()), del_(other.get_deleter())
+        : ptr_(other.release()), del_(other.get_deleter())
     {
     }
 
@@ -149,11 +145,12 @@ public:
     }
 
 
-    template<typename Src, typename SrcDel, typename = typename
-             std::enable_if
-             <std::is_convertible<typename UniquePtr<Src, SrcDel>::pointer,
-                                  pointer>::value
-              and not std::is_array<Src>::value>::type>
+    template <typename Src,
+              typename SrcDel,
+              typename = typename std::enable_if<
+                  std::is_convertible<typename UniquePtr<Src, SrcDel>::pointer,
+                                      pointer>::value and
+                  not std::is_array<Src>::value>::type>
     UniquePtr& operator=(UniquePtr<Src, SrcDel>&& other)
     {
         reset(other.release());
@@ -238,10 +235,10 @@ public:
 
 
 
-template<typename ValueType,
-         typename DeleterType,
-         typename Src,
-         typename SrcDel>
+template <typename ValueType,
+          typename DeleterType,
+          typename Src,
+          typename SrcDel>
 bool operator==(const UniquePtr<ValueType, DeleterType>& lhs,
                 const UniquePtr<Src, SrcDel>& rhs)
 {
@@ -250,7 +247,7 @@ bool operator==(const UniquePtr<ValueType, DeleterType>& lhs,
 
 
 
-template<typename ValueType, typename DeleterType>
+template <typename ValueType, typename DeleterType>
 bool operator==(const UniquePtr<ValueType, DeleterType>& ptr, std::nullptr_t)
 {
     return ptr.get() == nullptr;
@@ -258,7 +255,7 @@ bool operator==(const UniquePtr<ValueType, DeleterType>& ptr, std::nullptr_t)
 
 
 
-template<typename ValueType, typename DeleterType>
+template <typename ValueType, typename DeleterType>
 bool operator==(std::nullptr_t, const UniquePtr<ValueType, DeleterType>& ptr)
 {
     return ptr.get() == nullptr;
@@ -266,28 +263,30 @@ bool operator==(std::nullptr_t, const UniquePtr<ValueType, DeleterType>& ptr)
 
 
 
-template<typename ValueType,
-         typename DeleterType,
-         typename Src,
-         typename SrcDel>
+template <typename ValueType,
+          typename DeleterType,
+          typename Src,
+          typename SrcDel>
 bool operator not_eq(const UniquePtr<ValueType, DeleterType>& lhs,
                      const UniquePtr<Src, SrcDel>& rhs)
 {
-    return not (lhs.get() == rhs.get());
+    return not(lhs.get() == rhs.get());
 }
 
 
 
-template<typename ValueType, typename DeleterType>
-bool operator not_eq(const UniquePtr<ValueType, DeleterType>& ptr, std::nullptr_t)
+template <typename ValueType, typename DeleterType>
+bool operator not_eq(const UniquePtr<ValueType, DeleterType>& ptr,
+                     std::nullptr_t)
 {
     return ptr.get() not_eq nullptr;
 }
 
 
 
-template<typename ValueType, typename DeleterType>
-bool operator not_eq(std::nullptr_t, const UniquePtr<ValueType, DeleterType>& ptr)
+template <typename ValueType, typename DeleterType>
+bool operator not_eq(std::nullptr_t,
+                     const UniquePtr<ValueType, DeleterType>& ptr)
 {
     return ptr.get() not_eq nullptr;
 }

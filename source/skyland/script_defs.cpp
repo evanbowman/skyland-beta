@@ -39,6 +39,7 @@
 #include "eternal/eternal.hpp"
 #include "heap_data.hpp"
 #include "macrocosmEngine.hpp"
+#include "platform/conf.hpp"
 #include "platform/flash_filesystem.hpp"
 #include "player/autopilotPlayer.hpp"
 #include "player/opponent/enemyAI.hpp"
@@ -68,7 +69,6 @@
 #include "skyland/sound.hpp"
 #include "skyland/tile.hpp"
 #include "version.hpp"
-#include "platform/conf.hpp"
 
 
 

@@ -10,8 +10,8 @@
 #pragma once
 
 #include "containers/array.hpp"
-#include <ciso646>
 #include "number/int.h"
+#include <ciso646>
 #include <utility>
 
 

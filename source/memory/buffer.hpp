@@ -34,9 +34,9 @@
 
 #pragma once
 
+#include "containers/array.hpp"
 #include "number/numeric.hpp"
 #include "util.hpp"
-#include "containers/array.hpp"
 #include <new>
 
 

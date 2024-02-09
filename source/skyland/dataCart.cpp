@@ -3,7 +3,6 @@
 #include "platform/conf.hpp"
 #include "platform/flash_filesystem.hpp"
 #include "platform/platform.hpp"
-#include "platform/conf.hpp"
 
 
 

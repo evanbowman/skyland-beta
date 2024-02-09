@@ -54,8 +54,7 @@
 
 
 
-template <typename F>
-void foreach_reversed(auto& iterable, F&& callback)
+template <typename F> void foreach_reversed(auto& iterable, F&& callback)
 {
     auto end = iterable.end();
     auto first = iterable.begin();
