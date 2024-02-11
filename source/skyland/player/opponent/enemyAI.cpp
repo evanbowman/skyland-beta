@@ -59,9 +59,7 @@
 #include "skyland/rooms/warhead.hpp"
 #include "skyland/scene/constructionScene.hpp"
 #include "skyland/skyland.hpp"
-#include "skyland/waitlist.hpp"
 #include <algorithm>
-#include <tuple>
 
 
 
@@ -81,26 +79,6 @@
 
 namespace skyland
 {
-
-
-
-Island* get_island(bool near)
-{
-    if (near) {
-        return &APP.player_island();
-    } else {
-        return APP.opponent_island();
-    }
-}
-
-
-
-std::tuple<Island*, Island*, Player*> get_context(bool near)
-{
-    return {get_island(near),
-            get_island(not near),
-            near ? &APP.player() : &APP.opponent()};
-}
 
 
 
@@ -186,27 +164,28 @@ void EnemyAI::update(Time delta)
             // cause lag, so we instead update the target of one room per
             // iteration of the loop.
 
-            if (room_update_index_ >= ai_island_->rooms().size()) {
-                room_update_index_ = 0;
-                next_action_timer_ = milliseconds(500);
+            if (ai_island_->rooms().size() > 20 or
+                APP.game_mode() == App::GameMode::co_op) {
+                if (room_update_index_ >= ai_island_->rooms().size()) {
+                    room_update_index_ = 0;
+                    next_action_timer_ = milliseconds(500);
+                } else {
+                    update_room(*ai_island_->rooms()[room_update_index_++],
+                                (*target_island_).rooms_plot(),
+                                this,
+                                ai_island_,
+                                target_island_);
+                    next_action_timer_ = milliseconds(32);
+                }
+
             } else {
-                bool near = ai_island_ == &APP.player_island();
-
-                waitlist.push([ind = room_update_index_++, near] {
-                    auto [ai_isle, target_isle, owner] = get_context(near);
-
-                    if (ind >= ai_isle->rooms().size()) {
-                        return;
-                    }
-
-                    update_room(*ai_isle->rooms()[ind],
-                                (*target_isle).rooms_plot(),
-                                owner,
-                                ai_isle,
-                                target_isle);
-                });
-
-                next_action_timer_ = milliseconds(32);
+                for (auto& room : ai_island_->rooms()) {
+                    update_room(*room,
+                                (*target_island_).rooms_plot(),
+                                this,
+                                ai_island_,
+                                target_island_);
+                }
             }
         }
     }
@@ -217,22 +196,8 @@ void EnemyAI::update(Time delta)
         for (auto& room : (*target_island_).rooms()) {
             for (auto& character : room->characters()) {
                 if (character->owner() == this) {
-                    auto id = character->id();
-                    bool near = ai_island_ == &APP.player_island();
-
-                    waitlist.push([id, near] {
-                        auto [ai_isle, target_isle, owner] = get_context(near);
-
-                        if (not ai_isle or not target_isle) {
-                            return;
-                        }
-
-                        auto c = target_isle->find_character_by_id(id);
-                        if (c.first) {
-                            assign_boarded_character(
-                                *c.first, owner, ai_isle, target_isle);
-                        }
-                    });
+                    assign_boarded_character(
+                        *character, this, ai_island_, target_island_);
                 }
             }
         }
@@ -241,27 +206,47 @@ void EnemyAI::update(Time delta)
     if (local_character_reassign_timer_ <= 0) {
 
         if (ai_island_) {
-            local_character_reassign_timer_ = character_reassign_timeout;
-            for (auto& room : ai_island_->rooms()) {
-                for (auto& character : room->characters()) {
-                    if (character->owner() == this) {
-                        auto id = character->id();
-                        bool near = ai_island_ == &APP.player_island();
-
-                        waitlist.push([id, near] {
-                            auto [ai_isle, target_isle, owner] =
-                                get_context(near);
-
-                            if (not ai_isle or not target_isle) {
-                                return;
+            if (ai_island_->character_count() > 4) {
+                bool reassigned = false;
+                for (auto& room : ai_island_->rooms()) {
+                    for (auto& character : room->characters()) {
+                        if (character->owner() == this) {
+                            if (not character->ai_marked()) {
+                                assign_local_character(*character,
+                                                       this,
+                                                       ai_island_,
+                                                       target_island_);
+                                character->ai_mark();
+                                reassigned = true;
+                                goto DONE;
                             }
-
-                            auto c = ai_isle->find_character_by_id(id);
-                            if (c.first) {
-                                assign_local_character(
-                                    *c.first, owner, ai_isle, target_isle);
+                        }
+                    }
+                }
+            DONE:
+                if (reassigned) {
+                    local_character_reassign_timer_ = milliseconds(200);
+                } else {
+                    for (auto& room : ai_island_->rooms()) {
+                        for (auto& character : room->characters()) {
+                            if (character->owner() == this) {
+                                if (character->ai_marked()) {
+                                    character->ai_unmark();
+                                }
                             }
-                        });
+                        }
+                    }
+                    local_character_reassign_timer_ =
+                        character_reassign_timeout - seconds(3);
+                }
+            } else {
+                local_character_reassign_timer_ = character_reassign_timeout;
+                for (auto& room : ai_island_->rooms()) {
+                    for (auto& character : room->characters()) {
+                        if (character->owner() == this) {
+                            assign_local_character(
+                                *character, this, ai_island_, target_island_);
+                        }
                     }
                 }
             }

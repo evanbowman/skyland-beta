@@ -32,7 +32,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "regressionModule.hpp"
-#include "extram_data.hpp"
+#include "heap_data.hpp"
 #include "script/lisp.hpp"
 #include "skyland/scene/selectTutorialScene.hpp"
 #include "skyland/skyland.hpp"
@@ -44,7 +44,7 @@ namespace skyland
 
 
 
-EXTRAM_DATA s8 test_index = -1;
+HEAP_DATA s8 test_index = -1;
 
 
 

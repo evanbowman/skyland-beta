@@ -110,7 +110,6 @@ set(SOURCES
   ${SOURCE_DIR}/skyland/network.cpp
   ${SOURCE_DIR}/skyland/dataCart.cpp
   ${SOURCE_DIR}/skyland/roomPool.cpp
-  ${SOURCE_DIR}/skyland/waitlist.cpp
   ${SOURCE_DIR}/skyland/bulkTimer.cpp
   ${SOURCE_DIR}/skyland/loginToken.cpp
   ${SOURCE_DIR}/skyland/script_defs.cpp

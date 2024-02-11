@@ -39,7 +39,6 @@
 #include "skyland/rooms/targetingComputer.hpp"
 #include "skyland/sharedVariable.hpp"
 #include "skyland/skyland.hpp"
-#include "skyland/waitlist.hpp"
 
 
 
@@ -325,18 +324,15 @@ void PlayerP1::ChrAIState::update(Time delta)
 
         if (not local_chrs_.empty()) {
             auto chr_id = (local_chrs_)[local_buffer_index_++];
-
-            waitlist.push([chr_id] {
-                auto info = APP.player_island().find_character_by_id(chr_id);
-                if (info.first and info.first->ai_automated() and
-                    not info.first->is_superpinned()) {
-                    EnemyAI::assign_local_character(*info.first,
-                                                    &APP.player(),
-                                                    &APP.player_island(),
-                                                    APP.opponent_island(),
-                                                    true);
-                }
-            });
+            auto info = APP.player_island().find_character_by_id(chr_id);
+            if (info.first and info.first->ai_automated() and
+                not info.first->is_superpinned()) {
+                EnemyAI::assign_local_character(*info.first,
+                                                &APP.player(),
+                                                &APP.player_island(),
+                                                APP.opponent_island(),
+                                                true);
+            }
         }
 
         if (boarded_chrs_.empty() or
@@ -358,11 +354,7 @@ void PlayerP1::ChrAIState::update(Time delta)
 
         if (not boarded_chrs_.empty()) {
             auto chr_id = (boarded_chrs_)[boarded_buffer_index_++];
-
-            waitlist.push([chr_id] {
-                if (not APP.opponent_island()) {
-                    return;
-                }
+            if (APP.opponent_island()) {
                 auto info = APP.opponent_island()->find_character_by_id(chr_id);
                 if (info.first and info.first->ai_automated() and
                     not info.first->is_superpinned()) {
@@ -371,7 +363,7 @@ void PlayerP1::ChrAIState::update(Time delta)
                                                       &APP.player_island(),
                                                       APP.opponent_island());
                 }
-            });
+            }
         }
     }
 }

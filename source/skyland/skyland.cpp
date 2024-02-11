@@ -47,7 +47,6 @@
 #include "serial.hpp"
 #include "sound.hpp"
 #include "timeStreamEvent.hpp"
-#include "waitlist.hpp"
 #include "weather/storm.hpp"
 #include <limits>
 extern "C" {
@@ -403,10 +402,6 @@ void App::update(Time delta)
     TIMEPOINT(t4);
 
     next_scene_ = current_scene_->update(delta);
-
-    if (auto task = waitlist.pop()) {
-        (*task)();
-    }
 
     TIMEPOINT(t5);
 

@@ -32,8 +32,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "extram_data.hpp"
 #include "globals.hpp"
+#include "heap_data.hpp"
 #include "localization.hpp"
 #include "memory/malloc.hpp"
 #include "platform/conf.hpp"
@@ -105,10 +105,10 @@ static inline int boot_init()
 
 
 
-EXTRAM_DATA u8 frame_count = 0;
-EXTRAM_DATA u8 last_fps1 = 0;
-EXTRAM_DATA u8 last_fps2 = 0;
-EXTRAM_DATA Time frame_total = 0;
+HEAP_DATA u8 frame_count = 0;
+HEAP_DATA u8 last_fps1 = 0;
+HEAP_DATA u8 last_fps2 = 0;
+HEAP_DATA Time frame_total = 0;
 
 
 

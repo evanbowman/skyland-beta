@@ -37,7 +37,7 @@
 #include "configure_island.hpp"
 #include "dataCart.hpp"
 #include "eternal/eternal.hpp"
-#include "extram_data.hpp"
+#include "heap_data.hpp"
 #include "macrocosmEngine.hpp"
 #include "platform/conf.hpp"
 #include "platform/flash_filesystem.hpp"
@@ -141,7 +141,7 @@ DynamicMemory<FileLine> get_line_from_file(const char* file_name, int line)
 
 
 
-static EXTRAM_DATA Buffer<DeferredScene, 8> push_menu_queue;
+static HEAP_DATA Buffer<DeferredScene, 8> push_menu_queue;
 
 
 
