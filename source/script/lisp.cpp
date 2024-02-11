@@ -36,7 +36,7 @@
 #include "allocator.hpp"
 #include "bytecode.hpp"
 #include "eternal/eternal.hpp"
-#include "heap_data.hpp"
+#include "extram_data.hpp"
 #include "lisp_internal.hpp"
 #include "listBuilder.hpp"
 #include "localization.hpp"
@@ -91,11 +91,11 @@ static_assert(sizeof(ValueMemory) == 8);
 #endif
 
 
-static HEAP_DATA ValueMemory value_pool_data[VALUE_POOL_SIZE];
+static EXTRAM_DATA ValueMemory value_pool_data[VALUE_POOL_SIZE];
 static Value* value_pool = nullptr;
 
 
-static HEAP_DATA char symbol_intern_table[string_intern_table_size];
+static EXTRAM_DATA char symbol_intern_table[string_intern_table_size];
 
 
 const char* intern(const char* string);

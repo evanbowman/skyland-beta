@@ -678,7 +678,6 @@ AGAIN:
                 cut);
 
             add_option(
-
                 SYSTR(start_menu_quit)->c_str(),
                 []() -> ScenePtr<Scene> {
                     PLATFORM.fill_overlay(0);

@@ -328,7 +328,7 @@ class UIDamageNumber : public Entity
 public:
     static int total_count_;
 
-    static const int throttle_count_ = 20;
+    static const int throttle_count_ = 15;
 
 
     UIDamageNumber(const Vec2<Fixnum>& position, int value) : Entity({})

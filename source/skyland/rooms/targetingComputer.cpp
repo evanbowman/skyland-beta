@@ -42,6 +42,7 @@
 #include "skyland/tile.hpp"
 #include "skyland/timeStream.hpp"
 #include "skyland/timeStreamEvent.hpp"
+#include "skyland/waitlist.hpp"
 
 
 
@@ -121,7 +122,7 @@ void TargetingComputer::update(Time delta)
             room_update_index_ = 0;
             next_action_timer_ = seconds(3);
         } else {
-            auto& room = *player_island().rooms()[room_update_index_++];
+            auto& room = *player_island().rooms()[room_update_index_];
             if (&room not_eq this and room.metaclass() == this->metaclass()) {
                 // Player built two targeting computers.
                 room.apply_damage(Room::health_upper_limit());
@@ -138,16 +139,27 @@ void TargetingComputer::update(Time delta)
                     APP.opponent_island()->get_room(*room.get_target());
 
                 if (not has_pinned_target and not room.cast<Warhead>()) {
-                    EnemyAI::update_room(room,
-                                         APP.opponent_island()->rooms_plot(),
-                                         &APP.player(),
-                                         &APP.player_island(),
-                                         APP.opponent_island());
+
+                    waitlist.push([ind = room_update_index_] {
+                        if (ind >= APP.player_island().rooms().size()) {
+                            return;
+                        }
+                        auto opp_isle = APP.opponent_island();
+                        if (not opp_isle) {
+                            return;
+                        }
+                        auto& room = *APP.player_island().rooms()[ind];
+                        EnemyAI::update_room(room,
+                                             opp_isle->rooms_plot(),
+                                             &APP.player(),
+                                             &APP.player_island(),
+                                             opp_isle);
+                    });
                 }
-                next_action_timer_ = milliseconds(64);
-            } else {
-                next_action_timer_ = milliseconds(32);
             }
+
+            next_action_timer_ = milliseconds(32);
+            ++room_update_index_;
         }
     }
 

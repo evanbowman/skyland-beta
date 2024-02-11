@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Copyright (C) 2023  Evan Bowman. Some rights reserved.
+// Copyright (C) 2024  Evan Bowman. Some rights reserved.
 //
 // This program is source-available; the source code is provided for educational
 // purposes. All copies of the software must be distributed along with this
@@ -31,12 +31,54 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
+#include "waitlist.hpp"
+#include "extram_data.hpp"
+#include "skyland.hpp"
 
 
-#if defined(__NDS__)
-#define HEAP_DATA
-#elif defined(__GBA__)
-#define HEAP_DATA __attribute__((section(".ewram")))
-#else
-#define HEAP_DATA
-#endif
+
+namespace skyland
+{
+
+
+
+EXTRAM_DATA int waitlist_highwater = 0;
+
+
+
+bool Waitlist::push(Task task)
+{
+    auto success = task_queue_.push(task);
+
+    if (success) {
+        size_++;
+        if (size_ > waitlist_highwater) {
+            waitlist_highwater = size_;
+            info(format("waitlist highwater %", waitlist_highwater));
+        }
+    } else {
+        // The task queue is full. We'll have to invoke the task right away.
+        task();
+    }
+
+    return success;
+}
+
+
+
+Optional<Waitlist::Task> Waitlist::pop()
+{
+    auto ret = task_queue_.pop();
+    if (ret) {
+        --size_;
+    }
+    return ret;
+}
+
+
+
+EXTRAM_DATA Waitlist waitlist;
+
+
+
+} // namespace skyland
