@@ -296,7 +296,7 @@ void EnemyAI::update_room(Room& room,
     // pathfinding for all of those entities. Of course, the game _can_
     // handle that many entities, but doing so would result in periodic long
     // pauses.
-    Buffer<std::pair<BasicCharacter*, Room*>, 8> boarded_ai_characters;
+    Buffer<Pair<BasicCharacter*, Room*>, 8> boarded_ai_characters;
     for (auto& room : (*target_island).rooms()) {
         for (auto& character : room->characters()) {
             if (character->owner() == owner) {
@@ -1609,7 +1609,7 @@ void EnemyAI::set_target(const Bitmatrix<16, 16>& matrix,
         return;
     }
 
-    Buffer<std::pair<Room*, ATP>, 64> visible_rooms;
+    Buffer<Pair<Room*, ATP>, 64> visible_rooms;
 
 
     for (int x = 0; x < 16; ++x) {
@@ -1697,7 +1697,7 @@ void EnemyAI::set_target_rocketsilo(const Bitmatrix<16, 16>& matrix,
         return;
     }
 
-    Buffer<std::pair<Room*, ATP>, 64> visible_rooms;
+    Buffer<Pair<Room*, ATP>, 64> visible_rooms;
 
 
     for (int x = 0; x < 16; ++x) {

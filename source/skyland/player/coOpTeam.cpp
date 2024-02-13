@@ -232,8 +232,7 @@ void CoOpTeam::receive(const network::packet::ChrBoardedV2& packet)
 
     const auto dst = RoomCoord{packet.dst_x_, packet.dst_y_};
 
-    auto source_island =
-        packet.transporter_near_ ? &player_island() : opponent_island();
+    auto source_island = get_island(packet.transporter_near_);
 
     if (auto room = source_island->get_room(
             {packet.transporter_x_, packet.transporter_y_})) {
@@ -245,8 +244,7 @@ void CoOpTeam::receive(const network::packet::ChrBoardedV2& packet)
         }
     }
 
-    auto dest_island =
-        packet.transporter_near_ ? opponent_island() : &player_island();
+    auto dest_island = get_island(not packet.transporter_near_);
 
     transport_character_impl(
         source_island, dest_island, packet.chr_id_.get(), dst);
@@ -262,8 +260,7 @@ void CoOpTeam::receive(const network::packet::ChrDisembarkV2& packet)
 
     const auto dst = RoomCoord{packet.dst_x_, packet.dst_y_};
 
-    auto dest_island =
-        packet.transporter_near_ ? &player_island() : opponent_island();
+    auto dest_island = get_island(packet.transporter_near_);
 
     if (auto room = dest_island->get_room(
             {packet.transporter_x_, packet.transporter_y_})) {
@@ -275,8 +272,7 @@ void CoOpTeam::receive(const network::packet::ChrDisembarkV2& packet)
         }
     }
 
-    auto source_island =
-        packet.transporter_near_ ? opponent_island() : &player_island();
+    auto source_island = get_island(not packet.transporter_near_);
 
     transport_character_impl(
         source_island, dest_island, packet.chr_id_.get(), dst);

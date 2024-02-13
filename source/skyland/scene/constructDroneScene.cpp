@@ -190,15 +190,10 @@ ScenePtr<Scene> ConstructDroneScene::update(Time delta)
     if (APP.player().key_down(Key::action_1)) {
         const auto cost = templates[selector_]->cost();
         if (APP.coins() >= cost) {
-            return scene_pool::alloc<PlaceDroneScene>(position_,
-                                                      &templates[selector_]);
+            return make_scene<PlaceDroneScene>(position_,
+                                               &templates[selector_]);
         }
     }
-
-
-    auto test_key = [&](Key k) {
-        return APP.player().test_key(k, milliseconds(500), milliseconds(150));
-    };
 
 
     if (test_key(Key::right)) {
@@ -222,7 +217,7 @@ ScenePtr<Scene> ConstructDroneScene::update(Time delta)
     }
 
     if (APP.player().key_down(Key::action_2)) {
-        return scene_pool::alloc<ReadyScene>();
+        return make_scene<ReadyScene>();
     }
 
     return null_scene();

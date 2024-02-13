@@ -100,7 +100,7 @@ ScenePtr<Scene> SalvageDroneScene::update(Time delta)
     }
 
     if (APP.player().key_down(Key::action_2)) {
-        return scene_pool::alloc<ReadyScene>();
+        return make_scene<ReadyScene>();
     }
 
     if (APP.player().key_down(Key::action_1)) {
@@ -120,7 +120,7 @@ ScenePtr<Scene> SalvageDroneScene::update(Time delta)
                 break;
             }
         }
-        return scene_pool::alloc<ReadyScene>();
+        return make_scene<ReadyScene>();
     }
 
     return null_scene();

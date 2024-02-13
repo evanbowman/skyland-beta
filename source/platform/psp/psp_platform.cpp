@@ -251,8 +251,8 @@ void Platform::fatal(const char* msg)
 }
 
 
-std::pair<const char*, u32> Platform::load_file(const char* folder,
-                                                const char* filename) const
+Pair<const char*, u32> Platform::load_file(const char* folder,
+                                           const char* filename) const
 {
     return {nullptr, 0};
 }

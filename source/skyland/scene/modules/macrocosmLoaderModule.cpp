@@ -120,7 +120,7 @@ ScenePtr<Scene> MacrocosmLoaderModule::update(Time delta)
 
     loading_text_.reset();
 
-    return scene_pool::alloc<macro::MacroverseScene>();
+    return make_scene<macro::MacroverseScene>();
 }
 
 

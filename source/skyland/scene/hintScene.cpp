@@ -139,7 +139,7 @@ ScenePtr<Scene> HintScene::update(Time delta)
 
             state_ = State::fade_out;
         } else if (APP.player().key_down(Key::action_2)) {
-            return scene_pool::alloc<WorldMapScene>();
+            return make_scene<WorldMapScene>();
         }
         break;
 

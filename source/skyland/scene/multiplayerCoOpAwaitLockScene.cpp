@@ -50,7 +50,7 @@ ScenePtr<Scene> MultiplayerCoOpAwaitLockScene::update(Time delta)
             room->co_op_peer_release_lock();
         }
         PLATFORM.speaker().play_sound("beep_error", 2);
-        return scene_pool::alloc<ReadyScene>();
+        return make_scene<ReadyScene>();
     };
 
     if (auto scene = ActiveWorldScene::update(delta)) {
@@ -83,7 +83,7 @@ ScenePtr<Scene> MultiplayerCoOpAwaitChrLockScene::update(Time delta)
             chr->co_op_release_lock();
         }
         PLATFORM.speaker().play_sound("beep_error", 2);
-        return scene_pool::alloc<ReadyScene>();
+        return make_scene<ReadyScene>();
     };
 
     if (auto scene = ActiveWorldScene::update(delta)) {

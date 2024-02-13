@@ -198,7 +198,7 @@ ScenePtr<Scene> ItemShopScene::update(Time delta)
 
     case State::ready:
         if (player().key_down(Key::action_2)) {
-            return scene_pool::alloc<ReadyScene>();
+            return make_scene<ReadyScene>();
         }
         if (player().key_down(Key::action_1)) {
 

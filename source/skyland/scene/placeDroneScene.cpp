@@ -215,7 +215,7 @@ ScenePtr<Scene> PlaceDroneScene::update(Time delta)
     }
 
     if (APP.player().key_down(Key::action_2)) {
-        return scene_pool::alloc<ReadyScene>();
+        return make_scene<ReadyScene>();
     }
 
     cursor_anim_timer_ += delta;
@@ -247,7 +247,7 @@ ScenePtr<Scene> PlaceDroneScene::update(Time delta)
                     (*drone)->set_movement_target(*cursor_loc);
 
                     if (not room->attach_drone(*drone)) {
-                        return scene_pool::alloc<ReadyScene>();
+                        return make_scene<ReadyScene>();
                     }
 
                     island->drones().push(*drone);
@@ -270,15 +270,11 @@ ScenePtr<Scene> PlaceDroneScene::update(Time delta)
 
                     globals().near_cursor_loc_ = origin_;
                     globals().near_cursor_loc_.y--;
-                    return scene_pool::alloc<ReadyScene>();
+                    return make_scene<ReadyScene>();
                 }
             }
         }
     }
-
-    auto test_key = [&](Key k) {
-        return APP.player().test_key(k, milliseconds(500), milliseconds(100));
-    };
 
     APP.player().key_held_distribute();
 
@@ -291,8 +287,7 @@ ScenePtr<Scene> PlaceDroneScene::update(Time delta)
             globals().near_cursor_loc_.y = cursor_loc->y;
             globals().near_cursor_loc_.x =
                 APP.player_island().terrain().size() - 1;
-            return scene_pool::alloc<PlaceDroneScene>(
-                origin_, drone_class_, true);
+            return make_scene<PlaceDroneScene>(origin_, drone_class_, true);
         }
     }
 
@@ -303,8 +298,7 @@ ScenePtr<Scene> PlaceDroneScene::update(Time delta)
         } else if (near_ and APP.opponent_island()) {
             globals().far_cursor_loc_.y = cursor_loc->y;
             globals().far_cursor_loc_.x = 0;
-            return scene_pool::alloc<PlaceDroneScene>(
-                origin_, drone_class_, false);
+            return make_scene<PlaceDroneScene>(origin_, drone_class_, false);
         }
     }
 

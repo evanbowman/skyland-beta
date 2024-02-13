@@ -90,7 +90,7 @@ void describe_room(Island* island,
 
 
 
-std::tuple<u8, u8, Island*> check_island_tapclick(const Vec2<u32>& pos);
+Trio<u8, u8, Island*> check_island_tapclick(const Vec2<u32>& pos);
 
 
 
@@ -125,15 +125,11 @@ ScenePtr<Scene> InspectP2Scene::update(Time delta)
 
 
     if (not APP.opponent_island()) {
-        return scene_pool::alloc<ReadyScene>();
+        return make_scene<ReadyScene>();
     }
 
     auto& cursor_loc = globals().far_cursor_loc_;
 
-
-    auto test_key = [&](Key k) {
-        return APP.player().test_key(k, milliseconds(500), milliseconds(100));
-    };
 
     APP.player().key_held_distribute();
 
@@ -151,7 +147,7 @@ ScenePtr<Scene> InspectP2Scene::update(Time delta)
         }
 
         if (APP.player().key_held(Key::start, milliseconds(800))) {
-            return scene_pool::alloc<ModifierKeyHintScene>();
+            return make_scene<ModifierKeyHintScene>();
         }
 
         if (auto scene = update_modifier_keys()) {
@@ -161,7 +157,7 @@ ScenePtr<Scene> InspectP2Scene::update(Time delta)
     } else {
 
         if (APP.player().key_down(Key::select)) {
-            return scene_pool::alloc<SelectMenuScene>();
+            return make_scene<SelectMenuScene>();
         }
 
         if (test_key(Key::left)) {
@@ -180,7 +176,7 @@ ScenePtr<Scene> InspectP2Scene::update(Time delta)
 
                 APP.player().network_sync_cursor(near_cursor, 0, true);
                 PLATFORM.speaker().play_sound("cursor_tick", 0);
-                return scene_pool::alloc<ReadyScene>();
+                return make_scene<ReadyScene>();
             }
         }
 
@@ -217,7 +213,7 @@ ScenePtr<Scene> InspectP2Scene::update(Time delta)
         if (await_start_key_ and APP.player().key_up(Key::start) and
             APP.game_mode() not_eq App::GameMode::multiplayer and
             APP.game_mode() not_eq App::GameMode::co_op) {
-            auto next = scene_pool::alloc<StartMenuScene>(0);
+            auto next = make_scene<StartMenuScene>(0);
             next->cascade_anim_in_ = true;
             return next;
         }
@@ -234,7 +230,7 @@ ScenePtr<Scene> InspectP2Scene::update(Time delta)
 
     if (APP.game_mode() == App::GameMode::sandbox and
         (tapped_topleft_corner() or APP.player().key_down(Key::alt_2))) {
-        return scene_pool::alloc<ConstructionScene>(false);
+        return make_scene<ConstructionScene>(false);
     } else if (APP.player().key_down(Key::alt_2)) {
 
         PLATFORM.speaker().play_sound("beep_error", 2);
@@ -247,7 +243,7 @@ ScenePtr<Scene> InspectP2Scene::update(Time delta)
 
         APP.player().network_sync_cursor(near_cursor, 0, true);
 
-        return scene_pool::alloc<ReadyScene>();
+        return make_scene<ReadyScene>();
     }
 
     if (APP.player().key_down(Key::action_1)) {
@@ -271,19 +267,18 @@ ScenePtr<Scene> InspectP2Scene::update(Time delta)
     if (APP.player().key_down(Key::action_2)) {
         if (auto drone = APP.opponent_island()->get_drone(cursor_loc)) {
             if (is_player_island((*drone)->parent())) {
-                return scene_pool::alloc<SalvageDroneScene>(*drone);
+                return make_scene<SalvageDroneScene>(*drone);
             }
         } else if (APP.game_mode() == App::GameMode::sandbox) {
             if (auto room = APP.opponent_island()->get_room(cursor_loc)) {
                 const auto props = (*room->metaclass())->properties();
                 if (not(props & RoomProperties::salvage_disallowed)) {
-                    return scene_pool::alloc<SalvageRoomScene>(false);
+                    return make_scene<SalvageRoomScene>(false);
                 } else {
                     PLATFORM.speaker().play_sound("beep_error", 2);
                     auto msg = SYSTR(salvage_error_disallowed);
-                    auto s = scene_pool::make_deferred_scene<InspectP2Scene>();
-                    return scene_pool::alloc<NotificationScene>(msg->c_str(),
-                                                                s);
+                    auto s = make_deferred_scene<InspectP2Scene>();
+                    return make_scene<NotificationScene>(msg->c_str(), s);
                 }
             } else if (not PLATFORM.network_peer().is_connected()) {
                 await_b_key_ = true;
@@ -294,16 +289,16 @@ ScenePtr<Scene> InspectP2Scene::update(Time delta)
     if (await_b_key_ and APP.player().key_up(Key::action_2)) {
         await_b_key_ = false;
         if (APP.game_mode() == App::GameMode::tutorial) {
-            return scene_pool::alloc<MoveRoomScene>(false);
+            return make_scene<MoveRoomScene>(false);
         }
     }
     if (await_b_key_ and
         APP.player().key_held(Key::action_2, milliseconds(400))) {
-        return scene_pool::alloc<MoveRoomScene>(false);
+        return make_scene<MoveRoomScene>(false);
     }
 
     if (not is_far_camera()) {
-        return scene_pool::alloc<ReadyScene>();
+        return make_scene<ReadyScene>();
     }
 
     if (auto next = process_script_menu_request()) {

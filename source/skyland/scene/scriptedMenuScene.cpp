@@ -242,10 +242,6 @@ ScenePtr<Scene> ScriptedMenuScene::update(Time delta)
         return next;
     }
 
-    auto test_key = [&](Key k) {
-        return APP.player().test_key(k, milliseconds(500), milliseconds(100));
-    };
-
     if (test_key(Key::left)) {
         invoke_hook("on-L");
     }

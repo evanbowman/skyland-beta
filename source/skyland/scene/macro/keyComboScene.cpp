@@ -85,7 +85,7 @@ ScenePtr<Scene> KeyComboScene::update(Time delta)
         APP.key_callback_processor().reset();
 
 
-        return scene_pool::alloc<SelectorScene>();
+        return make_scene<SelectorScene>();
     }
 
     APP.key_callback_processor().update();

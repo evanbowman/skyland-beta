@@ -69,7 +69,7 @@ void AutopilotPlayer::on_room_damaged(Room& room)
 
 
 
-static std::pair<Key, bool> button_name_to_key(const char* name)
+static Pair<Key, bool> button_name_to_key(const char* name)
 {
     if (str_cmp(name, "Right") == 0) {
         return {Key::right, true};

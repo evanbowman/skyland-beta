@@ -509,7 +509,7 @@ private:
     EntityList<Entity> effects_;
     EntityList<Bird> birds_;
 
-    Buffer<std::pair<DeferredCallback, Time>, 20> deferred_callbacks_;
+    Buffer<Pair<DeferredCallback, Time>, 20> deferred_callbacks_;
 
 
     Boxed<Player, Player, 26 * sizeof(void*)> player_;

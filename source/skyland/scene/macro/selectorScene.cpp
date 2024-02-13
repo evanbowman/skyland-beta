@@ -113,7 +113,7 @@ public:
         }
 
         if (not player.key_pressed(Key::alt_1)) {
-            return scene_pool::alloc<SelectorScene>();
+            return make_scene<SelectorScene>();
         }
 
         return null_scene();
@@ -176,40 +176,35 @@ ScenePtr<Scene> SelectorScene::update(Player& player, macro::EngineImpl& state)
 
     if (player.key_pressed(Key::start)) {
         if (player.key_down(Key::alt_2)) {
-            return scene_pool::alloc<KeyComboScene>(true);
+            return make_scene<KeyComboScene>(true);
         }
     } else {
         if (await_start_key_ and player.key_up(Key::start)) {
-            auto next = scene_pool::alloc<StartMenuScene>(0);
+            auto next = make_scene<StartMenuScene>(0);
             next->cascade_anim_in_ = true;
             return next;
         }
     }
 
-    auto test_key = [&](Key k) {
-        return player.test_key(k, milliseconds(500), milliseconds(100));
-    };
-
-
     if (player.key_pressed(Key::select) and not state.data_->freebuild_mode_ and
         not state.data_->checkers_mode_) {
 
-        return scene_pool::alloc<HelpScene>();
+        return make_scene<HelpScene>();
     }
 
     if (player.key_pressed(Key::alt_1) and state.data_->freebuild_mode_) {
 
-        return scene_pool::alloc<KeylockScene>();
+        return make_scene<KeylockScene>();
 
     } else if (player.key_pressed(Key::alt_1) and
                not state.data_->freebuild_mode_ and
                not state.data_->checkers_mode_) {
 
-        return scene_pool::alloc<MenuOptionsScene>();
+        return make_scene<MenuOptionsScene>();
 
     } else if (player.key_down(Key::alt_2)) {
 
-        return scene_pool::alloc<ModifiedSelectorScene>();
+        return make_scene<ModifiedSelectorScene>();
 
     } else {
 
@@ -301,7 +296,7 @@ ScenePtr<Scene> SelectorScene::update(Player& player, macro::EngineImpl& state)
             if (not slots.empty()) {
                 PLATFORM.speaker().play_sound("button_wooden", 3);
                 state.sector().set_block(cursor, terrain::Type::air);
-                return scene_pool::alloc<MoveCheckerScene>(pos, slots);
+                return make_scene<MoveCheckerScene>(pos, slots);
             } else {
                 PLATFORM.speaker().play_sound("beep_error", 3);
             }
@@ -310,11 +305,11 @@ ScenePtr<Scene> SelectorScene::update(Player& player, macro::EngineImpl& state)
             switch (state.data_->keylock_) {
             case Keylock::nolock: {
                 PLATFORM.speaker().play_sound("cursor_tick", 0);
-                return scene_pool::alloc<TileOptionsScene>();
+                return make_scene<TileOptionsScene>();
             }
 
             case Keylock::buildlock:
-                return scene_pool::alloc<CreateBlockScene>();
+                return make_scene<CreateBlockScene>();
 
             case Keylock::improvelock: {
                 auto c = state.sector().cursor();
@@ -325,7 +320,7 @@ ScenePtr<Scene> SelectorScene::update(Player& player, macro::EngineImpl& state)
                         terrain::improvements((terrain::Type)block.type_);
                     if (not improvements.empty()) {
                         PLATFORM.speaker().play_sound("button_wooden", 3);
-                        return scene_pool::alloc<BuildImprovementScene>();
+                        return make_scene<BuildImprovementScene>();
                     }
                 }
                 break;

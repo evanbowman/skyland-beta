@@ -364,9 +364,9 @@ ScenePtr<Scene> RewindScene::update(Time)
         }
 
         if (far_camera_) {
-            return scene_pool::alloc<InspectP2Scene>();
+            return make_scene<InspectP2Scene>();
         } else {
-            return scene_pool::alloc<ReadyScene>();
+            return make_scene<ReadyScene>();
         }
     }
 
@@ -666,7 +666,7 @@ ScenePtr<Scene> RewindScene::update(Time)
             } else {
                 auto err = "rewind salvage: attempt to re-attach character"
                            " to non-existent room.";
-                return scene_pool::alloc<FatalErrorScene>(err);
+                return make_scene<FatalErrorScene>(err);
             }
 
             APP.time_stream().pop(sizeof *e);
@@ -1043,14 +1043,13 @@ ScenePtr<Scene> RewindScene::update(Time)
 
         case time_stream::event::Type::character_movement_path_assigned: {
             auto e = (time_stream::event::CharacterMovementPathAssigned*)end;
-            Island* island =
-                e->near_ ? &APP.player_island() : APP.opponent_island();
+            Island* island = get_island(e->near_);
 
             if (auto chr = island->find_character_by_id(e->id_.get()).first) {
                 chr->drop_movement_path();
             } else {
                 auto err = "rewind chr mv path asgn: invalid chr id!";
-                return scene_pool::alloc<FatalErrorScene>(err);
+                return make_scene<FatalErrorScene>(err);
             }
 
             APP.time_stream().pop(sizeof *e);
@@ -1073,8 +1072,7 @@ ScenePtr<Scene> RewindScene::update(Time)
 
         case time_stream::event::Type::character_moved: {
             auto e = (time_stream::event::CharacterMoved*)end;
-            Island* island =
-                e->near_ ? &APP.player_island() : APP.opponent_island();
+            Island* island = get_island(e->near_);
 
             if (auto chr = island->find_character_by_id(e->id_.get()).first) {
                 chr->rewind_movement_step({e->previous_x_, e->previous_y_});
@@ -1085,7 +1083,7 @@ ScenePtr<Scene> RewindScene::update(Time)
                 }
             } else {
                 auto err = "rewind chr mv path asgn: invalid chr id! (2)";
-                return scene_pool::alloc<FatalErrorScene>(err);
+                return make_scene<FatalErrorScene>(err);
             }
 
             APP.time_stream().pop(sizeof *e);
@@ -1096,8 +1094,7 @@ ScenePtr<Scene> RewindScene::update(Time)
         case time_stream::event::Type::character_died: {
             auto e = (time_stream::event::CharacterDied*)end;
 
-            Island* island =
-                e->near_ ? &APP.player_island() : APP.opponent_island();
+            Island* island = get_island(e->near_);
 
             Player* owner =
                 e->owned_by_player_ ? &APP.player() : &APP.opponent();
@@ -1121,8 +1118,7 @@ ScenePtr<Scene> RewindScene::update(Time)
         case time_stream::event::Type::replicant_created: {
             auto e = (time_stream::event::ReplicantCreated*)end;
 
-            Island* island =
-                e->near_ ? &APP.player_island() : APP.opponent_island();
+            Island* island = get_island(e->near_);
 
             if (auto room = island->get_room({e->x_, e->y_})) {
                 for (auto it = room->characters().begin();
@@ -1135,7 +1131,7 @@ ScenePtr<Scene> RewindScene::update(Time)
                         } else {
                             auto err = "rewind error: rewind replicant"
                                        "is not replicant?!";
-                            return scene_pool::alloc<FatalErrorScene>(err);
+                            return make_scene<FatalErrorScene>(err);
                         }
                         break;
                     } else {
@@ -1151,14 +1147,13 @@ ScenePtr<Scene> RewindScene::update(Time)
         case time_stream::event::Type::character_health_changed: {
             auto e = (time_stream::event::CharacterHealthChanged*)end;
 
-            Island* island =
-                e->near_ ? &APP.player_island() : APP.opponent_island();
+            Island* island = get_island(e->near_);
 
             if (auto chr = island->find_character_by_id(e->id_.get()).first) {
                 chr->__set_health(e->previous_health_);
             } else {
                 auto err = "rewind chr health changed: invalid chr id!";
-                return scene_pool::alloc<FatalErrorScene>(err);
+                return make_scene<FatalErrorScene>(err);
             }
 
             APP.time_stream().pop(sizeof *e);
@@ -1169,11 +1164,9 @@ ScenePtr<Scene> RewindScene::update(Time)
         case time_stream::event::Type::character_transported: {
             auto e = (time_stream::event::CharacterTransported*)end;
 
-            Island* source_island =
-                e->source_near_ ? &APP.player_island() : APP.opponent_island();
+            Island* source_island = get_island(e->source_near_);
 
-            Island* dest_island = not e->source_near_ ? &APP.player_island()
-                                                      : APP.opponent_island();
+            Island* dest_island = get_island(not e->source_near_);
 
             // Ok, so here, we want to revert the transport. Find the
             // transported character at the destination island, and move it back
@@ -1182,7 +1175,7 @@ ScenePtr<Scene> RewindScene::update(Time)
             auto chr_info = dest_island->find_character_by_id(e->id_.get());
             if (chr_info.first == nullptr) {
                 auto err = "rewind chr_transported: Invalid character id!";
-                return scene_pool::alloc<FatalErrorScene>(err);
+                return make_scene<FatalErrorScene>(err);
             }
 
             auto dest_room = chr_info.second;
@@ -1209,7 +1202,7 @@ ScenePtr<Scene> RewindScene::update(Time)
                         } else {
                             auto err = "fatal error when rewinding "
                                        "transport: source room missing.";
-                            return scene_pool::alloc<FatalErrorScene>(err);
+                            return make_scene<FatalErrorScene>(err);
                         }
                         break;
                     } else {
@@ -1218,7 +1211,7 @@ ScenePtr<Scene> RewindScene::update(Time)
                 }
             } else {
                 auto err = "error rewinding transport: dest room missing.";
-                return scene_pool::alloc<FatalErrorScene>(err);
+                return make_scene<FatalErrorScene>(err);
             }
 
             APP.time_stream().pop(sizeof *e);
@@ -1229,16 +1222,14 @@ ScenePtr<Scene> RewindScene::update(Time)
         case time_stream::event::Type::character_disembark: {
             auto e = (time_stream::event::CharacterDisembark*)end;
 
-            Island* source_island =
-                e->chr_near_ ? &APP.player_island() : APP.opponent_island();
+            Island* source_island = get_island(e->chr_near_);
 
-            Island* dest_island =
-                not e->chr_near_ ? &APP.player_island() : APP.opponent_island();
+            Island* dest_island = get_island(not e->chr_near_);
 
             auto chr_info = dest_island->find_character_by_id(e->id_.get());
             if (chr_info.first == nullptr) {
                 auto err = "rewind chr_disembark: Invalid character id!";
-                return scene_pool::alloc<FatalErrorScene>(err);
+                return make_scene<FatalErrorScene>(err);
             }
 
             auto dest_room = chr_info.second;
@@ -1266,7 +1257,7 @@ ScenePtr<Scene> RewindScene::update(Time)
                         } else {
                             auto err = "fatal error when rewinding "
                                        "disembark: source room missing";
-                            return scene_pool::alloc<FatalErrorScene>(err);
+                            return make_scene<FatalErrorScene>(err);
                         }
                         break;
                     } else {
@@ -1275,7 +1266,7 @@ ScenePtr<Scene> RewindScene::update(Time)
                 }
             } else {
                 auto err = "error rewinding disembark: dest room missing";
-                return scene_pool::alloc<FatalErrorScene>(err);
+                return make_scene<FatalErrorScene>(err);
             }
 
             APP.time_stream().pop(sizeof *e);
@@ -1298,8 +1289,7 @@ ScenePtr<Scene> RewindScene::update(Time)
         case time_stream::event::Type::weapon_set_target: {
             auto e = (time_stream::event::WeaponSetTarget*)end;
 
-            Island* island =
-                e->near_ ? &APP.player_island() : APP.opponent_island();
+            Island* island = get_island(e->near_);
 
             if (auto room = island->get_room({e->room_x_, e->room_y_})) {
                 if (e->has_previous_target_) {
@@ -1350,8 +1340,7 @@ ScenePtr<Scene> RewindScene::update(Time)
         case time_stream::event::Type::island_terrain_changed: {
             auto e = (time_stream::event::IslandTerrainChanged*)end;
 
-            Island* island =
-                e->near_ ? &APP.player_island() : APP.opponent_island();
+            Island* island = get_island(e->near_);
 
             island->init_terrain(e->previous_terrain_size_);
             island->repaint();
@@ -1364,8 +1353,7 @@ ScenePtr<Scene> RewindScene::update(Time)
         case time_stream::event::Type::drone_deployed: {
             auto e = (time_stream::event::DroneDeployed*)end;
 
-            Island* dest_island = e->destination_near_ ? &APP.player_island()
-                                                       : APP.opponent_island();
+            Island* dest_island = get_island(e->destination_near_);
 
             for (auto& drone_sp : dest_island->drones()) {
                 if (drone_sp->position().x == e->x_pos_ and
@@ -1386,8 +1374,7 @@ ScenePtr<Scene> RewindScene::update(Time)
         case time_stream::event::Type::drone_health_changed: {
             auto e = (time_stream::event::DroneHealthChanged*)end;
 
-            Island* dest_island = e->destination_near_ ? &APP.player_island()
-                                                       : APP.opponent_island();
+            Island* dest_island = get_island(e->destination_near_);
 
             for (auto& drone : dest_island->drones()) {
                 if (drone->position().x == e->x_pos_ and
@@ -1406,8 +1393,7 @@ ScenePtr<Scene> RewindScene::update(Time)
         case time_stream::event::Type::drone_set_target: {
             auto e = (time_stream::event::DroneSetTarget*)end;
 
-            Island* dest_island = e->destination_near_ ? &APP.player_island()
-                                                       : APP.opponent_island();
+            Island* dest_island = get_island(e->destination_near_);
 
             for (auto& drone : dest_island->drones()) {
                 if (drone->position().x == e->x_pos_ and
@@ -1432,8 +1418,7 @@ ScenePtr<Scene> RewindScene::update(Time)
         case time_stream::event::Type::drone_reload_complete: {
             auto e = (time_stream::event::DroneReloadComplete*)end;
 
-            Island* dest_island = e->destination_near_ ? &APP.player_island()
-                                                       : APP.opponent_island();
+            Island* dest_island = get_island(e->destination_near_);
 
             for (auto& drone : dest_island->drones()) {
                 if (drone->position().x == e->x_pos_ and
@@ -1452,11 +1437,9 @@ ScenePtr<Scene> RewindScene::update(Time)
         case time_stream::event::Type::drone_destroyed: {
             auto e = (time_stream::event::DroneDestroyed*)end;
 
-            Island* dest_island = e->destination_near_ ? &APP.player_island()
-                                                       : APP.opponent_island();
+            Island* dest_island = get_island(e->destination_near_);
 
-            Island* parent_island =
-                e->parent_near_ ? &APP.player_island() : APP.opponent_island();
+            Island* parent_island = get_island(e->parent_near_);
 
             auto drone_class = &drone_metatable().first[e->type_];
             if (auto drone = (*drone_class)
@@ -1478,7 +1461,7 @@ ScenePtr<Scene> RewindScene::update(Time)
                     } else {
                         auto err = "rewind: attempt to attach drone to non"
                                    " drone-bay";
-                        return scene_pool::alloc<FatalErrorScene>(err);
+                        return make_scene<FatalErrorScene>(err);
                     }
                 } else {
                     StringBuffer<64> fmt =
@@ -1490,7 +1473,7 @@ ScenePtr<Scene> RewindScene::update(Time)
                 }
             } else {
                 auto err = "rewind: failed to alloc drone";
-                return scene_pool::alloc<FatalErrorScene>(err);
+                return make_scene<FatalErrorScene>(err);
             }
 
             APP.time_stream().pop(sizeof *e);
@@ -1679,8 +1662,8 @@ ScenePtr<Scene> RewindScene::update(Time)
 
         case time_stream::event::cargo_bay_contents: {
             auto e = (time_stream::event::CargoBayContents*)end;
-            Island* island =
-                e->near_ ? &APP.player_island() : APP.opponent_island();
+
+            Island* island = get_island(e->near_);
 
             if (island) {
                 if (auto r = island->get_room({e->x_, e->y_})) {
@@ -1732,7 +1715,7 @@ ScenePtr<Scene> RewindScene::update(Time)
 
         default:
             auto err = "invalid event from time stream";
-            return scene_pool::alloc<FatalErrorScene>(err);
+            return make_scene<FatalErrorScene>(err);
         }
 
         if (APP.time_stream().end()) {

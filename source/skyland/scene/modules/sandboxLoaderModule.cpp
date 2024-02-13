@@ -237,11 +237,11 @@ ScenePtr<Scene> SandboxLoaderModule::update(Time delta)
 
     if (APP.player().key_down(Key::action_1)) {
         PLATFORM.screen().fade(1.f, ColorConstant::rich_black, {}, true, true);
-        return scene_pool::alloc<FadeInScene>();
+        return make_scene<FadeInScene>();
     } else if (APP.player().key_down(Key::action_2)) {
         cancelled_ = true;
         PLATFORM.screen().fade(1.f, ColorConstant::rich_black, {}, true, true);
-        return scene_pool::alloc<TitleScreenScene>(3);
+        return make_scene<TitleScreenScene>(3);
     }
 
     if (unveil_) {

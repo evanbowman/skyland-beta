@@ -108,10 +108,6 @@ ScenePtr<Scene> AdventureModeSettingsScene::update(Time delta)
 
     APP.player().update(delta);
 
-    auto test_key = [&](Key k) {
-        return APP.player().test_key(k, milliseconds(500), milliseconds(100));
-    };
-
     if (test_key(Key::up)) {
         auto& diff = APP.gp_.difficulty_;
         if ((int)diff == 0) {
@@ -202,7 +198,7 @@ ScenePtr<Scene> AdventureModeSettingsScene::update(Time delta)
             APP.invoke_script("/scripts/newgame.lisp");
         }
 
-        return scene_pool::alloc<WorldMapScene>();
+        return make_scene<WorldMapScene>();
     }
 
 

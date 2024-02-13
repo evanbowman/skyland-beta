@@ -1264,7 +1264,7 @@ ScenePtr<Scene> TitleScreenScene::update(Time delta)
                 auto tutorial_flag = GlobalPersistentData::tutorial_prompt;
 
                 if (APP.gp_.stateflags_.get(tutorial_flag)) {
-                    return scene_pool::alloc<NewgameScene>();
+                    return make_scene<NewgameScene>();
                 } else {
 
                     module_cursor_ = {0, 0};
@@ -1289,8 +1289,8 @@ ScenePtr<Scene> TitleScreenScene::update(Time delta)
                     cursor_loc.x = 0;
                     cursor_loc.y = 14;
 
-                    auto next = scene_pool::alloc<BoxedDialogSceneWS>(
-                        std::move(dialog));
+                    auto next =
+                        make_scene<BoxedDialogSceneWS>(std::move(dialog));
 
                     return next;
                 }
@@ -1300,7 +1300,7 @@ ScenePtr<Scene> TitleScreenScene::update(Time delta)
             case 1: {
                 APP.game_mode() = App::GameMode::challenge;
                 run_init_scripts(true);
-                return scene_pool::alloc<SelectChallengeScene>();
+                return make_scene<SelectChallengeScene>();
             }
 
             case 2:
@@ -1327,7 +1327,7 @@ ScenePtr<Scene> TitleScreenScene::update(Time delta)
 
                 APP.invoke_script("/scripts/reset_hooks.lisp");
 
-                return scene_pool::alloc<MacrocosmLoaderModule>();
+                return make_scene<MacrocosmLoaderModule>();
 
             case 3:
                 PLATFORM.fatal("logic error, this should be unreachable");
@@ -1425,11 +1425,6 @@ ScenePtr<Scene> TitleScreenScene::update(Time delta)
             PLATFORM.fill_overlay(0);
             redraw_margins();
         } else if (module_cursor_) {
-
-            auto test_key = [&](Key k) {
-                return APP.player().test_key(
-                    k, milliseconds(500), milliseconds(100));
-            };
 
             auto click_sound = [&] {
                 PLATFORM.speaker().play_sound("click_wooden", 2);

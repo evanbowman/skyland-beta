@@ -200,7 +200,7 @@ public:
 
         ScenePtr<Scene> create() override
         {
-            return scene_pool::alloc<T>();
+            return make_scene<T>();
         }
     };
 };

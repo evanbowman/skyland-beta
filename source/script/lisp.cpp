@@ -101,7 +101,7 @@ static HEAP_DATA char symbol_intern_table[string_intern_table_size];
 const char* intern(const char* string);
 
 
-std::pair<ValuePoolUsed, ValuePoolFree> value_pool_info()
+Pair<ValuePoolUsed, ValuePoolFree> value_pool_info()
 {
     int values_remaining = 0;
     Value* current = value_pool;
@@ -110,7 +110,8 @@ std::pair<ValuePoolUsed, ValuePoolFree> value_pool_info()
         current = current->heap_node().next_;
     }
 
-    return {VALUE_POOL_SIZE - values_remaining, values_remaining};
+    return {(ValuePoolUsed)(VALUE_POOL_SIZE - values_remaining),
+            (ValuePoolFree)values_remaining};
 }
 
 
@@ -938,7 +939,7 @@ Value* make_string_from_literal(const char* str)
 }
 
 
-std::pair<Value*, int> store_string(const char* string, u32 len)
+Pair<Value*, int> store_string(const char* string, u32 len)
 {
     Value* existing_buffer = nullptr;
     auto free = bound_context->string_buffer_remaining_;
@@ -2966,7 +2967,7 @@ Value* stacktrace()
 #endif
 
 using RequiredArgc = int;
-using Builtin = std::pair<RequiredArgc, lisp::Value* (*)(int)>;
+using Builtin = Pair<RequiredArgc, lisp::Value* (*)(int)>;
 // clang-format off
 BUILTIN_TABLE(
     // clang-format on

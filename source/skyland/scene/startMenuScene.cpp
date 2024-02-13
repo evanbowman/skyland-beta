@@ -205,7 +205,7 @@ public:
             return null_scene();
         }
         if (player.key_down(Key::action_2)) {
-            return scene_pool::alloc<macro::SelectorScene>();
+            return make_scene<macro::SelectorScene>();
         }
 
         return null_scene();
@@ -223,10 +223,6 @@ private:
 ScenePtr<Scene> StartMenuScene::update(Time delta)
 {
     player().update(delta);
-
-    auto test_key = [&](Key k) {
-        return player().test_key(k, milliseconds(500), milliseconds(100));
-    };
 
 AGAIN:
     if (not data_->disp_queue_.empty()) {
@@ -301,15 +297,14 @@ AGAIN:
                     PLATFORM.screen().pixelate(0);
                     PLATFORM.fill_overlay(0);
                     auto show_qr = [&code = *qr]() -> ScenePtr<Scene> {
-                        return scene_pool::alloc<QRViewerScene>(
+                        return make_scene<QRViewerScene>(
                             code,
                             []() {
                                 PLATFORM.load_overlay_texture("overlay");
                                 PLATFORM.load_background_texture(
                                     "background_macro");
                                 PLATFORM.screen().schedule_fade(0.f);
-                                return scene_pool::alloc<
-                                    macro::SelectorScene>();
+                                return make_scene<macro::SelectorScene>();
                             },
                             ColorConstant::rich_black);
                     };
@@ -318,8 +313,8 @@ AGAIN:
                         auto dialog =
                             allocate_dynamic<DialogString>("dialog-buffer");
                         *dialog = SYS_CSTR(qr_code_size_warning);
-                        auto next = scene_pool::alloc<BoxedDialogScene>(
-                            std::move(dialog));
+                        auto next =
+                            make_scene<BoxedDialogScene>(std::move(dialog));
                         next->set_next_scene(show_qr);
                         return next;
                     } else {
@@ -332,10 +327,9 @@ AGAIN:
                     auto dialog =
                         allocate_dynamic<DialogString>("dialog-buffer");
                     *dialog = SYS_CSTR(qr_code_size_error);
-                    auto next =
-                        scene_pool::alloc<BoxedDialogScene>(std::move(dialog));
-                    next->set_next_scene(scene_pool::make_deferred_scene<
-                                         macro::SelectorScene>());
+                    auto next = make_scene<BoxedDialogScene>(std::move(dialog));
+                    next->set_next_scene(
+                        make_deferred_scene<macro::SelectorScene>());
 
                     return next;
                 }
@@ -351,7 +345,7 @@ AGAIN:
         if (APP.game_mode() == App::GameMode::macro) {
 
             add_option(SYSTR(start_menu_resume)->c_str(),
-                       scene_pool::make_deferred_scene<macro::SelectorScene>(),
+                       make_deferred_scene<macro::SelectorScene>(),
                        kill_menu);
 
             if (not macrocosm().data_->freebuild_mode_ and
@@ -365,30 +359,26 @@ AGAIN:
                     add_offset_ = -30;
                 }
 
-                add_option(
+                add_option(SYSTR(start_menu_next_turn)->c_str(),
+                           make_deferred_scene<macro::NextTurnScene>(),
+                           cut);
 
-                    SYSTR(start_menu_next_turn)->c_str(),
-                    scene_pool::make_deferred_scene<macro::NextTurnScene>(),
-                    cut);
-
-                add_option(
-
-                    SYSTR(start_menu_macroverse)->c_str(),
-                    scene_pool::make_deferred_scene<macro::MacroverseScene>(),
-                    fade_sweep_transparent_text);
+                add_option(SYSTR(start_menu_macroverse)->c_str(),
+                           make_deferred_scene<macro::MacroverseScene>(),
+                           fade_sweep_transparent_text);
             }
 
         } else /* Game mode not_eq macro  */ {
 
             add_option(SYSTR(start_menu_resume)->c_str(),
-                       scene_pool::make_deferred_scene<ReadyScene>(),
+                       make_deferred_scene<ReadyScene>(),
                        kill_menu);
 
             add_option(
 
                 SYSTR(start_menu_glossary)->c_str(),
                 [] {
-                    auto next = scene_pool::alloc<GlossaryViewerModule>();
+                    auto next = make_scene<GlossaryViewerModule>();
                     next->disable_backdrop_ = true;
                     next->set_next_scene([]() {
                         auto& isle = APP.player_island();
@@ -414,7 +404,7 @@ AGAIN:
                         view.set_center(APP.camera()->center());
                         PLATFORM.screen().set_view(view);
 
-                        auto next = scene_pool::alloc<StartMenuScene>(1);
+                        auto next = make_scene<StartMenuScene>(1);
                         return next;
                     });
                     return next;
@@ -425,8 +415,8 @@ AGAIN:
 
                 SYSTR(start_menu_disable_rooms)->c_str(),
                 [] {
-                    auto next = scene_pool::alloc<HideRoomsScene>(
-                        []() { return scene_pool::alloc<StartMenuScene>(1); });
+                    auto next = make_scene<HideRoomsScene>(
+                        []() { return make_scene<StartMenuScene>(1); });
                     return next;
                 },
                 fade_sweep);
@@ -443,7 +433,7 @@ AGAIN:
             // wake the system out of low power mode anyway.
 
             add_option(SYSTR(start_menu_hibernate)->c_str(),
-                       scene_pool::make_deferred_scene<HibernateScene>(),
+                       make_deferred_scene<HibernateScene>(),
                        fade_sweep);
         }
 
@@ -456,15 +446,15 @@ AGAIN:
             add_option(
 
                 SYSTR(start_menu_repl)->c_str(),
-                []() { return scene_pool::alloc<LispReplScene>(); },
+                []() { return make_scene<LispReplScene>(); },
                 cut);
 
             add_option(SYSTR(start_menu_save_sandbox)->c_str(),
-                       scene_pool::make_deferred_scene<SaveSandboxScene>(),
+                       make_deferred_scene<SaveSandboxScene>(),
                        fade_sweep);
 
             add_option(SYSTR(start_menu_load_sandbox)->c_str(),
-                       scene_pool::make_deferred_scene<LoadSandboxScene>(),
+                       make_deferred_scene<LoadSandboxScene>(),
                        fade_sweep);
 
             add_option(
@@ -473,7 +463,7 @@ AGAIN:
                 []() -> ScenePtr<Scene> {
                     APP.swap_player<SandboxSpectatorPlayer>();
                     PLATFORM.screen().schedule_fade(0.f);
-                    return scene_pool::alloc<SpectatorScene>();
+                    return make_scene<SpectatorScene>();
                 },
                 cut);
 
@@ -491,7 +481,7 @@ AGAIN:
 
                         PLATFORM.screen().schedule_fade(0.f);
 
-                        return scene_pool::alloc<ReadyScene>();
+                        return make_scene<ReadyScene>();
                     }
                     Platform::fatal("invalid datatype for challenge-hint"
                                     " (expected function)");
@@ -505,7 +495,7 @@ AGAIN:
                     lisp::set_var("sb-help", L_NIL);
                     PLATFORM.fill_overlay(0);
                     PLATFORM.screen().set_shader(passthrough_shader);
-                    return scene_pool::alloc<TitleScreenScene>(3);
+                    return make_scene<TitleScreenScene>(3);
                 },
                 fade_sweep);
             break;
@@ -517,7 +507,7 @@ AGAIN:
 
                     SYSTR(start_menu_quit)->c_str(),
                     []() -> ScenePtr<Scene> {
-                        return scene_pool::alloc<TitleScreenScene>(3);
+                        return make_scene<TitleScreenScene>(3);
                     },
                     fade_sweep);
                 break;
@@ -543,7 +533,7 @@ AGAIN:
                             []() -> ScenePtr<Scene> {
                                 PLATFORM.screen().pixelate(0);
                                 using Next = macro::FreebuildConnectFriendScene;
-                                return scene_pool::alloc<Next>();
+                                return make_scene<Next>();
                             },
                             fade_sweep);
                     }
@@ -553,7 +543,7 @@ AGAIN:
                     add_option(
 
                         SYSTR(start_menu_freebuild_samples)->c_str(),
-                        []() { return scene_pool::alloc<SelectSampleScene>(); },
+                        []() { return make_scene<SelectSampleScene>(); },
                         cut);
 
                     add_option(
@@ -567,14 +557,14 @@ AGAIN:
                                 {u8(sz.x / 2), u8(sz.y / 2), u8(sz.z / 2)});
                             PLATFORM.screen().schedule_fade(0.f);
                             PLATFORM.screen().pixelate(0);
-                            return scene_pool::alloc<GenerateAgainScene>();
+                            return make_scene<GenerateAgainScene>();
                         },
                         cut);
 
                     add_option(
 
                         SYSTR(start_menu_repl)->c_str(),
-                        []() { return scene_pool::alloc<LispReplScene>(); },
+                        []() { return make_scene<LispReplScene>(); },
                         cut);
 
                     add_option(
@@ -612,7 +602,7 @@ AGAIN:
 
                             PLATFORM.screen().schedule_fade(0.f);
                             PLATFORM.screen().pixelate(0);
-                            return scene_pool::alloc<macro::SelectorScene>();
+                            return make_scene<macro::SelectorScene>();
                         },
                         cut);
                 }
@@ -630,7 +620,7 @@ AGAIN:
 
                         PLATFORM.screen().schedule_fade(0.f);
                         PLATFORM.screen().pixelate(0);
-                        return scene_pool::alloc<macro::SelectorScene>();
+                        return make_scene<macro::SelectorScene>();
                     },
                     cut);
 
@@ -644,9 +634,9 @@ AGAIN:
                         PLATFORM.fill_overlay(0);
                         PLATFORM.screen().set_shader(passthrough_shader);
                         if (macrocosm().data_->freebuild_mode_) {
-                            return scene_pool::alloc<TitleScreenScene>(3);
+                            return make_scene<TitleScreenScene>(3);
                         } else {
-                            return scene_pool::alloc<TitleScreenScene>(4);
+                            return make_scene<TitleScreenScene>(4);
                         }
                     },
                     fade_sweep);
@@ -657,7 +647,7 @@ AGAIN:
 
                 SYSTR(start_menu_save)->c_str(),
                 []() -> ScenePtr<Scene> {
-                    return scene_pool::alloc<macro::SaveConfirmScene>();
+                    return make_scene<macro::SaveConfirmScene>();
                 },
                 fade_sweep);
 
@@ -674,7 +664,7 @@ AGAIN:
                     PLATFORM.screen().display();
                     macrocosm().newgame();
                     PLATFORM.load_overlay_texture("overlay_challenges");
-                    return scene_pool::alloc<macro::MacroverseScene>();
+                    return make_scene<macro::MacroverseScene>();
                 },
                 cut);
 
@@ -684,7 +674,7 @@ AGAIN:
                 []() -> ScenePtr<Scene> {
                     PLATFORM.fill_overlay(0);
                     PLATFORM.screen().set_shader(passthrough_shader);
-                    return scene_pool::alloc<TitleScreenScene>(4);
+                    return make_scene<TitleScreenScene>(4);
                 },
                 fade_sweep);
 
@@ -694,20 +684,20 @@ AGAIN:
             if (APP.opponent_island() == nullptr or
                 APP.world_graph().nodes_[APP.current_world_location()].type_ ==
                     WorldGraph::Node::Type::shop) {
-                add_option(SYSTR(start_menu_sky_map)->c_str(),
-                           []() -> ScenePtr<Scene> {
-                               if (APP.current_world_location() == 0) {
-                                   return scene_pool::alloc<WorldMapScene>();
-                               } else {
-                                   return scene_pool::alloc<ZoneImageScene>();
-                               }
-                           },
-                           cut);
+                add_option(
+                    SYSTR(start_menu_sky_map)->c_str(),
+                    []() -> ScenePtr<Scene> {
+                        if (APP.current_world_location() == 0) {
+                            return make_scene<WorldMapScene>();
+                        } else {
+                            return make_scene<ZoneImageScene>();
+                        }
+                    },
+                    cut);
             } else {
                 if (not APP.opponent().is_friendly()) {
                     add_option(SYSTR(start_menu_end_run)->c_str(),
-                               scene_pool::make_deferred_scene<
-                                   SurrenderConfirmScene>(),
+                               make_deferred_scene<SurrenderConfirmScene>(),
                                fade_sweep);
                 }
 
@@ -724,7 +714,7 @@ AGAIN:
                             PLATFORM.fill_overlay(0);
                             APP.restore_backup();
                             PLATFORM.speaker().clear_sounds();
-                            return scene_pool::alloc<LoadLevelScene>();
+                            return make_scene<LoadLevelScene>();
                         },
                         fade_sweep);
                 }
@@ -740,7 +730,7 @@ AGAIN:
                     PLATFORM.speaker().stop_music();
                     PLATFORM.screen().schedule_fade(0.f);
                     PLATFORM.screen().pixelate(0);
-                    auto next = scene_pool::alloc<ReadyScene>();
+                    auto next = make_scene<ReadyScene>();
                     next->set_gamespeed(GameSpeed::normal);
                     return next;
                 },
@@ -763,7 +753,7 @@ AGAIN:
                         PLATFORM.screen().schedule_fade(0.f);
                         PLATFORM.screen().pixelate(0);
 
-                        return scene_pool::alloc<ReadyScene>();
+                        return make_scene<ReadyScene>();
                     }
                     Platform::fatal("invalid datatype for challenge-hint"
                                     " (expected function)");
@@ -776,7 +766,7 @@ AGAIN:
                 []() -> ScenePtr<Scene> {
                     PLATFORM.fill_overlay(0);
                     PLATFORM.screen().set_shader(passthrough_shader);
-                    return scene_pool::alloc<SelectChallengeScene>();
+                    return make_scene<SelectChallengeScene>();
                 },
                 fade_sweep);
 
@@ -883,9 +873,9 @@ AGAIN:
         PLATFORM.screen().schedule_fade(0.f);
         PLATFORM.screen().pixelate(0);
         if (APP.game_mode() == App::GameMode::macro) {
-            return scene_pool::alloc<macro::SelectorScene>();
+            return make_scene<macro::SelectorScene>();
         } else {
-            return scene_pool::alloc<ReadyScene>();
+            return make_scene<ReadyScene>();
         }
 
 

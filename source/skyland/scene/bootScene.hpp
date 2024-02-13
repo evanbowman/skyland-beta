@@ -76,7 +76,7 @@ class LanguageSelectScene : public Scene
 {
 private:
     using LanguageOptions =
-        Buffer<std::pair<StringBuffer<48>, StringBuffer<48>>, 16>;
+        Buffer<Pair<StringBuffer<48>, StringBuffer<48>>, 16>;
     DynamicMemory<LanguageOptions> opts_;
 
     int sel_ = 0;
@@ -145,18 +145,17 @@ public:
             }
             auto has_clock = PLATFORM.system_clock().initial_time();
             if (clean_boot_ and has_clock) {
-                auto next = scene_pool::alloc<DatetimeModule>();
-                next->next_scene_ =
-                    scene_pool::make_deferred_scene<IntroCreditsScene>();
+                auto next = make_scene<DatetimeModule>();
+                next->next_scene_ = make_deferred_scene<IntroCreditsScene>();
                 return next;
             } else {
                 if (PLATFORM.device_name() == "MacroDesktopDemo") {
                     APP.gp_.stateflags_.set(
                         GlobalPersistentData::freebuild_unlocked, true);
-                    return scene_pool::alloc<MacrocosmFreebuildModule>();
+                    return make_scene<MacrocosmFreebuildModule>();
                 }
 
-                return scene_pool::alloc<IntroCreditsScene>();
+                return make_scene<IntroCreditsScene>();
             }
         }
 
@@ -171,7 +170,7 @@ private:
 
         auto cp = PLATFORM.load_file_contents("strings", "lang.txt");
 
-        std::pair<StringBuffer<48>, StringBuffer<48>> current;
+        Pair<StringBuffer<48>, StringBuffer<48>> current;
         int parse_state = 0;
         utf8::scan(
             [&](utf8::Codepoint cp, const char* raw, int) {
@@ -459,7 +458,7 @@ public:
 
         if (not flash_filesystem::file_exists(lang_file) or clean_boot_) {
             info("lang selection...");
-            return scene_pool::alloc<LanguageSelectScene>(clean_boot_);
+            return make_scene<LanguageSelectScene>(clean_boot_);
         } else {
             message("bind strings file...");
             Vector<char> data;
@@ -470,7 +469,7 @@ public:
                 }
                 systemstring_bind_file(path.c_str());
             }
-            return scene_pool::alloc<IntroCreditsScene>();
+            return make_scene<IntroCreditsScene>();
         }
     }
 };

@@ -159,7 +159,7 @@ ScenePtr<Scene> IntroCreditsScene::update(Time delta)
     } else {
         if (timer_ > milliseconds(400)) {
             PLATFORM.set_overlay_origin(0, 0);
-            return scene_pool::alloc<TitleScreenScene>();
+            return make_scene<TitleScreenScene>();
         }
     }
 

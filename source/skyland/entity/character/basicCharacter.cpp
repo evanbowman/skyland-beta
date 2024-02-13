@@ -979,7 +979,7 @@ bool BasicCharacter::co_op_locked() const
 
 
 
-std::pair<BasicCharacter*, Room*> BasicCharacter::find_by_id(CharacterId id)
+Pair<BasicCharacter*, Room*> BasicCharacter::find_by_id(CharacterId id)
 {
     auto found = APP.player_island().find_character_by_id(id);
     if (found.first) {

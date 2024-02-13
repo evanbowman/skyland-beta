@@ -163,11 +163,11 @@ public:
                 packet.y_ = r->position().y;
                 network::transmit(packet);
             }
-            return scene_pool::alloc<ReadyScene>();
+            return make_scene<ReadyScene>();
         }
 
         if (APP.player().key_down(Key::action_2)) {
-            return scene_pool::alloc<ReadyScene>();
+            return make_scene<ReadyScene>();
         }
 
         return null_scene();
@@ -189,7 +189,7 @@ ScenePtr<Scene> Explosive::select_impl(const RoomCoord& cursor)
         return null_scene();
     }
 
-    return scene_pool::alloc<IgniteExplosiveScene>(position());
+    return make_scene<IgniteExplosiveScene>(position());
 }
 
 

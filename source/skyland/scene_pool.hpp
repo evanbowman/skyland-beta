@@ -36,7 +36,6 @@
 
 #include "memory/pool.hpp"
 #include "scene.hpp"
-#include <tuple>
 
 
 
@@ -99,18 +98,25 @@ template <typename T, typename... Args> ScenePtr<T> alloc(Args&&... args)
 
 
 
-template <typename S, typename... Args>
-DeferredScene make_deferred_scene(Args&&... args)
+template <typename S> DeferredScene make_deferred_scene()
 {
-    return [args = std::make_tuple(std::forward<Args>(args)...)] {
-        return std::apply([](auto&&... args) { return alloc<S>(args...); },
-                          std::move(args));
-    };
+    return [] { return alloc<S>(); };
 }
 
 
 
 } // namespace scene_pool
+
+
+
+template <typename T, typename... Args> ScenePtr<T> make_scene(Args&&... args)
+{
+    return scene_pool::alloc<T>(std::forward<Args>(args)...);
+}
+
+
+
+using scene_pool::make_deferred_scene;
 
 
 

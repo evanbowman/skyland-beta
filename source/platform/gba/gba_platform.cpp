@@ -3567,8 +3567,8 @@ void Platform::on_unrecoverrable_error(UnrecoverrableErrorCallback callback)
 
 
 
-std::pair<const char*, u32> Platform::load_file(const char* folder,
-                                                const char* filename) const
+Pair<const char*, u32> Platform::load_file(const char* folder,
+                                           const char* filename) const
 {
     StringBuffer<64> path("/");
 

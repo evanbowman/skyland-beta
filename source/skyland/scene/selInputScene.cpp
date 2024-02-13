@@ -119,10 +119,6 @@ ScenePtr<Scene> SelInputScene::update(Time delta)
     }
 
 
-    auto test_key = [&](Key k) {
-        return APP.player().test_key(k, milliseconds(500), milliseconds(150));
-    };
-
     APP.player().key_held_distribute();
 
 
@@ -171,7 +167,7 @@ ScenePtr<Scene> SelInputScene::update(Time delta)
         }
 
         if (not APP.opponent_island()) {
-            return scene_pool::alloc<ReadyScene>();
+            return make_scene<ReadyScene>();
         }
 
         far_camera();
@@ -205,9 +201,10 @@ ScenePtr<Scene> SelInputScene::update(Time delta)
 
 
     if (near_ and APP.player().key_down(Key::action_2)) {
-        auto next = scene_pool::alloc<SalvageRoomScene>();
-        next->set_next_scene(scene_pool::make_deferred_scene<SelInputScene>(
-            parameters_.get(), near_));
+        auto next = make_scene<SalvageRoomScene>();
+        next->set_next_scene([p = parameters_.get(), n = near_] {
+            return make_scene<SelInputScene>(p, n);
+        });
         return next;
     } else if (APP.player().key_down(Key::action_1)) {
 
@@ -244,9 +241,9 @@ ScenePtr<Scene> SelInputScene::update(Time delta)
         lisp::pop_op();
 
         if (started_near_) {
-            return scene_pool::alloc<ReadyScene>();
+            return make_scene<ReadyScene>();
         } else {
-            return scene_pool::alloc<InspectP2Scene>();
+            return make_scene<InspectP2Scene>();
         }
     }
 

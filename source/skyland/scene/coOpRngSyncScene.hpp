@@ -87,7 +87,7 @@ public:
         network::poll_messages(*this);
 
         if (syncd_) {
-            return scene_pool::alloc<ReadyScene>();
+            return make_scene<ReadyScene>();
         }
 
         if (not PLATFORM.network_peer().is_host()) {

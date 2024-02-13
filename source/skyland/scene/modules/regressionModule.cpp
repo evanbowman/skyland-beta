@@ -107,7 +107,7 @@ ScenePtr<Scene> RegressionModule::update(Time delta)
             }
         }
 
-        auto ret = scene_pool::alloc<SelectTutorialScene>();
+        auto ret = make_scene<SelectTutorialScene>();
         ret->quick_select(test_index++);
         return ret;
     }

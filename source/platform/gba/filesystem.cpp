@@ -125,7 +125,7 @@ void walk(Function<8 * sizeof(void*), void(const char* path)> callback)
 
 
 
-std::pair<FileContents, FileSize> load(FilePath path)
+Pair<FileContents, FileSize> load(FilePath path)
 {
     const char* current = &__rom_end__;
     current += sizeof(Root);

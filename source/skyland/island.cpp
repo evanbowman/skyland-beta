@@ -158,7 +158,7 @@ BasicCharacter* Island::character_at_location(const RoomCoord& loc)
 
 
 
-std::pair<BasicCharacter*, Room*> Island::find_character_by_id(CharacterId id)
+Pair<BasicCharacter*, Room*> Island::find_character_by_id(CharacterId id)
 {
     for (auto& room : rooms_) {
         for (auto& character : room->characters()) {
@@ -2565,6 +2565,20 @@ bool synth_notes_load(Island& island, const char* path)
 bool is_player_island(Island* isle)
 {
     return isle == &APP.player_island();
+}
+
+
+
+Island* get_island(bool island_is_near)
+{
+    return island_is_near ? &player_island() : opponent_island();
+}
+
+
+
+bool is_near_island(Island* isle)
+{
+    return is_player_island(isle);
 }
 
 

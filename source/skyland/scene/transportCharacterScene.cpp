@@ -50,7 +50,7 @@ namespace skyland
 
 TransportCharacterScene::TransportCharacterScene(RoomCoord origin)
     : NotificationScene(SYSTR(transporter_transport_char)->c_str(),
-                        [] { return scene_pool::alloc<ReadyScene>(); }),
+                        [] { return make_scene<ReadyScene>(); }),
       origin_(origin)
 {
 }
@@ -134,11 +134,11 @@ ScenePtr<Scene> TransportCharacterScene::update(Time delta)
     }
 
     if (APP.player().key_down(Key::action_2)) {
-        return scene_pool::alloc<ReadyScene>();
+        return make_scene<ReadyScene>();
     }
 
     if (not APP.opponent_island()) {
-        return scene_pool::alloc<ReadyScene>();
+        return make_scene<ReadyScene>();
     }
 
     RoomCoord* cursor_loc = nullptr;
@@ -201,9 +201,9 @@ ScenePtr<Scene> TransportCharacterScene::update(Time delta)
         if (auto room = APP.player_island().get_room(origin_)) {
             if (auto transporter = room->cast<Transporter>()) {
                 transporter->transport_occupant(*cursor_loc);
-                return scene_pool::alloc<InspectP2Scene>();
+                return make_scene<InspectP2Scene>();
             } else {
-                return scene_pool::alloc<ReadyScene>();
+                return make_scene<ReadyScene>();
             }
         }
     }

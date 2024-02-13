@@ -184,10 +184,6 @@ public:
     {
         player().update(delta);
 
-        auto test_key = [&](Key k) {
-            return player().test_key(k, milliseconds(500), milliseconds(100));
-        };
-
         if (test_key(Key::down)) {
             ++row_offset_;
             repaint(row_offset_);
@@ -211,7 +207,7 @@ public:
 
         if (PLATFORM.keyboard().down_transition<Key::action_2>()) {
             PLATFORM.fill_overlay(0);
-            return scene_pool::alloc<FileBrowserModule>(
+            return make_scene<FileBrowserModule>(
                 std::move(user_context_), path_.c_str(), false);
         }
 

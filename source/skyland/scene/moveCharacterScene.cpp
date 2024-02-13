@@ -196,7 +196,7 @@ ScenePtr<Scene> ModifyCharacterScene::update(Time delta)
     } else if (APP.opponent_island()) {
         island = APP.opponent_island();
     } else {
-        return scene_pool::alloc<ReadyScene>();
+        return make_scene<ReadyScene>();
     }
 
     RoomCoord* cursor_loc = nullptr;
@@ -206,10 +206,6 @@ ScenePtr<Scene> ModifyCharacterScene::update(Time delta)
     } else {
         cursor_loc = &globals().far_cursor_loc_;
     }
-
-    auto test_key = [&](Key k) {
-        return APP.player().test_key(k, milliseconds(500), milliseconds(100));
-    };
 
     APP.player().key_held_distribute();
 
@@ -254,9 +250,9 @@ ScenePtr<Scene> ModifyCharacterScene::update(Time delta)
 
     if (APP.player().key_down(Key::action_2)) {
         if (near_) {
-            return scene_pool::alloc<ReadyScene>();
+            return make_scene<ReadyScene>();
         } else {
-            return scene_pool::alloc<InspectP2Scene>();
+            return make_scene<InspectP2Scene>();
         }
     }
 
@@ -313,9 +309,9 @@ ScenePtr<Scene> ModifyCharacterScene::update(Time delta)
         }
 
         if (near_) {
-            return scene_pool::alloc<ReadyScene>();
+            return make_scene<ReadyScene>();
         } else {
-            return scene_pool::alloc<InspectP2Scene>();
+            return make_scene<InspectP2Scene>();
         }
     }
 

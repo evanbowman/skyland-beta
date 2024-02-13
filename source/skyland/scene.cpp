@@ -55,6 +55,13 @@ void Scene::display()
 
 
 
+bool Scene::test_key(Key k)
+{
+    return APP.player().test_key(k, milliseconds(500), milliseconds(100));
+}
+
+
+
 void Scene::enter(Scene& prev_scene)
 {
 }

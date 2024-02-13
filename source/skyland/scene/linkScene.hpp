@@ -74,10 +74,10 @@ public:
     ScenePtr<Scene> update(Time) override
     {
         if (key_down<Key::start>()) {
-            return scene_pool::alloc<MultiplayerConnectScene>();
+            return make_scene<MultiplayerConnectScene>();
         }
         if (key_down<Key::action_2>()) {
-            return scene_pool::alloc<TitleScreenScene>();
+            return make_scene<TitleScreenScene>();
         }
         return null_scene();
     }

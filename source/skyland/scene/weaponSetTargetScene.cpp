@@ -63,7 +63,7 @@ void clear_room_description(Optional<Text>& room_description);
 
 
 
-std::tuple<u8, u8, Island*> check_island_tapclick(const Vec2<u32>& pos);
+Trio<u8, u8, Island*> check_island_tapclick(const Vec2<u32>& pos);
 
 
 
@@ -101,19 +101,19 @@ ScenePtr<Scene> WeaponSetTargetScene::update(Time delta)
 
     auto player_weapon_exit_scene = [&]() -> ScenePtr<Scene> {
         if (resume_far_) {
-            return scene_pool::alloc<InspectP2Scene>();
+            return make_scene<InspectP2Scene>();
         } else {
-            return scene_pool::alloc<ReadyScene>();
+            return make_scene<ReadyScene>();
         }
     };
 
     auto drone_exit_scene = [&](Drone* drone) -> ScenePtr<Scene> {
         if (is_player_island(drone->destination())) {
             globals().near_cursor_loc_ = drone->position();
-            return scene_pool::alloc<ReadyScene>();
+            return make_scene<ReadyScene>();
         } else {
             globals().far_cursor_loc_ = drone->position();
-            return scene_pool::alloc<InspectP2Scene>();
+            return make_scene<InspectP2Scene>();
         }
     };
 
@@ -134,10 +134,6 @@ ScenePtr<Scene> WeaponSetTargetScene::update(Time delta)
 
     auto& cursor_loc = globals().far_cursor_loc_;
 
-
-    auto test_key = [&](Key k) {
-        return APP.player().test_key(k, milliseconds(500), milliseconds(100));
-    };
 
     APP.player().key_held_distribute();
 
@@ -326,7 +322,7 @@ ScenePtr<Scene> WeaponSetTargetScene::update(Time delta)
                 if (near_) {
                     return player_weapon_exit_scene();
                 } else {
-                    return scene_pool::alloc<InspectP2Scene>();
+                    return make_scene<InspectP2Scene>();
                 }
             } else {
 
@@ -1052,7 +1048,7 @@ void WeaponSetTargetScene::snap()
                             str_eq(weapon->name(), "rocket-bomb");
     }
 
-    Buffer<std::pair<Room*, RoomCoord>, 16> choices;
+    Buffer<Pair<Room*, RoomCoord>, 16> choices;
 
     if (weapon_is_missile) {
         for (u32 x = 0; x < APP.opponent_island()->terrain().size(); ++x) {

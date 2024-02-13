@@ -76,9 +76,9 @@ public:
             if (selection_) {
                 macrocosm().save();
                 PLATFORM.screen().schedule_fade(0.f);
-                return scene_pool::alloc<SelectorScene>();
+                return make_scene<SelectorScene>();
             } else {
-                return scene_pool::alloc<StartMenuScene>(1);
+                return make_scene<StartMenuScene>(1);
             }
         }
 

@@ -72,7 +72,7 @@ public:
     ScenePtr<Scene> update(Time delta)
     {
         PLATFORM.fill_overlay(0);
-        return scene_pool::alloc<IntroCreditsScene>();
+        return make_scene<IntroCreditsScene>();
     }
 };
 
@@ -149,11 +149,11 @@ public:
         if (timer_ > milliseconds(11000)) {
             PLATFORM.speaker().set_music_volume(
                 Platform::Speaker::music_volume_max);
-            return scene_pool::alloc<IntroCutsceneDoneScene>();
+            return make_scene<IntroCutsceneDoneScene>();
         } else {
             if (PLATFORM.keyboard().down_transition<Key::action_2>() or
                 PLATFORM.keyboard().down_transition<Key::action_1>()) {
-                return scene_pool::alloc<IntroCutsceneDoneScene>();
+                return make_scene<IntroCutsceneDoneScene>();
             }
         }
 
@@ -263,7 +263,7 @@ public:
 
         if (PLATFORM.keyboard().down_transition<Key::action_2>() or
             PLATFORM.keyboard().down_transition<Key::action_1>()) {
-            return scene_pool::alloc<IntroCutsceneDoneScene>();
+            return make_scene<IntroCutsceneDoneScene>();
         }
 
         auto fade_amount =
@@ -300,7 +300,7 @@ public:
 
 
         if (timer_ > milliseconds(6000)) {
-            return scene_pool::alloc<IntroCutsceneSceneText3>();
+            return make_scene<IntroCutsceneSceneText3>();
         }
 
         return null_scene();
@@ -347,7 +347,7 @@ public:
     {
         if (PLATFORM.keyboard().down_transition<Key::action_2>() or
             PLATFORM.keyboard().down_transition<Key::action_1>()) {
-            return scene_pool::alloc<IntroCutsceneDoneScene>();
+            return make_scene<IntroCutsceneDoneScene>();
         }
 
         timer_ += delta;
@@ -360,7 +360,7 @@ public:
         }
 
         if (timer_ > milliseconds(7300)) {
-            return scene_pool::alloc<IntroCutsceneLaunch>();
+            return make_scene<IntroCutsceneLaunch>();
         }
 
         return null_scene();
@@ -408,7 +408,7 @@ public:
     {
         if (PLATFORM.keyboard().down_transition<Key::action_2>() or
             PLATFORM.keyboard().down_transition<Key::action_1>()) {
-            return scene_pool::alloc<IntroCutsceneDoneScene>();
+            return make_scene<IntroCutsceneDoneScene>();
         }
 
         timer_ += delta;
@@ -420,7 +420,7 @@ public:
                                             ColorConstant::silver_white);
 
             if (timer_ > milliseconds(5000)) {
-                return scene_pool::alloc<IntroCutsceneSceneText2>();
+                return make_scene<IntroCutsceneSceneText2>();
             }
         } else {
             auto amount = smoothstep(0.f, milliseconds(1200), timer_);
@@ -512,7 +512,7 @@ public:
     {
         if (PLATFORM.keyboard().down_transition<Key::action_2>() or
             PLATFORM.keyboard().down_transition<Key::action_1>()) {
-            return scene_pool::alloc<IntroCutsceneDoneScene>();
+            return make_scene<IntroCutsceneDoneScene>();
         }
 
         timer_ += delta;
@@ -523,7 +523,7 @@ public:
 
 
         if (timer_ > milliseconds(4000)) {
-            return scene_pool::alloc<IntroCutsceneScene>();
+            return make_scene<IntroCutsceneScene>();
         }
 
         return null_scene();
@@ -589,7 +589,7 @@ public:
     {
         if (PLATFORM.keyboard().down_transition<Key::action_2>() or
             PLATFORM.keyboard().down_transition<Key::action_1>()) {
-            return scene_pool::alloc<IntroCutsceneDoneScene>();
+            return make_scene<IntroCutsceneDoneScene>();
         }
 
         timer_ += delta;
@@ -600,7 +600,7 @@ public:
 
 
         if (timer_ > milliseconds(2300)) {
-            return scene_pool::alloc<IntroCutsceneExplosion2>();
+            return make_scene<IntroCutsceneExplosion2>();
         }
 
         return null_scene();
@@ -629,7 +629,7 @@ public:
     {
         if (PLATFORM.keyboard().down_transition<Key::action_2>() or
             PLATFORM.keyboard().down_transition<Key::action_1>()) {
-            return scene_pool::alloc<IntroCutsceneDoneScene>();
+            return make_scene<IntroCutsceneDoneScene>();
         }
 
         timer_ += delta;
@@ -639,7 +639,7 @@ public:
         }
 
         if (timer_ > milliseconds(6500)) {
-            return scene_pool::alloc<IntroCutsceneExplosion1>();
+            return make_scene<IntroCutsceneExplosion1>();
         }
 
         return null_scene();
@@ -684,7 +684,7 @@ public:
         // }
 
         if (timer_ > milliseconds(800)) {
-            return scene_pool::alloc<IntroCutsceneSceneText1>();
+            return make_scene<IntroCutsceneSceneText1>();
         }
         return null_scene();
     }

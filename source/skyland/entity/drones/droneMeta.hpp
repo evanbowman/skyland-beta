@@ -188,7 +188,7 @@ public:
 
 
 
-std::pair<const DroneMeta*, int> drone_metatable();
+Pair<const DroneMeta*, int> drone_metatable();
 
 
 

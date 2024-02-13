@@ -77,11 +77,6 @@ public:
 
         auto& cursor_loc = globals().near_cursor_loc_;
 
-        auto test_key = [&](Key k) {
-            return APP.player().test_key(
-                k, milliseconds(500), milliseconds(100));
-        };
-
         APP.player().key_held_distribute();
 
         auto desc_block = [&] {
@@ -173,7 +168,7 @@ public:
         }
 
         if (APP.player().key_down(Key::action_2)) {
-            return scene_pool::alloc<ReadyScene>();
+            return make_scene<ReadyScene>();
         }
 
         return null_scene();

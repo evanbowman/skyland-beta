@@ -97,7 +97,7 @@ public:
             initial_pos = target_;
         }
 
-        return scene_pool::alloc<WeaponSetTargetScene>(
+        return make_scene<WeaponSetTargetScene>(
             position(), is_player_island(destination()), initial_pos);
     }
 

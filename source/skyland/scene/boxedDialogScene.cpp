@@ -860,7 +860,7 @@ ScenePtr<Scene> BoxedDialogScene::update(Time delta)
 
     case DisplayMode::clear:
         if (goto_tutorial_) {
-            auto next = scene_pool::alloc<SelectTutorialScene>();
+            auto next = make_scene<SelectTutorialScene>();
             next->quick_select(goto_tutorial_ - 1);
             return next;
         }
@@ -886,7 +886,7 @@ dialog_prompt(SystemString systr, DeferredScene next, const char* ambience)
     PLATFORM.screen().fade(1.f);
     auto dialog = allocate_dynamic<DialogString>("dialog-buffer");
     *dialog = loadstr(systr)->c_str();
-    auto s = scene_pool::alloc<BoxedDialogScene>(std::move(dialog));
+    auto s = make_scene<BoxedDialogScene>(std::move(dialog));
     s->set_next_scene(next);
     s->ambience_ = ambience;
     return s;

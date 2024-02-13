@@ -455,7 +455,7 @@ ScenePtr<Scene> MultiplayerSettingsScene::update(Time delta)
 
     if (state_ == State::ready) {
         if (opponent_ready_) {
-            return scene_pool::alloc<FadeInScene>();
+            return make_scene<FadeInScene>();
         }
         return null_scene();
     }

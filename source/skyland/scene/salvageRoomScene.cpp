@@ -193,9 +193,9 @@ ScenePtr<Scene> SalvageRoomScene::update(Time delta)
         if (next_) {
             return (*next_)();
         } else if (near) {
-            return scene_pool::alloc<ReadyScene>();
+            return make_scene<ReadyScene>();
         } else {
-            return scene_pool::alloc<InspectP2Scene>();
+            return make_scene<InspectP2Scene>();
         }
     };
 
@@ -212,8 +212,8 @@ ScenePtr<Scene> SalvageRoomScene::update(Time delta)
             if (next_) {
                 return (*next_)();
             } else {
-                return scene_pool::alloc<NotificationScene>(msg->c_str(),
-                                                            future_scene);
+                return make_scene<NotificationScene>(msg->c_str(),
+                                                     future_scene);
             }
         }
     } else {

@@ -185,7 +185,7 @@ ScenePtr<Scene> CheckersModule::update(Time delta)
 
     init();
 
-    return scene_pool::alloc<macro::SelectorScene>();
+    return make_scene<macro::SelectorScene>();
 }
 
 

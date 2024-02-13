@@ -261,10 +261,6 @@ ScenePtr<Scene> DatetimeModule::update(Time delta)
     auto& p = player();
     p.update(delta);
 
-    auto test_key = [&](Key k) {
-        return player().test_key(k, milliseconds(500), milliseconds(100));
-    };
-
     switch (state_) {
     case State::set_month:
         if (test_key(Key::up)) {
@@ -288,7 +284,7 @@ ScenePtr<Scene> DatetimeModule::update(Time delta)
             repaint();
         } else if (key_down<Key::action_2>()) {
             if (not next_scene_) {
-                return scene_pool::alloc<TitleScreenScene>(3);
+                return make_scene<TitleScreenScene>(3);
             }
         }
         break;
@@ -400,7 +396,7 @@ ScenePtr<Scene> DatetimeModule::update(Time delta)
             // cheat.
             // flash_filesystem::unlink_file("/save/mt.dat");
             if (not next_scene_) {
-                return scene_pool::alloc<TitleScreenScene>(3);
+                return make_scene<TitleScreenScene>(3);
             } else {
                 return (*next_scene_)();
             }

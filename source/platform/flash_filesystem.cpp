@@ -1187,7 +1187,7 @@ bool persistence()
 
 bool compaction()
 {
-    Buffer<std::pair<StringBuffer<68>, Vector<char>>, 9> files;
+    Buffer<Pair<StringBuffer<68>, Vector<char>>, 9> files;
 
     {
         Platform pfrm(".regr_input", ".regr_output");
@@ -1260,7 +1260,7 @@ bool compaction()
 
 bool write_triggered_compaction()
 {
-    Buffer<std::pair<StringBuffer<68>, Vector<char>>, 9> files;
+    Buffer<Pair<StringBuffer<68>, Vector<char>>, 9> files;
 
     Vector<char> test;
     for (int i = 0; i < 9999; ++i) {

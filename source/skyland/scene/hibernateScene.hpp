@@ -72,7 +72,7 @@ public:
             info("enter hibernate...");
             PLATFORM.system_call("hibernate", nullptr);
             info("resume!");
-            return scene_pool::alloc<StartMenuScene>(1);
+            return make_scene<StartMenuScene>(1);
         }
 
         return null_scene();

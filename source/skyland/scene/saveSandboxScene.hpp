@@ -140,7 +140,7 @@ public:
         }
 
         if (player().key_down(Key::action_2)) {
-            return scene_pool::alloc<StartMenuScene>(1);
+            return make_scene<StartMenuScene>(1);
         }
 
         if (player().key_down(Key::down)) {
@@ -215,7 +215,7 @@ public:
 
         PLATFORM.fill_overlay(0);
 
-        return scene_pool::alloc<FadeInScene>();
+        return make_scene<FadeInScene>();
     }
 
 
@@ -285,7 +285,7 @@ public:
 
         APP.time_stream().clear();
 
-        return scene_pool::alloc<FadeInScene>();
+        return make_scene<FadeInScene>();
     }
 };
 

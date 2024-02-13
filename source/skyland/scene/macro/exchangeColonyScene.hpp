@@ -100,7 +100,7 @@ public:
 
             PLATFORM.network_peer().listen();
             if (not PLATFORM.network_peer().is_connected()) {
-                return scene_pool::alloc<MacroverseScene>(true);
+                return make_scene<MacroverseScene>(true);
             }
 
             data_out_->payload_.orientation_ = s->orientation();
@@ -182,7 +182,7 @@ public:
             if (result_status_ == 1) {
                 state_ = State::done;
             } else if (result_status_ == 0) {
-                return scene_pool::alloc<MacroverseScene>(true);
+                return make_scene<MacroverseScene>(true);
             }
             break;
         }
@@ -226,7 +226,7 @@ public:
 
             // TODO: m.save();
 
-            return scene_pool::alloc<MacroverseScene>(true);
+            return make_scene<MacroverseScene>(true);
         }
         }
 

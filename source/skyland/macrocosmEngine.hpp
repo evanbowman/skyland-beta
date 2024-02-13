@@ -167,7 +167,7 @@ struct EngineImpl : public Engine
     };
 
 
-    std::pair<Coins, Productivity> colony_cost() const;
+    Pair<Coins, Productivity> colony_cost() const;
 
 
     terrain::Sector* make_sector(Vec2<s8> coord, terrain::Sector::Shape shape);

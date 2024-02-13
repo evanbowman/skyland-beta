@@ -176,20 +176,20 @@ int EngineImpl::food_consumption_factor()
 
 
 
-std::pair<Coins, Population> EngineImpl::colony_cost() const
+Pair<Coins, Population> EngineImpl::colony_cost() const
 {
     if (data_->other_sectors_.full()) {
         return {999999999, 9999};
     } else if (data_->other_sectors_.size() == 0) {
-        return {1500 + 3000 * data_->other_sectors_.size(), 100};
+        return {(Coins)(1500 + 3000 * data_->other_sectors_.size()), 100};
     } else if (data_->other_sectors_.size() < 3) {
-        return {1500 + 3000 * data_->other_sectors_.size(), 150};
+        return {(Coins)(1500 + 3000 * data_->other_sectors_.size()), 150};
     } else if (data_->other_sectors_.size() < 4) {
-        return {4000 + 3200 * data_->other_sectors_.size(), 200};
+        return {(Coins)(4000 + 3200 * data_->other_sectors_.size()), 200};
     } else if (data_->other_sectors_.size() < 6) {
-        return {6000 + 3600 * data_->other_sectors_.size(), 400};
+        return {(Coins)(6000 + 3600 * data_->other_sectors_.size()), 400};
     } else {
-        return {7000 + 4000 * data_->other_sectors_.size(), 600};
+        return {(Coins)(7000 + 4000 * data_->other_sectors_.size()), 600};
     }
 }
 
@@ -890,7 +890,7 @@ terrain::Categories terrain::categories(Type t)
 
 
 
-std::pair<terrain::Cost, terrain::Type> terrain::harvest(Type t)
+Pair<terrain::Cost, terrain::Type> terrain::harvest(Type t)
 {
     Cost cost;
     Type nt = terrain::Type::air;
@@ -1550,7 +1550,7 @@ terrain::Improvements terrain::improvements(Type t)
 
 
 
-std::pair<int, int> terrain::icons(Type t)
+Pair<int, int> terrain::icons(Type t)
 {
     switch (t) {
     case terrain::Type::reserved_1:

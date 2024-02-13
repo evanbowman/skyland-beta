@@ -58,7 +58,7 @@ ScenePtr<Scene> ModifierKeyHintScene::update(Time delta)
     }
 
     if (not player().key_pressed(Key::start)) {
-        return scene_pool::alloc<ReadyScene>();
+        return make_scene<ReadyScene>();
     }
 
     if (auto scene = update_modifier_keys()) {

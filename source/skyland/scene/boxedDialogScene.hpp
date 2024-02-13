@@ -217,11 +217,9 @@ public:
         }
 
         if (is_far_camera()) {
-            dialog_scene_.set_next_scene(
-                scene_pool::make_deferred_scene<InspectP2Scene>());
+            dialog_scene_.set_next_scene(make_deferred_scene<InspectP2Scene>());
         } else {
-            dialog_scene_.set_next_scene(
-                scene_pool::make_deferred_scene<ReadyScene>());
+            dialog_scene_.set_next_scene(make_deferred_scene<ReadyScene>());
         }
     }
 

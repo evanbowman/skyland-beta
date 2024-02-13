@@ -627,8 +627,8 @@ Vec2<u32> Platform::Screen::size() const
 enum class TextureSwap { spritesheet, tile0, tile1, overlay };
 
 
-static std::queue<std::pair<TextureSwap, std::string>> texture_swap_requests;
-static std::queue<std::pair<TileDesc, Platform::TextureMapping>> glyph_requests;
+static std::queue<Pair<TextureSwap, std::string>> texture_swap_requests;
+static std::queue<Pair<TileDesc, Platform::TextureMapping>> glyph_requests;
 
 
 
@@ -1666,7 +1666,7 @@ bool Platform::load_overlay_texture(const char* name)
 
 
 
-std::map<Layer, std::map<std::pair<u16, u16>, TileDesc>> tile_layers_;
+std::map<Layer, std::map<Pair<u16, u16>, TileDesc>> tile_layers_;
 
 
 
@@ -1836,8 +1836,8 @@ void Platform::set_palette(Layer layer, u16 x, u16 y, u16 palette)
 static std::map<std::string, std::string> files;
 
 
-std::pair<const char*, u32> Platform::load_file(const char* folder,
-                                                const char* filename) const
+Pair<const char*, u32> Platform::load_file(const char* folder,
+                                           const char* filename) const
 {
     const auto name = std::string(folder) + PATH_DELIMITER + filename;
     auto found = files.find(name);

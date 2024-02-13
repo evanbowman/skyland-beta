@@ -48,8 +48,23 @@
 
 
 
+// NOTE:
+//
+// Throughout the code, you will see mentions of the player island, and the
+// opponent island, or the near island, and the far island.
+//
+// The near, or player island, is the player controlled island at the left side
+// of the screen.
+//
+// The far, or opponent island, is the opponennt controlled island on the right
+// side of the screen.
+//
+
+
+
 namespace skyland
 {
+
 
 
 class Island
@@ -167,7 +182,7 @@ public:
     BasicCharacter* character_at_location(const RoomCoord& loc);
 
 
-    std::pair<BasicCharacter*, Room*> find_character_by_id(CharacterId id);
+    Pair<BasicCharacter*, Room*> find_character_by_id(CharacterId id);
 
 
     // NOTE: generally, you should use render() intead of repaint().
@@ -463,7 +478,13 @@ Island* opponent_island();
 
 
 
+// (See documentation for 'near' and 'far' island above)
+Island* get_island(bool island_is_near);
+
+
+
 bool is_player_island(Island* isle);
+bool is_near_island(Island* isle);
 
 
 
@@ -480,6 +501,7 @@ bool speaker_data_store(Island& island, const char* path);
 
 
 bool speaker_data_load(Island& island, const char* path);
+
 
 
 } // namespace skyland

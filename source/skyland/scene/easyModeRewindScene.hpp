@@ -115,11 +115,11 @@ public:
             switch (selected_) {
             case 0:
                 state_bit_store(StateBit::easy_mode_rewind_declined, false);
-                return scene_pool::alloc<RewindScene>(false);
+                return make_scene<RewindScene>(false);
 
             case 1:
                 state_bit_store(StateBit::easy_mode_rewind_declined, true);
-                return scene_pool::alloc<ReadyScene>();
+                return make_scene<ReadyScene>();
             }
         }
 

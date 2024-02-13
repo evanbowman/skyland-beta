@@ -79,8 +79,7 @@ void ClearSkies::display()
         // auto cursor = ws->is_far_camera() ? globals().far_cursor_loc_
         //     : globals().near_cursor_loc_;
 
-        auto isle = not ws->is_far_camera() ? &APP.player_island()
-                                            : APP.opponent_island();
+        auto isle = get_island(not ws->is_far_camera());
 
         HitBox sun_hb;
         Vec2<Fixnum> sun_pos = {x, y};

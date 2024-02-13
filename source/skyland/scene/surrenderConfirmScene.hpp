@@ -79,7 +79,7 @@ public:
                 APP.exit_condition() = App::ExitCondition::defeat;
                 PLATFORM.speaker().stop_music();
             }
-            return scene_pool::alloc<ReadyScene>();
+            return make_scene<ReadyScene>();
         }
 
         return null_scene();

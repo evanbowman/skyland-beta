@@ -67,7 +67,7 @@ bool is_mounted();
 
 
 
-std::pair<FileContents, FileSize> load(FilePath path);
+Pair<FileContents, FileSize> load(FilePath path);
 
 
 void walk(Function<8 * sizeof(void*), void(const char* path)> callback);

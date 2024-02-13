@@ -50,7 +50,7 @@ static const DroneMetatable<AttackDrone, CombatDrone, RepairDrone, FlakDrone>
 
 
 
-std::pair<const DroneMeta*, int> drone_metatable()
+Pair<const DroneMeta*, int> drone_metatable()
 {
     return {__drone_metatable.table_, __drone_metatable.size()};
 }

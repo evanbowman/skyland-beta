@@ -501,7 +501,7 @@ ScenePtr<Scene> CreateBlockScene::update(Player& player,
     }
 
     if (player.key_down(Key::action_2)) {
-        return scene_pool::alloc<SelectorScene>();
+        return make_scene<SelectorScene>();
     }
 
     return null_scene();
@@ -558,7 +558,7 @@ public:
     ScenePtr<Scene> update(Player& player, macro::EngineImpl& state) override
     {
         if (key_down<Key::action_1>() or key_down<Key::action_2>()) {
-            return scene_pool::alloc<SelectorScene>();
+            return make_scene<SelectorScene>();
         }
 
         return null_scene();
@@ -586,7 +586,7 @@ ScenePtr<Scene> CreateBlockScene::onclick(macro::EngineImpl& state)
              cost.clay_ > p.clay_.get() or cost.water_ > p.water_.get() or
              cost.productivity_ > state.sector().productivity())) {
             PLATFORM.speaker().play_sound("beep_error", 2);
-            return scene_pool::alloc<InsufficentResourcesScene>(state, cost);
+            return make_scene<InsufficentResourcesScene>(state, cost);
         } else if (not state.data_->freebuild_mode_) {
             auto prod = state.sector().productivity();
             prod -= cost.productivity_;
@@ -606,7 +606,7 @@ ScenePtr<Scene> CreateBlockScene::onclick(macro::EngineImpl& state)
         if (options_[selector_] not_eq terrain::Type::air) {
             PLATFORM.speaker().play_sound("build0", 4);
 
-            return scene_pool::alloc<SelectorScene>();
+            return make_scene<SelectorScene>();
 
         } else {
             PLATFORM.speaker().play_sound("cursor_tick", 0);

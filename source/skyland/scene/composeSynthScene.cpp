@@ -86,12 +86,8 @@ ScenePtr<Scene> ComposeSynthScene::update(Time delta)
     }
 
     if (not PLATFORM.speaker().psg() or player().key_down(Key::action_2)) {
-        return scene_pool::alloc<ReadyScene>();
+        return make_scene<ReadyScene>();
     }
-
-    auto test_key = [&](Key k) {
-        return player().test_key(k, milliseconds(500), milliseconds(100));
-    };
 
     if (player().key_down(Key::action_1)) {
         if (cursor_.x == 0) {
@@ -922,7 +918,7 @@ void ComposeSynthScene::enter(Scene& prev)
 
     repaint();
 
-    auto island = synth_near_ ? &player_island() : opponent_island();
+    auto island = get_island(synth_near_);
 
     for (auto& room : island->rooms()) {
         // Stop any currently-playing chiptunes.

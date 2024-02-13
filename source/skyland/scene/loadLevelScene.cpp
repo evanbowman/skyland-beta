@@ -298,13 +298,13 @@ ScenePtr<Scene> LoadLevelScene::update(Time delta)
                 APP.swap_environment<weather::Typhoon>();
             }
 
-            return scene_pool::alloc<FadeInScene>();
+            return make_scene<FadeInScene>();
         };
-        return scene_pool::alloc<FullscreenDialogScene>(std::move(buffer),
-                                                        future_scene);
+        return make_scene<FullscreenDialogScene>(std::move(buffer),
+                                                 future_scene);
     }
 
-    return scene_pool::alloc<FadeInScene>();
+    return make_scene<FadeInScene>();
 }
 
 

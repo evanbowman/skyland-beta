@@ -672,7 +672,7 @@ struct NativeInterface
     using Function = lisp::Function::CPP_Impl;
     using RequiredArgs = int;
 
-    using LookupResult = std::pair<RequiredArgs, Function>;
+    using LookupResult = Pair<RequiredArgs, Function>;
 
     // Given a string function name, should return a C++ lisp function
     // implementation.
@@ -711,7 +711,7 @@ int toplevel_count();
 
 using ValuePoolUsed = u32;
 using ValuePoolFree = u32;
-std::pair<ValuePoolUsed, ValuePoolFree> value_pool_info();
+Pair<ValuePoolUsed, ValuePoolFree> value_pool_info();
 
 
 Value* get_nil();

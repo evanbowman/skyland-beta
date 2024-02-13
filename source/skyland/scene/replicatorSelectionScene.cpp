@@ -111,10 +111,12 @@ void ReplicatorSelectionScene::exit(Scene& next)
         auto& cursor_loc =
             near_ ? globals().near_cursor_loc_ : globals().far_cursor_loc_;
 
-        Island* island = near_ ? &APP.player_island() : APP.opponent_island();
+        Island* island = get_island(near_);
 
-        if (auto room = island->get_room(cursor_loc)) {
-            room->co_op_release_lock();
+        if (island) {
+            if (auto room = island->get_room(cursor_loc)) {
+                room->co_op_release_lock();
+            }
         }
     }
 }
@@ -128,19 +130,22 @@ ScenePtr<Scene> ReplicatorSelectionScene::update(Time delta)
     }
 
     if (APP.coins() < replicator_fee) {
-        return scene_pool::alloc<ReadyScene>();
+        return make_scene<ReadyScene>();
     }
 
     if (exit_countdown_) {
         exit_countdown_ -= delta;
         if (exit_countdown_ <= 0) {
-            return scene_pool::alloc<ReadyScene>();
+            return make_scene<ReadyScene>();
         }
     } else {
         auto& cursor_loc =
             near_ ? globals().near_cursor_loc_ : globals().far_cursor_loc_;
 
-        Island* island = near_ ? &APP.player_island() : APP.opponent_island();
+        Island* island = get_island(near_);
+        if (not island) {
+            return null_scene();
+        }
 
         if (APP.player().key_down(Key::action_1)) {
             exit_countdown_ = milliseconds(500);
@@ -148,13 +153,13 @@ ScenePtr<Scene> ReplicatorSelectionScene::update(Time delta)
                 if (room->create_replicant()) {
                     APP.set_coins(APP.coins() - replicator_fee);
                 }
-                return scene_pool::alloc<ReadyScene>();
+                return make_scene<ReadyScene>();
             }
         }
     }
 
     if (APP.player().key_down(Key::action_2)) {
-        return scene_pool::alloc<ReadyScene>();
+        return make_scene<ReadyScene>();
     }
 
     return null_scene();

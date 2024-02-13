@@ -237,7 +237,7 @@ public:
     bool co_op_locked() const;
 
 
-    static std::pair<BasicCharacter*, Room*> find_by_id(CharacterId id);
+    static Pair<BasicCharacter*, Room*> find_by_id(CharacterId id);
 
 
     void mark()

@@ -134,7 +134,7 @@ ScenePtr<Scene> DeveloperModeModule::update(Time delta)
 {
     if (exit_) {
         PLATFORM.screen().schedule_fade(1.f);
-        return scene_pool::alloc<TitleScreenScene>(3);
+        return make_scene<TitleScreenScene>(3);
     }
 
 
