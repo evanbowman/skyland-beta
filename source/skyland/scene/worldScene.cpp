@@ -81,7 +81,7 @@ static void apply_gamespeed(Time& delta)
 
     case GameSpeed::rewind:
         // NOTE: we shouldn't even be in this scene if we're rewinding.
-        Platform::fatal("gamespeed set to rewind in incompatible scene.");
+        LOGIC_ERROR();
         break;
 
     case GameSpeed::count:
@@ -555,6 +555,181 @@ ScenePtr<Scene> update_multiplayer_prep_timer(Time delta)
 
 
 
+void WorldScene::update_camera(Time delta)
+{
+    auto& g = globals();
+
+    if (camera_update_check_key()) {
+        camera_update_timer_ = milliseconds(500);
+    }
+
+    if (APP.camera()->is_shaking() or camera_update_timer_ > 0 or
+        APP.camera()->always_update()) {
+
+        camera_update_timer_ -= delta;
+        camera_update_timer_ = util::max((int)camera_update_timer_, 0);
+
+        // You may be wondering, why are we setting a timer to determine whether
+        // to update the camera? Because we're using a floating point value
+        // multiplied by a delta time for linear interpolation, for really
+        // fine-grained camera movements, the camera target can get stuck
+        // flipping back and forth over a fractional pixel. Not updating the
+        // camera for times longer then half a second makes the issue go
+        // away. It really only happens when the camera's sitting idle in the
+        // same spot for a long time.
+
+        if (APP.opponent_island() and UNLIKELY(far_camera_)) {
+            auto& cursor_loc = g.far_cursor_loc_;
+            APP.camera()->update(
+                *APP.opponent_island(), cursor_loc, delta, false);
+        } else {
+            auto& cursor_loc = g.near_cursor_loc_;
+            APP.camera()->update(APP.player_island(), cursor_loc, delta, true);
+        }
+    }
+}
+
+
+
+void WorldScene::update_hud(Time delta)
+{
+    if (APP.game_mode() == App::GameMode::co_op) {
+        if (APP.game_speed() not_eq GameSpeed::stopped) {
+            hide_multiplayer_pauses_remaining();
+        } else {
+            set_pause_icon(gamespeed_icon(APP.game_speed()));
+
+            if (PLATFORM.network_peer().is_connected() and not disable_ui_) {
+                show_multiplayer_pauses_remaining();
+            }
+        }
+    } else {
+        if (not disable_gamespeed_icon_) {
+            if (APP.game_speed() == GameSpeed::normal) {
+                set_pause_icon(0);
+            } else {
+                set_pause_icon(gamespeed_icon(APP.game_speed()));
+            }
+        }
+    }
+
+
+    if (not disable_ui_) {
+        Island* disp_power =
+            power_fraction_opponent_island_
+                ? (APP.opponent_island() ? APP.opponent_island()
+                                         : &APP.player_island())
+                : &APP.player_island();
+
+
+        if (force_show_power_usage_) {
+            force_show_power_usage_ = false;
+
+            power_.emplace(OverlayCoord{1, 1},
+                           147,
+                           format_power_fraction(disp_power->power_supply(),
+                                                 disp_power->power_drain()),
+                           UIMetric::Align::left,
+                           UIMetric::Format::fraction);
+        }
+
+        if (last_power_supplied_ not_eq disp_power->power_supply() or
+            last_power_used_ not_eq disp_power->power_drain()) {
+
+            last_power_supplied_ = disp_power->power_supply();
+            last_power_used_ = disp_power->power_drain();
+
+            power_->set_value(
+                format_power_fraction(last_power_supplied_, last_power_used_));
+        }
+
+        if (power_) {
+            power_->update(delta);
+
+            if (not persistent_ui_ and
+                last_power_supplied_ >= last_power_used_) {
+                power_hide_timer_ += delta;
+                if (power_hide_timer_ > seconds(4)) {
+                    power_.reset();
+                    power_hide_timer_ = 0;
+                }
+            }
+        } else {
+            if (persistent_ui_) {
+                power_.emplace(OverlayCoord{1, 1},
+                               147,
+                               format_power_fraction(disp_power->power_supply(),
+                                                     disp_power->power_drain()),
+                               UIMetric::Align::left,
+                               UIMetric::Format::fraction);
+            }
+        }
+
+        if (disp_power->power_drain() > disp_power->power_supply()) {
+            // If the player's island power drain exceeds supply, make the UI
+            // sticky, so the player knows why his/her weapons aren't doing
+            // anything.
+            if (not disable_ui_) {
+                persist_ui();
+            }
+        }
+
+        if (last_coins_ not_eq APP.coins()) {
+            coins_.emplace(OverlayCoord{1, 2},
+                           146,
+                           (int)APP.coins(),
+                           UIMetric::Align::left);
+
+            coins_->set_value(APP.coins());
+            last_coins_ = APP.coins();
+        }
+
+        if (coins_) {
+            coins_->update(delta);
+
+            if (not persistent_ui_) {
+                coin_hide_timer_ += delta;
+                if (coin_hide_timer_ > seconds(4)) {
+                    coins_.reset();
+                    coin_hide_timer_ = 0;
+                }
+            }
+        } else {
+            if (persistent_ui_) {
+                coins_.emplace(OverlayCoord{1, 2},
+                               146,
+                               (int)APP.coins(),
+                               UIMetric::Align::left);
+            }
+        }
+    }
+}
+
+
+
+void WorldScene::collision_check()
+{
+    if (APP.opponent_island()) {
+        for (auto& projectile : APP.player_island().projectiles()) {
+            APP.opponent_island()->test_collision(*projectile);
+        }
+
+        for (auto& projectile : APP.opponent_island()->projectiles()) {
+            APP.player_island().test_collision(*projectile);
+        }
+
+        for (auto& projectile : APP.player_island().projectiles()) {
+            APP.player_island().test_collision(*projectile);
+        }
+
+        for (auto& projectile : APP.opponent_island()->projectiles()) {
+            APP.opponent_island()->test_collision(*projectile);
+        }
+    }
+}
+
+
+
 ScenePtr<Scene> WorldScene::update(Time delta)
 {
     auto& g = globals();
@@ -745,34 +920,7 @@ ScenePtr<Scene> WorldScene::update(Time delta)
         }
     }
 
-    if (camera_update_check_key()) {
-        camera_update_timer_ = milliseconds(500);
-    }
-
-    if (APP.camera()->is_shaking() or camera_update_timer_ > 0 or
-        APP.camera()->always_update()) {
-
-        camera_update_timer_ -= delta;
-        camera_update_timer_ = util::max((int)camera_update_timer_, 0);
-
-        // You may be wondering, why are we setting a timer to determine whether
-        // to update the camera? Because we're using a floating point value
-        // multiplied by a delta time for linear interpolation, for really
-        // fine-grained camera movements, the camera target can get stuck
-        // flipping back and forth over a fractional pixel. Not updating the
-        // camera for times longer then half a second makes the issue go
-        // away. It really only happens when the camera's sitting idle in the
-        // same spot for a long time.
-
-        if (APP.opponent_island() and UNLIKELY(far_camera_)) {
-            auto& cursor_loc = g.far_cursor_loc_;
-            APP.camera()->update(
-                *APP.opponent_island(), cursor_loc, delta, false);
-        } else {
-            auto& cursor_loc = g.near_cursor_loc_;
-            APP.camera()->update(APP.player_island(), cursor_loc, delta, true);
-        }
-    }
+    update_camera(delta);
 
     if (not noreturn_ and APP.dialog_buffer()) {
         return make_dialog();
@@ -802,137 +950,11 @@ ScenePtr<Scene> WorldScene::update(Time delta)
     }
     birds_drawn_ = true;
 
-
-    if (APP.game_mode() == App::GameMode::co_op) {
-        if (APP.game_speed() not_eq GameSpeed::stopped) {
-            hide_multiplayer_pauses_remaining();
-        } else {
-            set_pause_icon(gamespeed_icon(APP.game_speed()));
-
-            if (PLATFORM.network_peer().is_connected() and not disable_ui_) {
-                show_multiplayer_pauses_remaining();
-            }
-        }
-    } else {
-        if (not disable_gamespeed_icon_) {
-            if (APP.game_speed() == GameSpeed::normal) {
-                set_pause_icon(0);
-            } else {
-                set_pause_icon(gamespeed_icon(APP.game_speed()));
-            }
-        }
-    }
-
-
-    if (not disable_ui_) {
-        Island* disp_power =
-            power_fraction_opponent_island_
-                ? (APP.opponent_island() ? APP.opponent_island()
-                                         : &APP.player_island())
-                : &APP.player_island();
-
-
-        if (force_show_power_usage_) {
-            force_show_power_usage_ = false;
-
-            power_.emplace(OverlayCoord{1, 1},
-                           147,
-                           format_power_fraction(disp_power->power_supply(),
-                                                 disp_power->power_drain()),
-                           UIMetric::Align::left,
-                           UIMetric::Format::fraction);
-        }
-
-        if (last_power_supplied_ not_eq disp_power->power_supply() or
-            last_power_used_ not_eq disp_power->power_drain()) {
-
-            last_power_supplied_ = disp_power->power_supply();
-            last_power_used_ = disp_power->power_drain();
-
-            power_->set_value(
-                format_power_fraction(last_power_supplied_, last_power_used_));
-        }
-
-        if (power_) {
-            power_->update(delta);
-
-            if (not persistent_ui_ and
-                last_power_supplied_ >= last_power_used_) {
-                power_hide_timer_ += delta;
-                if (power_hide_timer_ > seconds(4)) {
-                    power_.reset();
-                    power_hide_timer_ = 0;
-                }
-            }
-        } else {
-            if (persistent_ui_) {
-                power_.emplace(OverlayCoord{1, 1},
-                               147,
-                               format_power_fraction(disp_power->power_supply(),
-                                                     disp_power->power_drain()),
-                               UIMetric::Align::left,
-                               UIMetric::Format::fraction);
-            }
-        }
-
-        if (disp_power->power_drain() > disp_power->power_supply()) {
-            // If the player's island power drain exceeds supply, make the UI
-            // sticky, so the player knows why his/her weapons aren't doing
-            // anything.
-            if (not disable_ui_) {
-                persist_ui();
-            }
-        }
-
-        if (last_coins_ not_eq APP.coins()) {
-            coins_.emplace(OverlayCoord{1, 2},
-                           146,
-                           (int)APP.coins(),
-                           UIMetric::Align::left);
-
-            coins_->set_value(APP.coins());
-            last_coins_ = APP.coins();
-        }
-
-        if (coins_) {
-            coins_->update(delta);
-
-            if (not persistent_ui_) {
-                coin_hide_timer_ += delta;
-                if (coin_hide_timer_ > seconds(4)) {
-                    coins_.reset();
-                    coin_hide_timer_ = 0;
-                }
-            }
-        } else {
-            if (persistent_ui_) {
-                coins_.emplace(OverlayCoord{1, 2},
-                               146,
-                               (int)APP.coins(),
-                               UIMetric::Align::left);
-            }
-        }
-    }
+    update_hud(delta);
 
     TIMEPOINT(t8);
 
-    if (APP.opponent_island()) {
-        for (auto& projectile : APP.player_island().projectiles()) {
-            APP.opponent_island()->test_collision(*projectile);
-        }
-
-        for (auto& projectile : APP.opponent_island()->projectiles()) {
-            APP.player_island().test_collision(*projectile);
-        }
-
-        for (auto& projectile : APP.player_island().projectiles()) {
-            APP.player_island().test_collision(*projectile);
-        }
-
-        for (auto& projectile : APP.opponent_island()->projectiles()) {
-            APP.opponent_island()->test_collision(*projectile);
-        }
-    }
+    collision_check();
 
     TIMEPOINT(t9);
 

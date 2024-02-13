@@ -164,6 +164,10 @@ private:
 
     void multiplayer_vs_timeout_step(Time delta);
 
+    void update_camera(Time delta);
+    void update_hud(Time delta);
+    void collision_check();
+
 protected:
     bool power_fraction_opponent_island_ = false;
 };
