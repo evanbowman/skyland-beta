@@ -6,17 +6,17 @@
 
 
 (dialog
- "The storm overtakes your castle... A massive fortress emerges from the tempest... "
+ (get-dialog "storm-king" "intro")
  (cond
-  ((equal (zone) 0) "There is little hope of survival...")
-  ((equal (zone) 1) "You probably aren't strong enough yet...")
-  ((equal (zone) 2) "You just might survive...")
-  ((equal (zone) 3) "Ready for the final showdown?")))
+  ((equal (zone) 0) (get-dialog "storm-king" "zone1"))
+  ((equal (zone) 1) (get-dialog "storm-king" "zone2"))
+  ((equal (zone) 2) (get-dialog "storm-king" "zone3"))
+  ((equal (zone) 3) (get-dialog "storm-king" "zone4"))))
 
 
 (setq on-fadein
       (lambda
-        (dialog "<c:storm king:4> . . .")))
+        (load-dialog "storm-king" "greeting")))
 
 
 (adventure-log-add 48 '())

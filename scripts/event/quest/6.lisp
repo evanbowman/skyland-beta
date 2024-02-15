@@ -1,7 +1,5 @@
 
-(dialog "<b:/scripts/misc/img/ruins.img.bin>"
-        "You discover the ruins of an ancient civilization. "
-        "The island appears deserted, but just as you are about to leave, someone signals for help...")
+(load-dialog "sylph-quest" "intro")
 
 
 (opponent-init 9 'neutral)
@@ -13,14 +11,13 @@
 
 
 (defn on-converge [0]
-  (dialog "A small injured boy begins speaking softly in an archaic language...")
+  (load-dialog "sylph-quest" "greet")
 
   (defn on-dialog-closed [0]
-    (dialog "<c:injured boy:26> "
-            "<S:1>i am the only survivor! can you help me get back home?")
+    (load-dialog "sylph-quest" "boy-speek")
 
     (defn on-dialog-closed [0]
-      (dialog "You can't understand a word he's saying. But he seems to want to join your crew.<B:0> Invite him aboard?")
+      (load-dialog "sylph-quest" "offer")
 
       (setq on-dialog-closed nil)
 
@@ -49,10 +46,10 @@
                     (push 'qids 6)
                     (push 'quests (cons "/scripts/event/quest_marker/civ.lisp" m))
                     (push 'qvar (cons 6 id))
-                    (dialog "The orphan boy joined your crew! <B:0> Upon discovering your sky chart, he marked a location with an *...")
+                    (load-dialog "sylph-quest" "join1")
                     (exit))
                 (progn
-                  (dialog "The injured boy joined your crew! Wonder where he came from...")
+                  (load-dialog "sylph-quest" "join2")
                   (exit)))))))
 
       (setq on-dialog-declined exit))))

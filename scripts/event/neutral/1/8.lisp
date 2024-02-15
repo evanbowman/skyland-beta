@@ -3,7 +3,7 @@
 ;;;
 
 
-(dialog "You discover the ruins of a forsaken town. I guess no one would mind if you scavenged some resources...")
+(load-dialog "forsaken-town" "intro")
 
 
 
@@ -39,15 +39,12 @@
   (let ((c (choice 5))
         (end (lambda
                ((eval-file "/scripts/util/pickup_cart.lisp") 4
-         "Something else catches your attention.<d:500>.<d:500>.<d:500> a data cartridge!"))))
+         (get-dialog "forsaken-town" "cart")))))
     (cond
      ((equal c 0)
       (let ((amt (+ 200 (choice 400))))
         (coins-add amt)
-        (dialog
-         (format
-          "Looks like someone already got here first. You collect %@."
-          amt))
+        (load-dialog "forsaken-town" "nothing" amt)
         (adventure-log-add 38 (list amt))
         (end)))
      (true
@@ -60,20 +57,20 @@
                     splitter)))
         (let ((pick (sample opts)))
           (dialog
-           "After boarding, you find a completely intact "
+           (get-dialog "forsaken-town" "found1")
            (rinfo 'name pick)
-           ". Your crew asks you where to install it...")
+           (get-dialog "forsaken-town" "found2"))
           (adventure-log-add 38 (rinfo 'name pick))
           (defn on-dialog-closed [0]
             (setq on-dialog-closed nil)
             (alloc-space pick)
             (sel-input
              pick
-             (format "Pick a slot (%x%)"
+             (format (get-dialog "forsaken-town" "pick")
                      (car (rinfo 'size pick))
                      (cdr (rinfo 'size pick)))
              (lambda
                (room-new (player) `(,pick ,$1 ,$2))
                (sound "build0")
-               (dialog "All done!")
+               (load-dialog "forsaken-town" "done")
                (end))))))))))

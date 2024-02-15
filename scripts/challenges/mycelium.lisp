@@ -12,8 +12,8 @@
 (let ((cnt 0))
   (defn challenge-hint [0]
     (dialog (if (equal cnt 0)
-                "Are you sure you want a hint?"
-              "Need another hint?"))
+                (get-dialog "challenges" "are-you-sure")
+                (get-dialog "challenges" "hint-again")))
     (dialog-await-y/n)
 
     (defn on-dialog-accepted [0]
@@ -21,13 +21,13 @@
        (cond
         ((equal cnt 0)
          (+= cnt 1)
-         "Hint: mycelium won't grow on forcefields, and is weak against arc-guns.")
+         (get-dialog "challenges" "hint-mycelium-1"))
         ((equal cnt 1)
          (+= cnt 1)
-         "Hint: you can incapacitate the cannon by destroying the two forcefields in front of it, allowing the mycelium to grow over the cannon.")
+         (get-dialog "challenges" "hint-mycelium-2"))
         ((equal cnt 2)
          (setq cnt 0)
-         "Ok, one final hint: After building anything that you need from the manufactory, scrap it for coins."))))
+         (get-dialog "challenges" "hint-mycelium-3")))))
 
 
     (setq on-dialog-declined (lambda '()))))

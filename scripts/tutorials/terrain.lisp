@@ -20,7 +20,7 @@
 
 (autopilot
  '((2000 nil)
-   (100 "<c:Milo:5>Ever need more room to build? You can easily add more terrain to your island, just like this:")
+   (100 (get-dialog "tutorials" "tr1"))
    (801 Right)
    (233 Right)
    (250 Right)

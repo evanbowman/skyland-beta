@@ -3,7 +3,7 @@
 ;;;
 
 
-(dialog "A castle lazily drifts across the horizon... possibly uninhabited?")
+(load-dialog "risky-castle" "intro")
 
 
 
@@ -21,7 +21,7 @@
 
 (secret
  0 13
- "Did you know that Skyland's goblins were human once? But they remained on the ruined surface too long, and were left mutated and cruel...")
+ (get-dialog "risky-castle" "secret"))
 
 
 
@@ -31,7 +31,7 @@
       (lambda
         (if (not trap)
             (let ((val (+ 600 (choice 300))))
-              (dialog "You explore, and salvage " (string val) "@ from the ruins.")
+              (load-dialog "risky-castle" "award" val)
               (coins-add val)
               (adventure-log-add 29 (list val))
               (exit))
@@ -48,17 +48,17 @@
             (opponent-mode 'hostile)
             (flag-show (opponent) 0)
             (adventure-log-add 30 '())
-            (dialog "It's a trap!"))))))
+            (load-dialog "risky-castle" "trap"))))))
 
 
 (setq on-converge
       (lambda
-        (dialog "The fortress appears to be empty, but you cannot be certain. Attempt to board?")
+        (load-dialog "risky-castle" "offer")
         (setq on-converge '())
         (dialog-await-y/n)))
 
 
 (setq on-dialog-declined
       (lambda
-        (dialog "The fortress sinks back into the clouds, its contents remain an unresolved mystery.")
+        (load-dialog "risky-castle" "decline")
         (exit)))

@@ -22,11 +22,15 @@
 
 
 ;; Captured with a keylogger that I hacked into playerP1.cpp (commented out)
+;;
+;; NOTE: The first element in each nested list is a number of microseconds to
+;; wait before interpreting the second element of each list. If the list
+;; contains unevaluated code, the autopilot will evaluate it.
 (autopilot
  '((2000 nil)
-   (100 "<c:Milo:5>So beautiful up here above the clouds! But look, just out there, pirates!")
+   (100 (get-dialog "tutorials" "ov1"))
    (100 nil)
-   (100 "<c:Milo:5>And look at our castle! Defenseless! They really caught us off guard. Let's pause things with the L button, and size up the situation!")
+   (100 (get-dialog "tutorials" "ov2"))
    (901 L-p)
    (60 L-np)
    (1007 Right)
@@ -35,13 +39,13 @@
    (583 Right)
    (466 Right)
    (3000 nil)
-   (100 "<c:Milo:5>Looks like our opponent has a weapon, one missile silo! We should build some defenses!")
+   (100 (get-dialog "tutorials" "ov3"))
    (999 Left)
    (1549 Left)
    (516 Left)
    (516 Left)
    (300 nil)
-   (100 "<c:Milo:5>The R button opens the construction menu, where you can build all sorts of stuff. At the bottom of the screen, you'll see the name and cost of each structure. In the top left, you'll see your current coin count and power usage! <d:1000> Err... <d:1000> they've got missiles, so I guess we should build some hull.")
+   (100 (get-dialog "tutorials" "ov4"))
    (400 R)
    (1800 A)
    (1550 A)
@@ -53,7 +57,7 @@
    (1133 L-p)
    (50 L-np)
    (9350 nil)
-   (100 "<c:Milo:5>Looks like we took some damage. You can see the health of a room by hovering over it with your cursor.")
+   (100 (get-dialog "tutorials" "ov5"))
    (584 L-p)
    (50 L-np)
    (1500 Left)
@@ -62,7 +66,7 @@
    (417 Up)
    (2000 nil)
    (100 nil)
-   (100 "<c:Milo:5>We should fight back, let's build some weapons of our own!")
+   (100 (get-dialog "tutorials" "ov6"))
    (1250 R)
    (717 Right)
    (400 Right)
@@ -76,7 +80,7 @@
    (683 Down)
    (716 Down)
    (100 nil)
-   (100 "<c:Milo:5>Navigate to a weapon, and press A to open the target selection menu.")
+   (100 (get-dialog "tutorials" "ov7"))
    (733 A)
    (750 A)
    (2866 L-p)
@@ -84,7 +88,7 @@
    (3080 Right)
    (433 Right)
    (10000 nil)
-   (100 "<c:Milo:5>Those blasted pirates! They've opened up a hole in our hull! We should probably fix that!")
+   (100 (get-dialog "tutorials" "ov8"))
    (449 Left)
    (367 Left)
    (367 Left)
@@ -99,7 +103,7 @@
    (349 Down)
    (400 Down)
    (100 nil)
-   (100 "<c:Milo:5>Well, that covers the basics of construction and combat! As your castle grows, you'll want to build a workshop, to enable you to build new weapons, sheilds, and power supplies. If you ever need help with anything else, I'll be in a room labeled 'extras', you know, to the right of the room labelled 'challenges'. Just press the Tutorials button to get my attention!")
+   (100 (get-dialog "tutorials" "ov9"))
    (2800 nil)))
 
 

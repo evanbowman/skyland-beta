@@ -5,7 +5,7 @@
 
 
 (defn challenge-hint [0]
-  (dialog "Sorry, no hints..."))
+  (load-dialog "challenges" "no-hints"))
 
 
 (defn on-victory [0]
@@ -13,11 +13,11 @@
 
 
 (defn challenge-hint [0]
-  (dialog "Are you sure you want a hint?")
+  (load-dialog "challenges" "are-you-sure")
   (dialog-await-y/n)
 
   (defn on-dialog-accepted [0]
-    (dialog "Hint: Transporters can remove crewmembers from enemy castles..."))
+    (load-dialog "challenges" "hint-ch-exchange"))
 
   (setq on-dialog-declined (lambda '())))
 

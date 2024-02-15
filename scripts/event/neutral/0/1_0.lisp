@@ -3,7 +3,7 @@
 ;;;
 
 
-(dialog "A heavily armed marauder fortress approaches. Its captain demands to speak with you.")
+(load-dialog "redbeard" "intro")
 
 
 (opponent-init 5 'neutral)
@@ -27,11 +27,11 @@
 
 
 (defn on-converge [0]
-  (dialog "<c:redbeard:12>Aarrrgh!! You're tresspassing in my domain. Gimme 600@ or I'll blast your island to bits!")
+  (load-dialog "redbeard" "demand")
   (dialog-opts-reset)
-  (dialog-opts-push "here's the money…" on-dialog-accepted)
+  (dialog-opts-push (get-dialog "redbeard" "opt1") on-dialog-accepted)
 
-  (dialog-opts-push "you're bluffing!"
+  (dialog-opts-push (get-dialog "redbeard" "opt2")
                     (lambda
 
                       (defn cb0 [0]
@@ -44,8 +44,9 @@
                         (emit (opponent) 0 14 (terrain (player)) 0))
 
                       (defn cb3 [0]
-                        (dialog "<c:redbeard:12>Yaargh!! I'm just a simple marauder, trying to earn a decent living here! [via petty extortion, how else?] <B:0> So what's it gonna be? Last chance...")
-                        (dialog-await-binary-q "pay 600@" "fight back")
+                        (load-dialog "redbeard" "demand2")
+                        (dialog-await-binary-q (get-dialog "redbeard" "opt2_1")
+                                               (get-dialog "redbeard" "opt2_2"))
                         (unbind 'cb0 'cb1 'cb2 'cb3))
 
                       (on-timeout 400 'cb0)
@@ -53,7 +54,7 @@
                       (on-timeout 800 'cb2)
                       (on-timeout 2000 'cb3)))
 
-  (dialog-opts-push "never!" on-dialog-declined)
+  (dialog-opts-push (get-dialog "redbeard" "opt3") on-dialog-declined)
   (setq on-converge nil))
 
 
@@ -61,9 +62,9 @@
        (lambda
          (dialog $0)
          (defn on-dialog-closed [0]
-           (dialog "<c:goblin:2>Yesss captain!")
+           (load-dialog "redbeard" "goblin_resp")
            (defn on-dialog-closed [0]
-             (dialog "(the transmission was cut)")
+             (load-dialog "redbeard" "hangup")
              (setq on-dialog-closed nil)))
          (opponent-mode 'hostile))))
   (setq on-dialog-accepted
@@ -71,15 +72,15 @@
           (if (< (coins) 600)
               (progn
                 (adventure-log-add 12 '())
-                (scr "<c:redbeard:12>That's not enough, load the cannons!!!"))
+                (scr (get-dialog "redbeard" "angry")))
             (progn
               (adventure-log-add 13 (list 600))
               (coins-add -600)
-              (dialog "<c:redbeard:12>Heh. I think you made the smart decision.")
+              (load-dialog "redbeard" "smug")
               (exit)))))
 
 
   (setq on-dialog-declined
         (lambda
           (adventure-log-add 14 '())
-          (scr "<c:redbeard:12>Whaatt!! Load the cannons!!!"))))
+          (scr (get-dialog "redbeard" "angry2")))))

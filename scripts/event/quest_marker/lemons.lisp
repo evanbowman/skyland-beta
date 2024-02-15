@@ -1,6 +1,6 @@
 
 
-(dialog "Farmer Meyer's brother waves in the distance, excited to see you! Err... hopefully you managed to keep some of his lemon trees alive...")
+(load-dialog "lemon-quest" "dest-intro")
 
 
 
@@ -39,14 +39,11 @@
                                         (rooms (player)))))))))
           (if (equal c 0)
               (progn
-                (dialog "<c:Farmer Ted:9>Hey, you lost my brother's trees!?")
+                (load-dialog "lemon-quest" "dest-failed")
                 (setq on-dialog-closed exit))
             (progn
 
-              (dialog
-               "<c:Farmer Ted:9>Wonderful! Here's "
-               (string c)
-               "@ for your trouble!")
+              (load-dialog "lemon-quest" "dest-reward" c)
 
               (adventure-log-add 23 (list c (rcnt (player) 'lemon-tree)))
 

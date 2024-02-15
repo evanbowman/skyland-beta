@@ -483,6 +483,7 @@ standard_charset_map(const utf8::Codepoint& cp)
         case UTF8_GETCHR(u8"ç"): return 90;
         case UTF8_GETCHR(u8"Ç"): return 91;
         case UTF8_GETCHR(u8"ö"): return 92;
+        case UTF8_GETCHR(u8"Ö"): return 92;
         case UTF8_GETCHR(u8"¡"): return 96;
         case UTF8_GETCHR(u8"¿"): return 97;
         case UTF8_GETCHR(u8"ì"): return 306;
@@ -504,6 +505,16 @@ standard_charset_map(const utf8::Codepoint& cp)
         case UTF8_GETCHR(u8"Â"): return 320;
         case UTF8_GETCHR(u8"Á"): return 321;
         case UTF8_GETCHR(u8"À"): return 322;
+        case UTF8_GETCHR(u8"Æ"): return 323;
+        case UTF8_GETCHR(u8"Ð"): return 324;
+        case UTF8_GETCHR(u8"ý"): return 325;
+        case UTF8_GETCHR(u8"Ý"): return 326;
+        case UTF8_GETCHR(u8"Þ"): return 327;
+        case UTF8_GETCHR(u8"þ"): return 328;
+        case UTF8_GETCHR(u8"æ"): return 329;
+        case UTF8_GETCHR(u8"ð"): return 330;
+        case UTF8_GETCHR(u8"§"): return 331;
+        case UTF8_GETCHR(u8"~"): return 332;
 
             // clang-format on
 

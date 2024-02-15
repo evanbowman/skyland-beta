@@ -5,23 +5,20 @@
 
 
 (defn on-fadein [0]
-  (dialog "<c:goblin king:3>This whole island needs to be demolissshed! That'sss right, every ssingle block! Not one block can remain!")
+  (load-dialog "challenges" "intro-demol-1")
   (defn on-dialog-closed [0]
-    (dialog
-     "<c:goblin:2>Hey King, we've finished wiring the island with explossivesss!")
+    (load-dialog "challenges" "intro-demol-2")
     (defn on-dialog-closed [0]
-      (dialog
-       "<c:goblin king:3>Heh. Well this complicates things... hahahahaha")
+      (load-dialog "challenges" "intro-demol-3")
       (setq on-dialog-closed nil))))
 
 
 (defn challenge-hint [0]
-  (dialog "Are you sure you want a hint?")
+  (load-dialog "challenges" "are-you-sure")
   (dialog-await-y/n)
 
   (defn on-dialog-accepted [0]
-    (dialog "Hint: Check which blocks are vulnerable to ion cannons. "
-            "The glossary has a search filter for this..."))
+    (load-dialog "challenges" "hint-ch-demol"))
 
   (setq on-dialog-declined (lambda '())))
 
@@ -50,8 +47,7 @@
               (setq hint (cons "(" hint))
               (setq hint (apply string hint))
 
-              (dialog "<c:goblin king:3>NO! WRONG!! "
-                      "The island is sssinking and some blockss remain! "
+              (dialog (get-dialog "challenges" "demol-fail")
                       hint)
               (setq skip 1)
               (exit 3)))

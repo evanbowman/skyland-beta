@@ -3,7 +3,7 @@
 ;;;
 
 
-(dialog "An acrid plume of smoke rises from a fortress on the horizon...")
+(load-dialog "burning-isle" "intro")
 
 
 (opponent-init 7 'neutral)
@@ -30,18 +30,17 @@
 
 
 (defn on-converge [0]
-  (dialog
-   "Looks like a terrible battle happened here... the crew seems to have abandoned the burning island, leaving behind a powerful weapon...")
+  (load-dialog "burning-isle" "award")
   (setq on-converge nil)
   (alloc-space 'incinerator)
   (adventure-log-add 46 '())
   (sel-input 'incinerator
-             "Place weapon (2x2)"
+             (get-dialog "burning-isle" "place")
              (lambda
                (room-new (player) (list 'incinerator $1 $2))
                  (room-del (opponent) 0 13)
                (sound "build0")
-               (dialog "A delicate weapon built long ago on the surface... protect it carefully, because you can't build a replacement.")
+               (load-dialog "burning-isle" "done")
                (run-util-script "pickup_cart.lisp"
                                 7
-                                "Oh! You notice something else..."))))
+                                (get-dialog "burning-isle" "cart")))))

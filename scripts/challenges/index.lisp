@@ -1,15 +1,19 @@
 
-'(;; ("test" . "event/neutral/2/2.lisp")
-  ("1: Goliath" . "challenges/goliath.lisp")
-  ("2: Goblin Raid" . "challenges/goblin_raid.lisp")
-  ("3: Nemesis" . "challenges/backdoor.lisp")
-  ("4: Masonry" . "challenges/masonry.lisp")
-  ("5: Mycelium!" . "challenges/mycelium.lisp")
-  ("6: Porcupine 1" . "challenges/porcupine1.lisp")
-  ("7: Porcupine 2" . "challenges/porcupine2.lisp")
-  ("8: Highwater" . "challenges/decimator.lisp")
-  ("9: Arc Defense" . "challenges/arcgun_defense.lisp")
-  ("10: Pursuit" . "challenges/beacon.lisp")
-  ("11: Exchange" . "challenges/exchange.lisp")
-  ("12: Demolition" . "challenges/demolition.lisp")
-  ("13: Fire Brigade" . "challenges/fire_brigade.lisp"))
+(map cons
+     (split (get-dialog "challenges" "ch-names") ",")
+     '("challenges/goliath.lisp"
+       "challenges/goblin_raid.lisp"
+       "challenges/backdoor.lisp"
+       "challenges/masonry.lisp"
+       "challenges/mycelium.lisp"
+       "challenges/porcupine1.lisp"
+       "challenges/porcupine2.lisp"
+       "challenges/decimator.lisp"
+       "challenges/arcgun_defense.lisp"
+       "challenges/beacon.lisp"
+       "challenges/exchange.lisp"
+       "challenges/demolition.lisp"
+       "challenges/fire_brigade.lisp"))
+
+;; note: the result format is '((challenge-name . path) ...)
+;; During localization, I had to move the names to a separate file.

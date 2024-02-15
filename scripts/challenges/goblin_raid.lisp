@@ -12,16 +12,16 @@
 
 
 (defn challenge-hint [0]
-  (dialog "Sorry, no hints for this one."))
+  (load-dialog "challenges" "no-hints"))
 
 
 (setq on-fadein
       (lambda
-        (dialog "<c:goblin:2>Hey King, we've found a defensselesss cassstle!")
+        (load-dialog "challenges" "intro-raid-1")
 
         (setq on-dialog-closed
               (lambda
-                (dialog "<c:goblin king:3>#cackle# minionsss, pepare for boarding!")
+                (load-dialog "challenges" "intro-raid-2")
                 (setq on-dialog-closed nil)))))
 
 

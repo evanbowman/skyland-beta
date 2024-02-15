@@ -10,11 +10,11 @@
 
 
 (defn challenge-hint [0]
-  (dialog "Are you sure you want a hint?")
+  (load-dialog "challenges" "are-you-sure")
   (dialog-await-y/n)
 
   (defn on-dialog-accepted [0]
-    (dialog "Hint: You may need to use a repair-drone in an unconventional way. Also: read the description for nemesis in the game's glossary."))
+    (load-dialog "challenges" "hint-ch-nemesis"))
 
   (setq on-dialog-declined (lambda '())))
 

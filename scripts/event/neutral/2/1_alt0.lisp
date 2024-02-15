@@ -1,6 +1,6 @@
 
 
-(dialog "A damaged fortress floats into view. The residents do not respond to your radio signals.")
+(load-dialog "crew-gamble" "intro")
 
 
 (opponent-init 5 'neutral)
@@ -20,8 +20,7 @@
 
 (setq on-converge
       (lambda
-        (dialog "You see a survivor amongst the wreckage. You cannot be sure whether the"
-                " survivor is trustworthy. Invite survivor aboard?")
+        (load-dialog "crew-gamble" "offer")
 
         (dialog-await-y/n)
         (setq on-converge nil)))
@@ -33,8 +32,8 @@
       (secret
        4 12
        (if bad
-           "Humans eaten: 17"
-         "Days alone on island: lll")))
+           (get-dialog "crew-gamble" "hint1")
+         (get-dialog "crew-gamble" "hint2"))))
 
 
   (setq on-dialog-accepted
@@ -49,19 +48,19 @@
                   (if (not bad)
                       (progn
                         (chr-new (player) (car temp) (cdr temp) 'neutral nil)
-                        (dialog "The survivor joined your crew!")
+                        (load-dialog "crew-gamble" "success")
                         (adventure-log-add 40 '())
                         (exit))
                     (progn
                       (chr-new (player) (car temp) (cdr temp) 'hostile nil)
-                      (dialog "The survivor turned out to be a vicious goblin!")
+                      (load-dialog "crew-gamble" "raid")
                       (adventure-log-add 41 '())
                       (setq on-dialog-closed
                             (lambda
-                              (dialog "<c:goblin:2>Die humansss!")
+                              (load-dialog "crew-gamble" "goblin-taunt")
                               (setq on-dialog-closed '()))))))
               (progn
-                (dialog "Sadly, there's no room...")
+                (load-dialog "crew-gamble" "no-room")
                 (exit)))))))
 
 

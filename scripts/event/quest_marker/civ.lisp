@@ -1,7 +1,5 @@
 
-(dialog "You arrive at the location that the orphan boy marked on your map. <B:0> "
-        "<b:/scripts/misc/img/ornate.img.bin>"
-        " As you approach, an advanced walled city emerges from the clouds. Its gleaming canals and skillful stonework shimmer with a brilliant light...")
+(load-dialog "sylph-quest" "dest-intro")
 
 
 (opponent-init 9 'neutral)
@@ -51,7 +49,7 @@
    (bronze-hull 8 14)
    (forcefield* 8 9)))
 
-(secret 4 14 "Because they're highly reclusive and technologically advanced, many myths exist about the Sylph. But they're only human...")
+(secret 4 14 (get-dialog "sylph-quest" "secret"))
 
 
 (let ((id (lookup 6 qvar))
@@ -64,13 +62,13 @@
 
   (if boy
       (defn on-converge [0]
-        (dialog "<c:sylph:21><S:1> hello, traveller...")
+        (load-dialog "sylph-quest" "sylph-greet")
 
         (defn on-dialog-closed [0]
-          (dialog "<c:orphan boy:26><S:1>oh!!! i'm home at last!")
+          (load-dialog "sylph-quest" "boy-reply")
 
           (defn on-dialog-closed [0]
-            (dialog "<c:sylph:21><S:1>oh! what have we here?!")
+            (load-dialog "sylph-quest" "sylph-greet2")
 
             (defn on-dialog-closed [0]
               (map (lambda
@@ -79,9 +77,9 @@
                    (chrs (player)))
               (coins-add 3000)
               (adventure-log-add 55 nil)
-              (dialog "The orphan boy returned to his home!")
+              (load-dialog "sylph-quest" "boy-depart")
               (defn on-dialog-closed [0]
-                (dialog "<c:sylph:21>hello, traveller...<B:0> We are very grateful to you for bringing him to us...")
+                (load-dialog "sylph-quest" "thanks")
                 (setq on-dialog-closed (lambda
                                          (on-timeout 500 'fut)
                                          (setq on-dialog-closed nil)))
@@ -95,10 +93,10 @@
                   (on-timeout 1000 'fut)
 
                   (defn fut[0]
-                    (dialog "A flash of resplendant light emanates from the city... <B:0> the approaching storm clouds receed far into the horizon...")
+                    (load-dialog "sylph-quest" "award")
                     (unbind 'fut)
                     (setq on-dialog-closed exit))))))))
 
     (defn on-converge [0]
-      (dialog "Despite multiple attempts to contact the city, the inhabitants are unresponsive. It's too bad the child isn't aboard your island anymore, maybe he'd know what this was all about...")
+      (load-dialog "sylph-quest" "failed")
       (exit))))

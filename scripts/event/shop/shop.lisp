@@ -30,25 +30,25 @@
     (let ((info (get shop-items item)))
       (if (< (coins) (get info 1))
           (progn
-            (dialog "Hah! You can't afford that!")
+            (load-dialog "shop" "low-funds")
             (defn on-dialog-closed [0]
               (push-menu "item-shop" '())))
         (progn
           (dialog
-           "<c:shopkeeper:7>"
+           (get-dialog "shop" "shopkeeper-label")
            name
-           (format "? I'll sell you one for %@..." (get info 1)))
+           (format (get-dialog "shop" "shopkeeper-offer") (get info 1)))
 
           (dialog-opts-reset)
 
           (dialog-opts-push
-           "I'll buy it!"
+           (get-dialog "shop" "opt-buy")
            (lambda
              (coins-add (* -1 (get info 1)))
              (adventure-log-add 50 (list name (get info 1)))
 
              (sel-input (get info 0)
-                        "pick a slot:"
+                        (get-dialog "shop" "pick")
                         (lambda
                           (room-new (player) (list (get info 0) $1 $2))
                           (sound "build0")
@@ -75,27 +75,24 @@
                           (if shop-items
                               (push-menu "item-shop" '())
                             (progn
-                              (dialog
-                               "<c:shopkeeper:7>How am I supposed to keep customers if you buy the whole store!? WE'RE CLOSED.")
+                              (load-dialog "shop" "sold-out-of-everything")
                               (exit)))))))
 
           (dialog-opts-push (if (> (length name) 13)
                                 ;; use alternate text for long block names
                                 (string name " stats?")
-                              (format "describe %" name))
+                              (format (get-dialog "shop" "opt-describe") name))
                             (lambda
                               (push-menu "glossary" (list (car info)))
                               (push-menu "item-shop" '())))
 
-          (dialog-opts-push "no thanks…"
+          (dialog-opts-push (get-dialog "shop" "decline")
                             (lambda
                               (push-menu "item-shop" '()))))))))
 
 
 (defn on-fadein [0]
-  (dialog
-   "<c:shopkeeper:7>Welcome to my shop! Let me know if you see anything you like! "
-   "(when done, use the start menu to return to your sky chart)")
+  (load-dialog "shop" "greeting")
 
   (defn on-dialog-closed [0]
     (push-menu "item-shop" '())))

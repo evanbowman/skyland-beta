@@ -24,7 +24,7 @@
 (autopilot
  '((818 Right)
    (1000 nil)
-   (100 "<c:Milo:5>Having trouble navigating the construction menu? Did you know that the up and down buttons cycle through categories? The menu arranges blocks in order, based on category (wall, weapon, factory, power, misc, decor).")
+   (100 (get-dialog "tutorials" "cons1"))
    (100 R)
    (434 A)
    (2354 Down)
@@ -43,7 +43,7 @@
    (300 B)
    (200 B)
    (100 nil)
-   (100 "<c:Milo:5>If you want to know more about what a block does, hover over it in the construction menu and press start. The game will open up the glossary to the correct page!")
+   (100 (get-dialog "tutorials" "cons2"))
    (1000 R)
    (300 A)
    (400 Right)
@@ -58,4 +58,4 @@
    (383 Left)
    (3071 B)
    (1286 B)
-   (100 "<c:Milo:5>Of course, you can always reach the glossary normally from the start menu, but the jump-to-page feature is handy if you already have the construction menu open. Finally, you may still find that there are too many choices in the construction menu. You can hide blocks that you don't want to see from the construction menu by selecting 'hide blocks' from the start menu!")))
+   (100 (get-dialog "tutorials" "cons3"))))

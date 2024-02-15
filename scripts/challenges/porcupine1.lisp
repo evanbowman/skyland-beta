@@ -16,11 +16,11 @@
 
 
 (defn challenge-hint [0]
-  (dialog "Are you sure you want a hint?")
+  (load-dialog "challenges" "are-you-sure")
   (dialog-await-y/n)
 
   (defn on-dialog-accepted [0]
-    (dialog "clear out some of that masonry, then, flak-guns might be useful..."))
+    (load-dialog "challenges" "hint-pc1"))
 
   (setq on-dialog-declined (lambda '())))
 

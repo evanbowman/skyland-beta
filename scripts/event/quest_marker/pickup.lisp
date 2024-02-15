@@ -1,6 +1,6 @@
 
 
-(dialog "At last, the pickup address...")
+(load-dialog "taxi-quest" "intro")
 
 
 (opponent-init 7 'neutral)
@@ -39,13 +39,12 @@
   (adventure-log-add 25 '())
 
   (if (equal 0 (length (chrs (opponent))))
-      (dialog "The passengers joined your crew!")
+      (load-dialog "taxi-quest" "join1")
     (if (< 3 (length (chrs (opponent))))
-        (dialog "Some of the passengers joined your crew!")
-      (dialog "You'd like to invite them aboard, but there seems to be no room..."))))
+        (load-dialog "taxi-quest" "join2")
+      (load-dialog "taxi-quest" "join3"))))
 
 
 (defn on-converge [0]
-  (dialog
-   "<c:passengers:10>We were starting to wonder if anyone would show up! How about we join up, it'll be safer to travel together! Here's 1500@ as a tip.")
+  (load-dialog "taxi-quest" "greeting")
   (coins-add 1500))

@@ -1,5 +1,5 @@
 
-(dialog "Could it be... the stolen bananas!")
+(load-dialog "banana-quest" "dest-intro")
 
 
 (opponent-init 11 'hostile)
@@ -29,15 +29,13 @@
 
 (setq on-converge
       (lambda
-        (dialog
-         "<c:banana man:8>MY BANANAS!!! HAND THEM OVER!!!")
+        (load-dialog "banana-quest" "dest-demand")
 
         (setq on-converge nil)
 
         (setq on-dialog-closed
               (lambda
-                (dialog
-                 "<c:goblins:2>Argh, he's sstill chasing us! This guy is relentlessss! Alright, it's not worth the trouble, we'll just give you the bananas back.")
+                (load-dialog "banana-quest" "dest-goblins")
                 (setq on-dialog-closed
                       (lambda
                         (island-configure
@@ -66,8 +64,7 @@
 
                         (adventure-log-add 24 '())
 
-                        (dialog
-                         "<c:banana man:8>Hooray! My bananas! Time for Banana Breakfast!")
+                        (load-dialog "banana-quest" "dest-success")
                         (setq on-dialog-closed
                               (lambda
                                 (achieve 11)

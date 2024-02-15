@@ -3,7 +3,7 @@
 ;;;
 
 
-(dialog "A goblin stronghold approaches... they seem to be willing to negotiate...")
+(load-dialog "goblin-stronghold" "intro")
 
 
 
@@ -20,12 +20,10 @@
                         (/ (coins) 3))))))
   (setq on-converge
         (lambda
-          (dialog
-           "<c:goblin king:3>#cackle# You're tresspasssing in my territory! I demand a tribute of "
-           (string val)
-           "@! Pay!")
+          (load-dialog "goblin-stronghold" "demand" val)
 
-          (dialog-await-binary-q "I'll pay…" "no way!")
+          (dialog-await-binary-q (get-dialog "goblin-stronghold" "opt1")
+                                 (get-dialog "goblin-stronghold" "opt2"))
           (setq on-converge nil)))
 
 
@@ -35,12 +33,10 @@
               (progn
                 (opponent-mode 'hostile)
                 (adventure-log-add 32 '())
-                (dialog "<c:globlin king:3>Thatsss not enough! Letss ssee if theress anything we can take!!"))
+                (load-dialog "goblin-stronghold" "low-funds"))
             (progn
               (coins-add (- val))
-              (dialog "The goblin king rejoices, having successfully extorted "
-                      (string val)
-                      "@.")
+              (load-dialog "goblin-stronghold" "extortion" val)
               (adventure-log-add 31 (list val))
               (exit))))))
 
@@ -51,4 +47,4 @@
       (lambda
         (opponent-mode 'hostile)
         (adventure-log-add 33 '())
-        (dialog "<c:goblin king:3>YARRRGG!!! PREPARE FOR BOARDING!!!")))
+        (load-dialog "goblin-stronghold" "decline")))

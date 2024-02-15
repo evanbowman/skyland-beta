@@ -71,7 +71,8 @@
 ;; needed, but the dialog-opts-reset and dialog-opts-push functions may be
 ;; called manually for more fine-grained control over dialog settings.
 (defn/c dialog-await-y/n [0]
-  (dialog-await-binary-q "yes" "no"))
+  (dialog-await-binary-q (get-dialog "global" "yes")
+                         (get-dialog "global" "no")))
 
 (defn/c dialog-await-binary-q [2]
   (dialog-opts-reset)
