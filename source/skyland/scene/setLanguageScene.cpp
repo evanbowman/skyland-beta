@@ -32,11 +32,26 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "setLanguageScene.hpp"
+#include "skyland/skyland.hpp"
 
 
 
 namespace skyland
 {
+
+
+
+void LanguageSelectScene::redraw_title()
+{
+    title_.emplace(OverlayCoord{1, 1});
+
+    auto l = get_line_from_file(format("/strings/%.idf", (*opts_)[sel_].second.c_str()).c_str(),
+                                (int)SystemString::set_language + 1);
+
+    title_->assign(l->c_str(),
+                   Text::OptColors{
+                       {ColorConstant::silver_white, ColorConstant::steel_blue}});
+}
 
 
 
@@ -56,6 +71,8 @@ void LanguageSelectScene::enter(Scene& prev)
             row += 2;
         }
     }
+
+    redraw_title();
 }
 
 
@@ -63,9 +80,13 @@ void LanguageSelectScene::enter(Scene& prev)
 void LanguageSelectScene::exit(Scene& prev)
 {
     text_opts_.clear();
-    for (int y = 0; y < 20; ++y) {
+    title_.reset();
+
+    for (int y = 3; y < 20; ++y) {
         PLATFORM.set_tile(Layer::overlay, 1, y, 0);
     }
+
+    PLATFORM.screen().fade(1.f, ColorConstant::rich_black, {}, true, true);
 }
 
 
@@ -73,10 +94,10 @@ void LanguageSelectScene::exit(Scene& prev)
 ScenePtr<Scene> LanguageSelectScene::update(Time delta)
 {
     auto show_cursor = [&] {
-        for (int y = 0; y < 20; ++y) {
+        for (int y = 3; y < 20; ++y) {
             PLATFORM.set_tile(Layer::overlay, 1, y, 0);
         }
-        PLATFORM.set_tile(Layer::overlay, 1, 3 + sel_ * 2, 396);
+        PLATFORM.set_tile(Layer::overlay, 1, 3 + sel_ * 2, 397);
     };
 
     show_cursor();
@@ -85,11 +106,13 @@ ScenePtr<Scene> LanguageSelectScene::update(Time delta)
         if (sel_ > 0) {
             --sel_;
             PLATFORM.speaker().play_sound("click_wooden", 2);
+            redraw_title();
         }
     } else if (key_down<Key::down>()) {
         if (sel_ < (int)opts_->size() - 1) {
             ++sel_;
             PLATFORM.speaker().play_sound("click_wooden", 2);
+            redraw_title();
         }
     } else if (opts_->empty() or opts_->size() == 1 or
                key_down<Key::action_1>()) {

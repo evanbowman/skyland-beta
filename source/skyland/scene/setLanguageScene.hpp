@@ -63,6 +63,8 @@ private:
 
     bool clean_boot_;
 
+    Optional<Text> title_;
+
 public:
     Optional<DeferredScene> next_;
 
@@ -83,6 +85,9 @@ public:
 
 
 private:
+
+    void redraw_title();
+
     static DynamicMemory<LanguageOptions> load_language_options();
 };
 
