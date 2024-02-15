@@ -27,13 +27,7 @@
              (equal (wg-current-type) 8) ; uncharted hostile node.
              (not (has-dialog?))         ; sanity check.
              (< ash-storm-count (get '(1 1 2) (difficulty)))) ; not too many...
-    (dialog "Unexpected bad weather forces your island to retreat below the clouds. <B:0> "
-            "<b:/scripts/misc/img/radiation_warning.img.bin>"
-            "Heavy particles and radioactive ash blow through the air, periodically damaging "
-            "all exposed areas of your castle. <B:0>"
-            "<b:/scripts/misc/img/murk.img.bin>"
-            "Just when things couldn't seem to get any worse, an enemy raiding ship, "
-            "also forced below the clouds, emerges from the murk...")
+    (load-dialog "misc" "dust-storm")
     (weather 6)
     (adventure-log-add 56 nil)
     (+= ash-storm-count 1)))

@@ -59,7 +59,7 @@
             (progn
               (load-dialog "orphan" "no-room")
               (defn on-dialog-closed [0]
-                (dialog "orphan" "beg")
+                (load-dialog "orphan" "beg")
                 (defn on-dialog-closed [0]
                   (alloc-space 'cargo-bay)
                   (sel-input 'cargo-bay
