@@ -387,7 +387,7 @@ void print_char(utf8::Codepoint c,
     if (c not_eq 0) {
         auto mapping_info = locale_texture_map()(c);
 
-        u16 t = 495;
+        u16 t = 111;
 
         if (mapping_info) {
 

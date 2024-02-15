@@ -1,0 +1,62 @@
+
+repelió una nave hostil, -%@, +%@.
+
+% miembros de la tripulación murieron en la pelea.
+__sin uso__
+¡derrotó al rey de la tormenta!
+¡rescató a un naufrago!
+encontró un naufragio abandonado, pero no lo exploró.
+encontró un naufragio abandonado, ¡encontró una bomba cohete!
+compró dos % a algunos comerciantes por %@.
+exploró ruinas abandonadas, encontró %@.
+conoció al pirata Barbanegra, no logró sobornar.
+conoció al pirata Barbanegra, pagó un peaje de %@.
+conoció al pirata Barbanegra, se negó a pagar soborno.
+¡rescató a una niña huérfana! ¡se unió a la tripulación!
+aceptó una misión de entrega de un puesto de comerciantes.
+¡aceptó la misteriosa tarea del hombre banana!
+¡aceptó la misión del granjero Meyer! (entregar % árboles)
+¡aceptó la misión del chófer!
+compró azulejos para reventa, costo %@.
+¡revendió azulejos por %@!
+completó la misión del comerciante, ganó %@.
+el hermano del granjero Meyer pagó %@ por la entrega de % árboles.
+¡salvó las plantas de plátano de Banana Man!
+completó la misión del chófer (recogió tres tripulantes).
+¡llegó a la zona %!
+¡contrató a un mercenario por @%!
+rechazó la oferta de los mercenarios...
+salvó %@ de un castillo abandonado.
+¡el fuerte abandonado era una trampa!?
+pagó %@ al rey de los goblins.
+¡el rey de los goblins rechazó el soborno y atacó!
+el rey de los goblins atacó después de rechazar el soborno.
+la isla contaminada por el castillo infestado.
+rebuscó %@ en la isla infestada.
+donó un núcleo al pueblo, +2 % y +3 tripulantes.
+¡actualizó todo el casco a casco apilado!
+recolectó %@ de la ciudad abandonada.
+encontró un transportador de drones...
+rescató a un superviviente de una nave naufragada.
+¡un superviviente salvaje de una nave naufragada atacó!
+¡piratas atacan desde un barco de guerra robado!
+¡piratas en el barco de guerra robado se retiran después de soborno...
+compró un decimator robado de una nave fugitiva.
+compró algunos cascos espejados.
+recuperó un incinerador de una isla en llamas!!
+recolectó %@ de la isla abandonada.
+una nave de guerra masiva ataca...
+¡descubrió una tienda!
+compró % por %@.
+aceptando la derrota, ¡un goblin se unió a su tripulación!
+¡aceptó la misión del viajero misterioso!
+¡invitó a un explorador a bordo!
+¡aceptó la misión del niño huérfano!
+devolvió al niño perdido a los Silfos...
+descendió por debajo de las nubes para evitar mal tiempo.
+¡aceptó la misión de los mineros (entregar 7 explosivos)!
+¡completó la misión de los mineros! (+%@)
+incapaz de hacer el pago a la estación imperial de misiles.
+hizo el pago a la estación imperial de misiles.
+se negó a pagar a la estación imperial de misiles.
+¡aceptó la rendición del goblin, salvó bloques...

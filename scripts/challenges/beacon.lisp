@@ -14,7 +14,7 @@
   (dialog-await-y/n)
 
   (defn on-dialog-accepted [0]
-    (load-dialog "challenges" "hint-ch-beacon"))
+    (load-dialog "challenges" "intro-ch-beacon"))
 
   (setq on-dialog-declined (lambda '())))
 

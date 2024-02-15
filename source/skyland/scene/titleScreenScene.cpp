@@ -454,7 +454,7 @@ void TitleScreenScene::put_module_text()
 
     const auto len = utf8::len(buffer.c_str());
 
-    auto margin = centered_text_margins(buffer.length());
+    auto margin = centered_text_margins(len);
     text_.emplace(
 
         buffer.c_str(),
@@ -469,9 +469,9 @@ void TitleScreenScene::put_menu_text()
     redraw_margins();
 
     const auto st = calc_screen_tiles();
-    StringBuffer<32> buffer(SYS_CSTR(game_title));
+    StringBuffer<64> buffer(SYS_CSTR(game_title));
     buffer += ":   ";
-    const auto prefix_len = buffer.length();
+    const auto prefix_len = utf8::len(buffer.c_str());
     buffer += *loadstr(menu_text[menu_selection_]);
 
     const auto len = utf8::len(buffer.c_str());

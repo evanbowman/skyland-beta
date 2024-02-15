@@ -96,7 +96,7 @@ void SandboxLoaderModule::update_parameter(u8 line_num)
         int_text_len = utf8::len(boolean_field_str->c_str());
     }
 
-    for (u32 i = temp.length(); i < 28 - int_text_len - 2; ++i) {
+    for (u32 i = utf8::len(temp.c_str()); i < 28 - int_text_len - 2; ++i) {
         if (i % 2 == 0) {
             temp.push_back('.');
         } else {

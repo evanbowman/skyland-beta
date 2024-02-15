@@ -761,6 +761,11 @@ enum class SystemString {
 
     adventure_log,
 
+    machine_translation,
+
+    cart_location,
+    cart_found,
+
     count,
 };
 

@@ -3964,7 +3964,7 @@ bool Platform::load_overlay_texture(const char* name)
 }
 
 
-static const TileDesc bad_glyph = 495;
+static const TileDesc bad_glyph = 111;
 
 
 // Rather than doing tons of extra work to keep the palettes

@@ -842,6 +842,12 @@ void ConstructionScene::show_current_building_text()
     StringBuffer<32> str = SYSTR(construction_build)->c_str();
     str += " :";
 
+    if (str_eq(systemstring_bound_file(), "spanish")) {
+        // Spanish names are too long! Use a shorter prefix
+        str = ":";
+    }
+
+
     str += (*load_metaclass(data_->available_buildings_[building_selector_]))
                ->ui_name()
                ->c_str();

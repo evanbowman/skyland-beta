@@ -86,6 +86,10 @@ private:
     bool clean_boot_;
 
 public:
+
+    Optional<DeferredScene> next_;
+
+
     LanguageSelectScene(bool clean_boot)
         : opts_(load_language_options()), clean_boot_(clean_boot)
     {
@@ -94,11 +98,16 @@ public:
 
     void enter(Scene& prev) override
     {
+        PLATFORM.screen().schedule_fade(1.f, ColorConstant::silver_white);
+
         if (opts_->size() > 1) {
             u8 row = 3;
             for (auto& opt : *opts_) {
-                text_opts_.emplace_back(opt.first.c_str(),
-                                        OverlayCoord{3, row});
+
+                text_opts_.emplace_back(OverlayCoord{3, row});
+                text_opts_.back().assign(opt.first.c_str(),
+                                         Text::OptColors{{ColorConstant::steel_blue,
+                                                          ColorConstant::silver_white}});
                 row += 2;
             }
         }
@@ -149,13 +158,11 @@ public:
                 next->next_scene_ = make_deferred_scene<IntroCreditsScene>();
                 return next;
             } else {
-                if (PLATFORM.device_name() == "MacroDesktopDemo") {
-                    APP.gp_.stateflags_.set(
-                        GlobalPersistentData::freebuild_unlocked, true);
-                    return make_scene<MacrocosmFreebuildModule>();
+                if (next_) {
+                    return (*next_)();
+                } else {
+                    return make_scene<IntroCreditsScene>();
                 }
-
-                return make_scene<IntroCreditsScene>();
             }
         }
 
@@ -467,6 +474,7 @@ public:
                 for (char c : data) {
                     path.push_back(c);
                 }
+                PLATFORM.fill_overlay(0);
                 systemstring_bind_file(path.c_str());
             }
             return make_scene<IntroCreditsScene>();

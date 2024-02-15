@@ -1,1 +1,2 @@
 english=english
+español=spanish

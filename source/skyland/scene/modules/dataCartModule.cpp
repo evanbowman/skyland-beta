@@ -59,7 +59,7 @@ void DataCartModule::show_cart(int index)
     auto cart = carts_->load(index);
     if (not cart) {
         DataCart missing(index);
-        tmp.append(" location: ", colors);
+        tmp.append(SYS_CSTR(cart_location), colors);
         tmp.append(missing.get_label_string("location").c_str(), colors);
 
         draw_image(376, 14, 8, 2, 4, Layer::overlay);
@@ -67,7 +67,7 @@ void DataCartModule::show_cart(int index)
         Text::print(format("cart_%", index + 1).c_str(), {12, 6}, colors);
 
     } else {
-        tmp.append(" found at ", colors);
+        tmp.append(SYS_CSTR(cart_found), colors);
         auto exact = cart->get_label_string("exact_location");
         for (char& c : exact) {
             // FIXME: ini conf library ignoring whitespace in strings. Fix conf.cpp.

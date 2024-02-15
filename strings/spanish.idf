@@ -1,0 +1,610 @@
+
+SKYLAND
+Sí
+No
+Configuración Multijugador
+¿Listo? ¡Presiona iniciar!
+cooperativo
+versus
+modo de juego
+segundos de preparación
+mostrar preparación
+monedas
+tamaño del terreno
+Esperando al otro jugador...
+frecuencia de tiempo de espera (seg)
+duración del tiempo de espera (seg)
+aire
+aniquilador
+arma-de-arco
+arco
+núcleo-inactivo
+globo
+planta-de-plátano
+barrera
+basalto
+ladrillo-de-basalto
+basalto-tallado
+arma-de-haz
+casco-grande
+máquina-de-guerra
+puente
+casco-de-bronce
+edificio
+hematita-tallada
+piedra-tallada
+camuflaje
+cacao
+módulo-de-comando
+cohete-astilla
+cesio
+brazo-de-salvamento
+cosechas (¡podridas! ¡recoge pronto!)
+cristal-tallado
+cristal
+pilar-de-cristal
+cúpula
+nieve
+casco-apilado
+casco-espejo
+control-mental
+puerta-de-casco
+cañón
+bodega-de-carga
+núcleo
+decimador
+bahía-de-drones
+baliza-de-escape
+casa-de-campo
+cañón-de-artillería
+carga-de-fuego
+comida
+campo-de-fuerza
+campo-de-fuerza*
+fuente
+bloque-de-oro
+granero
+puerto
+hematita
+columna-de-hematita
+miel
+casco
+hielo
+incinerador
+índigo
+enfermería
+cañón-de-iones
+disipador-de-iones
+escalera
+escalera+1
+dama-de-la-libertad
+lava
+lava*
+árbol-de-limón
+fuente-de-luz
+madera
+rosa-madre
+factoría
+mármol
+albañilería
+silos-de-misiles
+micelio
+nemesis
+ocre
+palmera-de-coco
+perlas
+pistón
+habitación-saqueada
+patatas
+casco-energizado
+código
+radar
+radiador
+reactor
+replicador
+arroz
+riel-ns (decoración)
+riel-we (decoración)
+centro-de-riel
+bomba-de-cohetes
+azafrán
+arena
+cercha
+marisco
+vegetación
+singularidad
+célula-solar
+cañón-de-chispas
+altavoz
+escalera
+escalera+1
+escalera+2
+estatua
+columna-de-piedra
+pistón-pegajoso
+girasol
+interruptor
+sintético
+computadora-de-apuntado
+té
+terreno
+tulipanes
+dinamita
+dinamita-ii
+antorcha
+transportador
+suelo
+misil-atómico
+agua
+agua*
+motor-meteorológico
+trigo
+molino-de-viento
+lana
+taller
+/azulejo
+/enredaderas
+/ladrillo
+/buen-chico
+/monstruo-de-bolsillo
+/troll-amistoso
+/tengo-que-ir-rápido
+rojo
+negro
+(pájaro)
+(humano) 
+(goblin) 
+(replicante) 
+(perro) 
+aventura
+desafío
+multijugador
+extras
+macrocosmo
+Logros
+Créditos
+Cargador de Actualizaciones
+Gestor de DLC
+Restablecimiento de Fábrica
+Explorador de Archivos
+Diseñador de Banderas
+Glosario
+Battle Sandbox
+SKYLAND para Siempre
+Editor de Texto
+Puntuaciones Altas
+Tutoriales
+Modo Desarrollador
+Damas
+Fecha/Hora
+Retroalimentación
+Informe de Errores
+Cartas de Datos
+Macroconstrucción Libre
+Ejecutar Regresión
+enero, febrero, marzo, abril, mayo, junio, julio, agosto, septiembre, octubre, noviembre, diciembre,
+¿Activar modo desarrollador? Te permite ejecutar código personalizado, pero las puntuaciones altas no se registrarán mientras esté habilitado.
+¡Modo desarrollador desactivado con éxito!
+carga: 
+ninguna
+:crear
+:crear :añadir-terreno 
+fondos insuficientes
+suministro de energía insuficiente
+demasiados bloques
+¡No hay suficiente espacio!
+¡Solo se permite uno!
+tamaño
+murallas
+armas
+fábricas
+energía
+varios
+decoración
+Evan Bowman presenta
+Copyright ©2021-%
+año:
+crear bloque:
+construir mejora:
+cosecha:
+:rotar
+:elevar
+:capas
+ver umbral: 
+:próximo día
+¡No hay cultivos listos para cosechar!
+:verificar cosecha
+entrar
+crear colonia
+islote (tamaño completo)
+atolón (pequeño)
+editar nombre
+disponible: %
+costo: %_
+manual: 
+población 
+productividad 
+comida 
+cultivos
+colonias
+Cada isla comienza con un residente. Cada día, tus islas ganarán y perderán residentes según la comida y la vivienda disponibles. ¡Construye más viviendas para animar a los aldeanos a establecerse!
+Cada uno de tus aldeanos produce diez puntos de productividad por día. ¡Gasta productividad para construir estructuras, plantar o cosechar cultivos y más!
+Cada aldeano consume una unidad de comida al día. ¡Asegúrate de plantar algunos cultivos; tus residentes comenzarán a irse si no hay nada para comer!
+Cada isla puede almacenar cinco unidades de comida. ¡Construye graneros para aumentar tu límite de almacenamiento de alimentos!
+Los cultivos tardan unos días en madurar. ¡Revísalos regularmente! Si dejas los cultivos maduros sin cosechar, ¡se echarán a perder! Presiona el botón de hombro izquierdo + A para verificar si hay cultivos maduros.
+Los cultivos no crecerán en la oscuridad. ¡Pero puedes construir fuentes de luz, lo que te permite colocar cultivos verticalmente!
+Trigo: 2 días, rendimiento 3, Papas: 6 días, rendimiento 15, Madera: 10 días, rinde madera
+Cuando tengas una población lo suficientemente grande, ¡puedes establecer otras islas cercanas! Consulta el menú del macrocosmo para ver las opciones.
+colonizar isla
+hundir colonia
+Renombrar isla:
+presupuesto: 
+ciudadanos (empleados)
+ciudadanos
+sin hogar
+total
+hambruna
+felicidad
+infelicidad
+suministro de alimentos
+suministro de viviendas
+densidad de población
+felicidad total
+presión de crecimiento de la población
+cubo
+ancho
+pilar
+más ancho
+estándar
+superplano
+(bloqueo de modo)
+Emite pulsos de antimateria que explotan al colisionar con campos de fuerza, dañando todo dentro del rango = 2. Para casco energizado, explosión más pequeña y rango = 1.
+¡Grúa de dragado, recoge chatarra del mundo inundado debajo! Solo en modo aventura. Utilizable una vez por nivel, durante el clima despejado.
+¡Cada isla voladora necesita un núcleo de energía para mantenerse en el aire! Suministra energía a las estructuras de tu castillo.
+¡Energía del sol! Rendimiento de energía al 50% durante el clima nublado.
+Aunque ligeramente menos potente que un cañón ordinario, sus ataques propagan fuego.
+Un arma para apuntar al techo de una fortaleza enemiga. Inflige % de daño cada %.% segundos.
+¡Agua! Apaga el fuego en las casillas adyacentes.
+Bloque fuente de agua.
+Reduce ligeramente el costo de construcción de todos los bloques.
+Muestra el interior de castillos enemigos. Los radares mejoran la precisión del transportador y el rango de movimiento en el mapa mundial.
+Cancela todo el daño de iones al contacto. Útil para proteger estructuras vulnerables, como reactores o campos de fuerza, de cañones de iones.
+"Dame a tus cansados, tus pobres, Tus masas hacinadas anhelando respirar libres"
+Fluye por una isla, prende fuego a bloques no ignífugos.
+Bloque fuente de lava.
+...
+¡Reproduce chiptunes! Conecta hasta tres bloques de sintetizador a la derecha del bloque de altavoz. Cuando termina de reproducir, activa cualquier bloque que esté debajo, si hay alguno.
+¡Ni!
+Inflige daño de iones. Ráfagas pasan inofensivas por la mayoría de bloques, causan % de daño cada %.% s a campos de fuerza, reactores, etc.
+Inflige % de daño cada %.% segundos, pero a diferencia de otras armas, el daño se encadena a todas las estructuras idénticas vecinas.
+¡Casco, pero hecho de bronce! Bastante bonito, ¿verdad?
+Recibe un 75% menos de daño de los misiles.
+Refleja proyectiles (¡excepto misiles!). Aún recibe daño, sin embargo.
+Un arma tipo cañón inusual. El daño comienza en % y aumenta a % cuando la salud cae a la mitad, % cuando la salud cae por debajo del 1/4. Recarga de %.% s.
+Una estructura defensiva esencial.
+Bloquea los proyectiles enemigos, pero permite que tus propias armas disparen a través de él. Vulnerable al daño de iones.
+Un campo de fuerza mejorado.
+Un núcleo de energía mejorado. Suministra mucha más energía, pero es susceptible al daño de iones.
+Se usa para limitar el movimiento de las partidas enemigas. Tu tripulación atraviesa puertas, pero no las unidades enemigas.
+¡Transporta partidas de abordaje a un castillo enemigo! Selecciona un destino al azar, a menos que tengas un radar.
+Casco mejorado. Mucho más duradero, pero susceptible al daño de iones.
+Inflige un daño bajo, pero se extiende por áreas grandes. Altamente destructivo cuando se usa en grupos contra castillos con casco delgado.
+Un taller mejorado. Reduce ligeramente el costo de construcción de todos los bloques.
+Aunque ineficaces contra la mayoría de las armas modernas, los aldeanos en Skyland todavía construyen estructuras con piedra porque se ve bien. Haz clic para cambiar el estilo.
+Una estatua de metal brillante. Haz clic para cambiar el estilo.
+Un arma masivamente destructiva con una recarga lenta de %.% segundos. Recarga y dispara solo cuando está habitada por un personaje.
+Una estructura diseñada para atravesar una gran distancia vertical dividiéndola en distancias verticales más pequeñas, a menudo llamadas escalones.
+Una estructura de marcador de posición creada después de que un personaje destruye una habitación saqueándola.
+Bloque de audio programable. Debe colocarse dentro de tres baldosas a la derecha de un bloque de altavoz. La posición determina el canal (+1 cuadrado, +2 cuadrados, +3 ruido).
+Almacena una unidad de carga. Requerido para misiones en el modo aventura.
+Un arma de artillería confiable. Inflige % de daño cada %.% segundos.
+Emite radiación perjudicial, dañando a cualquier personaje que esté a dos espacios de distancia.
+¡Un interruptor! Cuando se selecciona el lado izquierdo del interruptor, seleccionará uno de dos objetivos, según la posición del interruptor.
+...
+Casco indestructible. Solo se puede construir en modo sandbox.
+Una vez activado, transporta una isla fuera de una batalla después de 60 segundos.
+Una estructura defensiva orgánica. Crece para cubrir toda la superficie de un castillo. No crecerá en bloques de fluido, campos de fuerza u otros micelios.
+El agua se congela en bloques de hielo en clima nevado...
+Un bloque producido cuando el agua interactúa con la lava.
+Altamente inflamable, pero no recibe daño por quemaduras. Solo en modo sandbox.
+¡Reacciona violentamente con el agua! Solo en modo sandbox.
+¡Se puede recuperar por el cien por cien de su valor! Útil para el multijugador cooperativo.
+Más débiles que los misiles regulares, pero con un radio de daño más amplio y provoca incendios. Se requiere una factoría.
+¡Cambia el clima!
+¡Elige automáticamente los objetivos de las armas por ti! Puede que puedas hacerlo mejor tú mismo, ¡pero qué conveniente! (y aún puedes fijar objetivos manualmente)
+No produce energía, a menos que todas tus otras fuentes de energía sean destruidas. ¡Un último recurso! Solo se permite uno por isla.
+Como una escalera, pero la mitad de alta.
+Cura a los habitantes, más lento por cada habitante adicional. Solo cura a la tripulación originaria de la misma isla que la enfermería.
+Produce replicantes. Un replicante tiene el 75% de la salud del personaje fuente y no puede curarse.
+¡Despliega un dron! Cuando se destruye, el dron desplegado también se destruirá.
+Un arma poderosa que solo funciona en el clima más tormentoso. Gana una munición y carga un nivel por cada rayo.
+Texto escrito en algún idioma extraño... ¿qué podría significar? (Si ves uno, haz clic para ampliar)
+Bloques de camuflaje: la IA no ve bloques creados completamente dentro de él. La IA adivinará según el comportamiento. Recibe daño de iones.
+Este bloque solía controlar la IA de la tripulación, pero ya no es necesario.
+Toma el control de uno de los miembros de la tripulación de tu oponente.
+Un antiguo arma de la superficie, nadie sabe cómo construirlas más... inicia incendios... si tienes suerte, tal vez encuentres una...
+Construido hace mucho tiempo en la superficie, este láser quema todo a su paso, infligiendo daño a cada bloque que toca su haz.
+Construido miles de años atrás durante las guerras en la superficie. Extremadamente duradero y reparable, con una gran producción de energía.
+Principalmente decorativo, pero genera algo de energía. La producción de energía se duplica en clima tormentoso. Se permite solo uno por isla.
+Construido en la superficie, misiles se dividen en diez proyectiles al impactar y rebotan. Pocos, si acaso, todavía existen, busca en las tiendas...
+Como una escalera, pero un bloque más alta. (Mejora una escalera a través del menú de selección)
+Como una escalera, pero un bloque más alta.
+Como una escalera+1, pero un bloque más alta.
+Una pequeña nave monoplaza. A menudo utilizada por aldeanos para realizar largos viajes entre islas; no consume mucha energía.
+Arma bárbara ancestral: causa una explosión masiva, propagando daño e incendios en una extensa área. Solo se puede utilizar una vez.
+pausado
+lento
+regular
+rápido
+rebobinar
+error
+velocidad: 
+reanudar
+glosario
+hibernar
+ocultar bloques
+guardar en sandbox
+cargar sandbox
+salir
+hundir (salir)
+mapa del cielo
+¡Dame una pista!
+¿qué es el modo sandbox?!
+guardar
+cargar
+macrocosmo
+siguiente día
+ajustar vista
+nuevajuego
+conectar a un amigo
+compartir isla
+espectar
+continuar construyendo
+consola de scripts
+rendirse
+muestras
+generar terreno
+¿Estás seguro?
+START: soltar
+por favor espera...
+¿realmente salvaguardar?  +
+A:  sí 
+B:  no 
+¡no se puede salvar la habitación poblada!
+¡este bloque no se puede salvar!
+¿eliminar dron?
+claro
+llovizna
+lluvia
+nieve
+tormenta
+ceniza radiactiva
+¿reorganizar bloques? %@
+elige un bloque para mover:
+elige destino:
+Logro:
+Desbloqueado:
+asignar grupos de armas:
+desplegar:
+lanzar dron: seleccionar posición
+-- puntuaciones más altas --
+puntuación
+l + r: compartir puntuación más alta
+SEL: tabla de clasificación
+¡Escanear para ver la tabla de clasificación!
+Ingresa tu token:
+Paso 1: ¡Escanear para solicitar un token de inicio de sesión!
+
+Escanear para subir puntuación.
+ A: siguiente 
+Preparando código QR...
+combos: START + ?
+establecer grupos de armas
+grupo de armas 1
+grupo de armas 2
+grupo de armas 3
+elegir grupo de armas
+SEL asignación automática tripulación
+atajo: 
+tiempo
+pausas utilizadas
+monedas gastadas
+bloques +/-
+seleccionar un destino:
+¿recuperar personaje?
+¿iniciar control mental?
+mostrando: rango de reparación
+¿crear replicante? -
+¿Restablecer sandbox?
+salir
+configurar interruptor: conectar ON:
+configurar interruptor: conectar OFF:
+-- zona % --
+cargando...
+visitado
+neutral
+hostil
+tormenta
+búsqueda
+tienda
+inexplorado
+marcador de búsqueda
+progreso guardado...
+Tu tripulación está tomando un descanso,
+¡vuelve pronto!
+mapa del cielo - zona %
+tormenta >>
+salida
+monedas
+tamaño del terreno
+música
+dependencias
+clima
+Configuración de Sandbox
+Presiona A para comenzar
+tripulación
+¡Niveles nuevos interminables! ¡Sobrevive el mayor tiempo posible!
+Presiona A para comenzar
+SKYLAND Forever
+dificultad
+principiante
+normal
+difícil
+maniaco
+El modo más fácil, pero sigue siendo desafiante. Intentos extra si mueres.
+Los enemigos te dan menos recursos. Puntuación x2. Patrones de niveles más difíciles.
+Los enemigos te dan aún menos recursos. Puntuación x4. Patrones de niveles aún más difíciles.
+Sin pausa. Puntuación x6.
+¿Salir del tutorial?
+Constructor
+¡Construye una isla con más de diez estructuras!
+Arquitecto
+¡Construye una isla con más de veinte estructuras!
+Arquitecto (2)
+¡Construye una isla con más de veinte estructuras!
+Explorador
+¡Alcanza la zona 2!
+Estratega
+¡Alcanza la zona 3!
+Fortaleza
+¡Crea castillo con 4+ núcleos!
+dinamita
+¡Completa cualquier nivel de desafío!
+Virtuoso (1)
+¡Completa tres niveles de desafío!
+Virtuoso (2)
+¡Completa tres niveles de desafío!
+Triaje
+¡Destruye goblins invasores con dinamita!
+Hombre Banana
+¡Completa la misión del hombre plátano!
+Tecnología prestada
+¡Destruye un decimator saqueándolo!
+Barco de Teseo
+¡Copia un castillo enemigo con al menos 15 bloques! (reflejado)
+¡Limoneros rescatados!
+¡Completa la misión del granjero Meyer!
+La nueva coloso
+"¡Instala al menos siete personas en tu castillo!"
+Fusión nuclear
+¡Destruye el reactor de un oponente con daño de iones!
+Completacionista
+¡Termina todos los niveles de desafío!
+Simbiosis
+¡Completa el desafío "¡Mycelium!"!
+Primitivo
+¡Alcanza la zona 3 sin construir una factoría!
+Héroe
+¡Derrota al Rey de las Tormentas!
+¡Al borde del mundo!
+¡Alcanza el nivel más a la derecha de la zona 4!
+Incursión
+¡Aborda la isla del oponente con más de 4 de tu propia tripulación!
+Pacifista
+¡Alcanza la zona 4 sin matar a ningún miembro de la tripulación enemiga!
+opciones
+consejos y trucos
+Mantén presionado el botón de pausa para ajustar la velocidad del juego. ¡Velocidades de cámara lenta y avance rápido disponibles! ¡Incluso puedes rebobinar!
+¡Construye una enfermería para curar a tu tripulación!
+En el menú de construcción, los botones arriba/abajo desplazan las categorías: defensas, armas, talleres, energía, miscelánea.
+¡Usa puertas de bulkhead para proteger tus núcleos de energía contra los goblins!
+¿Abrumado por los goblins? ¡Intenta construir algunos drones de reparación!
+¡Puedes asignar grupos de armas a teclas de acceso rápido! Mantén presionado Start para obtener más opciones.
+El glosario, que se encuentra en el menú de extras de la pantalla principal, describe todas las estructuras en el juego.
+¡Asalta y saquea castillos para obtener monedas extra!
+Si pierdes un núcleo de energía, los sistemas pueden apagarse hasta que vuelvas a equilibrar la energía.
+Para obtener más ayuda, desplázate hacia la derecha en la pantalla principal y abre el visor de tutoriales.
+Objetivo: ¡derrotar al Rey de las Tormentas! ¡Construye tu castillo hasta que seas lo suficientemente fuerte, luego entra en la tormenta!
+¿Atascado en el mapa del mundo? ¿La tormenta te alcanza? Puedes aumentar tu rango de movimiento construyendo un radar...
+filtros
+requiere taller
+requiere factoría
+habitables
+recibe daño de iones
+altamente inflamable
+no constructible
+¡No tienes ningún DLC instalado!
+mantén A para borrar!
+(requiere taller)
+(requiere factoría)
+(no constructible)
+¡Corte de energía!
+¡El castillo puede ser amigable!
+¡fuera de pausas!
+¡el bloque está apagado!
+Modo principiante: auto-rebobinar:
+¿Intentarlo de nuevo? (vidas: x%)
+¿Restablecer el juego a la configuración de fábrica? Presiona B para cancelar. Presiona A cinco veces mientras mantienes presionado Select para continuar.
+¡Bienvenido! <b:datacarts_flattened> ¡Aquí encontrarás tu colección de cartuchos de datos de tus aventuras! ¡Los cartuchos son la principal manera de almacenar información en Skyland! A ver cuántos puedes encontrar...
+Beep... recopilando... ¡Bienvenido de nuevo! <B:0><b:datacarts_flattened> No veo a muchos visitantes aquí en los archivos. ¡Tanta información para ordenar, he estado muy ocupado! <B:0> ¿Encontraste algún cartucho nuevo últimamente?
+<c:Milo:5>¡Oye! ¡Capitán! <s:3>. . . <s:0>¡Vamos, despierta!    . . . ¿Qué!? ¿No me recuerdas? ¡Soy Milo, uno de tu tripulación! <d:1000>Está bien... de todos modos, hay una tormenta a nuestras espaldas, ¡y nos está empujando hacia territorio hostil! Ven a la ventana y te mostraré lo que quiero decir<t:0>!
+El bastión del Rey de las Tormentas se desintegra... las oscuras nubes se despejan, trayendo la calma a SKYLAND una vez más. <d:1000>E<d:1000>L <d:1000>F<d:1000>I<d:1000>N<d:500>.<d:500>.<d:500>.
+sesión de conexión...
+¡No se pudo conectar al compañero multijugador!
+¡El sistema entrará ahora en modo de bajo consumo! ¡Presiona L+R+SELECT para despertar!
+El sistema aceptará actualizaciones de software de otra consola de Game Boy Advance. Si tienes un ROM de actualización de software de SKYLAND o una tarjeta e-Reader, conecta un cable de enlace para instalar actualizaciones. Presiona A cuando estés listo...
+ADVERTENCIA: ¡Detectada una colisión gravitatoria!!!
+¡La isla implosionó!
+¡Bloqueado! ¿Por qué no pruebas el modo macrocosmo regular por un rato?
+¿tamaño del terreno?
+¡Error! ¡La isla tiene demasiados bloques para comprimir en un código QR legible! Lo siento, esta es una limitación técnica, no se puede hacer mucho, excepto reducir el número de bloques en tu isla.
+ADVERTENCIA: Tu isla es bastante grande y el código QR resultante no cabe en la pantalla, excepto cuando se usa 1 píxel por bloque. Te recomendamos encarecidamente que reduzcas el número de bloques en tu isla, ya que podrías tener problemas para escanear el código QR (pista: si usas Android, es posible que necesites escanear con Google Lens).
+El Nintendo DS no tiene un puerto de conexión para Gameboy Advance, ¡lo siento!
+Conecta dos consolas GBA enchufando el extremo 1p de un cable de enlace en el primer dispositivo y el extremo 2p del cable de enlace en el segundo dispositivo. Cuando ambos dispositivos muestren la siguiente pantalla blanca, presiona START para conectar.
+(duelo)
+pensando la IA...
+si puedes saltar, ¡debes hacerlo!
+% gana
+¡salta de nuevo!
+Nombre del tripulante:
+ENTRAR: enviar
+Acabas de cargar una partida guardada. Cada partida guardada del modo aventura solo se puede restaurar una vez antes de guardar de nuevo. ¡Recuerda guardar antes de apagar el juego!
+Consejo: también puedes mover bloques manteniendo presionado B sobre un espacio vacío. ¡Consulta el tutorial "mover bloques" para obtener funciones más avanzadas!
+Consejo: ajusta la velocidad desde el botón de pausa. Tutorial: "Velocidad del juego" para más ayuda.
+Consejo: el menú SELECT lista funciones adicionales que no siempre están disponibles en otros lugares. ¡Intenta seleccionar cosas diferentes para acceder a más opciones!
+ok
+no mostrar de nuevo
+reintentar
+¿generar de nuevo?
+ver interior
+ver exterior
+mover bloques
+mover tripulante
+nombrar tripulante
+dejar de disparar
+establecer objetivo
+salvamento
+velocidad del juego
+quitar pausa
+construir
+atrás
+asustar pájaros
+describir bloque
+editar bandera
+ícono del tripulante
+mejorar bloque
+fijar tripulante
+desfijar tripulante
+encendido
+apagado
+desviar energía
+elige una bandera:
+colonial
+viejo imperio
+segundo imperio
+merodeador
+horda de goblins
+girasol
+comerciante
+plátano
+¿mejorar al %?
+¡la mejora requiere una factoría!
+¡la mejora requiere un taller!
+SEL: preajustes
+START: inundación
+bandera
+% bandera
+-registro-de-aventuras-
+
+ ubicación: 
+ de: 
