@@ -66,7 +66,7 @@ using Section = StringBuffer<32>;
 using CachedPtr = const char*;
 
 // This speeds up consecutive accesses to a section.
-Buffer<Trio<Data, Section, CachedPtr>, 4> conf_cache;
+Buffer<Trio<Data, Section, CachedPtr>, 16> conf_cache;
 
 
 
