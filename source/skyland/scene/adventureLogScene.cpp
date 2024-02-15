@@ -165,8 +165,8 @@ StringBuffer<128> AdventureLogScene::format_logentry(int entry)
 
         auto line = lisp::get_list(v, 0)->integer().value_;
 
-        auto path = format("/strings/adventure_log/%.txt",
-                           systemstring_bound_file());
+        auto path =
+            format("/strings/adventure_log/%.txt", systemstring_bound_file());
 
         auto str = get_line_from_file(path.c_str(), line);
 

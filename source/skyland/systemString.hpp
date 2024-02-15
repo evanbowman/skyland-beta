@@ -766,6 +766,8 @@ enum class SystemString {
     cart_location,
     cart_found,
 
+    set_language,
+
     count,
 };
 

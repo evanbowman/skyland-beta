@@ -177,6 +177,7 @@ set(SOURCES
   ${SOURCE_DIR}/skyland/scene/boxedDialogScene.cpp
   ${SOURCE_DIR}/skyland/scene/salvageRoomScene.cpp
   ${SOURCE_DIR}/skyland/scene/titleScreenScene.cpp
+  ${SOURCE_DIR}/skyland/scene/setLanguageScene.cpp
   ${SOURCE_DIR}/skyland/scene/sandboxResetScene.cpp
   ${SOURCE_DIR}/skyland/scene/scriptedMenuScene.cpp
   ${SOURCE_DIR}/skyland/scene/introCreditsScene.cpp
@@ -222,6 +223,7 @@ set(SOURCES
   ${SOURCE_DIR}/skyland/scene/modules/bugReportModule.cpp
   ${SOURCE_DIR}/skyland/scene/modules/feedbackModule.cpp
   ${SOURCE_DIR}/skyland/scene/modules/factoryResetModule.cpp
+  ${SOURCE_DIR}/skyland/scene/modules/changeLanguageModule.cpp
   ${SOURCE_DIR}/skyland/scene/modules/developerModeModule.cpp
   ${SOURCE_DIR}/skyland/scene/modules/creditsModule.cpp
   ${SOURCE_DIR}/skyland/scene/modules/checkersModule.cpp
