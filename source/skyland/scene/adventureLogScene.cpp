@@ -64,7 +64,7 @@ void AdventureLogScene::show_page(int page_num)
 
     end = clamp(end, begin, cnt);
 
-    Text::print("-Adventure-log-",
+    Text::print(SYS_CSTR(adventure_log),
                 {0, 0},
                 FontColors{custom_color(0xf7f7ef), custom_color(0x0e0984)});
 
@@ -164,7 +164,11 @@ StringBuffer<128> AdventureLogScene::format_logentry(int entry)
     if (auto v = load_logentry(entry)) {
 
         auto line = lisp::get_list(v, 0)->integer().value_;
-        auto str = get_line_from_file("/strings/adventure_log.txt", line);
+
+        auto path = format("/strings/adventure_log/%.txt",
+                           systemstring_bound_file());
+
+        auto str = get_line_from_file(path.c_str(), line);
 
         Buffer<StringBuffer<20>, 8> args;
         lisp::foreach (v->cons().cdr(), [&](lisp::Value* val) {

@@ -759,6 +759,8 @@ enum class SystemString {
     flag,
     flag_fmt,
 
+    adventure_log,
+
     count,
 };
 
