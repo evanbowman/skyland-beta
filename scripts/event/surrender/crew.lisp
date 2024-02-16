@@ -1,14 +1,13 @@
 
-(dialog
- "<c:goblin pirates:2>We surrender! Honesst, we promise not to pillage any other cassstles!")
+(lc-dialog-load "surrender" "plead")
 
 (defn on-dialog-closed [0]
     (setq on-dialog-closed '())
   (let ((c (+ (/ (coins-victory) 2) (/ (coins-victory) 6))))
-    (dialog "The goblins offer surrender, accept terms?")
+    (lc-dialog-load "surrender" "offer")
 
     (dialog-opts-reset)
-    (dialog-opts-push (format "+1 crew, +%@" c)
+    (dialog-opts-push (format (lc-dialog-get "surrender" "opt-crew") c)
                       (lambda
                           (coins-add c)
                         (let ((g (chrs (opponent)))
@@ -32,10 +31,10 @@
                                          'neutral
                                          '((race . 1)))
                                 (adventure-log-add 51 '())
-                                (dialog "One of the goblins joined your crew!")
+                                (lc-dialog-load "surrender" "add-crew")
                                 (run-util-script "pickup_cart.lisp"
                                                  8
-                                                 "While scanning the goblin fortress' computers, you find some fascinating images of the surface world. You record them on a cartridge..."))))
+                                                 (lc-dialog-get "surrender" "cart")))))
                         (exit 2)))
 
     (let ((cnt 0)
@@ -43,19 +42,19 @@
       (setq cnt tot)
       (when cnt
         (dialog-opts-push
-         (format "salvage rights: % blocks" cnt)
+         (format (lc-dialog-get "surrender" "opt-salvage") cnt)
          (lambda
            (let ((rtry (this)))
              (sel-input-opponent
               nil
-              (format "Take block: (%/%)" (- tot cnt) tot)
+              (format (lc-dialog-get "surrender" "take") (- tot cnt) tot)
               (lambda
                 (let ((took (car (room-load (opponent) $1 $2))))
                   (if (room-is-critical (opponent) $1 $2)
                       (progn
-                        (dialog "You shouldn't remove the island's only power source! We're accepting their surrender, not trying to sink them!")
+                        (lc-dialog-load "surrender" "salvage-failed")
                         (if (equal 1 (length (rooms (opponent))))
-                            (exit)
+                            (exit 2)
                             (setq on-dialog-closed rtry)))
                       (progn
                         (room-del (opponent) $1 $2)
@@ -63,33 +62,26 @@
                         (alloc-space took)
                         (sel-input
                          took
-                         (format "Place block: (%/%)" (- tot cnt) tot)
+                         (format (lc-dialog-get "surrender" "place") (- tot cnt) tot)
                          (lambda
                            (room-new (player) (list took $1 $2))
                            (sound "build0")
                            (setq cnt (- cnt 1))
                            (if (equal cnt 0)
                                (progn
-                                 (dialog (format "Accepted surrender, and acquired % blocks!" tot))
+                                 (dialog (format (lc-dialog-get "surrender" "done") tot))
                                  (adventure-log-add 62 '())
-                                 (setq on-dialog-closed exit))
+                                 (setq on-dialog-closed (curry exit 2)))
                                (rtry))))))))))))))
 
 
     (let ((rtry (this)))
-      (dialog-opts-push "(help me decide!)"
+      (dialog-opts-push (lc-dialog-get "surrender" "opt-help")
                         (lambda
-                            (dialog
-                             "<s:3>. . . . . <s:0> "
-                             "Your crew values the resources in the goblin ship at "
-                             (format "%@" (coins-victory))
-                             ". <B:0>Or you may end the fight and accept the terms of the "
-                             "goblins' surrender. <B:0>"
-                             "Goblins may offer you crewmembers, blocks, and/or money in their surrender options.")
-
+                          (lc-dialog-load-fmt "surrender" "help" (coins-victory))
                           (setq on-dialog-closed rtry))))
 
 
-    (dialog-opts-push "unacceptable!" (lambda nil))))
+    (dialog-opts-push (lc-dialog-get "surrender" "opt-refuse") (lambda nil))))
 
 (gc)

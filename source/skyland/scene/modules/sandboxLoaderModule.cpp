@@ -96,7 +96,7 @@ void SandboxLoaderModule::update_parameter(u8 line_num)
         int_text_len = utf8::len(boolean_field_str->c_str());
     }
 
-    for (u32 i = temp.length(); i < 28 - int_text_len - 2; ++i) {
+    for (u32 i = utf8::len(temp.c_str()); i < 28 - int_text_len - 2; ++i) {
         if (i % 2 == 0) {
             temp.push_back('.');
         } else {
@@ -235,13 +235,13 @@ ScenePtr<Scene> SandboxLoaderModule::update(Time delta)
 
     APP.player().update(delta);
 
-    if (APP.player().key_down(Key::action_1) or APP.player().tap_released()) {
+    if (APP.player().key_down(Key::action_1)) {
         PLATFORM.screen().fade(1.f, ColorConstant::rich_black, {}, true, true);
-        return scene_pool::alloc<FadeInScene>();
+        return make_scene<FadeInScene>();
     } else if (APP.player().key_down(Key::action_2)) {
         cancelled_ = true;
         PLATFORM.screen().fade(1.f, ColorConstant::rich_black, {}, true, true);
-        return scene_pool::alloc<TitleScreenScene>(3);
+        return make_scene<TitleScreenScene>(3);
     }
 
     if (unveil_) {

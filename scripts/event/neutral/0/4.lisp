@@ -3,7 +3,7 @@
 ;;;
 
 
-(dialog "You discover the wreckage of a goblin raid...")
+(lc-dialog-load "raid" "intro")
 
 
 (opponent-init 8 'neutral)
@@ -29,7 +29,7 @@
 
 (secret
  0 14
- "Goblins from the surface! Now they too inhabit the skies... nowhere is safe...")
+ (lc-dialog-get "raid" "secret"))
 
 
 (let ((wpn 'rocket-bomb)
@@ -50,9 +50,7 @@
 
 
   (defn on-converge [0]
-    (dialog
-     "The island seems thoroughly ransacked... but the pirates inexplicably "
-     "left behind a weapon. Haul it aboard?")
+    (lc-dialog-load "raid" "offer")
     (dialog-await-y/n)
     (setq on-converge nil))
 
@@ -61,15 +59,15 @@
     (alloc-space wpn)
     (room-del (opponent) (car pos) (cdr pos))
     (sel-input wpn
-               (format "Pick a slot (%x%)" (car (rinfo 'size wpn)) (cdr (rinfo 'size wpn)))
+               (format (lc-dialog-get "raid" "pick") (car (rinfo 'size wpn)) (cdr (rinfo 'size wpn)))
                (lambda
                  (room-new (player) (list wpn $1 $2))
                  (sound "build0")
                  (cond
                   ((equal wpn 'rocket-bomb)
-                   (dialog "Like a missile-silo, but starts fires! A useful addition!"))
+                   (lc-dialog-load "raid" "award1"))
                   ((equal wpn 'splitter)
-                   (dialog "Wow, a very powerful weapon! <B:0> You're lucky to have found this..."))
+                   (lc-dialog-load "raid" "award2"))
                   (true
                    (dialog "...")))
 
@@ -77,6 +75,6 @@
     (adventure-log-add 9 '()))
 
   (defn on-dialog-declined [0]
-    (dialog "Huh!? Who doesn't want free stuff? Suit yourself...")
+    (lc-dialog-load "raid" "decline")
     (adventure-log-add 8 '())
     (setq on-dialog-closed exit)))

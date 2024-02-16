@@ -1,7 +1,5 @@
 
-(dialog
- "<b:/scripts/misc/img/castaway.img.bin>"
- "You arrive at the delivery address...")
+(lc-dialog-load "market-quest" "dest-intro")
 
 
 
@@ -31,10 +29,7 @@
                    (cdr (car p))
                    "")
 
-                  (dialog
-                   "<c:Customer:16>Thank you! I wasn't sure it would arrive! Now I can use these machine parts to fix my engines! Here's "
-                   (string temp)
-                   "@ for your trouble!")
+                  (lc-dialog-load-fmt "market-quest" "thanks" temp)
 
                   (coins-add temp)
                   (adventure-log-add 22 (list temp))
@@ -42,4 +37,4 @@
                   (setq on-dialog-closed exit))
               (progn
                 (setq on-dialog-closed exit)
-                (dialog "Upon closer inspection, no one seems to be home! Good thing too, as it seems that you lost the parcel along the way!")))))))
+                (lc-dialog-load "market-quest" "failed")))))))

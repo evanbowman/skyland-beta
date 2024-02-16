@@ -40,6 +40,7 @@
 #include "skyland/rooms/core.hpp"
 #include "skyland/scene/modules/skylandForever.hpp"
 #include "skyland/skyland.hpp"
+#include <limits>
 
 
 
@@ -251,7 +252,7 @@ void MultiplayerSettingsScene::setup_co_op_game()
 
     APP.persistent_data().score_.set(0);
 
-    APP.set_coins(std::max(0, APP.coins() - 1000));
+    APP.set_coins(util::max(0, APP.coins() - 1000));
 
     APP.swap_player<CoOpTeam>();
 
@@ -454,7 +455,7 @@ ScenePtr<Scene> MultiplayerSettingsScene::update(Time delta)
 
     if (state_ == State::ready) {
         if (opponent_ready_) {
-            return scene_pool::alloc<FadeInScene>();
+            return make_scene<FadeInScene>();
         }
         return null_scene();
     }

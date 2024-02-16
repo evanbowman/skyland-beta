@@ -134,11 +134,11 @@ ScenePtr<Scene> CreateFileScene::update(Time delta)
             full_path_ += path_;
 
             if (get_extension(full_path_) == ".img") {
-                return scene_pool::alloc<PaintScene>(full_path_.c_str(), true);
+                return make_scene<PaintScene>(full_path_.c_str(), true);
             } else {
                 UserContext ctx;
 
-                return scene_pool::alloc<TextEditorModule>(
+                return make_scene<TextEditorModule>(
 
                     std::move(ctx),
                     full_path_.c_str(),

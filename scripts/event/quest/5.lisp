@@ -1,8 +1,5 @@
 
-(dialog
- "<b:/scripts/misc/img/wanderer_town.img.bin>"
- "While out on reconnaissance, your crew discovers an overcrowded transit hub, full of refugees departing the storm... <B:0> "
- "<b:/scripts/misc/img/wanderer.img.bin> In the local cantina, a mysterious traveller offers you a deal... <B:0> You change course to dock with the station...")
+(lc-dialog-load "wanderer-quest" "intro")
 
 
 (opponent-init 14 'neutral)
@@ -68,9 +65,10 @@
 (defn on-converge [0]
   (setq on-converge nil)
 
-  (dialog "<c:traveller:23> Hello! I was just talking to your crew! A few weeks ago, some wretched goblins ransacked my island. Outnumbered, I jumped in a transporter and ended up here. Can you help me get back home?")
+  (lc-dialog-load "wanderer-quest" "offer")
 
-  (dialog-await-binary-q "of course!" "I'm kind of busy…")
+  (dialog-await-binary-q (lc-dialog-get "wanderer-quest" "opt1")
+                         (lc-dialog-get "wanderer-quest" "opt2"))
 
   (defn on-dialog-accepted [0]
     (let ((sl (chr-slots (player))))
@@ -94,14 +92,14 @@
                 (push 'qids 5)
                 (adventure-log-add 52 '())
                 (push 'quests (cons "/scripts/event/quest_marker/traveller.lisp" m))
-                (dialog "<c:traveller:23> Great! I'll come aboard and travel to the destination with you! I've marked the location on your sky chart with an *...")
+                (lc-dialog-load "wanderer-quest" "accepted")
                 (defn on-dialog-closed [0]
-                  (dialog "The mysterious traveller joined your crew!")
+                  (lc-dialog-load "wanderer-quest" "join")
                   (setq on-dialog-closed exit)))
             (progn
-              (dialog "<c:traveller:23> Looking at your sky chart, doesn't seem like we can get there before the storm overtakes us. I'll join your crew anyway, better than waiting in line for a transporter here...")
+              (lc-dialog-load "wanderer-quest" "skip")
               (defn on-dialog-closed [0]
-                (dialog "The mysterious traveller joined your crew!")
+                (lc-dialog-load "wanderer-quest" "join")
                 (setq on-dialog-closed exit))))))))
 
   (defn on-dialog-declined [0]

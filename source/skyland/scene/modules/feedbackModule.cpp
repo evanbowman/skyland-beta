@@ -45,11 +45,10 @@ namespace skyland
 
 ScenePtr<Scene> FeedbackModule::update(Time delta)
 {
-    return scene_pool::alloc<ConfiguredURLQRViewerScene>(
-        "/scripts/config/feedback.lisp",
-        "",
-        "",
-        scene_pool::make_deferred_scene<TitleScreenScene>(3));
+    return make_scene<ConfiguredURLQRViewerScene>(
+        "/scripts/config/feedback.lisp", "", "", []() -> ScenePtr<Scene> {
+            return make_scene<TitleScreenScene>(3);
+        });
 }
 
 

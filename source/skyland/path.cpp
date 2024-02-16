@@ -35,6 +35,8 @@
 #include "path.hpp"
 #include "island.hpp"
 #include "skyland/scene/constructionScene.hpp"
+#include <algorithm>
+#include <limits>
 
 
 
@@ -52,10 +54,10 @@ struct PathVertexData
 
 
 
-std::optional<Path> find_path(Island* island,
-                              BasicCharacter* for_character,
-                              const RoomCoord& start,
-                              const RoomCoord& end)
+Optional<Path> find_path(Island* island,
+                         BasicCharacter* for_character,
+                         const RoomCoord& start,
+                         const RoomCoord& end)
 {
     BulkAllocator<2> vertex_memory_;
 

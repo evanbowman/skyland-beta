@@ -47,6 +47,8 @@
 #include "textEntryScene.hpp"
 #include "titleScreenScene.hpp"
 #include "version.hpp"
+#include <algorithm>
+#include <iterator>
 
 
 
@@ -114,19 +116,19 @@ const char* highscore_island_file = "/save/hs_isle.dat";
 
 
 
-std::optional<HighscoreIslandInfo> highscore_island_info_load()
+Optional<HighscoreIslandInfo> highscore_island_info_load()
 {
     HighscoreIslandInfo result;
 
     if (not flash_filesystem::file_exists(highscore_island_file)) {
-        return std::nullopt;
+        return nullopt();
     }
 
     Vector<char> data;
     flash_filesystem::read_file_data_binary(highscore_island_file, data);
 
     if (data.size() not_eq sizeof result) {
-        return std::nullopt;
+        return nullopt();
     }
 
     auto it = (u8*)&result;
@@ -181,6 +183,7 @@ void highscore_island_info_store()
 
                     auto mt = metaclass_index(rname.name());
                     HighscoreIslandInfo::BlockData bd;
+                    memset(&bd, 0, sizeof bd);
                     bd.type_ = mt + 1; // 0 used as null room
                     bd.set_xpos(rx.value_);
                     bd.set_ypos(ry.value_);
@@ -299,9 +302,9 @@ void HighscoresScene::enter(Scene& prev)
             highscore_island_info_store();
         }
 
-        for (auto& highscore : reversed(highscores.values_)) {
-            if (highscore.get() < (u32)score) {
-                highscore.set(score);
+        for (int i = Highscores::count - 1; i > -1; --i) {
+            if (highscores.values_[i].get() < (u32)score) {
+                highscores.values_[i].set(score);
                 changed = true;
                 break;
             }
@@ -494,11 +497,11 @@ static Vector<char> encode_highscore_data()
 ScenePtr<Scene> HighscoresScene::update(Time)
 {
     if (APP.player().key_pressed(Key::select)) {
-        return scene_pool::alloc<ConfiguredURLQRViewerScene>(
+        return make_scene<ConfiguredURLQRViewerScene>(
             "/scripts/config/leaderboard.lisp",
             "",
             SYSTR(highscores_scan_qr_leaderboard)->c_str(),
-            scene_pool::make_deferred_scene<HighscoresScene>());
+            make_deferred_scene<HighscoresScene>());
     }
 
     if (APP.player().key_pressed(Key::alt_1) and
@@ -517,11 +520,11 @@ ScenePtr<Scene> HighscoresScene::update(Time)
 
             make_format(*fmt_buf, "?d=%", temp->c_str());
 
-            return scene_pool::alloc<ConfiguredURLQRViewerScene>(
+            return make_scene<ConfiguredURLQRViewerScene>(
                 "/scripts/config/uploadscore.lisp",
                 fmt_buf->c_str(),
                 SYSTR(score_upload_prompt_3)->c_str(),
-                scene_pool::make_deferred_scene<HighscoresScene>(),
+                make_deferred_scene<HighscoresScene>(),
                 ColorConstant::rich_black);
         };
 
@@ -542,11 +545,10 @@ ScenePtr<Scene> HighscoresScene::update(Time)
                 return next();
             };
             auto prompt = SYSTR(score_upload_enter_token);
-            return scene_pool::alloc<TextEntryScene>(
-                prompt->c_str(), receive, 8, 8);
+            return make_scene<TextEntryScene>(prompt->c_str(), receive, 8, 8);
         };
 
-        return scene_pool::alloc<ConfiguredURLQRViewerScene>(
+        return make_scene<ConfiguredURLQRViewerScene>(
             "/scripts/config/login.lisp",
             "",
             SYSTR(score_upload_prompt_1)->c_str(),
@@ -565,14 +567,15 @@ ScenePtr<Scene> HighscoresScene::update(Time)
 
                 const auto pg = title_screen_page_;
 
-                auto next =
-                    scene_pool::make_deferred_scene<TitleScreenScene>(pg);
-                return scene_pool::alloc<AchievementNotificationScene>(
+                auto next = [pg]() -> ScenePtr<Scene> {
+                    return make_scene<TitleScreenScene>(pg);
+                };
+                return make_scene<AchievementNotificationScene>(
                     achievement, next, true);
             }
         }
 
-        return scene_pool::alloc<TitleScreenScene>(title_screen_page_);
+        return make_scene<TitleScreenScene>(title_screen_page_);
     }
     return null_scene();
 }

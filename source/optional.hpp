@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Copyright (C) 2023  Evan Bowman. Some rights reserved.
+// Copyright (C) 2024  Evan Bowman. Some rights reserved.
 //
 // This program is source-available; the source code is provided for educational
 // purposes. All copies of the software must be distributed along with this
@@ -32,29 +32,17 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 
-#include "mixer.hpp"
-#include "gba_platform_soundcontext.hpp"
+#pragma once
+
+#include <new>
+#include <optional>
+#include <utility>
 
 
-
-#ifdef __GBA__
-
+template <typename T> using Optional = std::optional<T>;
 
 
-extern "C" {
-__attribute__((section(".iwram"), long_call)) void
-memcpy32(void* dst, const void* src, uint wcount);
-void memcpy16(void* dst, const void* src, uint hwcount);
+inline auto nullopt()
+{
+    return std::nullopt;
 }
-
-
-
-SoundContext snd_ctx;
-
-
-
-// NOTE: I got rid of this version of the mixer.
-
-
-
-#endif

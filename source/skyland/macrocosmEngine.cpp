@@ -51,6 +51,7 @@ extern "C" {
 }
 #include "compression.hpp"
 #include "script/listBuilder.hpp"
+#include <array>
 
 
 
@@ -64,7 +65,7 @@ namespace raster
 
 
 
-std::optional<DynamicMemory<raster::DepthBuffer>> _db;
+Optional<DynamicMemory<raster::DepthBuffer>> _db;
 
 
 
@@ -175,20 +176,20 @@ int EngineImpl::food_consumption_factor()
 
 
 
-std::pair<Coins, Population> EngineImpl::colony_cost() const
+Pair<Coins, Population> EngineImpl::colony_cost() const
 {
     if (data_->other_sectors_.full()) {
         return {999999999, 9999};
     } else if (data_->other_sectors_.size() == 0) {
-        return {1500 + 3000 * data_->other_sectors_.size(), 100};
+        return {(Coins)(1500 + 3000 * data_->other_sectors_.size()), 100};
     } else if (data_->other_sectors_.size() < 3) {
-        return {1500 + 3000 * data_->other_sectors_.size(), 150};
+        return {(Coins)(1500 + 3000 * data_->other_sectors_.size()), 150};
     } else if (data_->other_sectors_.size() < 4) {
-        return {4000 + 3200 * data_->other_sectors_.size(), 200};
+        return {(Coins)(4000 + 3200 * data_->other_sectors_.size()), 200};
     } else if (data_->other_sectors_.size() < 6) {
-        return {6000 + 3600 * data_->other_sectors_.size(), 400};
+        return {(Coins)(6000 + 3600 * data_->other_sectors_.size()), 400};
     } else {
-        return {7000 + 4000 * data_->other_sectors_.size(), 600};
+        return {(Coins)(7000 + 4000 * data_->other_sectors_.size()), 600};
     }
 }
 
@@ -889,7 +890,7 @@ terrain::Categories terrain::categories(Type t)
 
 
 
-std::pair<terrain::Cost, terrain::Type> terrain::harvest(Type t)
+Pair<terrain::Cost, terrain::Type> terrain::harvest(Type t)
 {
     Cost cost;
     Type nt = terrain::Type::air;
@@ -1549,7 +1550,7 @@ terrain::Improvements terrain::improvements(Type t)
 
 
 
-std::pair<int, int> terrain::icons(Type t)
+Pair<int, int> terrain::icons(Type t)
 {
     switch (t) {
     case terrain::Type::reserved_1:
@@ -1808,11 +1809,11 @@ static void update_lava_slanted(terrain::Sector& s,
 static void lava_spread(terrain::Sector& s, Vec3<u8> target, terrain::Type tp)
 {
     auto prev_tp = s.get_block(target).type();
-    if (UNLIKELY(prev_tp not_eq tp and
-                 (prev_tp == terrain::Type::lava_slant_a or
-                  prev_tp == terrain::Type::lava_slant_b or
-                  prev_tp == terrain::Type::lava_slant_c or
-                  prev_tp == terrain::Type::lava_slant_d))) {
+    if (prev_tp not_eq tp and (prev_tp == terrain::Type::lava_slant_a or
+                               prev_tp == terrain::Type::lava_slant_b or
+                               prev_tp == terrain::Type::lava_slant_c or
+                               prev_tp == terrain::Type::lava_slant_d))
+        [[unlikely]] {
         switch (tp) {
         case terrain::Type::lava_slant_a:
             s.set_block(target, terrain::Type::lava_spread_laterally_a);
@@ -1924,11 +1925,11 @@ static void water_spread(terrain::Sector& s, Vec3<u8> target, terrain::Type tp)
     if (terrain::categories(tp) & terrain::Categories::fluid_lava) {
         s.set_block(target, terrain::Type::basalt);
     }
-    if (UNLIKELY(prev_tp not_eq tp and
-                 (prev_tp == terrain::Type::water_slant_a or
-                  prev_tp == terrain::Type::water_slant_b or
-                  prev_tp == terrain::Type::water_slant_c or
-                  prev_tp == terrain::Type::water_slant_d))) {
+    if (prev_tp not_eq tp and (prev_tp == terrain::Type::water_slant_a or
+                               prev_tp == terrain::Type::water_slant_b or
+                               prev_tp == terrain::Type::water_slant_c or
+                               prev_tp == terrain::Type::water_slant_d))
+        [[unlikely]] {
         switch (tp) {
         case terrain::Type::water_slant_a:
             s.set_block(target, terrain::Type::water_spread_laterally_a);
@@ -2114,11 +2115,11 @@ bool harvest_block(macro::EngineImpl& state, terrain::Sector& s, Vec3<u8> c)
     prod -= cost.productivity_;
     s.set_productivity(prod);
     auto& p = state.data_->p();
-    p.stone_.set(std::min(int(p.stone_.get() + cost.stone_), 99));
-    p.lumber_.set(std::min(int(p.lumber_.get() + cost.lumber_), 99));
-    p.crystal_.set(std::min(int(p.crystal_.get() + cost.crystal_), 99));
-    p.clay_.set(std::min(int(p.clay_.get() + cost.clay_), 99));
-    p.water_.set(std::min(int(p.water_.get() + cost.water_), 99));
+    p.stone_.set(util::min(int(p.stone_.get() + cost.stone_), 99));
+    p.lumber_.set(util::min(int(p.lumber_.get() + cost.lumber_), 99));
+    p.crystal_.set(util::min(int(p.crystal_.get() + cost.crystal_), 99));
+    p.clay_.set(util::min(int(p.clay_.get() + cost.clay_), 99));
+    p.water_.set(util::min(int(p.water_.get() + cost.water_), 99));
     p.water_.set(p.water_.get() + cost.water_);
     s.set_food(s.food() + cost.food_);
     if (s.food() > s.food_storage()) {

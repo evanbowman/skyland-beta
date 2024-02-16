@@ -65,9 +65,9 @@ ScenePtr<Scene> SandboxResetScene::update(Time delta)
 
     if (APP.player().key_down(Key::action_1)) {
         if (selection_) {
-            return scene_pool::alloc<SandboxLoaderModule>();
+            return make_scene<SandboxLoaderModule>();
         } else {
-            return scene_pool::alloc<TitleScreenScene>(3);
+            return make_scene<TitleScreenScene>(3);
         }
     }
 

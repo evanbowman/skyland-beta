@@ -49,7 +49,7 @@
 
 void print_char(utf8::Codepoint c,
                 const OverlayCoord& coord,
-                const std::optional<FontColors>& colors = {});
+                const Optional<FontColors>& colors = {});
 
 
 
@@ -85,13 +85,9 @@ ScenePtr<Scene> ComposeSynthScene::update(Time delta)
         return scene;
     }
 
-    if (player().key_down(Key::action_2)) {
-        return scene_pool::alloc<ReadyScene>();
+    if (not PLATFORM.speaker().psg() or player().key_down(Key::action_2)) {
+        return make_scene<ReadyScene>();
     }
-
-    auto test_key = [&](Key k) {
-        return player().test_key(k, milliseconds(500), milliseconds(100));
-    };
 
     if (player().key_down(Key::action_1)) {
         if (cursor_.x == 0) {
@@ -102,15 +98,18 @@ ScenePtr<Scene> ComposeSynthScene::update(Time delta)
     if (note_demo_timer_ > 0) {
         note_demo_timer_ -= delta;
         if (note_demo_timer_ < 0) {
-            PLATFORM.speaker().stop_chiptune_note(channel_);
+            PLATFORM.speaker().psg()->stop_note(channel_);
         }
     }
 
+    using ChannelSettings = Platform::Speaker::PSG::ChannelSettings;
+    using Channel = Platform::Speaker::PSG::Channel;
+    using Note = Platform::Speaker::PSG::Note;
+    using Effect = Platform::Speaker::PSG::Effect;
 
-    PLATFORM.speaker().apply_chiptune_effect(
-        Platform::Speaker::Channel::square_1,
-        effect_flags_.load((int)Platform::Speaker::Channel::square_1,
-                           demo_index_),
+    PLATFORM.speaker().psg()->apply_effect(
+        Channel::square_1,
+        effect_flags_.load((int)Channel::square_1, demo_index_),
         effect_parameters_[demo_index_].value_,
         delta);
 
@@ -133,7 +132,7 @@ ScenePtr<Scene> ComposeSynthScene::update(Time delta)
 
         if (test_key(Key::down)) {
 
-            if (channel_ == Platform::Speaker::Channel::noise) {
+            if (channel_ == Channel::noise) {
                 if (notes_[cursor_.y].noise_freq_.frequency_select_ == 0 and
                     last_freq_) {
                     notes_[cursor_.y].noise_freq_.frequency_select_ =
@@ -150,18 +149,15 @@ ScenePtr<Scene> ComposeSynthScene::update(Time delta)
                         notes_[cursor_.y].noise_freq_.frequency_select_;
                 }
             } else {
-                if (notes_[cursor_.y].regular_.note_ ==
-                    Platform::Speaker::Note::invalid) {
+                if (notes_[cursor_.y].regular_.note_ == Note::invalid) {
                     notes_[cursor_.y].regular_.octave_ = last_octave_;
                 }
 
-                notes_[cursor_.y].regular_.note_ = (Platform::Speaker::Note)(
-                    ((u8)notes_[cursor_.y].regular_.note_ + 1));
+                notes_[cursor_.y].regular_.note_ =
+                    (Note)(((u8)notes_[cursor_.y].regular_.note_ + 1));
 
-                if ((u8)notes_[cursor_.y].regular_.note_ >
-                    (int)(Platform::Speaker::Note::B)) {
-                    notes_[cursor_.y].regular_.note_ =
-                        Platform::Speaker::Note::invalid;
+                if ((u8)notes_[cursor_.y].regular_.note_ > (int)(Note::B)) {
+                    notes_[cursor_.y].regular_.note_ = Note::invalid;
                 }
             }
 
@@ -172,7 +168,7 @@ ScenePtr<Scene> ComposeSynthScene::update(Time delta)
 
         if (test_key(Key::up)) {
 
-            if (channel_ == Platform::Speaker::Channel::noise) {
+            if (channel_ == Channel::noise) {
                 if (notes_[cursor_.y].noise_freq_.frequency_select_ > 0) {
                     notes_[cursor_.y].noise_freq_.frequency_select_--;
                     last_freq_ =
@@ -186,19 +182,15 @@ ScenePtr<Scene> ComposeSynthScene::update(Time delta)
                     }
                 }
             } else {
-                if (notes_[cursor_.y].regular_.note_ ==
-                    Platform::Speaker::Note::invalid) {
+                if (notes_[cursor_.y].regular_.note_ == Note::invalid) {
                     notes_[cursor_.y].regular_.octave_ = last_octave_;
                 }
 
-                if (notes_[cursor_.y].regular_.note_ ==
-                    Platform::Speaker::Note::invalid) {
-                    notes_[cursor_.y].regular_.note_ =
-                        Platform::Speaker::Note::B;
+                if (notes_[cursor_.y].regular_.note_ == Note::invalid) {
+                    notes_[cursor_.y].regular_.note_ = Note::B;
                 } else {
                     notes_[cursor_.y].regular_.note_ =
-                        (Platform::Speaker::Note)(
-                            ((u8)notes_[cursor_.y].regular_.note_ - 1));
+                        (Note)(((u8)notes_[cursor_.y].regular_.note_ - 1));
                 }
             }
 
@@ -209,11 +201,10 @@ ScenePtr<Scene> ComposeSynthScene::update(Time delta)
 
     } else if (cursor_.x == 1) {
 
-        if (notes_[cursor_.y].regular_.note_ not_eq
-            Platform::Speaker::Note::invalid) {
+        if (notes_[cursor_.y].regular_.note_ not_eq Note::invalid) {
             if (test_key(Key::down)) {
 
-                if (channel_ == Platform::Speaker::Channel::noise) {
+                if (channel_ == Channel::noise) {
                     notes_[cursor_.y].noise_freq_.wide_mode_ =
                         not notes_[cursor_.y].noise_freq_.wide_mode_;
 
@@ -233,7 +224,7 @@ ScenePtr<Scene> ComposeSynthScene::update(Time delta)
 
             if (test_key(Key::up)) {
 
-                if (channel_ == Platform::Speaker::Channel::noise) {
+                if (channel_ == Channel::noise) {
                     notes_[cursor_.y].noise_freq_.wide_mode_ =
                         not notes_[cursor_.y].noise_freq_.wide_mode_;
                 } else {
@@ -253,22 +244,22 @@ ScenePtr<Scene> ComposeSynthScene::update(Time delta)
         }
 
     } else if (cursor_.x == 2) {
-        auto set_effect_param_default = [&](Platform::Speaker::Effect e) {
+        auto set_effect_param_default = [&](Effect e) {
             auto& param = effect_parameters_[cursor_.y];
             switch (e) {
-            case Platform::Speaker::Effect::none:
+            case Effect::none:
                 param.value_ = 0;
                 break;
 
-            case Platform::Speaker::Effect::vibrato:
+            case Effect::vibrato:
                 param.value_ = 0x1e;
                 break;
 
-            case Platform::Speaker::Effect::duty:
+            case Effect::duty:
                 param.value_ = 0;
                 break;
 
-            case Platform::Speaker::Effect::envelope:
+            case Effect::envelope:
                 param.value_ = 0xf7;
                 break;
             }
@@ -276,32 +267,30 @@ ScenePtr<Scene> ComposeSynthScene::update(Time delta)
         if (test_key(Key::down)) {
             auto effect = effect_flags_.load((int)channel_, cursor_.y);
             if ((int)effect < 3) {
-                effect = (Platform::Speaker::Effect)((int)effect + 1);
+                effect = (Effect)((int)effect + 1);
             } else {
-                effect = (Platform::Speaker::Effect)0;
+                effect = (Effect)0;
             }
             effect_flags_.store((int)channel_, cursor_.y, effect);
             set_effect_param_default(effect);
             repaint();
 
-            if (notes_[cursor_.y].regular_.note_ not_eq
-                Platform::Speaker::Note::invalid) {
+            if (notes_[cursor_.y].regular_.note_ not_eq Note::invalid) {
                 demo_note();
             }
 
         } else if (test_key(Key::up)) {
             auto effect = effect_flags_.load((int)channel_, cursor_.y);
             if ((int)effect > 0) {
-                effect = (Platform::Speaker::Effect)((int)effect - 1);
+                effect = (Effect)((int)effect - 1);
             } else {
-                effect = (Platform::Speaker::Effect)3;
+                effect = (Effect)3;
             }
             effect_flags_.store((int)channel_, cursor_.y, effect);
             set_effect_param_default(effect);
             repaint();
 
-            if (notes_[cursor_.y].regular_.note_ not_eq
-                Platform::Speaker::Note::invalid) {
+            if (notes_[cursor_.y].regular_.note_ not_eq Note::invalid) {
                 demo_note();
             }
         }
@@ -310,16 +299,16 @@ ScenePtr<Scene> ComposeSynthScene::update(Time delta)
         int upper_limit = [&] {
             auto e = effect_flags_.load((int)channel_, cursor_.y);
             switch (e) {
-            case Platform::Speaker::Effect::none:
+            case Effect::none:
                 return 0;
 
-            case Platform::Speaker::Effect::duty:
+            case Effect::duty:
                 return 3;
 
-            case Platform::Speaker::Effect::vibrato:
+            case Effect::vibrato:
                 return 15;
 
-            case Platform::Speaker::Effect::envelope:
+            case Effect::envelope:
                 return 15;
 
             default:
@@ -340,8 +329,7 @@ ScenePtr<Scene> ComposeSynthScene::update(Time delta)
             effect_parameters_[cursor_.y] = p;
             repaint();
 
-            if (notes_[cursor_.y].regular_.note_ not_eq
-                Platform::Speaker::Note::invalid) {
+            if (notes_[cursor_.y].regular_.note_ not_eq Note::invalid) {
                 demo_note();
             }
 
@@ -356,8 +344,7 @@ ScenePtr<Scene> ComposeSynthScene::update(Time delta)
             effect_parameters_[cursor_.y] = p;
             repaint();
 
-            if (notes_[cursor_.y].regular_.note_ not_eq
-                Platform::Speaker::Note::invalid) {
+            if (notes_[cursor_.y].regular_.note_ not_eq Note::invalid) {
                 demo_note();
             }
         }
@@ -366,16 +353,16 @@ ScenePtr<Scene> ComposeSynthScene::update(Time delta)
         int upper_limit = [&] {
             auto e = effect_flags_.load((int)channel_, cursor_.y);
             switch (e) {
-            case Platform::Speaker::Effect::none:
+            case Effect::none:
                 return 0;
 
-            case Platform::Speaker::Effect::duty:
+            case Effect::duty:
                 return 0;
 
-            case Platform::Speaker::Effect::vibrato:
+            case Effect::vibrato:
                 return 15;
 
-            case Platform::Speaker::Effect::envelope:
+            case Effect::envelope:
                 return 15;
 
             default:
@@ -396,8 +383,7 @@ ScenePtr<Scene> ComposeSynthScene::update(Time delta)
             effect_parameters_[cursor_.y] = p;
             repaint();
 
-            if (notes_[cursor_.y].regular_.note_ not_eq
-                Platform::Speaker::Note::invalid) {
+            if (notes_[cursor_.y].regular_.note_ not_eq Note::invalid) {
                 demo_note();
             }
 
@@ -412,122 +398,120 @@ ScenePtr<Scene> ComposeSynthScene::update(Time delta)
             effect_parameters_[cursor_.y] = p;
             repaint();
 
-            if (notes_[cursor_.y].regular_.note_ not_eq
-                Platform::Speaker::Note::invalid) {
+            if (notes_[cursor_.y].regular_.note_ not_eq Note::invalid) {
                 demo_note();
             }
         }
     } else {
 
-        auto generic_update_settings =
-            [&](Platform::Speaker::ChannelSettings& s) {
-                if (test_key(Key::down)) {
-                    switch (cursor_.y) {
-                    case 0:
-                        if (s.envelope_step_ == 7) {
-                            s.envelope_step_ = 0;
-                        } else {
-                            s.envelope_step_ += 1;
-                        }
-                        break;
-
-                    case 1:
-                        if (s.envelope_direction_) {
-                            s.envelope_direction_ = 0;
-                        } else {
-                            s.envelope_direction_ = 1;
-                        }
-                        break;
-
-                    case 2:
-                        if (s.duty_ == 3) {
-                            s.duty_ = 0;
-                        } else {
-                            s.duty_ += 1;
-                        }
-                        break;
-
-                    case 3:
-                        if (s.length_ == 63) {
-                            s.length_ = 0;
-                        } else {
-                            s.length_ += 1;
-                        }
-                        break;
-
-                    case 4:
-                        if (s.volume_ == 15) {
-                            s.volume_ = 0;
-                        } else {
-                            s.volume_ += 1;
-                        }
-                        break;
+        auto generic_update_settings = [&](ChannelSettings& s) {
+            if (test_key(Key::down)) {
+                switch (cursor_.y) {
+                case 0:
+                    if (s.envelope_step_ == 7) {
+                        s.envelope_step_ = 0;
+                    } else {
+                        s.envelope_step_ += 1;
                     }
+                    break;
 
-                    repaint();
-
-                } else if (test_key(Key::up)) {
-                    switch (cursor_.y) {
-                    case 0:
-                        if (s.envelope_step_ == 0) {
-                            s.envelope_step_ = 7;
-                        } else {
-                            s.envelope_step_ -= 1;
-                        }
-                        break;
-
-                    case 1:
-                        if (s.envelope_direction_) {
-                            s.envelope_direction_ = 0;
-                        } else {
-                            s.envelope_direction_ = 1;
-                        }
-                        break;
-
-                    case 2:
-                        if (s.duty_ == 0) {
-                            s.duty_ = 3;
-                        } else {
-                            s.duty_ -= 1;
-                        }
-                        break;
-
-                    case 3:
-                        if (s.length_ == 0) {
-                            s.length_ = 63;
-                        } else {
-                            s.length_ -= 1;
-                        }
-                        break;
-
-                    case 4:
-                        if (s.volume_ == 0) {
-                            s.volume_ = 15;
-                        } else {
-                            s.volume_ -= 1;
-                        }
-                        break;
+                case 1:
+                    if (s.envelope_direction_) {
+                        s.envelope_direction_ = 0;
+                    } else {
+                        s.envelope_direction_ = 1;
                     }
+                    break;
 
-                    repaint();
+                case 2:
+                    if (s.duty_ == 3) {
+                        s.duty_ = 0;
+                    } else {
+                        s.duty_ += 1;
+                    }
+                    break;
+
+                case 3:
+                    if (s.length_ == 63) {
+                        s.length_ = 0;
+                    } else {
+                        s.length_ += 1;
+                    }
+                    break;
+
+                case 4:
+                    if (s.volume_ == 15) {
+                        s.volume_ = 0;
+                    } else {
+                        s.volume_ += 1;
+                    }
+                    break;
                 }
-            };
+
+                repaint();
+
+            } else if (test_key(Key::up)) {
+                switch (cursor_.y) {
+                case 0:
+                    if (s.envelope_step_ == 0) {
+                        s.envelope_step_ = 7;
+                    } else {
+                        s.envelope_step_ -= 1;
+                    }
+                    break;
+
+                case 1:
+                    if (s.envelope_direction_) {
+                        s.envelope_direction_ = 0;
+                    } else {
+                        s.envelope_direction_ = 1;
+                    }
+                    break;
+
+                case 2:
+                    if (s.duty_ == 0) {
+                        s.duty_ = 3;
+                    } else {
+                        s.duty_ -= 1;
+                    }
+                    break;
+
+                case 3:
+                    if (s.length_ == 0) {
+                        s.length_ = 63;
+                    } else {
+                        s.length_ -= 1;
+                    }
+                    break;
+
+                case 4:
+                    if (s.volume_ == 0) {
+                        s.volume_ = 15;
+                    } else {
+                        s.volume_ -= 1;
+                    }
+                    break;
+                }
+
+                repaint();
+            }
+        };
 
         switch (channel_) {
-        case Platform::Speaker::Channel::square_1:
+        case Channel::square_1:
             generic_update_settings(square_1_settings_);
             break;
 
-        case Platform::Speaker::Channel::square_2:
+        case Channel::square_2:
             generic_update_settings(square_2_settings_);
             break;
 
-        case Platform::Speaker::Channel::noise:
+        case Channel::noise:
             generic_update_settings(noise_settings_);
             break;
 
         default:
-        case Platform::Speaker::Channel::wave:
+        case Channel::wave:
             // TODO...
             break;
         }
@@ -558,6 +542,10 @@ ScenePtr<Scene> ComposeSynthScene::update(Time delta)
 
 void ComposeSynthScene::demo_note()
 {
+    if (not PLATFORM.speaker().psg()) {
+        return;
+    }
+
     if (cursor_.x < 4) {
         demo_index_ = cursor_.y;
     } else {
@@ -566,11 +554,11 @@ void ComposeSynthScene::demo_note()
         demo_index_ = resume_y_;
     }
 
-    PLATFORM.speaker().init_chiptune_square_1(square_1_settings_);
-    PLATFORM.speaker().init_chiptune_square_2(square_2_settings_);
-    PLATFORM.speaker().init_chiptune_noise(noise_settings_);
+    PLATFORM.speaker().psg()->init_square_1(square_1_settings_);
+    PLATFORM.speaker().psg()->init_square_2(square_2_settings_);
+    PLATFORM.speaker().psg()->init_noise(noise_settings_);
 
-    PLATFORM.speaker().play_chiptune_note(channel_, notes_[demo_index_]);
+    PLATFORM.speaker().psg()->play_note(channel_, notes_[demo_index_]);
 
     note_demo_timer_ = seconds(3);
 }
@@ -579,6 +567,11 @@ void ComposeSynthScene::demo_note()
 
 void ComposeSynthScene::repaint()
 {
+    using Channel = Platform::Speaker::PSG::Channel;
+    using Note = Platform::Speaker::PSG::Note;
+    using Effect = Platform::Speaker::PSG::Effect;
+
+
     const auto st = calc_screen_tiles();
     int start_x = st.x / 2 - 12;
     int start_y = (st.y - 16) / 2;
@@ -588,24 +581,22 @@ void ComposeSynthScene::repaint()
         {ColorConstant::silver_white, ColorConstant::aerospace_orange}};
 
 
-    auto put_char = [&](char c,
-                        int x,
-                        int y,
-                        const std::optional<FontColors>& colors = {}) {
-        auto clr = colors;
+    auto put_char =
+        [&](char c, int x, int y, const Optional<FontColors>& colors = {}) {
+            auto clr = colors;
 
-        if (not colors) {
-            clr = Text::OptColors{
-                {ColorConstant::steel_blue, ColorConstant::silver_white}};
-        }
+            if (not colors) {
+                clr = Text::OptColors{
+                    {ColorConstant::steel_blue, ColorConstant::silver_white}};
+            }
 
-        print_char(c, {u8(start_x + x), u8(start_y + y)}, clr);
-    };
+            print_char(c, {u8(start_x + x), u8(start_y + y)}, clr);
+        };
 
     auto put_str = [&](const char* str,
                        int x,
                        int y,
-                       const std::optional<FontColors>& colors = {}) {
+                       const Optional<FontColors>& colors = {}) {
         auto clr = colors;
 
         if (not colors) {
@@ -638,46 +629,46 @@ void ComposeSynthScene::repaint()
 
         auto str = [&] {
             switch (note.regular_.note_) {
-            case Platform::Speaker::Note::C:
+            case Note::C:
                 return "C ";
 
-            case Platform::Speaker::Note::CIS:
+            case Note::CIS:
                 return "C#";
 
-            case Platform::Speaker::Note::D:
+            case Note::D:
                 return "D ";
 
-            case Platform::Speaker::Note::DIS:
+            case Note::DIS:
                 return "D#";
 
-            case Platform::Speaker::Note::E:
+            case Note::E:
                 return "E ";
 
-            case Platform::Speaker::Note::F:
+            case Note::F:
                 return "F ";
 
-            case Platform::Speaker::Note::FIS:
+            case Note::FIS:
                 return "F#";
 
-            case Platform::Speaker::Note::G:
+            case Note::G:
                 return "G ";
 
-            case Platform::Speaker::Note::GIS:
+            case Note::GIS:
                 return "G#";
 
-            case Platform::Speaker::Note::A:
+            case Note::A:
                 return "A ";
 
-            case Platform::Speaker::Note::AIS:
+            case Note::AIS:
                 return "A#";
 
-            case Platform::Speaker::Note::B:
+            case Note::B:
                 return "B ";
 
-            case Platform::Speaker::Note::invalid:
+            case Note::invalid:
                 return "--";
 
-            case Platform::Speaker::Note::count:
+            case Note::count:
                 return "XX";
             }
 
@@ -685,7 +676,7 @@ void ComposeSynthScene::repaint()
         }();
 
 
-        if (channel_ == Platform::Speaker::Channel::noise) {
+        if (channel_ == Channel::noise) {
             StringBuffer<2> sel;
             StringBuffer<1> wide;
             if (note.noise_freq_.wide_mode_) {
@@ -725,7 +716,7 @@ void ComposeSynthScene::repaint()
         } else {
             StringBuffer<4> oct;
 
-            if (note.regular_.note_ not_eq Platform::Speaker::Note::invalid) {
+            if (note.regular_.note_ not_eq Note::invalid) {
                 oct += stringify(note.regular_.octave_);
             } else {
                 oct = "-";
@@ -754,16 +745,16 @@ void ComposeSynthScene::repaint()
 
         auto effect_sym = [&] {
             switch (effect_flags_.load((int)channel_, y)) {
-            case Platform::Speaker::Effect::none:
+            case Effect::none:
                 return '-';
 
-            case Platform::Speaker::Effect::vibrato:
+            case Effect::vibrato:
                 return 'v';
 
-            case Platform::Speaker::Effect::duty:
+            case Effect::duty:
                 return 'w';
 
-            case Platform::Speaker::Effect::envelope:
+            case Effect::envelope:
                 return 'e';
 
             default:
@@ -817,9 +808,9 @@ void ComposeSynthScene::repaint()
 
     if (init_) {
         switch (channel_) {
-        case Platform::Speaker::Channel::square_1:
-        case Platform::Speaker::Channel::square_2:
-        case Platform::Speaker::Channel::noise:
+        case Channel::square_1:
+        case Channel::square_2:
+        case Channel::noise:
             put_str("envelope", 10, 1);
             put_str("envlp-dir", 10, 3);
             put_str("duty", 10, 5);
@@ -829,85 +820,89 @@ void ComposeSynthScene::repaint()
 
 
         default:
-        case Platform::Speaker::Channel::wave:
+        case Channel::wave:
             // TODO...
             break;
         }
     }
 
-    auto show_channel_settings = [&](Platform::Speaker::ChannelSettings& s) {
-        auto str_fill = [&](u8 val) {
-            StringBuffer<2> str;
-            if (val < 10) {
-                str += "0";
+    auto show_channel_settings =
+        [&](Platform::Speaker::PSG::ChannelSettings& s) {
+            auto str_fill = [&](u8 val) {
+                StringBuffer<2> str;
+                if (val < 10) {
+                    str += "0";
+                }
+                str += stringify(val);
+                return str;
+            };
+
+            if (cursor_.x == 5 and cursor_.y == 0) {
+                if (s.envelope_step_ == 0) {
+                    put_char('8', 20, 1, highlight);
+                } else {
+                    put_char(stringify(s.envelope_step_)[0], 20, 1, highlight);
+                }
+            } else {
+                if (s.envelope_step_ == 0) {
+                    put_char('8', 20, 1);
+                } else {
+                    put_char(stringify(s.envelope_step_)[0], 20, 1);
+                }
             }
-            str += stringify(val);
-            return str;
+
+            if (cursor_.x == 5 and cursor_.y == 1) {
+                put_char(stringify(s.envelope_direction_)[0], 20, 3, highlight);
+            } else {
+                put_char(stringify(s.envelope_direction_)[0], 20, 3);
+            }
+
+            put_str(
+                [&] {
+                    switch (s.duty_) {
+                    case 0:
+                        return "12";
+                    case 1:
+                        return "25";
+                    case 2:
+                        return "50";
+                    case 3:
+                        return "75";
+                    }
+                    return "ERR";
+                }(),
+                19,
+                5,
+                (cursor_.x == 5 and cursor_.y == 2) ? highlight : nullopt());
+
+            put_str(str_fill(s.length_).c_str(),
+                    19,
+                    7,
+                    (cursor_.x == 5 and cursor_.y == 3) ? highlight
+                                                        : nullopt());
+
+            put_str(str_fill(s.volume_).c_str(),
+                    19,
+                    9,
+                    (cursor_.x == 5 and cursor_.y == 4) ? highlight
+                                                        : nullopt());
         };
 
-        if (cursor_.x == 5 and cursor_.y == 0) {
-            if (s.envelope_step_ == 0) {
-                put_char('8', 20, 1, highlight);
-            } else {
-                put_char(stringify(s.envelope_step_)[0], 20, 1, highlight);
-            }
-        } else {
-            if (s.envelope_step_ == 0) {
-                put_char('8', 20, 1);
-            } else {
-                put_char(stringify(s.envelope_step_)[0], 20, 1);
-            }
-        }
-
-        if (cursor_.x == 5 and cursor_.y == 1) {
-            put_char(stringify(s.envelope_direction_)[0], 20, 3, highlight);
-        } else {
-            put_char(stringify(s.envelope_direction_)[0], 20, 3);
-        }
-
-        put_str(
-            [&] {
-                switch (s.duty_) {
-                case 0:
-                    return "12";
-                case 1:
-                    return "25";
-                case 2:
-                    return "50";
-                case 3:
-                    return "75";
-                }
-            }(),
-            19,
-            5,
-            (cursor_.x == 5 and cursor_.y == 2) ? highlight : std::nullopt);
-
-        put_str(str_fill(s.length_).c_str(),
-                19,
-                7,
-                (cursor_.x == 5 and cursor_.y == 3) ? highlight : std::nullopt);
-
-        put_str(str_fill(s.volume_).c_str(),
-                19,
-                9,
-                (cursor_.x == 5 and cursor_.y == 4) ? highlight : std::nullopt);
-    };
-
     switch (channel_) {
-    case Platform::Speaker::Channel::square_1:
+    case Channel::square_1:
         show_channel_settings(square_1_settings_);
         break;
 
-    case Platform::Speaker::Channel::square_2:
+    case Channel::square_2:
         show_channel_settings(square_2_settings_);
         break;
 
-    case Platform::Speaker::Channel::noise:
+    case Channel::noise:
         show_channel_settings(noise_settings_);
         break;
 
     default:
-    case Platform::Speaker::Channel::wave:
+    case Channel::wave:
         // TODO...
         break;
     }
@@ -923,7 +918,7 @@ void ComposeSynthScene::enter(Scene& prev)
 
     repaint();
 
-    auto island = synth_near_ ? &player_island() : opponent_island();
+    auto island = get_island(synth_near_);
 
     for (auto& room : island->rooms()) {
         // Stop any currently-playing chiptunes.
@@ -946,20 +941,20 @@ void ComposeSynthScene::enter(Scene& prev)
     heading_->assign(
         [&]() {
             switch (channel_) {
-            case Platform::Speaker::Channel::square_1:
+            case Platform::Speaker::PSG::Channel::square_1:
                 return "tone_1";
 
-            case Platform::Speaker::Channel::wave:
+            case Platform::Speaker::PSG::Channel::wave:
                 return "wave";
 
-            case Platform::Speaker::Channel::noise:
+            case Platform::Speaker::PSG::Channel::noise:
                 return "noise";
 
-            case Platform::Speaker::Channel::square_2:
+            case Platform::Speaker::PSG::Channel::square_2:
                 return "tone_2";
 
             default:
-            case Platform::Speaker::Channel::invalid:
+            case Platform::Speaker::PSG::Channel::invalid:
                 return "!?";
             }
         }(),
@@ -976,7 +971,9 @@ void ComposeSynthScene::exit(Scene& next)
 {
     PLATFORM.fill_overlay(0);
 
-    PLATFORM.speaker().stop_chiptune_note(channel_);
+    if (PLATFORM.speaker().psg()) {
+        PLATFORM.speaker().psg()->stop_note(channel_);
+    }
 
     PLATFORM.screen().schedule_fade(0.f);
 

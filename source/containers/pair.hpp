@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Copyright (C) 2023  Evan Bowman. Some rights reserved.
+// Copyright (C) 2024  Evan Bowman. Some rights reserved.
 //
 // This program is source-available; the source code is provided for educational
 // purposes. All copies of the software must be distributed along with this
@@ -35,40 +35,25 @@
 #pragma once
 
 
-#include "memory/buffer.hpp"
 
-
-using VolumeScaleLUT = std::array<s8, 256>;
-
-
-using AudioSample = s8;
-
-
-struct ActiveSoundInfo
+template <typename T1, typename T2> struct Pair
 {
-    s32 position_;
-    const s32 length_;
-    const AudioSample* data_;
-    s32 priority_;
-    const char* name_;
+    T1 first;
+    T2 second;
 };
 
 
-struct SoundContext
+
+template <typename T1, typename T2> Pair<T1, T2> make_pair(T1 t1, T2 t2)
 {
-    // Only three sounds will play at a time... hey, sound mixing's expensive!
-    Buffer<ActiveSoundInfo, 3> active_sounds;
-
-    const AudioSample* music_track = nullptr;
-    const char* music_track_name;
-    s32 music_track_length = 0;
-    s32 music_track_pos = 0;
-};
+    return {t1, t2};
+}
 
 
-struct AudioBuffer
+
+template <typename T1, typename T2, typename T3> struct Trio
 {
-    static const int sample_count = 280 / 4;
-
-    int samples_[sample_count];
+    T1 first;
+    T2 second;
+    T3 third;
 };

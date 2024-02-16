@@ -87,7 +87,7 @@ void GenericPool::print_diagnostics()
         pool = pool->next();
     }
 
-    PLATFORM.logger().log(Severity::info, output->c_str());
+    log_write(Severity::info, output->c_str());
     PLATFORM.remote_console().printline(output->c_str(), "sc> ");
 }
 #endif

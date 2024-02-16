@@ -163,11 +163,11 @@ public:
                 packet.y_ = r->position().y;
                 network::transmit(packet);
             }
-            return scene_pool::alloc<ReadyScene>();
+            return make_scene<ReadyScene>();
         }
 
         if (APP.player().key_down(Key::action_2)) {
-            return scene_pool::alloc<ReadyScene>();
+            return make_scene<ReadyScene>();
         }
 
         return null_scene();
@@ -175,9 +175,9 @@ public:
 
 
 private:
-    std::optional<Text> text_;
-    std::optional<Text> yes_text_;
-    std::optional<Text> no_text_;
+    Optional<Text> text_;
+    Optional<Text> yes_text_;
+    Optional<Text> no_text_;
     RoomCoord coord_;
 };
 
@@ -189,7 +189,7 @@ ScenePtr<Scene> Explosive::select_impl(const RoomCoord& cursor)
         return null_scene();
     }
 
-    return scene_pool::alloc<IgniteExplosiveScene>(position());
+    return make_scene<IgniteExplosiveScene>(position());
 }
 
 
@@ -271,13 +271,12 @@ void Explosive::ignite(int range, Health damage, bool spread_fire)
 
         if (room->cast<TNT>()) {
             auto d = clamp((int)damage, 0, (int)tnt_damage);
-            room->apply_damage(std::min(room->health() + 1, d));
+            room->apply_damage(util::min(room->health() + 1, d));
         } else {
             room->apply_damage(damage);
         }
 
-        if (spread_fire and not((*room->metaclass())->properties() &
-                                RoomProperties::fireproof)) {
+        if (spread_fire and not room->has_prop(RoomProperties::fireproof)) {
             if (room->health() > 0) {
                 room->parent()->fire_create(room->position());
             }
@@ -480,7 +479,7 @@ void Cesium::update(Time delta)
         u8 y = position().y;
 
         if (auto room = parent()->get_room({x, u8(y - 1)})) {
-            if ((*room->metaclass())->properties() & RoomProperties::fluid) {
+            if (room->has_prop(RoomProperties::fluid)) {
                 ignition_ = true;
                 apply_damage(1);
                 return;
@@ -488,7 +487,7 @@ void Cesium::update(Time delta)
         }
 
         if (auto room = parent()->get_room({x, u8(y + 1)})) {
-            if ((*room->metaclass())->properties() & RoomProperties::fluid) {
+            if (room->has_prop(RoomProperties::fluid)) {
                 ignition_ = true;
                 apply_damage(1);
                 return;
@@ -496,7 +495,7 @@ void Cesium::update(Time delta)
         }
 
         if (auto room = parent()->get_room({u8(x + 1), y})) {
-            if ((*room->metaclass())->properties() & RoomProperties::fluid) {
+            if (room->has_prop(RoomProperties::fluid)) {
                 ignition_ = true;
                 apply_damage(1);
                 return;
@@ -504,7 +503,7 @@ void Cesium::update(Time delta)
         }
 
         if (auto room = parent()->get_room({u8(x - 1), y})) {
-            if ((*room->metaclass())->properties() & RoomProperties::fluid) {
+            if (room->has_prop(RoomProperties::fluid)) {
                 ignition_ = true;
                 apply_damage(1);
                 return;

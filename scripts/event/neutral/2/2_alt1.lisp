@@ -2,7 +2,7 @@
 ;;;
 
 
-(dialog "An abandoned warship appears! No crew seems to be aboard; ship appears to be completely dormant...")
+(lc-dialog-load "auto-ship" "intro")
 
 
 (opponent-init 11 'neutral)
@@ -57,26 +57,26 @@
 
 (defn on-converge [0]
   (setq on-converge nil)
-  (dialog
-   "The ship's weapons seem to be more-or-less intact! Attempt to remove one?")
+  (lc-dialog-load "auto-ship" "offer")
 
   (dialog-opts-reset)
   (apply dialog-opts-push (take 'beam-gun))
   (apply dialog-opts-push (take 'incinerator))
   (apply dialog-opts-push (take 'splitter))
-  (dialog-opts-push "nope" (lambda
-                             (unbind 'take)
-                             (exit))))
+  (dialog-opts-push (lc-dialog-get "auto-ship" "decline")
+                    (lambda
+                      (unbind 'take)
+                      (exit))))
 
 
 (defn take [1]
   (let ((wpn $0))
     (list
-     (string "take " (rinfo 'name wpn) "…")
+     (string (lc-dialog-get "auto-ship" "take") (rinfo 'name wpn) "…")
      (lambda
        (sel-input
         wpn
-        "Place where?"
+        (lc-dialog-get "auto-ship" "place")
         (lambda
           (room-new (player) `(,wpn ,$1 ,$2))
 
@@ -87,15 +87,13 @@
 
 
           (sound "build0")
-          (dialog "The fortress remains quiet.<B:0> Now to remove the next one...")
+          (lc-dialog-load "auto-ship" "still-quiet")
 
           (let ((opts '(beam-gun incinerator splitter))
                 (wake
                  (lambda
                    (opponent-mode 'hostile)
-                   (dialog "<c:abandoned ship ai:25> .<d:500>.<d:500>.<d:500>.<d:500> "
-                           "PROCESSING INTERRUPT... <B:0> BLOCK DETECTED MISSING! "
-                           "<B:0> HOSTILE THREAT DETECTED")
+                   (lc-dialog-load "auto-ship" "wakeup")
                    (defn on-dialog-closed [0]
                      (map (curry room-new (opponent))
                           '((forcefield* 0 10)
@@ -113,11 +111,14 @@
                             (forcefield* 9 9)
                             (forcefield 9 7)
                             (forcefield 10 7)))
-                     (dialog "The vessel begins charging its weapons...")
+                     (lc-dialog-load "auto-ship" "weapon-charge")
                      (setq on-dialog-closed nil)))))
 
             (setq opts (filter (lambda (not (equal $0 wpn))) opts))
             (dialog-opts-reset)
-            (dialog-opts-push (string "take " (rinfo 'name (get opts 0)) "…") wake)
-            (dialog-opts-push (string "take " (rinfo 'name (get opts 1)) "…") wake)
+            (dialog-opts-push (string (lc-dialog-get "auto-ship" "take")
+                                      (rinfo 'name (get opts 0)) "…") wake)
+
+            (dialog-opts-push (string (lc-dialog-get "auto-ship" "take")
+                                      (rinfo 'name (get opts 1)) "…") wake)
             (unbind 'take))))))))

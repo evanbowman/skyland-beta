@@ -38,6 +38,7 @@
 #include "skyland/scene_pool.hpp"
 #include "skyland/skyland.hpp"
 #include "titleScreenScene.hpp"
+#include <limits>
 
 
 
@@ -215,7 +216,7 @@ ScenePtr<Scene> SelectChallengeScene::update(Time delta)
     if (exit_) {
         page_ = 0;
         cursor_ = 0;
-        return scene_pool::alloc<TitleScreenScene>(2);
+        return make_scene<TitleScreenScene>(2);
     }
 
     timer_ += delta;
@@ -231,9 +232,8 @@ ScenePtr<Scene> SelectChallengeScene::update(Time delta)
 
                 PLATFORM.screen().fade(1.f);
 
-                auto next =
-                    scene_pool::make_deferred_scene<SelectChallengeScene>();
-                return scene_pool::alloc<AchievementNotificationScene>(
+                auto next = make_deferred_scene<SelectChallengeScene>();
+                return make_scene<AchievementNotificationScene>(
                     achievement, next, true);
             }
         }
@@ -321,7 +321,7 @@ ScenePtr<Scene> SelectChallengeScene::update(Time delta)
                 PLATFORM.speaker().play_music(APP.environment().music(), 0);
             }
 
-            return scene_pool::alloc<FadeInScene>();
+            return make_scene<FadeInScene>();
 
         } else {
             const auto amount =

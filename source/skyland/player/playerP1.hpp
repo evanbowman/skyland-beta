@@ -114,11 +114,7 @@ private:
 
     DynamicMemory<ChrAIState> chr_ai_;
 
-
     Time last_key_ = 0;
-
-    Time last_touch_held_time_ = 0;
-
     Time key_held_timers_[static_cast<int>(Key::count)];
 };
 

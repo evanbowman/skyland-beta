@@ -3,7 +3,7 @@
 ;;;
 
 
-(dialog "A precarious-looking fort drifts out of the clouds...")
+(lc-dialog-load "dev-cameo" "intro")
 
 
 (opponent-init 7 'neutral)
@@ -39,13 +39,13 @@
 (setq on-converge
       (lambda
         (let ((info (cart-info 0)))
-          (dialog "Looks like no one's home! The sign on the door reads: 'Away on holiday --Evan'. Amongst the clutter, you find a data cartridge!")
+          (lc-dialog-load "dev-cameo" "meet")
           (setq on-dialog-closed
                 (lambda
                   (sound "click_digital_1")
                   (cart-add 0)
-                  (dialog "You pick up a cart labled "
+                  (dialog (lc-dialog-get "dev-cameo" "pickup1")
                           (get info 0)
-                          "! (cartridge 1)")
+                          (lc-dialog-get "dev-cameo" "pickup2"))
                   (setq on-dialog-closed nil)
                   (exit))))))

@@ -63,13 +63,14 @@ Value get(LinearGenerator& gen);
 
 template <Value N> Value choice(LinearGenerator& gen)
 {
+    static_assert(N not_eq 0);
     return get(gen) % N;
 }
 
 
 inline Value choice(Value n, LinearGenerator& gen)
 {
-    return get(gen) % n;
+    return n ? (get(gen) % n) : 0;
 }
 
 

@@ -86,12 +86,12 @@ public:
     ScenePtr<Scene> select() override
     {
         PLATFORM.speaker().play_sound("drone_beep", 1);
-        std::optional<RoomCoord> initial_pos;
+        Optional<RoomCoord> initial_pos;
         if (target_near_ == (is_player_island(destination()))) {
             initial_pos = target_;
         }
 
-        return scene_pool::alloc<WeaponSetTargetScene>(
+        return make_scene<WeaponSetTargetScene>(
             position(), is_player_island(destination()), initial_pos);
     }
 

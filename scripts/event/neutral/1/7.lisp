@@ -3,7 +3,7 @@
 ;;;
 
 
-(dialog "An island inhabited by an old engineer signals you. He says he's designed a new type of hull and may be able to upgrade your castle...")
+(lc-dialog-load "engineer" "intro")
 
 
 (opponent-init 7 'neutral)
@@ -40,14 +40,12 @@
     (let ((cost (* (length r) 160)))
       (if (length r)
           (progn
-            (dialog "<c:engineer:15>Hello there! I've designed a special type of hull resistant to missiles. I'll replace all of your old hull blocks with stacked-hull, for a price of "
-                    (string cost)
-                    "@, you interested?")
+            (lc-dialog-load-fmt "engineer" "offer" cost)
             (dialog-await-y/n)
             (defn on-dialog-accepted [0]
               (if (< (coins) cost)
                   (progn
-                    (dialog "<c:engineer:15>Sorry! you don't have enough resources, and I can't afford to upgrade your castle." (string (coins) " " cost))
+                    (dialog (lc-dialog-get "engineer" "low-funds") (string (coins) " " cost))
                     (exit))
                 (progn
                   (coins-add (* -1 cost))
@@ -57,14 +55,14 @@
                      (room-mut (player) (get $0 1) (get $0 2) 'stacked-hull))
                    r)
                   (adventure-log-add 37 '())
-                  (dialog "<c:engineer:15> All finished! Your new hull blocks will take 75% less damage from missiles!")
+                  (lc-dialog-load "engineer" "success")
                   (exit)))))
         (progn
-          (dialog "<c:engineer:15>Hello there! I've designed a special type of hull resistant to missiles. I could have upgraded your hull, but you don't have any! But I'm sure we'll meet again someday!")
+          (lc-dialog-load "engineer" "fail")
           (exit))
         (setq on-converge nil)))))
 
 
 (defn on-dialog-declined [0]
-  (dialog "<c:engineer:15>That's ok, I understand! Personally, I feel very safe from missiles with all the stacked-hull that I've built up...")
+  (lc-dialog-load "engineer" "decline")
   (exit))

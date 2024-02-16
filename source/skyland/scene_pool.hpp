@@ -76,7 +76,12 @@ inline void deleter(Scene* scene)
 template <typename T, typename... Args> ScenePtr<T> alloc(Args&&... args)
 {
     static_assert(sizeof(T) <= max_scene_size);
+#if defined(__GBA__) or defined(__ALIGN_CHECK__)
+    // NOTE: flycheck clang in emacs raises warnings about this for whatever
+    // reason. Supress warnings, but still use this code during actual
+    // compilation.
     static_assert(alignof(T) <= pool_->alignment());
+#endif
 
     if (pool_ == nullptr) {
         return {nullptr, deleter};
@@ -93,18 +98,25 @@ template <typename T, typename... Args> ScenePtr<T> alloc(Args&&... args)
 
 
 
-template <typename S, typename... Args>
-DeferredScene make_deferred_scene(Args&&... args)
+template <typename S> DeferredScene make_deferred_scene()
 {
-    return [args = std::make_tuple(std::forward<Args>(args)...)] {
-        return std::apply([](auto&&... args) { return alloc<S>(args...); },
-                          std::move(args));
-    };
+    return [] { return alloc<S>(); };
 }
 
 
 
 } // namespace scene_pool
+
+
+
+template <typename T, typename... Args> ScenePtr<T> make_scene(Args&&... args)
+{
+    return scene_pool::alloc<T>(std::forward<Args>(args)...);
+}
+
+
+
+using scene_pool::make_deferred_scene;
 
 
 

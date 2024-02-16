@@ -81,7 +81,7 @@ static void apply_gamespeed(Time& delta)
 
     case GameSpeed::rewind:
         // NOTE: we shouldn't even be in this scene if we're rewinding.
-        Platform::fatal("gamespeed set to rewind in incompatible scene.");
+        LOGIC_ERROR();
         break;
 
     case GameSpeed::count:
@@ -232,7 +232,7 @@ ScenePtr<Scene> ActiveWorldScene::on_player_island_destroyed()
         APP.persistent_data().lives_ > 0) {
         --APP.persistent_data().lives_;
 
-        return scene_pool::alloc<EasyModeRewindScene>();
+        return make_scene<EasyModeRewindScene>();
     }
 
     state_bit_store(StateBit::easy_mode_rewind_declined, false);
@@ -251,7 +251,7 @@ ScenePtr<Scene> ActiveWorldScene::on_player_island_destroyed()
     }
 
     APP.effects().clear();
-    return scene_pool::alloc<PlayerIslandDestroyedScene>(&APP.player_island());
+    return make_scene<PlayerIslandDestroyedScene>(&APP.player_island());
 }
 
 
@@ -270,7 +270,7 @@ ScenePtr<Scene> ActiveWorldScene::try_surrender()
         if (APP.world_graph().nodes_[APP.current_world_location()].type_ not_eq
             WorldGraph::Node::Type::corrupted) {
 
-            return scene_pool::alloc<SurrenderWaitScene>();
+            return make_scene<SurrenderWaitScene>();
         }
     }
 
@@ -304,8 +304,8 @@ ScenePtr<Scene> ActiveWorldScene::update(Time delta)
 
         bool near = (*APP.input_setup_info())->cons().car()->integer().value_;
 
-        auto next = scene_pool::alloc<SelInputScene>((*APP.input_setup_info())->cons().cdr(),
-                                                     near);
+        auto next = make_scene<SelInputScene>(
+            (*APP.input_setup_info())->cons().cdr(), near);
 
         APP.input_setup_info().reset();
 
@@ -342,7 +342,7 @@ ScenePtr<Scene> ActiveWorldScene::update(Time delta)
             cursor_loc.x = 0;
 
             APP.effects().clear();
-            return scene_pool::alloc<PlayerIslandDestroyedScene>(
+            return make_scene<PlayerIslandDestroyedScene>(
                 APP.opponent_island());
         }
     }
@@ -448,7 +448,7 @@ ScenePtr<Scene> WorldScene::make_dialog()
     if (APP.dialog_buffer()) {
         auto buffer = std::move(*APP.dialog_buffer());
         APP.dialog_buffer().reset();
-        return scene_pool::alloc<BoxedDialogSceneWS>(std::move(buffer));
+        return make_scene<BoxedDialogSceneWS>(std::move(buffer));
     }
     return null_scene();
 }
@@ -519,240 +519,55 @@ void WorldScene::multiplayer_vs_timeout_step(Time delta)
 
 
 
-ScenePtr<Scene> WorldScene::update(Time delta)
+ScenePtr<Scene> update_multiplayer_prep_timer(Time delta)
 {
     auto& g = globals();
-
-    TIMEPOINT(t1);
-
-
-    if (not PLATFORM.network_peer().is_connected()) {
-        // We scale game updates based on frame delta. But if the game starts to
-        // lag a lot, the logic can start to get screwed up, so at some point,
-        // the player will in fact start to notice the lag.
-        delta = std::min(delta, seconds(1) / 18);
-    }
-
-
-    Time world_delta = delta;
-
-    if (not PLATFORM.network_peer().is_connected()) {
-        // NOTE: we can't clamp the clock delta in multiplayer modes of course!
-
-        // The game uses clock deltas for update logic throughout the code, but
-        // huge deltas mess up the collision checking, so in certain cases, it's
-        // better to just clamp the delta time and allow some lag.
-        //
-        // i.e.: lag the game if it lags slower than 30fps.
-        world_delta = clamp(world_delta, seconds(0), seconds(1) / 30);
-    }
-
-    apply_gamespeed(world_delta);
-
-    APP.delta_fp() = world_delta;
-
-    APP.update_parallax(world_delta);
-
-
-    APP.stat_timer().count_up(delta);
-    APP.level_timer().count_up(world_delta);
-    APP.time_stream().update(world_delta);
-
-
     auto& mt_prep_timer = g.multiplayer_prep_timer_;
-
     auto& mt_prep_seconds = g.multiplayer_prep_seconds_;
 
+    mt_prep_timer += delta;
+    if (mt_prep_timer > seconds(1)) {
+        mt_prep_timer -= seconds(1);
+        mt_prep_seconds--;
 
-    TIMEPOINT(t2);
-
-
-    if (PLATFORM.network_peer().is_connected()) {
-        if (mt_prep_seconds) {
-            if (APP.game_speed() not_eq GameSpeed::stopped and
-                not disable_ui_) {
-
-                mt_prep_timer += delta;
-                if (mt_prep_timer > seconds(1)) {
-                    mt_prep_timer -= seconds(1);
-                    mt_prep_seconds--;
-
-                    if (mt_prep_seconds == 0 and
-                        APP.game_mode() not_eq App::GameMode::co_op) {
-                        return scene_pool::alloc<MultiplayerReadyScene>();
-                    }
-
-                    StringBuffer<30> msg = "get ready! 0";
-                    msg += stringify(mt_prep_seconds / 60);
-                    msg += ":";
-                    const auto rem = mt_prep_seconds % 60;
-                    if (rem < 10) {
-                        msg += "0";
-                    }
-                    msg += stringify(rem);
-
-                    const u8 margin = centered_text_margins(msg.length());
-
-
-                    g.multiplayer_prep_text_.emplace(msg.c_str(),
-                                                     OverlayCoord{margin, 4});
-                }
-            }
-        } else {
-            g.multiplayer_prep_text_.reset();
-            if (APP.game_mode() == App::GameMode::multiplayer) {
-                multiplayer_vs_timeout_step(delta);
-            }
+        if (mt_prep_seconds == 0 and
+            APP.game_mode() not_eq App::GameMode::co_op) {
+            return make_scene<MultiplayerReadyScene>();
         }
-    } else {
-        g.multiplayer_prep_text_.reset();
+
+        StringBuffer<30> msg = "get ready! 0";
+        msg += stringify(mt_prep_seconds / 60);
+        msg += ":";
+        const auto rem = mt_prep_seconds % 60;
+        if (rem < 10) {
+            msg += "0";
+        }
+        msg += stringify(rem);
+
+        const u8 margin = centered_text_margins(msg.length());
+
+
+        g.multiplayer_prep_text_.emplace(msg.c_str(), OverlayCoord{margin, 4});
     }
 
-
-    auto tapped_topright_corner = [&] {
-        if (auto pos = APP.player().tap_released()) {
-            auto sz = PLATFORM.screen().size();
-            if (pos->x > sz.x - 36 and pos->y < 36) {
-                return true;
-            }
-        }
-        return false;
-    };
-
-    auto ret = null_scene();
+    return null_scene();
+}
 
 
-    if (APP.game_mode() == App::GameMode::multiplayer) {
-        // Pauses unsupported in vs mode...
-    } else if (not noreturn_ and
-               (APP.player().key_up(Key::alt_1) or tapped_topright_corner())) {
-        if (APP.game_speed() not_eq GameSpeed::stopped) {
 
-            bool can_pause = true;
-
-            if (PLATFORM.network_peer().is_connected()) {
-                if (not g.multiplayer_pauses_remaining_) {
-                    can_pause = false;
-                    PLATFORM.speaker().play_sound("beep_error", 3);
-                    set_gamespeed(GameSpeed::normal);
-                    auto future_scene = []() {
-                        return scene_pool::alloc<ReadyScene>();
-                    };
-                    auto str = SYSTR(error_no_more_pauses);
-                    ret = scene_pool::alloc<NotificationScene>(str->c_str(),
-                                                               future_scene);
-                } else {
-                    g.multiplayer_pause_owner_ = true;
-                    g.multiplayer_pauses_remaining_--;
-                }
-            }
-
-            if (can_pause) {
-                APP.pause_count()++;
-                set_gamespeed(GameSpeed::stopped);
-
-                if (PLATFORM.network_peer().is_connected()) {
-                    network::packet::Paused pkt;
-                    pkt.status_ = true;
-                    network::transmit(pkt);
-                }
-            }
-
-        } else {
-
-            bool can_unpause = true;
-
-            if (PLATFORM.network_peer().is_connected()) {
-                if (not g.multiplayer_pause_owner_) {
-                    can_unpause = false;
-                    PLATFORM.speaker().play_sound("beep_error", 3);
-                } else {
-                    g.multiplayer_pause_owner_ = false;
-                }
-            }
-
-            if (can_unpause) {
-                if (PLATFORM.network_peer().is_connected()) {
-                    network::packet::Paused pkt;
-                    pkt.status_ = false;
-                    network::transmit(pkt);
-                }
-
-                set_gamespeed(GameSpeed::normal);
-            }
-        }
-        APP.player().touch_consume();
-    } else if (not noreturn_ and APP.player().key_pressed(Key::alt_1) and
-               not PLATFORM.network_peer().is_connected()) {
-        set_gamespeed_keyheld_timer_ += delta;
-        if (set_gamespeed_keyheld_timer_ > milliseconds(300)) {
-            return scene_pool::alloc<SetGamespeedScene>();
-        }
-    } else {
-        set_gamespeed_keyheld_timer_ = 0;
-    }
-
-    TIMEPOINT(t3);
-
-    if (APP.opponent_island()) {
-
-        const bool show_opponent_interior =
-            (APP.player_island().has_radar() and
-             not static_cast<Opponent&>(APP.opponent_island()->owner())
-                     .is_friendly()) or
-            APP.opponent_island()->is_boarded() or
-            (APP.player_island().interior_visible() and
-             APP.game_mode() == App::GameMode::sandbox);
-
-        if (not APP.opponent_island()->interior_visible() and
-            show_opponent_interior) {
-
-            show_island_interior(APP.opponent_island());
-
-        } else if (APP.opponent_island()->interior_visible() and
-                   not show_opponent_interior) {
-
-            show_island_exterior(APP.opponent_island());
-        }
-
-        // Hey, I threw this code together in a panic for a game jam, I know
-        // this is illegible. Drift opponent island toward the player, until
-        // a certain distance. If the player extends the terrain on his own
-        // island, drift the opponent island away to maintain the ideal
-        // distance between the two.
-        if ((APP.opponent_island()->get_drift() < 0.0_fixed and
-             APP.opponent_island()->get_position().x.as_integer() <=
-                 (int)APP.player_island().terrain().size() * 16 + 48) or
-            (APP.opponent_island()->get_drift() > 0.0_fixed and
-             APP.opponent_island()->get_position().x.as_integer() >
-                 (int)APP.player_island().terrain().size() * 16 + 48)) {
-
-            APP.opponent_island()->set_position(
-                {Fixnum((Float)APP.player_island().terrain().size() * 16 + 48),
-                 Fixnum(APP.opponent_island()->get_position().y)});
-            APP.opponent_island()->set_drift(0.0_fixed);
-
-            APP.on_timeout(milliseconds(500),
-                           []() { invoke_hook("on-converge"); });
-        }
-
-        if (APP.opponent_island()->get_drift() == 0.0_fixed) {
-            if (APP.opponent_island()->get_position().x.as_integer() <
-                (int)APP.player_island().terrain().size() * 16 + 48) {
-                APP.opponent_island()->set_drift(0.00003_fixed);
-            }
-        }
-    }
+void WorldScene::update_camera(Time delta)
+{
+    auto& g = globals();
 
     if (camera_update_check_key()) {
         camera_update_timer_ = milliseconds(500);
     }
 
     if (APP.camera()->is_shaking() or camera_update_timer_ > 0 or
-        APP.player().touch_current() or APP.camera()->always_update()) {
+        APP.camera()->always_update()) {
 
         camera_update_timer_ -= delta;
-        camera_update_timer_ = std::max((int)camera_update_timer_, 0);
+        camera_update_timer_ = util::max((int)camera_update_timer_, 0);
 
         // You may be wondering, why are we setting a timer to determine whether
         // to update the camera? Because we're using a floating point value
@@ -772,40 +587,12 @@ ScenePtr<Scene> WorldScene::update(Time delta)
             APP.camera()->update(APP.player_island(), cursor_loc, delta, true);
         }
     }
-
-    if (APP.player().key_down(Key::action_4)) {
-        PLATFORM.system_call("swap-screens", nullptr);
-    }
-
-    if (not noreturn_ and APP.dialog_buffer()) {
-        return make_dialog();
-    }
+}
 
 
-    TIMEPOINT(t4);
 
-    APP.player_island().update(world_delta);
-
-    TIMEPOINT(t5);
-
-    if (APP.opponent_island()) {
-        APP.opponent_island()->update(world_delta);
-    }
-
-    TIMEPOINT(t6);
-
-    update_entities(world_delta, APP.effects());
-
-    update_entities(world_delta, APP.birds());
-
-    TIMEPOINT(t7);
-
-    for (auto& bird : APP.birds()) {
-        PLATFORM.screen().draw(bird->sprite());
-    }
-    birds_drawn_ = true;
-
-
+void WorldScene::update_hud(Time delta)
+{
     if (APP.game_mode() == App::GameMode::co_op) {
         if (APP.game_speed() not_eq GameSpeed::stopped) {
             hide_multiplayer_pauses_remaining();
@@ -916,9 +703,12 @@ ScenePtr<Scene> WorldScene::update(Time delta)
             }
         }
     }
+}
 
-    TIMEPOINT(t8);
 
+
+void WorldScene::collision_check()
+{
     if (APP.opponent_island()) {
         for (auto& projectile : APP.player_island().projectiles()) {
             APP.opponent_island()->test_collision(*projectile);
@@ -936,6 +726,235 @@ ScenePtr<Scene> WorldScene::update(Time delta)
             APP.opponent_island()->test_collision(*projectile);
         }
     }
+}
+
+
+
+ScenePtr<Scene> WorldScene::update(Time delta)
+{
+    auto& g = globals();
+
+    TIMEPOINT(t1);
+
+
+    if (not PLATFORM.network_peer().is_connected()) {
+        // We scale game updates based on frame delta. But if the game starts to
+        // lag a lot, the logic can start to get screwed up, so at some point,
+        // the player will in fact start to notice the lag.
+        delta = util::min(delta, seconds(1) / 18);
+    }
+
+
+    Time world_delta = delta;
+
+    if (not PLATFORM.network_peer().is_connected()) {
+        // NOTE: we can't clamp the clock delta in multiplayer modes of course!
+
+        // The game uses clock deltas for update logic throughout the code, but
+        // huge deltas mess up the collision checking, so in certain cases, it's
+        // better to just clamp the delta time and allow some lag.
+        //
+        // i.e.: lag the game if it lags slower than 30fps.
+        world_delta = clamp(world_delta, seconds(0), seconds(1) / 30);
+    }
+
+    apply_gamespeed(world_delta);
+
+    APP.delta_fp() = world_delta;
+
+    APP.update_parallax(world_delta);
+
+
+    APP.stat_timer().count_up(delta);
+    APP.level_timer().count_up(world_delta);
+    APP.time_stream().update(world_delta);
+
+
+    auto& mt_prep_seconds = g.multiplayer_prep_seconds_;
+
+
+    TIMEPOINT(t2);
+
+
+    if (PLATFORM.network_peer().is_connected()) {
+        if (mt_prep_seconds) {
+            if (APP.game_speed() not_eq GameSpeed::stopped and
+                not disable_ui_) {
+
+                if (auto scn = update_multiplayer_prep_timer(delta)) {
+                    return scn;
+                }
+            }
+        } else {
+            g.multiplayer_prep_text_.reset();
+            if (APP.game_mode() == App::GameMode::multiplayer) {
+                multiplayer_vs_timeout_step(delta);
+            }
+        }
+    } else {
+        g.multiplayer_prep_text_.reset();
+    }
+
+
+    auto ret = null_scene();
+
+
+    if (APP.game_mode() == App::GameMode::multiplayer) {
+        // Pauses unsupported in vs mode...
+    } else if (not noreturn_ and (APP.player().key_up(Key::alt_1))) {
+
+        if (APP.game_speed() not_eq GameSpeed::stopped) {
+
+            bool can_pause = true;
+
+            if (PLATFORM.network_peer().is_connected()) {
+                if (not g.multiplayer_pauses_remaining_) {
+                    can_pause = false;
+                    PLATFORM.speaker().play_sound("beep_error", 3);
+                    set_gamespeed(GameSpeed::normal);
+                    auto future_scene = []() {
+                        return make_scene<ReadyScene>();
+                    };
+                    auto str = SYSTR(error_no_more_pauses);
+                    ret = make_scene<NotificationScene>(str->c_str(),
+                                                        future_scene);
+                } else {
+                    g.multiplayer_pause_owner_ = true;
+                    g.multiplayer_pauses_remaining_--;
+                }
+            }
+
+            if (can_pause) {
+                APP.pause_count()++;
+                set_gamespeed(GameSpeed::stopped);
+
+                if (PLATFORM.network_peer().is_connected()) {
+                    network::packet::Paused pkt;
+                    pkt.status_ = true;
+                    network::transmit(pkt);
+                }
+            }
+
+        } else {
+
+            bool can_unpause = true;
+
+            if (PLATFORM.network_peer().is_connected()) {
+                if (not g.multiplayer_pause_owner_) {
+                    can_unpause = false;
+                    PLATFORM.speaker().play_sound("beep_error", 3);
+                } else {
+                    g.multiplayer_pause_owner_ = false;
+                }
+            }
+
+            if (can_unpause) {
+                if (PLATFORM.network_peer().is_connected()) {
+                    network::packet::Paused pkt;
+                    pkt.status_ = false;
+                    network::transmit(pkt);
+                }
+
+                set_gamespeed(GameSpeed::normal);
+            }
+        }
+    } else if (not noreturn_ and APP.player().key_pressed(Key::alt_1) and
+               not PLATFORM.network_peer().is_connected()) {
+        set_gamespeed_keyheld_timer_ += delta;
+        if (set_gamespeed_keyheld_timer_ > milliseconds(300)) {
+            return make_scene<SetGamespeedScene>();
+        }
+    } else {
+        set_gamespeed_keyheld_timer_ = 0;
+    }
+
+    TIMEPOINT(t3);
+
+    if (APP.opponent_island()) {
+
+        const bool show_opponent_interior =
+            (APP.player_island().has_radar() and
+             not static_cast<Opponent&>(APP.opponent_island()->owner())
+                     .is_friendly()) or
+            APP.opponent_island()->is_boarded() or
+            (APP.player_island().interior_visible() and
+             APP.game_mode() == App::GameMode::sandbox);
+
+        if (not APP.opponent_island()->interior_visible() and
+            show_opponent_interior) {
+
+            show_island_interior(APP.opponent_island());
+
+        } else if (APP.opponent_island()->interior_visible() and
+                   not show_opponent_interior) {
+
+            show_island_exterior(APP.opponent_island());
+        }
+
+        // Hey, I threw this code together in a panic for a game jam, I know
+        // this is illegible. Drift opponent island toward the player, until
+        // a certain distance. If the player extends the terrain on his own
+        // island, drift the opponent island away to maintain the ideal
+        // distance between the two.
+        if ((APP.opponent_island()->get_drift() < 0.0_fixed and
+             APP.opponent_island()->get_position().x.as_integer() <=
+                 (int)APP.player_island().terrain().size() * 16 + 48) or
+            (APP.opponent_island()->get_drift() > 0.0_fixed and
+             APP.opponent_island()->get_position().x.as_integer() >
+                 (int)APP.player_island().terrain().size() * 16 + 48)) {
+
+            APP.opponent_island()->set_position(
+                {Fixnum((Float)APP.player_island().terrain().size() * 16 + 48),
+                 Fixnum(APP.opponent_island()->get_position().y)});
+            APP.opponent_island()->set_drift(0.0_fixed);
+
+            APP.on_timeout(milliseconds(500),
+                           []() { invoke_hook("on-converge"); });
+        }
+
+        if (APP.opponent_island()->get_drift() == 0.0_fixed) {
+            if (APP.opponent_island()->get_position().x.as_integer() <
+                (int)APP.player_island().terrain().size() * 16 + 48) {
+                APP.opponent_island()->set_drift(0.00003_fixed);
+            }
+        }
+    }
+
+    update_camera(delta);
+
+    if (not noreturn_ and APP.dialog_buffer()) {
+        return make_dialog();
+    }
+
+
+    TIMEPOINT(t4);
+
+    APP.player_island().update(world_delta);
+
+    TIMEPOINT(t5);
+
+    if (APP.opponent_island()) {
+        APP.opponent_island()->update(world_delta);
+    }
+
+    TIMEPOINT(t6);
+
+    update_entities(world_delta, APP.effects());
+
+    update_entities(world_delta, APP.birds());
+
+    TIMEPOINT(t7);
+
+    for (auto& bird : APP.birds()) {
+        PLATFORM.screen().draw(bird->sprite());
+    }
+    birds_drawn_ = true;
+
+    update_hud(delta);
+
+    TIMEPOINT(t8);
+
+    collision_check();
 
     TIMEPOINT(t9);
 

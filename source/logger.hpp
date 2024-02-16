@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Copyright (C) 2023  Evan Bowman. Some rights reserved.
+// Copyright (C) 2024  Evan Bowman. Some rights reserved.
 //
 // This program is source-available; the source code is provided for educational
 // purposes. All copies of the software must be distributed along with this
@@ -31,70 +31,59 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-
 #pragma once
 
-
-#include "projectile.hpp"
-#include "skyland/skyland.hpp"
-
+#include "containers/vector.hpp"
+#include "severity.hpp"
 
 
-namespace skyland
+
+void log_write(Severity s, const char* msg);
+
+
+
+void log_flush();
+
+
+
+void log_clear();
+
+
+
+Vector<char>* log_data();
+
+
+
+inline void debug(const char* msg)
 {
-
-
-
-class Curveshot : public Projectile
+    log_write(Severity::debug, msg);
+}
+inline void info(const char* msg)
 {
-public:
-    Curveshot(const Vec2<Float>& position,
-              const Vec2<Float>& target,
-              Island* source,
-              Island* dest,
-              const RoomCoord& origin_tile,
-              const RoomCoord& dest_tile);
+    log_write(Severity::info, msg);
+}
+inline void warning(const char* msg)
+{
+    log_write(Severity::warning, msg);
+}
+inline void error(const char* msg)
+{
+    log_write(Severity::error, msg);
+}
 
-
-    void set_step_vector(const Vec2<Float>& val)
-    {
-        step_vector_ = val;
-    }
-
-
-    void set_timer(Time value)
-    {
-        timer_ = value;
-    }
-
-
-    void update(Time delta) override;
-
-
-    void rewind(Time delta) override;
-
-
-    void on_collision(Room&) override;
-
-
-    void on_collision(Entity&) override;
-
-
-private:
-    void destroy(bool explosion);
-
-    Float y_base_ = 0;
-    Time timer_ = 0;
-    Time time_to_target_ = 0;
-    Vec2<Float> step_vector_;
-    Island* source_;
-
-    // We need to keep track of the origin tile coords, to prevent cannons from
-    // shooting themselves.
-    RoomCoord origin_tile_;
-    u8 height_;
-};
-
-
-
-} // namespace skyland
+template <u32 size> void debug(const StringBuffer<size>& buffer)
+{
+    log_write(Severity::debug, buffer.c_str());
+}
+template <u32 size> void info(const StringBuffer<size>& buffer)
+{
+    log_write(Severity::debug, buffer.c_str());
+}
+template <u32 size> void warning(const StringBuffer<size>& buffer)
+{
+    log_write(Severity::debug, buffer.c_str());
+}
+template <u32 size> void error(const StringBuffer<size>& buffer)
+{
+    log_write(Severity::debug, buffer.c_str());
+}

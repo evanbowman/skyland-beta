@@ -101,13 +101,17 @@ ScenePtr<Scene> FadeOutScene::update(Time delta)
         }
 
 
-        PLATFORM.speaker().stop_chiptune_note(
-            Platform::Speaker::Channel::square_1);
-        PLATFORM.speaker().stop_chiptune_note(
-            Platform::Speaker::Channel::square_2);
-        PLATFORM.speaker().stop_chiptune_note(
-            Platform::Speaker::Channel::noise);
-        PLATFORM.speaker().stop_chiptune_note(Platform::Speaker::Channel::wave);
+        if (PLATFORM.speaker().psg()) {
+            PLATFORM.speaker().psg()->stop_note(
+                Platform::Speaker::PSG::Channel::square_1);
+            PLATFORM.speaker().psg()->stop_note(
+                Platform::Speaker::PSG::Channel::square_2);
+            PLATFORM.speaker().psg()->stop_note(
+                Platform::Speaker::PSG::Channel::noise);
+            PLATFORM.speaker().psg()->stop_note(
+                Platform::Speaker::PSG::Channel::wave);
+        }
+
 
         APP.player_island().set_hidden(false);
         if (APP.opponent_island()) {
@@ -118,26 +122,26 @@ ScenePtr<Scene> FadeOutScene::update(Time delta)
         PLATFORM.screen().fade(1.f);
 
         if (state_bit_load(StateBit::regression)) {
-            return scene_pool::alloc<RegressionModule>();
+            return make_scene<RegressionModule>();
         }
 
         switch (APP.game_mode()) {
         case App::GameMode::tutorial:
-            return scene_pool::alloc<SelectTutorialScene>();
+            return make_scene<SelectTutorialScene>();
 
         case App::GameMode::adventure:
-            return scene_pool::alloc<ZoneImageScene>();
+            return make_scene<ZoneImageScene>();
 
         case App::GameMode::challenge:
-            return scene_pool::alloc<SelectChallengeScene>();
+            return make_scene<SelectChallengeScene>();
 
         case App::GameMode::skyland_forever:
         case App::GameMode::sandbox:
-            return scene_pool::alloc<TitleScreenScene>(3);
+            return make_scene<TitleScreenScene>(3);
 
         case App::GameMode::co_op:
         case App::GameMode::multiplayer:
-            return scene_pool::alloc<TitleScreenScene>();
+            return make_scene<TitleScreenScene>();
 
         case App::GameMode::macro:
             Platform::fatal("logic error: macro fadeout!?");

@@ -62,8 +62,7 @@ void Ice::update(Time delta)
     };
 
     if (auto room = parent()->get_room({x, u8(y - 1)})) {
-        if (((*room->metaclass())->properties() &
-             RoomProperties::generates_heat) or
+        if (room->has_prop(RoomProperties::generates_heat) or
             parent()->fire_present({x, u8(y - 1)})) {
             melt();
             return;
@@ -71,8 +70,7 @@ void Ice::update(Time delta)
     }
 
     if (auto room = parent()->get_room({x, u8(y + 1)})) {
-        if (((*room->metaclass())->properties() &
-             RoomProperties::generates_heat) or
+        if (room->has_prop(RoomProperties::generates_heat) or
             parent()->fire_present({x, u8(y + 1)})) {
             melt();
             return;
@@ -80,8 +78,7 @@ void Ice::update(Time delta)
     }
 
     if (auto room = parent()->get_room({u8(x + 1), y})) {
-        if (((*room->metaclass())->properties() &
-             RoomProperties::generates_heat) or
+        if (room->has_prop(RoomProperties::generates_heat) or
             parent()->fire_present({u8(x + 1), y})) {
             melt();
             return;
@@ -89,8 +86,7 @@ void Ice::update(Time delta)
     }
 
     if (auto room = parent()->get_room({u8(x - 1), y})) {
-        if (((*room->metaclass())->properties() &
-             RoomProperties::generates_heat) or
+        if (room->has_prop(RoomProperties::generates_heat) or
             parent()->fire_present({u8(x - 1), y})) {
             melt();
             return;

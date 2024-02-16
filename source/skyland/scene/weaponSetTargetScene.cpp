@@ -44,6 +44,7 @@
 #include "skyland/scene_pool.hpp"
 #include "skyland/skyland.hpp"
 #include "skyland/timeStreamEvent.hpp"
+#include <algorithm>
 
 
 
@@ -54,21 +55,21 @@ namespace skyland
 
 void describe_room(Island* island,
                    const RoomCoord& cursor_loc,
-                   std::optional<Text>& room_description);
+                   Optional<Text>& room_description);
 
 
 
-void clear_room_description(std::optional<Text>& room_description);
+void clear_room_description(Optional<Text>& room_description);
 
 
 
-std::tuple<u8, u8, Island*> check_island_tapclick(const Vec2<u32>& pos);
+Trio<u8, u8, Island*> check_island_tapclick(const Vec2<u32>& pos);
 
 
 
 WeaponSetTargetScene::WeaponSetTargetScene(const RoomCoord& weapon_loc,
                                            bool near,
-                                           std::optional<RoomCoord> initial_pos)
+                                           Optional<RoomCoord> initial_pos)
     : weapon_loc_(weapon_loc), near_(near), initial_pos_(initial_pos)
 {
 }
@@ -100,19 +101,19 @@ ScenePtr<Scene> WeaponSetTargetScene::update(Time delta)
 
     auto player_weapon_exit_scene = [&]() -> ScenePtr<Scene> {
         if (resume_far_) {
-            return scene_pool::alloc<InspectP2Scene>();
+            return make_scene<InspectP2Scene>();
         } else {
-            return scene_pool::alloc<ReadyScene>();
+            return make_scene<ReadyScene>();
         }
     };
 
     auto drone_exit_scene = [&](Drone* drone) -> ScenePtr<Scene> {
         if (is_player_island(drone->destination())) {
             globals().near_cursor_loc_ = drone->position();
-            return scene_pool::alloc<ReadyScene>();
+            return make_scene<ReadyScene>();
         } else {
             globals().far_cursor_loc_ = drone->position();
-            return scene_pool::alloc<InspectP2Scene>();
+            return make_scene<InspectP2Scene>();
         }
     };
 
@@ -133,10 +134,6 @@ ScenePtr<Scene> WeaponSetTargetScene::update(Time delta)
 
     auto& cursor_loc = globals().far_cursor_loc_;
 
-
-    auto test_key = [&](Key k) {
-        return APP.player().test_key(k, milliseconds(500), milliseconds(100));
-    };
 
     APP.player().key_held_distribute();
 
@@ -325,7 +322,7 @@ ScenePtr<Scene> WeaponSetTargetScene::update(Time delta)
                 if (near_) {
                     return player_weapon_exit_scene();
                 } else {
-                    return scene_pool::alloc<InspectP2Scene>();
+                    return make_scene<InspectP2Scene>();
                 }
             } else {
 
@@ -370,18 +367,6 @@ ScenePtr<Scene> WeaponSetTargetScene::update(Time delta)
     if (test_key(Key::action_1)) {
         if (auto scene = onclick(cursor_loc)) {
             return scene;
-        }
-    }
-    if (auto pos = APP.player().tap_released()) {
-        auto [x, y, island] = check_island_tapclick(*pos);
-        if (island == APP.opponent_island()) {
-            if (auto scene = onclick({x, y})) {
-                return scene;
-            } else {
-                return scene_pool::alloc<ReadyScene>();
-            }
-        } else {
-            return scene_pool::alloc<ReadyScene>();
         }
     }
 
@@ -1063,7 +1048,7 @@ void WeaponSetTargetScene::snap()
                             str_eq(weapon->name(), "rocket-bomb");
     }
 
-    Buffer<std::pair<Room*, RoomCoord>, 16> choices;
+    Buffer<Pair<Room*, RoomCoord>, 16> choices;
 
     if (weapon_is_missile) {
         for (u32 x = 0; x < APP.opponent_island()->terrain().size(); ++x) {

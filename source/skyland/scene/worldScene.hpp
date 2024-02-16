@@ -138,8 +138,8 @@ public:
 
 
 protected:
-    std::optional<UIMetric> coins_;
-    std::optional<UIMetric> power_;
+    Optional<UIMetric> coins_;
+    Optional<UIMetric> power_;
 
     Time camera_update_timer_ = 0;
 
@@ -163,6 +163,10 @@ private:
     bool force_show_power_usage_ : 1;
 
     void multiplayer_vs_timeout_step(Time delta);
+
+    void update_camera(Time delta);
+    void update_hud(Time delta);
+    void collision_check();
 
 protected:
     bool power_fraction_opponent_island_ = false;

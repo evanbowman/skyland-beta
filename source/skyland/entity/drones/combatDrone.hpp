@@ -112,8 +112,7 @@ public:
                         return;
                     }
 
-                    auto island = target_near_ ? &APP.player_island()
-                                               : APP.opponent_island();
+                    auto island = get_island(target_near_);
 
                     if (auto drone = island->get_drone(*target_)) {
 
@@ -189,7 +188,7 @@ public:
     ScenePtr<Scene> select() override
     {
         PLATFORM.speaker().play_sound("drone_beep", 1);
-        return scene_pool::alloc<CombatDroneSetTargetScene>(shared_from_this());
+        return make_scene<CombatDroneSetTargetScene>(shared_from_this());
     }
 
     enum State : u8 {

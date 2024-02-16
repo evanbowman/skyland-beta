@@ -3,7 +3,7 @@
 ;;;
 
 
-(dialog "A goblin stronghold approaches... they seem to be willing to negotiate...")
+(lc-dialog-load "goblin-stronghold2" "intro")
 
 
 
@@ -96,12 +96,10 @@
              (max (list (+ 900 (choice 500))
                         (/ (coins) 2))))))
   (defn on-converge [0]
-    (dialog
-     "<c:goblin king:3>#cackle# You're tresspasssing in my territory! I demand a tribute of "
-     (string val)
-     "@! Pay!")
+    (lc-dialog-load-fmt "goblin-stronghold2" "demand" val)
 
-    (dialog-await-binary-q "I'll pay…" "no way!")
+    (dialog-await-binary-q (lc-dialog-get "goblin-stronghold2" "opt1")
+                           (lc-dialog-get "goblin-stronghold2" "opt2"))
     (setq on-converge nil))
 
 
@@ -110,13 +108,11 @@
         (progn
           (opponent-mode 'hostile)
           (adventure-log-add 32 '())
-          (dialog "<c:globlin king:3>Thatsss not enough! Letss ssee if theress anything we can take!!"))
+          (lc-dialog-load "goblin-stronghold2" "low-funds"))
       (progn
         (coins-add (- val))
         (adventure-log-add 31 (list val))
-        (dialog "The goblin king rejoices, having successfully extorted "
-                (string val)
-                "@.")
+        (lc-dialog-load-fmt "goblin-stronghold2" "extortion" val)
         (exit)))))
 
 
@@ -124,4 +120,4 @@
 (defn on-dialog-declined [0]
   (opponent-mode 'hostile)
   (adventure-log-add 33 '())
-  (dialog "<c:goblin king:3>YARRRGG!!! PREPARE FOR BOARDING!!!"))
+  (lc-dialog-load "goblin-stronghold2" "decline"))

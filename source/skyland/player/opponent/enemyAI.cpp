@@ -52,7 +52,6 @@
 #include "skyland/rooms/forcefield.hpp"
 #include "skyland/rooms/ionCannon.hpp"
 #include "skyland/rooms/masonry.hpp"
-#include "skyland/rooms/mindControl.hpp"
 #include "skyland/rooms/missileSilo.hpp"
 #include "skyland/rooms/rocketSilo.hpp"
 #include "skyland/rooms/sparkCannon.hpp"
@@ -60,6 +59,7 @@
 #include "skyland/rooms/warhead.hpp"
 #include "skyland/scene/constructionScene.hpp"
 #include "skyland/skyland.hpp"
+#include <algorithm>
 
 
 
@@ -296,7 +296,7 @@ void EnemyAI::update_room(Room& room,
     // pathfinding for all of those entities. Of course, the game _can_
     // handle that many entities, but doing so would result in periodic long
     // pauses.
-    Buffer<std::pair<BasicCharacter*, Room*>, 8> boarded_ai_characters;
+    Buffer<Pair<BasicCharacter*, Room*>, 8> boarded_ai_characters;
     for (auto& room : (*target_island).rooms()) {
         for (auto& character : room->characters()) {
             if (character->owner() == owner) {
@@ -326,7 +326,7 @@ void EnemyAI::update_room(Room& room,
     } else if (auto fire_charge = room.cast<FireCharge>()) {
         set_target(matrix, *fire_charge, owner, ai_island, target_island);
     } else if (category == Room::Category::weapon or
-               (*room.metaclass())->properties() & RoomProperties::plugin) {
+               room.has_prop(RoomProperties::plugin)) {
         // NOTE: if we haven't hit any of the cases above, assume that the
         // weapon is a generic cannon-type weapon.
         set_target(matrix, room, owner, ai_island, target_island);
@@ -381,7 +381,7 @@ void EnemyAI::update_room(Room& room,
             }
 
             if (found_infirmary) {
-                auto recover_pos = [&]() -> std::optional<RoomCoord> {
+                auto recover_pos = [&]() -> Optional<RoomCoord> {
                     for (auto it = boarded_ai_characters.begin();
                          it not_eq boarded_ai_characters.end();) {
                         if ((*it).first->health() < 25 and
@@ -440,8 +440,7 @@ void EnemyAI::resolve_insufficient_power()
             // supply.
             continue;
         }
-        if ((*room->metaclass())->properties() &
-            RoomProperties::salvage_disallowed) {
+        if (room->has_prop(RoomProperties::salvage_disallowed)) {
             continue;
         }
         auto pwr = room->power_usage();
@@ -527,7 +526,7 @@ void EnemyAI::assign_local_character(BasicCharacter& character,
 
     for (auto& room : ai_island_->rooms()) {
         if (room->health() not_eq room->max_health() and
-            (*room->metaclass())->properties() & RoomProperties::habitable) {
+            room->has_prop(RoomProperties::habitable)) {
             damaged_habitable_rooms = true;
         }
         if (room->metaclass() == cannon_mt) {
@@ -1221,7 +1220,7 @@ static void place_offensive_drone(DroneBay& db,
         }
     }
 
-    std::optional<RoomCoord> ideal_coord;
+    Optional<RoomCoord> ideal_coord;
     ATP max_weight = 0.0_atp;
     for (u8 y = construction_zone_min_y; y < 15; ++y) {
         if (left_column_weights[y] > max_weight) {
@@ -1299,7 +1298,7 @@ void EnemyAI::update_drone_bay(const Bitmatrix<16, 16>& matrix,
     bool opponent_missile_silos[16];
     for (int i = 0; i < 16; ++i) {
         player_missile_silos[i] = 0;
-        opponent_missile_silos[16] = 0;
+        opponent_missile_silos[i] = 0;
     }
 
 
@@ -1492,7 +1491,7 @@ void EnemyAI::offensive_drone_set_target(const Bitmatrix<16, 16>& matrix,
     // without potentially affecting performance on the gameboy, if the enemy
     // has deployed a lot of drones.
 
-    std::optional<RoomCoord> ideal_pos;
+    Optional<RoomCoord> ideal_pos;
     ATP highest_weight = 0.0_atp;
 
     const auto drone_pos = drone.position();
@@ -1610,7 +1609,7 @@ void EnemyAI::set_target(const Bitmatrix<16, 16>& matrix,
         return;
     }
 
-    Buffer<std::pair<Room*, ATP>, 64> visible_rooms;
+    Buffer<Pair<Room*, ATP>, 64> visible_rooms;
 
 
     for (int x = 0; x < 16; ++x) {
@@ -1698,7 +1697,7 @@ void EnemyAI::set_target_rocketsilo(const Bitmatrix<16, 16>& matrix,
         return;
     }
 
-    Buffer<std::pair<Room*, ATP>, 64> visible_rooms;
+    Buffer<Pair<Room*, ATP>, 64> visible_rooms;
 
 
     for (int x = 0; x < 16; ++x) {
@@ -1930,7 +1929,7 @@ void EnemyAI::set_target(const Bitmatrix<16, 16>& matrix,
     for (auto& room : target_island->rooms()) {
         auto pos = room->position();
         auto weight = room->get_atp();
-        if ((*room->metaclass())->properties() & RoomProperties::habitable) {
+        if (room->has_prop(RoomProperties::habitable)) {
             for (auto& chr : room->characters()) {
                 (void)chr;
                 weight -= 250.0_atp;

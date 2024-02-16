@@ -1,5 +1,5 @@
 
-(dialog "A damaged fortress floats into view. The residents do not respond to your radio signals.")
+(lc-dialog-load "crew-gamble2" "intro")
 
 
 (opponent-init 8 'neutral)
@@ -41,8 +41,7 @@
 
 
 (defn on-converge [0]
-  (dialog "The island's radio appears to be broken. <B:0> Three survivors signal to you that they'd like to come aboard, but it's not clear whether they can be trusted.<B:0> Invite survivors aboard?")
-
+  (lc-dialog-load "crew-gamble2" "offer")
   (dialog-await-y/n)
   (setq on-converge nil))
 
@@ -75,16 +74,16 @@
              (if (equal (car $0) 'hull)
                  (room-mut (opponent) (get $0 1) (get $0 2) 'mirror-hull)))
            (rooms (opponent)))
-      (dialog "The survivors turned out to be vicious goblins, and their island is not as defensless as it initially appeared...")
+      (lc-dialog-load "crew-gamble2" "trap")
       (defn on-dialog-closed [0]
-        (dialog "<c:goblin:2>Die humansss!")
+        (lc-dialog-load "crew-gamble2" "goblin-taunt")
         (setq on-dialog-closed nil))
       (opponent-mode 'hostile))
      (true
       (move 'neutral)
       (if (chrs (opponent))
-          (dialog "Some of the survivors joined your crew!")
-        (dialog "The survivors joined your crew!"))
+          (lc-dialog-load "crew-gamble2" "join")
+        (lc-dialog-load "crew-gamble2" "join2"))
       (defn on-dialog-closed [0]
         (dialog "...")
         (setq on-dialog-closed exit))))))

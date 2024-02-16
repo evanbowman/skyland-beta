@@ -13,13 +13,13 @@
                     (lambda
                       (sound "click_digital_1")
                       (cart-add n)
-                      (dialog "You picked up a cart labeled "
+                      (dialog (lc-dialog-get "cart" "pickup1")
                               (car (cart-info n))
-                              (format "! (cartridge %)" (+ n 1)))
+                              (format (lc-dialog-get "cart" "pickup2") (+ n 1)))
                       (setq on-dialog-closed
                             (if (save-bit-load 8)
                                 exit
                               (lambda
-                                (dialog "(To load data carts, go to the extras room of the title screen!)")
+                                (lc-dialog-load "cart" "help")
                                 (save-bit-store 8 1)
                                 (setq on-dialog-closed exit)))))))))))

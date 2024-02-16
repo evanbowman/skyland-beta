@@ -692,6 +692,26 @@ o----------------------------o
 
 o----------------------------o
 
+ (lc-dialog-get section key)
+
+ A function for loading
+ localized dialog strings
+ from
+ /strings/dialog/<lang>.ini
+ ...
+
+
+o----------------------------o
+
+ (lc-dialog-load section key)
+
+ A shortcut for invoking
+ dialog with the result of
+ lc-dialog-get.
+
+
+o----------------------------o
+
  (dialog strings ...)
 
  Composes a dialog message
@@ -985,6 +1005,20 @@ o----------------------------o
  Terminate the game, and
  display fatal error message
  containing value.
+
+
+o----------------------------o
+
+ (force-save)
+
+ Forcefully write a game save.
+ Normally, only the save
+ button on the sky chart
+ writes game saves, and
+ loading and adventure game
+ erases the old save. If for
+ some reason you wanted to
+ override this behavior...
 
 
 o----------------------------o

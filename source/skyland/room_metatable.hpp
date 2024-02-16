@@ -134,7 +134,7 @@ struct RoomMeta
 
 
 
-std::pair<RoomMeta*, int> room_metatable();
+Pair<RoomMeta*, int> room_metatable();
 
 
 

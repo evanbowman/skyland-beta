@@ -3,6 +3,7 @@
 #include "camera.hpp"
 #include "skyland/macrocosmEngine.hpp"
 #include "skyland/skyland.hpp"
+#include <limits>
 
 
 

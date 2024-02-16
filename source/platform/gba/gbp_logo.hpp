@@ -1,33 +1,26 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Copyright (C) 2023  Evan Bowman. Some rights reserved.
+// MIT License
 //
-// This program is source-available; the source code is provided for educational
-// purposes. All copies of the software must be distributed along with this
-// license document.
+// Copyright (c) 2020-2024 Evan Bowman
 //
-// 1. DEFINITION OF SOFTWARE: The term "Software" refers to SKYLAND,
-// including any updates, modifications, or associated documentation provided by
-// Licensor.
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
 //
-// 2. DERIVATIVE WORKS: Licensee is permitted to modify the source code.
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
 //
-// 3. COMMERCIAL USE: Commercial use is not allowed.
-//
-// 4. ATTRIBUTION: Licensee is required to provide attribution to Licensor.
-//
-// 5. INTELLECTUAL PROPERTY RIGHTS: All intellectual property rights in the
-// Software shall remain the property of Licensor. The Licensee does not acquire
-// any rights to the Software except for the limited use rights specified in
-// this Agreement.
-//
-// 6. WARRANTY AND LIABILITY: The Software is provided "as is" without warranty
-// of any kind. Licensor shall not be liable for any damages arising out of or
-// related to the use or inability to use the Software.
-//
-// 7. TERMINATION: This Agreement shall terminate automatically if Licensee
-// breaches any of its terms and conditions. Upon termination, Licensee must
-// cease all use of the Software and destroy all copies.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
 //
 ////////////////////////////////////////////////////////////////////////////////
 

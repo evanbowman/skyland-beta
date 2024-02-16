@@ -278,7 +278,7 @@ inline Stats Block::stats() const
 }
 SystemString name(Type t);
 SystemString name(Commodity::Type t);
-std::pair<int, int> icons(Type t);
+Pair<int, int> icons(Type t);
 Improvements improvements(Type t);
 
 struct Cost
@@ -295,7 +295,7 @@ struct Cost
 
 
 Cost cost(Type t);
-std::pair<Cost, Type> harvest(Type t);
+Pair<Cost, Type> harvest(Type t);
 
 
 

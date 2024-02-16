@@ -1,9 +1,5 @@
 
-(dialog
- "In the distance, you hear the metallic clang of gears and winches... <B:0>"
- "<b:/scripts/misc/img/mining.img.bin>"
- "A mining rig appears! <B:0> "
- "Steam billows from its engines as cranes dredge heavy ore from the surface...")
+(lc-dialog-load "mining-quest" "intro")
 
 
 (opponent-init 12 'neutral)
@@ -65,9 +61,9 @@
 
 (defn on-converge [0]
   (setq on-converge nil)
-  (dialog "<c:mining cheif:20>Hey there! One of our other mining platforms nearby is running low on blasting equipment. <B:0> Can you do us a favor and transport some explosives for us?")
+  (lc-dialog-load "mining-quest" "greet")
   (defn on-dialog-closed [0]
-    (dialog "Sounds extremely dangerous... but the miners offer to pay you quite well. Accept task?")
+    (lc-dialog-load "mining-quest" "offer")
     (dialog-await-y/n))
 
   (defn on-dialog-accepted [0]
@@ -80,7 +76,7 @@
             ;; push adventure log
             (push 'qids 7)
             (push 'quests (cons "/scripts/event/quest_marker/dynamite-ii.lisp" m))
-            (dialog "<c:mining cheif:20>Great! Let's move some of this cargo over to your island...")
+            (lc-dialog-load "mining-quest" "cargo")
             (adventure-log-add 57 nil)
 
             (defn on-dialog-closed [0]
@@ -91,7 +87,7 @@
                      (alloc-space bloc)
                      (sel-input
                       bloc
-                      (string "place explosive " (+ cnt 1) "/7:")
+                      (string (lc-dialog-get "mining-quest" "place") (+ cnt 1) "/7:")
                       (lambda
                         (room-new (player) (list bloc $1 $2))
                         (sound "build0")
@@ -102,11 +98,11 @@
 
                         (if (equal cnt 7)
                             (progn
-                              (dialog "<c:mining cheif:20> Here, I'll mark the delivery location on your map with an *. Be careful, ok! <B:0> This stuff is extremely volatile. (hover to see blast radius) <B:0> The slightest damage and it'll make an explosion like you've never seen!")
+                              (lc-dialog-load "mining-quest" "instructions")
                               (setq on-dialog-closed exit))
                           (t))))))))))
         (progn
-          (dialog "<c:mining cheif:20>Unfortunately, we just got a report from our other mining rig that bad weather will make the delivery impossible. Thanks anyway!")
+          (lc-dialog-load "mining-quest" "skip")
           (exit)))))
 
   (setq on-dialog-declined exit))

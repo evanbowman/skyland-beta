@@ -4,7 +4,7 @@
 
 
 
-(dialog "An ancient warship approaches, flying a pirate flag. The fortress gives off a strange radiation signature, but the pirates have not yet decided to attack...")
+(lc-dialog-load "warship" "intro")
 
 
 
@@ -19,11 +19,7 @@
 (let ((val (+ 1000 (choice 800))))
   (setq on-converge
         (lambda
-          (dialog
-           "The pirates seem to have stolen a powerful imperial assault vessel. They demand "
-           (string val)
-           "@ and make crude gestures. Will you pay?")
-
+          (lc-dialog-load-fmt "warship" "demand" val)
           (dialog-await-y/n)
           (setq on-converge nil)))
 
@@ -34,10 +30,10 @@
               (progn
                 (opponent-mode 'hostile)
                 (adventure-log-add 42 '())
-                (dialog "You cannot afford to pay. Prepare for heavy damage..."))
+                (lc-dialog-load "warship" "low-funds"))
             (progn
               (coins-add (- val))
-              (dialog "The pirates accept your bribe and move on.")
+              (lc-dialog-load "warship" "bribe-accepted")
               (adventure-log-add 43 '())
               (exit))))))
 
@@ -46,4 +42,4 @@
       (lambda
         (opponent-mode 'hostile)
         (adventure-log-add 42 '())
-        (dialog "Prepare for attack!")))
+        (lc-dialog-load "warship" "decline")))

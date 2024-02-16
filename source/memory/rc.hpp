@@ -35,8 +35,8 @@
 #pragma once
 
 #include "number/numeric.hpp"
+#include "optional.hpp"
 #include "pool.hpp"
-#include <optional>
 
 
 //
@@ -150,7 +150,7 @@ template <typename ControlBlockT> class RcBase
 public:
     using ControlBlock = ControlBlockT;
 
-    size_t strong_count() const
+    u32 strong_count() const
     {
         return control_->strong_count_;
     }
@@ -254,7 +254,7 @@ public:
         Super::add_weak(other.control_);
     }
 
-    std::optional<Rc<T, ControlBlockImpl>> promote()
+    Optional<Rc<T, ControlBlockImpl>> promote()
     {
         if (Super::control_->strong_count_) {
             return Rc<T, ControlBlockImpl>(Super::control_);
@@ -271,7 +271,7 @@ public:
 
 
 template <typename T, u32 PoolSize, typename... Args>
-static std::optional<Rc<T, PooledRcControlBlock<T, PoolSize>>>
+Optional<Rc<T, PooledRcControlBlock<T, PoolSize>>>
 create_pooled_rc(ObjectPool<PooledRcControlBlock<T, PoolSize>, PoolSize>* pool,
                  void (*finalizer_hook)(PooledRcControlBlock<T, PoolSize>*),
                  Args&&... args)

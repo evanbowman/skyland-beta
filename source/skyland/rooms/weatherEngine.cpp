@@ -150,17 +150,17 @@ public:
 
             PLATFORM.speaker().play_sound("bell", 3);
 
-            return scene_pool::alloc<ReadyScene>();
+            return make_scene<ReadyScene>();
         }
 
         if (APP.player().key_down(Key::action_2)) {
-            return scene_pool::alloc<ReadyScene>();
+            return make_scene<ReadyScene>();
         }
 
         return null_scene();
     }
 
-    std::optional<Text> text_;
+    Optional<Text> text_;
     int index_ = 0;
 };
 
@@ -168,7 +168,7 @@ public:
 
 ScenePtr<Scene> WeatherEngine::select_impl(const RoomCoord& cursor)
 {
-    return scene_pool::alloc<SetWeatherScene>();
+    return make_scene<SetWeatherScene>();
 }
 
 

@@ -74,16 +74,13 @@
 #include "skyland/rooms/lemonTree.hpp"
 #include "skyland/rooms/manufactory.hpp"
 #include "skyland/rooms/masonry.hpp"
-#include "skyland/rooms/mindControl.hpp"
 #include "skyland/rooms/mirrorHull.hpp"
 #include "skyland/rooms/missileSilo.hpp"
 #include "skyland/rooms/mycelium.hpp"
 #include "skyland/rooms/nemesis.hpp"
 #include "skyland/rooms/palm.hpp"
-#include "skyland/rooms/piston.hpp"
 #include "skyland/rooms/plunderedRoom.hpp"
 #include "skyland/rooms/poweredHull.hpp"
-#include "skyland/rooms/pummeler.hpp"
 #include "skyland/rooms/qrBlock.hpp"
 #include "skyland/rooms/radar.hpp"
 #include "skyland/rooms/radiator.hpp"
@@ -143,12 +140,6 @@ template <typename T> struct InfoImpl : public RoomMeta::Info
     {
         parent->add_room<T>(position, do_repaint);
     }
-
-    // RoomPtr<Room> create(Island* parent,
-    //                      const RoomCoord& position) const override
-    // {
-    //     return room_pool::alloc<T>(parent, position);
-    // }
 
     const char* name() const override
     {
@@ -483,7 +474,7 @@ const RoomMeta* drone_bay_mt = load_metaclass(DroneBay::name());
 
 
 
-std::pair<RoomMeta*, int> room_metatable()
+Pair<RoomMeta*, int> room_metatable()
 {
     return {__metatable().table_, __metatable().size()};
 }

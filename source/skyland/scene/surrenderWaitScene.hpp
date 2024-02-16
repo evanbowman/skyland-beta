@@ -61,7 +61,7 @@ public:
             }
         } else {
             if (not APP.dialog_buffer()) {
-                return scene_pool::alloc<ReadyScene>();
+                return make_scene<ReadyScene>();
             }
         }
 

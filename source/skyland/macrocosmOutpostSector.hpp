@@ -100,7 +100,7 @@ public:
         base_stats_cache_->happiness_ = s.happiness_;
 
         base_stats_cache_->commodity_count_ =
-            std::min((int)commodities_max, (int)s.commodities_.size());
+            util::min((int)commodities_max, (int)s.commodities_.size());
 
         for (u32 i = 0; i < base_stats_cache_->commodity_count_; ++i) {
             base_stats_cache_->commodities_[i] = s.commodities_[i];
@@ -114,7 +114,7 @@ public:
     }
 
 
-    std::optional<Stats> base_stats_cache_load() const override
+    Optional<Stats> base_stats_cache_load() const override
     {
         if (not base_stats_cache_) {
             return {};
@@ -135,7 +135,7 @@ public:
     }
 
 
-    std::optional<Coins> coin_yield_cache_load() const override
+    Optional<Coins> coin_yield_cache_load() const override
     {
         return coin_yield_cache_;
     }
@@ -153,8 +153,8 @@ private:
         Commodity commodities_[commodities_max];
     };
 
-    mutable std::optional<SmallStats> base_stats_cache_;
-    mutable std::optional<Coins> coin_yield_cache_;
+    mutable Optional<SmallStats> base_stats_cache_;
+    mutable Optional<Coins> coin_yield_cache_;
 };
 
 

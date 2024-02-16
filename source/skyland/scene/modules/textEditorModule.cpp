@@ -579,8 +579,8 @@ TextEditorModule::TextEditorModule(UserContext&& context)
 {
     state_->file_path_ = "/";
 
-    if (PLATFORM.logger().data()) {
-        for (char c : *PLATFORM.logger().data()) {
+    if (log_data()) {
+        for (char c : *log_data()) {
             text_buffer_.push_back(c);
         }
         text_buffer_.push_back('\n');
@@ -657,10 +657,6 @@ void TextEditorModule::tabs_to_spaces()
 void TextEditorModule::enter(Scene& prev)
 {
     PLATFORM.load_overlay_texture("overlay_editor");
-
-    while (PLATFORM.screen().touch()) {
-        PLATFORM.system_call("swap-screens", nullptr);
-    }
 
     header_.emplace(OverlayCoord{});
     StringBuffer<32> temp("  text editor  ");
@@ -780,7 +776,7 @@ ScenePtr<Scene> TextEditorModule::update(Time delta)
     };
 
     auto center_view = [&] {
-        start_line_ = std::max(0, cursor_.y - ((y_max() - 2) / 2));
+        start_line_ = util::max(0, cursor_.y - ((y_max() - 2) / 2));
         if (cursor_.x > 15) {
             column_offset_ = cursor_.x - 15;
         } else {
@@ -832,7 +828,7 @@ ScenePtr<Scene> TextEditorModule::update(Time delta)
                 unshade_cursor();
                 bool do_render = false;
                 cursor_.x += skip_word();
-                cursor_.x = std::min(cursor_.x, line_length());
+                cursor_.x = util::min(cursor_.x, line_length());
                 ideal_cursor_right_ = cursor_.x;
                 if (cursor_.x < column_offset_) {
                     column_offset_ = cursor_.x;
@@ -852,7 +848,7 @@ ScenePtr<Scene> TextEditorModule::update(Time delta)
                 unshade_cursor();
                 bool do_render = false;
                 cursor_.x -= back_word();
-                cursor_.x = std::max(cursor_.x, 0);
+                cursor_.x = util::max(cursor_.x, 0);
                 ideal_cursor_right_ = cursor_.x;
                 if (cursor_.x > column_offset_ + (calc_screen_tiles().x - 1)) {
                     ++column_offset_;
@@ -889,7 +885,7 @@ ScenePtr<Scene> TextEditorModule::update(Time delta)
                 bool do_render = false;
 
                 if (cursor_.y > start_line_ + (calc_screen_tiles().y - 3)) {
-                    start_line_ = std::max(0, cursor_.y - ((y_max() - 2) / 2));
+                    start_line_ = util::max(0, cursor_.y - ((y_max() - 2) / 2));
                     do_render = true;
                 }
 
@@ -934,7 +930,7 @@ ScenePtr<Scene> TextEditorModule::update(Time delta)
                 bool do_render = false;
 
                 if (cursor_.y < start_line_) {
-                    start_line_ = std::max(0, cursor_.y - ((y_max() - 2) / 2));
+                    start_line_ = util::max(0, cursor_.y - ((y_max() - 2) / 2));
                     do_render = true;
                 }
 
@@ -1043,7 +1039,7 @@ ScenePtr<Scene> TextEditorModule::update(Time delta)
                 cursor_.y = line_count_;
                 column_offset_ = 0;
                 start_line_ =
-                    std::max(0, line_count_ - (calc_screen_tiles().y - 3));
+                    util::max(0, line_count_ - (calc_screen_tiles().y - 3));
                 bool dummy;
                 sel_forward(dummy);
                 render(start_line_);
@@ -1070,7 +1066,7 @@ ScenePtr<Scene> TextEditorModule::update(Time delta)
             bool do_render = false;
 
             if (cursor_.y < start_line_) {
-                start_line_ = std::max(0, cursor_.y - ((y_max() - 2) / 2));
+                start_line_ = util::max(0, cursor_.y - ((y_max() - 2) / 2));
                 do_render = true;
             }
             cursor_.x = ideal_cursor_right_;
@@ -1109,7 +1105,7 @@ ScenePtr<Scene> TextEditorModule::update(Time delta)
             APP.player().key_held_reset(Key::down, milliseconds(60));
 
             if (cursor_.y > start_line_ + (calc_screen_tiles().y - 3)) {
-                start_line_ = std::max(0, cursor_.y - ((y_max() - 2) / 2));
+                start_line_ = util::max(0, cursor_.y - ((y_max() - 2) / 2));
                 do_render = true;
             }
             cursor_.x = ideal_cursor_right_;
@@ -1273,22 +1269,22 @@ ScenePtr<Scene> TextEditorModule::update(Time delta)
 
                             state_->file_path_.c_str(), text_buffer_, opts);
                     } else {
-                        return scene_pool::alloc<SramFileWritebackScene>(
+                        return make_scene<SramFileWritebackScene>(
                             state_->file_path_.c_str(),
                             std::move(text_buffer_),
                             std::move(user_context_));
                     }
                 }
                 if (filesystem_ == FileSystem::device) {
-                    return scene_pool::alloc<FileBrowserModule>();
+                    return make_scene<FileBrowserModule>();
                 }
-                return scene_pool::alloc<FileBrowserModule>(
-                    std::move(user_context_),
-                    state_->file_path_.c_str(),
-                    filesystem_ == FileSystem::rom);
+                return make_scene<FileBrowserModule>(std::move(user_context_),
+                                                     state_->file_path_.c_str(),
+                                                     filesystem_ ==
+                                                         FileSystem::rom);
             }
         } else if (APP.player().key_down(Key::action_1)) {
-            start_line_ = std::max(0, cursor_.y - ((y_max() - 2) / 2));
+            start_line_ = util::max(0, cursor_.y - ((y_max() - 2) / 2));
             show_keyboard_ = true;
             mode_ = Mode::edit;
             keyboard_cursor_ = {5, 4};
@@ -1515,7 +1511,7 @@ Vector<char>::Iterator TextEditorModule::insert_pos()
 
 
 
-void TextEditorModule::erase_char(std::optional<Vector<char>::Iterator> hint)
+void TextEditorModule::erase_char(Optional<Vector<char>::Iterator> hint)
 {
     if (cursor_.x == 0 and cursor_.y == 0) {
         // Nothing left to delete.
@@ -1568,7 +1564,7 @@ void TextEditorModule::delete_selection()
 
     if (cursor_.y > start_line_ + (calc_screen_tiles().y - 3) or
         cursor_.y < start_line_) {
-        start_line_ = std::max(0, cursor_.y - ((y_max() - 2) / 2));
+        start_line_ = util::max(0, cursor_.y - ((y_max() - 2) / 2));
     }
 
     if (cursor_.x < column_offset_) {
@@ -1632,7 +1628,7 @@ void TextEditorModule::save_selection(Vector<char>& output)
 
 
 void TextEditorModule::insert_char(char c,
-                                   std::optional<Vector<char>::Iterator> hint)
+                                   Optional<Vector<char>::Iterator> hint)
 {
     state_->modified_ = true;
 

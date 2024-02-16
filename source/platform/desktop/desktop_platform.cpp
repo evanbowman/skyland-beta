@@ -310,7 +310,7 @@ public:
                   auto ssize = sf::VideoMode::getDesktopMode();
                   auto x_scale = ssize.width / resolution.x;
                   auto y_scale = ssize.height / resolution.y;
-                  return static_cast<int>(std::max(x_scale, y_scale));
+                  return static_cast<int>(util::max(x_scale, y_scale));
               } else {
                   return
                       // lisp::loadv<lisp::Integer>("window-scale").value_
@@ -491,7 +491,7 @@ Platform::DeltaClock::~DeltaClock()
 std::queue<sf::Event> event_queue;
 
 
-std::array<sf::Keyboard::Key, static_cast<int>(Key::count)> keymap;
+Array<sf::Keyboard::Key, static_cast<int>(Key::count)> keymap;
 
 
 void Platform::Keyboard::rumble(bool enabled)
@@ -616,13 +616,6 @@ Platform::ModelName Platform::model_name() const
 
 
 
-const Platform::Screen::Touch* Platform::Screen::touch() const
-{
-    return nullptr;
-}
-
-
-
 Vec2<u32> Platform::Screen::size() const
 {
     const auto data = PLATFORM.data();
@@ -634,8 +627,8 @@ Vec2<u32> Platform::Screen::size() const
 enum class TextureSwap { spritesheet, tile0, tile1, overlay };
 
 
-static std::queue<std::pair<TextureSwap, std::string>> texture_swap_requests;
-static std::queue<std::pair<TileDesc, Platform::TextureMapping>> glyph_requests;
+static std::queue<Pair<TextureSwap, std::string>> texture_swap_requests;
+static std::queue<Pair<TileDesc, Platform::TextureMapping>> glyph_requests;
 
 
 
@@ -663,7 +656,7 @@ static struct DynamicTextureMapping
 
 
 
-std::optional<Platform::DynamicTexturePtr> Platform::make_dynamic_texture()
+Optional<Platform::DynamicTexturePtr> Platform::make_dynamic_texture()
 {
     auto finalizer =
         [](PooledRcControlBlock<DynamicTexture, dynamic_texture_count>* ctrl) {
@@ -953,9 +946,9 @@ void Platform::Screen::display()
     // Draw sprites
     //
 
-    for (auto& spr : reversed(draw_queue)) {
+    foreach_reversed(draw_queue, [&](auto& spr) {
         if (spr.get_alpha() == Sprite::Alpha::transparent) {
-            continue;
+            return;
         }
 
         const auto& pos = spr.get_position();
@@ -1006,7 +999,7 @@ void Platform::Screen::display()
         } else {
             window.draw(sf_spr);
         }
-    }
+    });
 
 
     ////////////////////////////////////////////////////////////////////////////
@@ -1043,7 +1036,7 @@ static bool fade_is_active = false;
 
 void Platform::Screen::fade(Float amount,
                             ColorConstant k,
-                            std::optional<ColorConstant> base,
+                            Optional<ColorConstant> base,
                             bool include_sprites,
                             bool include_overlay)
 {
@@ -1284,7 +1277,7 @@ void Platform::Speaker::stop_music()
 
 void Platform::Speaker::play_sound(const char* name,
                                    int priority,
-                                   std::optional<Vec2<Float>> position)
+                                   Optional<Vec2<Float>> position)
 {
     (void)priority; // We are not using the priority variable, because we're a
                     // powerful desktop pc, we can play lots of sounds at once,
@@ -1347,7 +1340,7 @@ void Platform::RemoteConsole::start()
 
 
 
-auto Platform::RemoteConsole::readline() -> std::optional<Line>
+auto Platform::RemoteConsole::readline() -> Optional<Line>
 {
     // TODO...
     return {};
@@ -1360,91 +1353,11 @@ bool Platform::RemoteConsole::printline(const char* text, const char* prompt)
 }
 
 
-////////////////////////////////////////////////////////////////////////////////
-// Logger
-////////////////////////////////////////////////////////////////////////////////
-
-
-static const char* const logfile_name = "logfile.txt";
-static std::ofstream logfile_out(logfile_name);
-
-
-static Severity log_threshold;
-
-
-std::optional<Vector<char>> log_data_;
-
-
-void Platform::Logger::clear()
-{
-    log_data_.reset();
-}
-
-
-void Platform::Logger::set_threshold(Severity severity)
-{
-    log_threshold = severity;
-}
-
-
-void Platform::Logger::flush()
-{
-    if (not log_data_) {
-        return;
-    }
-
-    flash_filesystem::store_file_data_binary("/log.txt", *log_data_);
-
-    log_data_.reset();
-}
-
-
 
 void Platform::walk_filesystem(
     Function<8 * sizeof(void*), void(const char* path)> callback)
 {
     // TODO...
-}
-
-
-
-void Platform::Logger::log(Severity level, const char* msg)
-{
-    if (::__platform__ == nullptr) {
-        return;
-    }
-
-    ScratchBuffer::Tag t = "syslog_data";
-
-    if (not log_data_) {
-        log_data_.emplace(t);
-    }
-
-    while (*msg not_eq '\0') {
-        log_data_->push_back(*msg, t);
-        std::cout << *msg;
-        ++msg;
-    }
-
-    log_data_->push_back('\n', t);
-    std::cout << '\n';
-}
-
-
-
-Platform::Logger::Logger()
-{
-}
-
-
-
-Vector<char>* Platform::Logger::data()
-{
-    if (log_data_) {
-        return &*log_data_;
-    }
-
-    return nullptr;
 }
 
 
@@ -1506,13 +1419,13 @@ static ObjectPool<PooledRcControlBlock<ScratchBuffer, scratch_buffer_count>,
 
 
 
-static std::optional<DateTime> start_time;
+static Optional<DateTime> start_time;
 
 
-std::optional<DateTime> Platform::SystemClock::initial_time()
+Optional<DateTime> Platform::SystemClock::initial_time()
 {
     // return ::start_time;
-    return std::nullopt;
+    return nullopt();
 }
 
 
@@ -1753,7 +1666,7 @@ bool Platform::load_overlay_texture(const char* name)
 
 
 
-std::map<Layer, std::map<std::pair<u16, u16>, TileDesc>> tile_layers_;
+std::map<Layer, std::map<Pair<u16, u16>, TileDesc>> tile_layers_;
 
 
 
@@ -1761,7 +1674,7 @@ void Platform::set_tile(Layer layer,
                         u16 x,
                         u16 y,
                         TileDesc val,
-                        std::optional<u16> palette)
+                        Optional<u16> palette)
 {
     tile_layers_[layer][{x, y}] = val;
 
@@ -1923,8 +1836,8 @@ void Platform::set_palette(Layer layer, u16 x, u16 y, u16 palette)
 static std::map<std::string, std::string> files;
 
 
-std::pair<const char*, u32> Platform::load_file(const char* folder,
-                                                const char* filename) const
+Pair<const char*, u32> Platform::load_file(const char* folder,
+                                           const char* filename) const
 {
     const auto name = std::string(folder) + PATH_DELIMITER + filename;
     auto found = files.find(name);
@@ -2059,7 +1972,7 @@ void Platform::NetworkPeer::update()
 
     impl->poll_consume_position_ = 0;
 
-    std::array<char, 1024> buffer = {0};
+    Array<char, 1024> buffer = {0};
     std::size_t received = 0;
 
     while (true) {
@@ -2078,8 +1991,7 @@ void Platform::NetworkPeer::update()
 }
 
 
-std::optional<Platform::NetworkPeer::Message>
-Platform::NetworkPeer::poll_message()
+Optional<Platform::NetworkPeer::Message> Platform::NetworkPeer::poll_message()
 {
     auto impl = (NetworkPeerImpl*)impl_;
 
@@ -2126,7 +2038,7 @@ int Platform::NetworkPeer::send_queue_size() const
 ////////////////////////////////////////////////////////////////////////////////
 
 
-std::optional<DateTime> Platform::SystemClock::now()
+Optional<DateTime> Platform::SystemClock::now()
 {
     const auto t = std::chrono::system_clock::now();
 

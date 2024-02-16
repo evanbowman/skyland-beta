@@ -246,7 +246,7 @@ public:
             break;
 
         case State::done:
-            return scene_pool::alloc<ReadyScene>();
+            return make_scene<ReadyScene>();
         }
 
         return null_scene();

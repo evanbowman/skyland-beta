@@ -1,4 +1,6 @@
 #include "conf.hpp"
+#include "containers/pair.hpp"
+#include "memory/buffer.hpp"
 #include "platform/platform.hpp"
 
 
@@ -58,8 +60,20 @@ static int conf_atoi(const char* string)
 }
 
 
+
+using Data = const char*;
+using Section = StringBuffer<32>;
+using CachedPtr = const char*;
+
+// This speeds up consecutive accesses to a section.
+Buffer<Trio<Data, Section, CachedPtr>, 16> conf_cache;
+
+
+
 Conf::String get_conf(const char* data, const char* section, const char* key)
 {
+    auto file_start = data;
+
     const int section_len = strlen(section);
     const int key_len = strlen(key);
 
@@ -71,6 +85,15 @@ Conf::String get_conf(const char* data, const char* section, const char* key)
     } state = State::seek_section;
 
     Conf::String result = allocate_dynamic<StringBuffer<2000>>("conf-string");
+
+    bool used_cached = false;
+    for (auto& elem : conf_cache) {
+        if (elem.first == data and elem.second == section) {
+            data = elem.third;
+            used_cached = true;
+            break;
+        }
+    }
 
 #define EAT_LINE()                                                             \
     while (true) {                                                             \
@@ -97,6 +120,7 @@ Conf::String get_conf(const char* data, const char* section, const char* key)
             break;
 
         case State::match_section: {
+            auto section_start = data - 1;
             for (int i = 0; i < section_len; ++i) {
                 if (data[i] == '\0') {
                     return result;
@@ -110,6 +134,12 @@ Conf::String get_conf(const char* data, const char* section, const char* key)
                     state = State::seek_section;
                     goto TOP;
                 }
+            }
+            if (not used_cached) {
+                if (conf_cache.full()) {
+                    conf_cache.erase(conf_cache.begin());
+                }
+                conf_cache.push_back({file_start, section, section_start});
             }
             data += section_len;
             while (true) {

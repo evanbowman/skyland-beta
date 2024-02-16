@@ -119,14 +119,14 @@ void LispReplScene::repaint_entry(bool show_cursor)
         switch (display_mode_) {
         default:
         case DisplayMode::entry:
-            return std::nullopt;
+            return nullopt();
 
         case DisplayMode::show_result:
             return {{ColorConstant::med_blue_gray, ColorConstant::rich_black}};
         }
     }();
     const int scroll =
-        std::max(0, (int)command_->length() - (screen_tiles.x - 1));
+        util::max(0, (int)command_->length() - (screen_tiles.x - 1));
 
 
     const int balance = paren_balance(command_->c_str());
@@ -357,9 +357,9 @@ TOP:
         if (PLATFORM.keyboard().down_transition<Key::action_2>()) {
             if (command_->empty()) {
                 if (APP.macrocosm()) {
-                    return scene_pool::alloc<macro::SelectorScene>();
+                    return make_scene<macro::SelectorScene>();
                 } else {
-                    return scene_pool::alloc<ReadyScene>();
+                    return make_scene<ReadyScene>();
                 }
             }
             command_->pop_back();
@@ -380,7 +380,7 @@ TOP:
 
             if (not command_->empty() and
                 not is_delimiter((*command_)[command_->length() - 1])) {
-                std::optional<int> ident_start;
+                Optional<int> ident_start;
 
                 for (int i = command_->length() - 1; i >= 0; --i) {
                     if (is_delimiter((*command_)[i])) {

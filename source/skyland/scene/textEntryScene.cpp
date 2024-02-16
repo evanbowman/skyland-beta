@@ -125,10 +125,6 @@ ScenePtr<Scene> TextEntryScene::update(Time delta)
 {
     player().update(delta);
 
-    auto test_key = [&](Key k) {
-        return player().test_key(k, milliseconds(500), milliseconds(100));
-    };
-
     auto row_strlen = strlen(keyboard[keyboard_cursor_.y]);
     if (row_strlen % 2) {
         Platform::fatal("logic error: invalid spacing in keyboard");

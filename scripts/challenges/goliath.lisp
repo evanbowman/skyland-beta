@@ -11,7 +11,7 @@
 
 
 (defn challenge-hint [0]
-  (dialog "Sorry, no hints for this one."))
+  (lc-dialog-load "challenges" "no-hints"))
 
 
 (terrain-set (player) 8)

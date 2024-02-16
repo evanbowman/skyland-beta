@@ -218,9 +218,6 @@ enum Type : u8 {
     score_increased_huge,
     score_decreased,
 
-    mind_control_started,
-    mind_control_stopped,
-
     cargo_bay_contents,
 
     player_room_powerchange,
@@ -1330,32 +1327,6 @@ struct ScoreDecreased
     HostInteger<u32> amount_;
 
     static constexpr const auto t = Type::score_decreased;
-};
-
-
-
-struct MindControlStarted
-{
-    Header header_;
-    HostInteger<CharacterId> prev_id_;
-    u8 controller_x_ : 4;
-    u8 controller_y_ : 4;
-    u8 controller_near_ : 1;
-
-    static constexpr const auto t = Type::mind_control_started;
-};
-
-
-
-struct MindControlStopped
-{
-    Header header_;
-    HostInteger<CharacterId> id_;
-    u8 controller_x_ : 4;
-    u8 controller_y_ : 4;
-    u8 controller_near_ : 1;
-
-    static constexpr const auto t = Type::mind_control_stopped;
 };
 
 

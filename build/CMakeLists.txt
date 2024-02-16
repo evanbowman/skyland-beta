@@ -46,7 +46,7 @@ include_directories(${SOURCE_DIR})
 include_directories(${ROOT_DIR}/external/)
 
 
-if(APPLE)
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   set(EMACS_FLYCHECK_FRONTEND clang)
 else()
   set(EMACS_FLYCHECK_FRONTEND gcc)
@@ -74,6 +74,7 @@ set(SOURCES
   ${SOURCE_DIR}/platform/flash_filesystem.cpp
   ${SOURCE_DIR}/platform/ram_filesystem.cpp
   ${SOURCE_DIR}/platform/scratch_buffer.cpp
+  ${SOURCE_DIR}/compatibility_tests.cpp
   ${SOURCE_DIR}/platform/conf.cpp
   ${SOURCE_DIR}/graphics/overlay.cpp
   ${SOURCE_DIR}/graphics/sprite.cpp
@@ -86,7 +87,9 @@ set(SOURCES
   ${SOURCE_DIR}/compression.cpp
   ${SOURCE_DIR}/memory/pool.cpp
   ${SOURCE_DIR}/collision.cpp
+  ${SOURCE_DIR}/optional.cpp
   ${SOURCE_DIR}/globals.cpp
+  ${SOURCE_DIR}/logger.cpp
   ${SOURCE_DIR}/base32.cpp
   ${SOURCE_DIR}/string.cpp
   ${SOURCE_DIR}/start.cpp
@@ -174,6 +177,7 @@ set(SOURCES
   ${SOURCE_DIR}/skyland/scene/boxedDialogScene.cpp
   ${SOURCE_DIR}/skyland/scene/salvageRoomScene.cpp
   ${SOURCE_DIR}/skyland/scene/titleScreenScene.cpp
+  ${SOURCE_DIR}/skyland/scene/setLanguageScene.cpp
   ${SOURCE_DIR}/skyland/scene/sandboxResetScene.cpp
   ${SOURCE_DIR}/skyland/scene/scriptedMenuScene.cpp
   ${SOURCE_DIR}/skyland/scene/introCreditsScene.cpp
@@ -219,6 +223,7 @@ set(SOURCES
   ${SOURCE_DIR}/skyland/scene/modules/bugReportModule.cpp
   ${SOURCE_DIR}/skyland/scene/modules/feedbackModule.cpp
   ${SOURCE_DIR}/skyland/scene/modules/factoryResetModule.cpp
+  ${SOURCE_DIR}/skyland/scene/modules/changeLanguageModule.cpp
   ${SOURCE_DIR}/skyland/scene/modules/developerModeModule.cpp
   ${SOURCE_DIR}/skyland/scene/modules/creditsModule.cpp
   ${SOURCE_DIR}/skyland/scene/modules/checkersModule.cpp
@@ -246,6 +251,7 @@ set(SOURCES
 add_library(FASTPATH
   ${SOURCE_DIR}/skyland/room.cpp
   ${SOURCE_DIR}/skyland/island.cpp
+  ${SOURCE_DIR}/skyland/roomTable.cpp
   ${SOURCE_DIR}/skyland/rooms/ice.cpp
   ${SOURCE_DIR}/skyland/rooms/tnt.cpp
   ${SOURCE_DIR}/skyland/rooms/core.cpp
@@ -405,6 +411,7 @@ if(NINTENDO_DS OR GAMEBOY_ADVANCE)
     ${DATA_DIR}/flags.s
     ${DATA_DIR}/character_art.s
     ${DATA_DIR}/boot_img_flattened.s
+    ${DATA_DIR}/button_hint_flattened.s
     ${DATA_DIR}/savegame_flattened.s
     ${DATA_DIR}/ending_img_flattened.s
     ${DATA_DIR}/macro_rendertexture.s
@@ -514,8 +521,11 @@ elseif(GAMEBOY_ADVANCE)
 
   set(SOURCES
     ${SOURCES}
-    ${SOURCE_DIR}/platform/gba/mixer.cpp
     ${SOURCE_DIR}/platform/gba/gba_platform.cpp
+    ${SOURCE_DIR}/platform/gba/gba_platform_audio.cpp
+    ${SOURCE_DIR}/platform/gba/gba_platform_network.cpp
+    ${SOURCE_DIR}/platform/gba/gba_platform_console.cpp
+    ${SOURCE_DIR}/platform/gba/gba_platform_deltaclock.cpp
     ${SOURCE_DIR}/platform/gba/skyland_mgba.cpp
     ${SOURCE_DIR}/platform/gba/gbp_logo.cpp
     ${SOURCE_DIR}/platform/gba/memcpy.s
@@ -552,6 +562,39 @@ else()
   add_executable(${EXECUTABLE_NAME}
     ${SOURCES})
 endif()
+
+
+# Saves a few seconds when building. Most of the time savings comes from the
+# bloated STL headers. Eventually I'd like to replace some of these headers with
+# my own implementations. But some STL includes would be very difficult to
+# replace in a portable way, so I'm stuck with these libraries.
+target_precompile_headers(${EXECUTABLE_NAME}
+  PRIVATE
+  <limits>
+  <utility>
+  <new>
+  <tuple>
+  <variant>
+  <type_traits>
+  <initializer_list>
+  <ciso646>
+  <stddef.h>
+  <optional>
+  ../source/optional.hpp
+  ../source/unicode.hpp
+  ../source/allocator.hpp
+  ../source/containers/vector.hpp
+  ../source/graphics/overlay.hpp
+  ../source/globals.hpp
+  ../source/memory/buffer.hpp
+  ../source/number/numeric.hpp
+  ../source/number/fixnum.hpp
+  ../source/skyland/room.hpp
+  ../source/skyland/island.hpp
+  ../source/skyland/entity.hpp
+  ../source/skyland/timeStreamEvent.hpp
+  ../source/platform/platform.hpp
+  ../source/skyland/skyland.hpp)
 
 
 set(IMAGE_INCLUDES "")
@@ -761,6 +804,7 @@ if(GAMEBOY_ADVANCE OR NINTENDO_DS)
     add_tilesheet(skyland_title_2 0 0 YES YES)
     add_tilesheet(skyland_title_1 0 0 YES YES)
     add_tilesheet(skyland_title_0 0 0 YES YES)
+    add_tilesheet(button_hint 0 0 YES YES)
     add_tilesheet(boot_img 0 0 YES YES)
     add_tilesheet(savegame 0 0 YES YES)
     add_tilesheet(ending_img 0 0 YES YES)

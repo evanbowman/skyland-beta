@@ -39,6 +39,7 @@
 #include "skyland/room.hpp"
 #include "skyland/skyland.hpp"
 #include "skyland/timeStreamEvent.hpp"
+#include <limits>
 
 
 

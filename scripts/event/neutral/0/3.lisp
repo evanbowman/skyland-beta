@@ -3,7 +3,7 @@
 ;;;
 
 
-(dialog "Some merchants broadcast an advertisement for advanced technology! Let's see if they have anything useful!")
+(lc-dialog-load "merchants" "intro")
 
 
 (opponent-init 5 'neutral)
@@ -37,12 +37,12 @@
 
   (setq on-converge
         (lambda
-          (dialog "<c:merchant:7> We ordered too many "
+          (dialog (lc-dialog-get "merchants" "offer-p1")
                   (rinfo 'name item)
-                  "s and we're having a big sale today! Much cheaper than if you built them yourself. 1300@ for two, "
+                  (lc-dialog-get "merchants" "offer-p2")
                   (if (< (coins) 1300)
-                      "...but you don't seem to have enough. Do you want to salvage some stuff to come up with the funds? I'll check back in 15 seconds?"
-                    "what do you say?"))
+                      (lc-dialog-get "merchants" "offer-p3_1")
+                    (lc-dialog-get "merchants" "offer-p3_2")))
           (dialog-await-y/n)
           (setq on-converge nil)))
 
@@ -59,7 +59,7 @@
                   (defn fut
                     (if (> (coins) 1299)
                         (progn
-                          (dialog "<c:merchant:7> Seems like you have enough now!")
+                          (lc-dialog-load "merchants" "enough-coins")
                           (setq on-dialog-closed f))
                       (f))))
 
@@ -68,7 +68,7 @@
                       (setq skip 0)
                       (on-timeout 15000 'fut))
                   (progn
-                    (dialog "<c:merchant:7> Sorry, that's not enough money! Do you want to salvage some stuff to come up with the funds? I'll check back in in 15 seconds?")
+                    (lc-dialog-load "merchants" "retry")
                     (dialog-await-y/n)
                     (setq on-dialog-accepted (lambda (on-timeout 15000 'fut)))
                     (setq on-dialog-declined (lambda (unbind 'fut) (exit))))))
@@ -79,7 +79,7 @@
               (sel-input
                item
                (string
-                "place first "
+                (lc-dialog-get "merchants" "place1")
                 (rinfo 'name item)
                 (format " (%x%):" (car (rinfo 'size item)) (cdr (rinfo 'size item))))
                (lambda
@@ -88,11 +88,11 @@
                  (alloc-space item)
                  (sel-input
                   item
-                  (string "place second " (rinfo 'name item) ":")
+                  (string (lc-dialog-get "merchants" "place2") (rinfo 'name item) ":")
                   (lambda
                     (room-new (player) (list item $1 $2))
                     (sound "build0")
-                    (dialog "<c:merchant:7> Looks great! You made a fine choice!")
+                    (lc-dialog-load "merchants" "done")
                     (setq on-dialog-closed exit))))))))))
 
 (gc) ;; just in case, no harm in running it.

@@ -239,12 +239,12 @@ ScenePtr<Scene> SkylandForever::update(Time delta)
         --cursor_;
     }
 
-    if (APP.player().key_down(Key::action_1) or APP.player().tap_released()) {
+    if (APP.player().key_down(Key::action_1)) {
         PLATFORM.screen().fade(1.f, ColorConstant::rich_black, {}, true, true);
-        return scene_pool::alloc<FadeInScene>();
+        return make_scene<FadeInScene>();
     } else if (APP.player().key_down(Key::action_2)) {
         PLATFORM.screen().fade(1.f, ColorConstant::rich_black, {}, true, true);
-        return scene_pool::alloc<TitleScreenScene>(3);
+        return make_scene<TitleScreenScene>(3);
     }
 
     return null_scene();

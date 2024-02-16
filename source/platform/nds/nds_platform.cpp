@@ -406,7 +406,7 @@ void Platform::overwrite_sprite_tile(u16 index, const EncodedTile& t)
 
 
 
-std::optional<DateTime> Platform::startup_time() const
+Optional<DateTime> Platform::startup_time() const
 {
     return {};
 }
@@ -642,7 +642,7 @@ void* Platform::system_call(const char* feature_name, void* arg)
 
 
 
-std::optional<Platform::DynamicTexturePtr> Platform::make_dynamic_texture()
+Optional<Platform::DynamicTexturePtr> Platform::make_dynamic_texture()
 {
     return {};
 }
@@ -998,7 +998,7 @@ Platform::DeltaClock::DeltaClock()
 
 void Platform::Screen::draw(const Sprite& spr)
 {
-    if (UNLIKELY(spr.get_alpha() == Sprite::Alpha::transparent)) {
+    if (spr.get_alpha() == Sprite::Alpha::transparent) [[unlikely]] {
         return;
     }
 
@@ -1022,7 +1022,7 @@ void Platform::Screen::draw(const Sprite& spr)
     }
 
     auto draw_sprite = [&](int tex_off, int x_off, int scale) {
-        if (UNLIKELY(oam_write_index == oam_count)) {
+        if (oam_write_index == oam_count) [[unlikely]] {
             return;
         }
         const auto position =
@@ -1236,17 +1236,6 @@ void Platform::Screen::display()
 
 
 
-const Platform::Screen::Touch* Platform::Screen::touch() const
-{
-    if (not main_on_top) {
-        return &touch_;
-    } else {
-        return nullptr;
-    }
-}
-
-
-
 Vec2<u32> Platform::Screen::size() const
 {
     return {256, 192};
@@ -1341,7 +1330,7 @@ void Platform::Screen::set_shader_argument(int arg)
 
 void Platform::Screen::fade(float amount,
                             ColorConstant k,
-                            std::optional<ColorConstant> base,
+                            Optional<ColorConstant> base,
                             bool include_sprites,
                             bool include_overlay)
 {
@@ -1591,12 +1580,12 @@ Platform::Screen::Screen()
     }
 
 #define BLD_BUILD(top, bot, mode)                                              \
-    ((((bot)&63) << 8) | (((mode)&3) << 6) | ((top)&63))
+    ((((bot) & 63) << 8) | (((mode) & 3) << 6) | ((top) & 63))
 #define BLD_OBJ 0x0010
 #define BLD_BG0 0x0001
 #define BLD_BG1 0x0002
 #define BLD_BG3 0x0008
-#define BLDA_BUILD(eva, evb) (((eva)&31) | (((evb)&31) << 8))
+#define BLDA_BUILD(eva, evb) (((eva) & 31) | (((evb) & 31) << 8))
 
     REG_BLDCNT = BLD_BUILD(BLD_OBJ, BLD_BG0 | BLD_BG1 | BLD_BG3, 0);
     REG_BLDALPHA = BLDA_BUILD(0x40 / 8, 0x40 / 8);
@@ -1620,7 +1609,7 @@ void Platform::load_sprite_texture(const char* name)
             // skipping two tiles).
             memcpy16(SPRITE_GFX + vram_tile_size(),
                      (u16*)info.tile_data_,
-                     std::min((u32)16128, info.tile_data_length_ / 2) -
+                     util::min((u32)16128, info.tile_data_length_ / 2) -
                          vram_tile_size());
 
             // We need to do this, otherwise whatever screen fade is currently
@@ -1779,7 +1768,7 @@ void Platform::set_tile(Layer layer,
                         u16 x,
                         u16 y,
                         TileDesc val,
-                        std::optional<u16> palette)
+                        Optional<u16> palette)
 {
     switch (layer) {
     case Layer::overlay:
@@ -1842,7 +1831,7 @@ void Platform::set_tile(u16 x, u16 y, TileDesc glyph, const FontColors& colors)
     const auto bg_color_hash =
         invoke_shader(Color(colors.background_), 1).bgr_hex_555();
 
-    auto existing_mapping = [&]() -> std::optional<PaletteBank> {
+    auto existing_mapping = [&]() -> Optional<PaletteBank> {
         for (auto i = custom_text_palette_begin; i < custom_text_palette_end;
              ++i) {
             if (BG_PALETTE[i * 16 + default_colors.fg_] == fg_color_hash and
@@ -1992,8 +1981,8 @@ bool Platform::load_overlay_texture(const char* name)
 
             memcpy16(bgGetGfxPtr(0),
                      (u16*)info.tile_data_,
-                     std::min((size_t)info.tile_data_length_ / 2,
-                              (size_t)0x4000 / 2));
+                     util::min((size_t)info.tile_data_length_ / 2,
+                               (size_t)0x4000 / 2));
 
 
             if (get_gflag(GlobalFlag::glyph_mode)) {
@@ -2248,7 +2237,7 @@ bool Platform::Speaker::is_music_playing(const char* name)
 
 void Platform::Speaker::play_sound(const char* name,
                                    int priority,
-                                   std::optional<Vec2<Float>> position)
+                                   Optional<Vec2<Float>> position)
 {
 }
 
@@ -2352,8 +2341,7 @@ void Platform::NetworkPeer::update()
 
 
 
-std::optional<Platform::NetworkPeer::Message>
-Platform::NetworkPeer::poll_message()
+Optional<Platform::NetworkPeer::Message> Platform::NetworkPeer::poll_message()
 {
     return {};
 }
@@ -2380,7 +2368,7 @@ bool Platform::NetworkPeer::supported_by_device()
 ////////////////////////////////////////////////////////////////////////////////
 
 
-std::optional<Platform::RemoteConsole::Line> Platform::RemoteConsole::readline()
+Optional<Platform::RemoteConsole::Line> Platform::RemoteConsole::readline()
 {
     return {};
 }

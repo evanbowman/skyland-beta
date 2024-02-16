@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Copyright (C) 2023  Evan Bowman. Some rights reserved.
+// Copyright (C) 2024  Evan Bowman. Some rights reserved.
 //
 // This program is source-available; the source code is provided for educational
 // purposes. All copies of the software must be distributed along with this
@@ -31,13 +31,60 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
+#include "logger.hpp"
+#include "platform/flash_filesystem.hpp"
 
 
-static const struct
+
+static Optional<Vector<char>> log_data_;
+
+
+
+void log_write(Severity s, const char* msg)
 {
-    const char* root_;
-    const char* name_;
-    const unsigned char* data_;
-} files[] = {
+    if (::__platform__ == nullptr) {
+        return;
+    }
 
-};
+    ScratchBuffer::Tag t = "syslog_data";
+
+    if (not log_data_) {
+        log_data_.emplace(t);
+    }
+
+    while (*msg not_eq '\0') {
+        log_data_->push_back(*msg, t);
+        ++msg;
+    }
+
+    log_data_->push_back('\n', t);
+}
+
+
+
+void log_flush()
+{
+    if (not log_data_) {
+        return;
+    }
+
+    flash_filesystem::store_file_data_binary("/log.txt", *log_data_);
+}
+
+
+
+void log_clear()
+{
+    log_data_.reset();
+}
+
+
+
+Vector<char>* log_data()
+{
+    if (log_data_) {
+        return &*log_data_;
+    }
+
+    return nullptr;
+}

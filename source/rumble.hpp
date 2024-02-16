@@ -58,7 +58,7 @@ public:
         if (not enabled_) {
             PLATFORM.keyboard().rumble(true);
         }
-        duration_ = std::max(duration, duration_);
+        duration_ = util::max(duration, duration_);
         enabled_ = true;
     }
 

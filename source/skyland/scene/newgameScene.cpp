@@ -124,15 +124,15 @@ ScenePtr<Scene> NewgameScene::update(Time delta)
     };
 
     DeferredScene next([] {
-        auto ret = scene_pool::alloc<AdventureLogScene>();
-        ret->set_next_scene([] { return scene_pool::alloc<ZoneImageScene>(); });
+        auto ret = make_scene<AdventureLogScene>();
+        ret->set_next_scene([] { return make_scene<ZoneImageScene>(); });
         return ret;
     });
 
 
     if (loaded and not skip_save_prompt) {
 
-        auto ret = scene_pool::alloc<MenuPromptScene>(
+        auto ret = make_scene<MenuPromptScene>(
             SystemString::save_prompt,
             SystemString::ok,
             SystemString::do_not_show_again,

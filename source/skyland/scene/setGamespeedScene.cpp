@@ -91,36 +91,34 @@ ScenePtr<Scene> SetGamespeedScene::update(Time delta)
             if (APP.time_stream().pushes_enabled()) {
                 set_gamespeed(GameSpeed::stopped);
 
-                return scene_pool::alloc<SwapOverlayTextureScene>(
-                    "overlay",
-                    scene_pool::make_deferred_scene<RewindScene>(
-                        is_far_camera()));
+                return make_scene<SwapOverlayTextureScene>(
+                    "overlay", [f = is_far_camera()]() -> ScenePtr<Scene> {
+                        return make_scene<RewindScene>(f);
+                    });
             } else {
                 set_gamespeed(GameSpeed::stopped);
                 selection_ = (int)GameSpeed::stopped;
                 repaint_selector();
 
-                return scene_pool::alloc<SwapOverlayTextureScene>(
-                    "overlay", [] {
-                        auto future_scene = []() {
-                            return scene_pool::alloc<ReadyScene>();
-                        };
-                        const char* msg = "rewind disabled!";
-                        return scene_pool::alloc<NotificationScene>(
-                            msg, future_scene);
-                    });
+                return make_scene<SwapOverlayTextureScene>("overlay", [] {
+                    auto future_scene = []() {
+                        return make_scene<ReadyScene>();
+                    };
+                    const char* msg = "rewind disabled!";
+                    return make_scene<NotificationScene>(msg, future_scene);
+                });
             }
         } else {
             set_gamespeed((GameSpeed)selection_);
 
-            return scene_pool::alloc<SwapOverlayTextureScene>(
-                "overlay", scene_pool::make_deferred_scene<ReadyScene>());
+            return make_scene<SwapOverlayTextureScene>(
+                "overlay", make_deferred_scene<ReadyScene>());
         }
     }
 
     if (button_mode_ == 1 and APP.player().key_down(Key::action_2)) {
-        return scene_pool::alloc<SwapOverlayTextureScene>(
-            "overlay", scene_pool::make_deferred_scene<ReadyScene>());
+        return make_scene<SwapOverlayTextureScene>(
+            "overlay", make_deferred_scene<ReadyScene>());
     }
 
     return null_scene();

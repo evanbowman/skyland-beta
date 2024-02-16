@@ -5,7 +5,7 @@
 
 
 (defn challenge-hint [0]
-  (dialog "Sorry, no hints for this one."))
+  (lc-dialog-load "challenges" "no-hints"))
 
 
 (defn on-victory [0]

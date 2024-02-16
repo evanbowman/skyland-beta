@@ -55,23 +55,19 @@ ScenePtr<Scene> AssignWeaponGroupScene::update(Time delta)
 
     auto& cursor_loc = globals().near_cursor_loc_;
 
-    auto test_key = [&](Key k) {
-        return APP.player().test_key(k, milliseconds(500), milliseconds(100));
-    };
-
     APP.player().key_held_distribute();
 
     switch (state_) {
     case State::select_group:
         if (APP.player().key_down(Key::action_2)) {
-            return scene_pool::alloc<ReadyScene>();
+            return make_scene<ReadyScene>();
         }
         break;
 
     case State::assign_rooms:
 
         if (APP.player().key_down(Key::action_2)) {
-            return scene_pool::alloc<ReadyScene>();
+            return make_scene<ReadyScene>();
         }
 
 

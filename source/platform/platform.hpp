@@ -23,6 +23,8 @@
 #pragma once
 
 
+#include "containers/array.hpp"
+#include "containers/pair.hpp"
 #include "dateTime.hpp"
 #include "function.hpp"
 #include "graphics/contrast.hpp"
@@ -33,12 +35,10 @@
 #include "memory/buffer.hpp"
 #include "memory/rc.hpp"
 #include "number/numeric.hpp"
+#include "optional.hpp"
 #include "scratch_buffer.hpp"
-#include "severity.hpp"
 #include "sound.hpp"
 #include "unicode.hpp"
-#include <array>
-#include <optional>
 
 
 using TileDesc = u16;
@@ -87,7 +87,6 @@ class Platform
 public:
     class Screen;
     class Keyboard;
-    class Logger;
     class Speaker;
     class NetworkPeer;
     class DeltaClock;
@@ -171,12 +170,6 @@ public:
         return keyboard_;
     }
 
-
-    Logger& logger()
-    {
-        return logger_;
-    }
-
     Speaker& speaker()
     {
         return speaker_;
@@ -239,7 +232,7 @@ public:
     // Supplied with a unicode codepoint, this function should provide an offset
     // into a texture image from which to load a glyph image.
     using TextureCpMapper =
-        std::optional<TextureMapping> (*)(const utf8::Codepoint&);
+        Optional<TextureMapping> (*)(const utf8::Codepoint&);
 
     // Map a glyph into the vram space reserved for the overlay tile layer.
     TileDesc map_glyph(const utf8::Codepoint& glyph,
@@ -296,7 +289,7 @@ public:
            PooledRcControlBlock<DynamicTexture, dynamic_texture_count>>;
 
 
-    std::optional<DynamicTexturePtr> make_dynamic_texture();
+    Optional<DynamicTexturePtr> make_dynamic_texture();
 
 
     // In glyph mode, the platform will automatically unmap glyphs when their
@@ -312,7 +305,7 @@ public:
                   u16 x,
                   u16 y,
                   TileDesc val,
-                  std::optional<u16> palette = {});
+                  Optional<u16> palette = {});
 
 
     void set_raw_tile(Layer layer, u16 x, u16 y, TileDesc val);
@@ -379,8 +372,8 @@ public:
     // For historical reasons, allows you to specify a folder and filename
     // separately. If you do not care for this behavior, supply an empty string
     // in the folder argument, and the path in the filename argument.
-    std::pair<const char*, u32> load_file(const char* folder,
-                                          const char* filename) const;
+    Pair<const char*, u32> load_file(const char* folder,
+                                     const char* filename) const;
 
 
     const char* load_file_contents(const char* folder,
@@ -436,8 +429,8 @@ public:
     class SystemClock
     {
     public:
-        std::optional<DateTime> now();
-        std::optional<DateTime> initial_time();
+        Optional<DateTime> now();
+        Optional<DateTime> initial_time();
 
         void configure(DateTime dt);
 
@@ -460,35 +453,6 @@ public:
     {
     public:
         static constexpr u32 sprite_limit = 128;
-
-
-        class Touch
-        {
-        public:
-            std::optional<Vec2<u32>> read() const
-            {
-                return current_;
-            }
-
-
-            std::optional<Vec2<u32>> up_transition() const
-            {
-                if (not current_ and previous_) {
-                    return previous_;
-                }
-
-                return {};
-            }
-
-
-        private:
-            friend class Screen;
-            std::optional<Vec2<u32>> current_;
-            std::optional<Vec2<u32>> previous_;
-        };
-
-
-        const Touch* touch() const;
 
 
         void draw(const Sprite& spr);
@@ -561,7 +525,7 @@ public:
         // function, I'm retiring this one.
         void fade(float amount,
                   ColorConstant color = ColorConstant::rich_black,
-                  std::optional<ColorConstant> base = {},
+                  Optional<ColorConstant> base = {},
                   bool include_sprites = true,
                   bool include_overlay = false);
 
@@ -590,7 +554,6 @@ public:
 
         View view_;
         void* userdata_;
-        Touch touch_;
     };
 
 
@@ -602,7 +565,7 @@ public:
     class Keyboard
     {
     public:
-        using KeyStates = std::array<bool, int(Key::count)>;
+        using KeyStates = Array<bool, int(Key::count)>;
 
 
         void poll();
@@ -689,31 +652,6 @@ public:
 
 
     ////////////////////////////////////////////////////////////////////////////
-    // Logger
-    ////////////////////////////////////////////////////////////////////////////
-
-
-    class Logger
-    {
-    public:
-        void log(Severity severity, const char* msg);
-
-        void flush();
-
-        void clear();
-
-        Vector<char>* data();
-
-        void set_threshold(Severity severity);
-
-    private:
-        Logger();
-
-        friend class Platform;
-    };
-
-
-    ////////////////////////////////////////////////////////////////////////////
     // Speaker
     ////////////////////////////////////////////////////////////////////////////
 
@@ -723,89 +661,93 @@ public:
     public:
         void start();
 
-        enum Note : u8 {
-            invalid,
-            C,
-            CIS,
-            D,
-            DIS,
-            E,
-            F,
-            FIS,
-            G,
-            GIS,
-            A,
-            AIS,
-            B,
-            count,
-        };
-
-
-        enum class Channel {
-            square_1,
-            square_2,
-            noise,
-            wave,
-            invalid,
-        };
-
-
-        struct NoteDesc
+        struct PSG
         {
-            struct RegularNote
-            {
-                Platform::Speaker::Note note_ : 4;
-                u8 octave_ : 4;
+            enum Note : u8 {
+                invalid,
+                C,
+                CIS,
+                D,
+                DIS,
+                E,
+                F,
+                FIS,
+                G,
+                GIS,
+                A,
+                AIS,
+                B,
+                count,
             };
 
-            struct NoiseFrequency
-            {
-                u8 frequency_select_ : 7;
-                u8 wide_mode_ : 1;
+
+            enum class Channel {
+                square_1,
+                square_2,
+                noise,
+                wave,
+                invalid,
             };
 
-            union
+            struct NoteDesc
             {
-                RegularNote regular_;
-                NoiseFrequency noise_freq_;
+                struct RegularNote
+                {
+                    Platform::Speaker::PSG::Note note_ : 4;
+                    u8 octave_ : 4;
+                };
+
+                struct NoiseFrequency
+                {
+                    u8 frequency_select_ : 7;
+                    u8 wide_mode_ : 1;
+                };
+
+                union
+                {
+                    RegularNote regular_;
+                    NoiseFrequency noise_freq_;
+                };
             };
+
+
+            void play_note(Channel channel, NoteDesc note);
+
+
+            void stop_note(Channel channel);
+
+
+            enum class Effect {
+                none,
+                vibrato,
+                duty,
+                envelope,
+            };
+
+
+            void apply_effect(Channel channel,
+                              Effect effect,
+                              u8 argument,
+                              Microseconds delta);
+
+
+            struct ChannelSettings
+            {
+                u8 length_ : 6;
+                u8 duty_ : 2;
+                u8 envelope_step_ : 3;
+                u8 envelope_direction_ : 1;
+                u8 volume_ : 4;
+            };
+
+
+            void init_square_1(ChannelSettings settings);
+            void init_square_2(ChannelSettings settings);
+            void init_wave(u16 config);
+            void init_noise(ChannelSettings settings);
         };
 
-
-        void play_chiptune_note(Channel channel, NoteDesc note);
-
-
-        void stop_chiptune_note(Channel channel);
-
-
-        enum class Effect {
-            none,
-            vibrato,
-            duty,
-            envelope,
-        };
-
-
-        void apply_chiptune_effect(Channel channel,
-                                   Effect effect,
-                                   u8 argument,
-                                   Microseconds delta);
-
-
-        struct ChannelSettings
-        {
-            u8 length_ : 6;
-            u8 duty_ : 2;
-            u8 envelope_step_ : 3;
-            u8 envelope_direction_ : 1;
-            u8 volume_ : 4;
-        };
-
-
-        void init_chiptune_square_1(ChannelSettings settings);
-        void init_chiptune_square_2(ChannelSettings settings);
-        void init_chiptune_wave(u16 config);
-        void init_chiptune_noise(ChannelSettings settings);
+        PSG* psg();
 
 
         // NOTE: All music will loop. It's just more efficient to implement the
@@ -848,7 +790,7 @@ public:
         // camera center);
         void play_sound(const char* name,
                         int priority,
-                        std::optional<Vec2<Float>> position = {});
+                        Optional<Vec2<Float>> position = {});
         bool is_sound_playing(const char* name);
 
 
@@ -935,7 +877,7 @@ public:
         // data in the network-peer's buffer. If the space in the buffer is
         // insufficient to frame a message, exit polling, and do not call
         // poll_consume() until there's enough space to fill an entire message.
-        std::optional<Message> poll_message();
+        Optional<Message> poll_message();
         void poll_consume(u32 length);
 
     private:
@@ -960,7 +902,7 @@ public:
         void start();
 
 
-        std::optional<Line> readline();
+        Optional<Line> readline();
 
         Line* peek_buffer();
 
@@ -1001,7 +943,6 @@ private:
     Screen screen_;
     Keyboard keyboard_;
     Speaker speaker_;
-    Logger logger_;
     Data* data_ = nullptr;
 };
 
@@ -1050,39 +991,4 @@ inline void draw_image(TileDesc start_tile,
 template <Key k> bool key_down()
 {
     return PLATFORM.keyboard().down_transition<k>();
-}
-
-
-inline void debug(const char* msg)
-{
-    PLATFORM.logger().log(Severity::debug, msg);
-}
-inline void info(const char* msg)
-{
-    PLATFORM.logger().log(Severity::info, msg);
-}
-inline void warning(const char* msg)
-{
-    PLATFORM.logger().log(Severity::warning, msg);
-}
-inline void error(const char* msg)
-{
-    PLATFORM.logger().log(Severity::error, msg);
-}
-
-template <u32 size> void debug(const StringBuffer<size>& buffer)
-{
-    PLATFORM.logger().log(Severity::debug, buffer.c_str());
-}
-template <u32 size> void info(const StringBuffer<size>& buffer)
-{
-    PLATFORM.logger().log(Severity::debug, buffer.c_str());
-}
-template <u32 size> void warning(const StringBuffer<size>& buffer)
-{
-    PLATFORM.logger().log(Severity::debug, buffer.c_str());
-}
-template <u32 size> void error(const StringBuffer<size>& buffer)
-{
-    PLATFORM.logger().log(Severity::debug, buffer.c_str());
 }

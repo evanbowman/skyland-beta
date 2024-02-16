@@ -115,11 +115,11 @@ public:
             switch (selected_) {
             case 0:
                 state_bit_store(StateBit::easy_mode_rewind_declined, false);
-                return scene_pool::alloc<RewindScene>(false);
+                return make_scene<RewindScene>(false);
 
             case 1:
                 state_bit_store(StateBit::easy_mode_rewind_declined, true);
-                return scene_pool::alloc<ReadyScene>();
+                return make_scene<ReadyScene>();
             }
         }
 
@@ -143,11 +143,11 @@ public:
     }
 
 private:
-    std::optional<Text> title_;
-    std::optional<Text> text_;
-    std::optional<Text> yes_text_;
-    std::optional<Text> no_text_;
-    std::optional<Text> lives_;
+    Optional<Text> title_;
+    Optional<Text> text_;
+    Optional<Text> yes_text_;
+    Optional<Text> no_text_;
+    Optional<Text> lives_;
 
     int selected_ = 0;
 };

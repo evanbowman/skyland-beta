@@ -1,5 +1,5 @@
 
-(dialog "Still got those ceramics? The locals might be interested...")
+(lc-dialog-load "ceramics-quest" "dest-intro")
 
 
 
@@ -41,7 +41,7 @@
 
                   (dialog
                    (format
-                    "<c:the collector:6>Wow, such beautiful craftmanship! I must have them!! How much would you sell them for? Here, take %@!"
+                    (lc-dialog-get "ceramics-quest" "dest-reward")
                     sale))
 
                   (coins-add sale)
@@ -51,4 +51,4 @@
                   (setq on-dialog-closed exit))
               (progn
                 (setq on-dialog-closed exit)
-                (dialog "Upon closer inspection, no one seems to be home! Good thing too, as it seems that you lost the tiles along the way!")))))))
+                (lc-dialog-load "ceramics-quest" "dest-failed")))))))

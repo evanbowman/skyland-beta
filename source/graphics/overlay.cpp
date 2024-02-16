@@ -161,7 +161,7 @@ void UIMetric::display()
                     return Text::OptColors{{ColorConstant::med_blue_gray,
                                             ColorConstant::rich_black}};
                 } else {
-                    return std::nullopt;
+                    return nullopt();
                 }
             }
         }();
@@ -196,11 +196,11 @@ void UIMetric::display()
 
 u32 integer_text_length(int n)
 {
-    std::array<char, 40> buffer = {0};
+    char buffer[40] = {0};
 
-    locale_num2str(n, buffer.data(), 10);
+    locale_num2str(n, buffer, 10);
 
-    return strlen(buffer.data());
+    return strlen(buffer);
 }
 
 
@@ -265,10 +265,10 @@ void Text::print(const char* msg,
 
 void Text::assign(int val, const OptColors& colors)
 {
-    std::array<char, 40> buffer = {0};
+    char buffer[40] = {0};
 
-    locale_num2str(val, buffer.data(), 10);
-    this->assign(buffer.data(), colors);
+    locale_num2str(val, buffer, 10);
+    this->assign(buffer, colors);
 }
 
 
@@ -279,7 +279,7 @@ Platform::TextureCpMapper locale_texture_map_transparent();
 
 void print_double_char(utf8::Codepoint c,
                        const OverlayCoord& coord,
-                       const std::optional<FontColors>& colors = {})
+                       const Optional<FontColors>& colors = {})
 {
     if (c not_eq 0) {
         const auto mapping_info = locale_doublesize_texture_map()(c);
@@ -361,7 +361,7 @@ void enable_text_icon_glyphs(bool enable)
 
 void print_char(utf8::Codepoint c,
                 const OverlayCoord& coord,
-                const std::optional<FontColors>& colors = {})
+                const Optional<FontColors>& colors = {})
 {
     if (text_icon_glyphs_enabled) {
         if (c == '@') {
@@ -387,7 +387,7 @@ void print_char(utf8::Codepoint c,
     if (c not_eq 0) {
         auto mapping_info = locale_texture_map()(c);
 
-        u16 t = 495;
+        u16 t = 111;
 
         if (mapping_info) {
 
@@ -474,10 +474,10 @@ void Text::append(const char* str, const OptColors& colors)
 
 void Text::append(int num, const OptColors& colors)
 {
-    std::array<char, 40> buffer = {0};
+    char buffer[40] = {0};
 
-    locale_num2str(num, buffer.data(), 10);
-    this->append(buffer.data(), colors);
+    locale_num2str(num, buffer, 10);
+    this->append(buffer, colors);
 }
 
 

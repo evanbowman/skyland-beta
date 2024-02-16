@@ -34,9 +34,9 @@
 
 #pragma once
 
-#include "platform/conf.hpp"
+#include "allocator.hpp"
+#include "optional.hpp"
 #include "string.hpp"
-#include <optional>
 
 
 
@@ -60,11 +60,11 @@ public:
     using LabelString = StringBuffer<32>;
     using Name = LabelString;
     using Subheading = LabelString;
-    using ContentString = Conf::String;
+    using ContentString = DynamicMemory<StringBuffer<2000>>;
 
 
     LabelString get_label_string(const char* field) const;
-    std::optional<ContentString> get_content_string(const char* field) const;
+    Optional<ContentString> get_content_string(const char* field) const;
     ContentString expect_content_string(const char* field) const;
 
 
@@ -96,7 +96,7 @@ public:
     void store(DataCart cart);
 
 
-    std::optional<DataCart> load(int id) const;
+    Optional<DataCart> load(int id) const;
 
 
     int max_carts() const

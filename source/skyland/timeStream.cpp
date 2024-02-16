@@ -41,6 +41,55 @@ namespace skyland::time_stream
 
 
 
+TimeBuffer::TimeBuffer(TimeTracker& begin) : time_window_begin_(begin.total())
+{
+}
+
+
+
+void TimeBuffer::update(Time delta)
+{
+    elapsed_ += delta;
+}
+
+
+
+void TimeBuffer::rewind(Time delta)
+{
+    elapsed_ -= delta;
+}
+
+
+
+void TimeBuffer::pop(u32 bytes)
+{
+    if (end_ + bytes <= data_ + sizeof data_) {
+        end_ += bytes;
+    }
+}
+
+
+
+event::Header* TimeBuffer::end()
+{
+    if (end_ == data_ + sizeof data_) {
+        return nullptr;
+    }
+    return reinterpret_cast<event::Header*>(end_);
+}
+
+
+
+void TimeStream::free_single_buffer()
+{
+    if (buffers_ and (*buffers_)->next_) {
+        --buffer_count_;
+        buffers_ = std::move(*(*buffers_)->next_);
+    }
+}
+
+
+
 void TimeStream::pop(u32 bytes)
 {
     if (end_) {
@@ -134,7 +183,7 @@ event::Header* TimeStream::end()
 
 
 
-std::optional<u64> TimeStream::end_timestamp()
+Optional<u64> TimeStream::end_timestamp()
 {
     if (end_) {
         if (end_->end()) {

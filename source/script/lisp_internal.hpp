@@ -37,12 +37,13 @@
 #include "lisp.hpp"
 
 
-namespace lisp {
+namespace lisp
+{
 
 
-using LocalVariableOffset = std::pair<u8, u8>;
+using LocalVariableOffset = Pair<u8, u8>;
 
-std::optional<LocalVariableOffset> __find_local(const char* intern_str);
+Optional<LocalVariableOffset> __find_local(const char* intern_str);
 Value* __get_local(LocalVariableOffset off);
 
 

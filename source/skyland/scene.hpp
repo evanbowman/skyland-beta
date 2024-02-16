@@ -108,6 +108,9 @@ public:
     virtual MultiplayerCoOpAwaitChrLockScene* cast_co_op_await_chr_lock_scene();
 
 
+    bool test_key(Key k);
+
+
     // NOTE: gui nodes: one scene subclass in particular supports scripting menu
     // logic with an xml-styled DOM.
     virtual void

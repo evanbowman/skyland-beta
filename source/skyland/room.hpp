@@ -46,7 +46,6 @@
 #include "scene.hpp"
 #include "script/value.hpp"
 #include "tileId.hpp"
-#include <limits>
 
 
 
@@ -263,6 +262,8 @@ public:
     }
 
 
+    bool has_prop(RoomProperties::Value prop);
+
 
     void set_injured();
 
@@ -325,41 +326,25 @@ public:
     ScenePtr<Scene> reject_if_friendly();
 
 
-    virtual std::optional<RoomCoord> get_target() const
-    {
-        return {};
-    }
+    virtual Optional<RoomCoord> get_target() const;
 
 
     virtual bool target_pinned() const;
 
 
-    virtual void set_target(const RoomCoord& target, bool pinned)
-    {
-    }
+    virtual void set_target(const RoomCoord& target, bool pinned);
 
 
-    virtual void unset_target()
-    {
-    }
+    virtual void unset_target();
 
 
-    virtual Time reload_time_remaining() const
-    {
-        return 0;
-    }
+    virtual Time reload_time_remaining() const;
 
 
-    virtual Time reload_interval() const
-    {
-        return 1;
-    }
+    virtual Time reload_interval() const;
 
 
-    virtual void override_reload_timer(Time new_time)
-    {
-        // ...
-    }
+    virtual void override_reload_timer(Time new_time);
 
 
     static Category category()
@@ -374,10 +359,7 @@ public:
     virtual void finalize();
 
 
-    void __unsafe__ignore_finalizer()
-    {
-        finalized_ = true;
-    }
+    void __unsafe__ignore_finalizer();
 
 
     // NOTE: The first three elements of the result list must be room name
@@ -387,10 +369,7 @@ public:
     virtual void deserialize(lisp::Value*);
 
 
-    virtual void append_name_suffix(StringBuffer<32>& result)
-    {
-        return;
-    }
+    virtual void append_name_suffix(StringBuffer<32>& result);
 
 
     Health health() const
@@ -402,10 +381,7 @@ public:
     Health max_health() const;
 
 
-    static Health health_upper_limit()
-    {
-        return std::numeric_limits<Health>::max();
-    }
+    static Health health_upper_limit();
 
 
     void heal(Health amount);
@@ -427,11 +403,7 @@ public:
 
     // DO NOT CALL __set_health()! Intended for rewind, multiplayer, and very
     // niche purposes.
-    void __set_health(Health amount)
-    {
-        health_ = amount;
-        update_description();
-    }
+    void __set_health(Health amount);
 
 
     virtual void apply_damage(Health damage);
@@ -557,7 +529,7 @@ public:
 
     virtual bool attach_drone(SharedEntityRef<Drone>);
     virtual void detach_drone(bool quiet);
-    virtual std::optional<SharedEntityRef<Drone>> drone() const;
+    virtual Optional<SharedEntityRef<Drone>> drone() const;
 
 
     virtual bool create_replicant()

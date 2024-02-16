@@ -196,8 +196,7 @@ bool tapped_topleft_corner();
 
 
 
-std::optional<RoomCoord> get_local_tapclick(Island* island,
-                                            const Vec2<u32>& pos)
+Optional<RoomCoord> get_local_tapclick(Island* island, const Vec2<u32>& pos)
 {
     const auto view_offset = PLATFORM.screen().get_view().int_center();
 
@@ -229,10 +228,10 @@ void shift_rooms_right(Island& island)
     for (auto& room : island.rooms()) {
         tmp->push_back(room.get());
     }
-    for (auto& r : reversed(*tmp)) {
+    foreach_reversed(*tmp, [&](auto& r) {
         island.move_room(r->position(),
                          {(u8)(r->position().x + 1), r->position().y});
-    }
+    });
     // NOTE: because we shifted all blocks to the right by one
     // coordinate, a drone may now be inside of a block, which we
     // don't want to deal with at the moment, so just destroy them
@@ -242,8 +241,7 @@ void shift_rooms_right(Island& island)
     }
     // Furthermore... all weapons on the players' island need to
     // have their targets adjusted accordingly:
-    Island* other_island = (is_player_island(&island)) ? APP.opponent_island()
-                                                       : &APP.player_island();
+    Island* other_island = get_island(not is_player_island(&island));
 
     if (other_island) {
         for (auto& r : other_island->rooms()) {
@@ -274,9 +272,9 @@ ScenePtr<Scene> ConstructionScene::update(Time delta)
     auto exit_scene = [this, fixup_cursor]() -> ScenePtr<Scene> {
         fixup_cursor();
         if (near_) {
-            return scene_pool::alloc<ReadyScene>();
+            return make_scene<ReadyScene>();
         } else {
-            return scene_pool::alloc<InspectP2Scene>();
+            return make_scene<InspectP2Scene>();
         }
     };
 
@@ -286,7 +284,7 @@ ScenePtr<Scene> ConstructionScene::update(Time delta)
     }
 
     if (APP.player().key_down(Key::select)) {
-        return scene_pool::alloc<SelectMenuScene>();
+        return make_scene<SelectMenuScene>();
     }
 
     if (not island()) {
@@ -310,21 +308,7 @@ ScenePtr<Scene> ConstructionScene::update(Time delta)
     }
 
 
-    auto tapclick = [&]() -> std::optional<Vec2<s8>> {
-        if (auto pos = APP.player().tap_released()) {
-            auto clk = get_local_tapclick(island(), *pos);
-
-            if (clk) {
-                return clk->cast<s8>();
-            }
-        }
-        return std::nullopt;
-    }();
-
-
-    auto test_key = [&](Key k) {
-        return APP.player().test_key(k, milliseconds(500), milliseconds(100));
-    };
+    auto tapclick = [&]() -> Optional<Vec2<s8>> { return nullopt(); }();
 
     bool sync_cursor = false;
 
@@ -357,7 +341,7 @@ ScenePtr<Scene> ConstructionScene::update(Time delta)
 
                 cursor_loc.x = 0;
                 cursor_loc.y = globals().near_cursor_loc_.y;
-                return scene_pool::alloc<ConstructionScene>(false);
+                return make_scene<ConstructionScene>(false);
             }
         } else if (test_key(Key::left)) {
             stack_ = 0;
@@ -376,7 +360,7 @@ ScenePtr<Scene> ConstructionScene::update(Time delta)
                 cursor_loc.y = globals().far_cursor_loc_.y;
 
                 PLATFORM.speaker().play_sound("cursor_tick", 0);
-                return scene_pool::alloc<ConstructionScene>(true);
+                return make_scene<ConstructionScene>(true);
             }
         } else if (test_key(Key::up)) {
             stack_ = 0;
@@ -462,17 +446,7 @@ ScenePtr<Scene> ConstructionScene::update(Time delta)
                     show_current_building_text();
                 }
             }
-        } else if (tapclick or APP.player().touch_held(milliseconds(200))) {
-
-            if (APP.player().touch_held(milliseconds(200))) {
-                // If the player presses and holds the touch screen, scroll
-                // through available construction sites.
-                if (auto pos = APP.player().touch_current()) {
-                    if (auto t = get_local_tapclick(island(), *pos)) {
-                        tapclick = t->cast<s8>();
-                    }
-                }
-            }
+        } else if (tapclick) {
 
             if (tapclick) {
                 // First try to find an exact match. If not, try a loose match
@@ -503,14 +477,14 @@ ScenePtr<Scene> ConstructionScene::update(Time delta)
     case State::choose_building: {
         if (APP.player().key_down(Key::start)) {
             auto mt = data_->available_buildings_[building_selector_];
-            auto next = scene_pool::alloc<GlossaryViewerModule>(mt);
+            auto next = make_scene<GlossaryViewerModule>(mt);
             category_label_.reset();
             next->skip_categories();
             if (next) {
                 const bool near = near_;
                 const u8 mti_8 = mt;
                 next->set_next_scene([near, mti_8]() {
-                    auto s = scene_pool::alloc<ConstructionScene>(near);
+                    auto s = make_scene<ConstructionScene>(near);
                     s->open_prompt_at(mti_8);
                     return s;
                 });
@@ -543,33 +517,14 @@ ScenePtr<Scene> ConstructionScene::update(Time delta)
                 show_current_building_text();
             }
         };
-        if (APP.player().touch_held(milliseconds(200))) {
-            if (auto p = APP.player().touch_current()) {
-                if (last_touch_x_) {
-                    touchscroll_ += p->x - last_touch_x_;
-                    last_touch_x_ = p->x;
-                } else {
-                    last_touch_x_ = p->x;
-                }
-            }
-            if (touchscroll_ < -16) {
-                touchscroll_ = 0;
-                scroll_right();
-            } else if (touchscroll_ > 16) {
-                touchscroll_ = 0;
-                scroll_left();
-            }
-        } else if (APP.player().key_down(Key::action_2) or
-                   (tapclick and
-                    *tapclick not_eq data_->construction_sites_[selector_])) {
+        if (APP.player().key_down(Key::action_2) or
+            (tapclick and
+             *tapclick not_eq data_->construction_sites_[selector_])) {
             find_construction_sites();
             state_ = State::select_loc;
             category_label_.reset();
             msg(SYSTR(construction_build)->c_str());
-            last_touch_x_ = 0;
             break;
-        } else {
-            last_touch_x_ = 0;
         }
 
         if (APP.player().key_down(Key::down)) {
@@ -886,6 +841,12 @@ void ConstructionScene::show_current_building_text()
 
     StringBuffer<32> str = SYSTR(construction_build)->c_str();
     str += " :";
+
+    if (str_eq(systemstring_bound_lang(), "spanish")) {
+        // Spanish names are too long! Use a shorter prefix
+        str = ":";
+    }
+
 
     str += (*load_metaclass(data_->available_buildings_[building_selector_]))
                ->ui_name()

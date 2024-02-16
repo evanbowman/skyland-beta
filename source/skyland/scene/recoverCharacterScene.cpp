@@ -61,14 +61,10 @@ ScenePtr<Scene> RecoverCharacterScene::update(Time delta)
     }
 
     if (not APP.opponent_island()) {
-        return scene_pool::alloc<ReadyScene>();
+        return make_scene<ReadyScene>();
     }
 
     auto& cursor_loc = globals().far_cursor_loc_;
-
-    auto test_key = [&](Key k) {
-        return APP.player().test_key(k, milliseconds(500), milliseconds(100));
-    };
 
     APP.player().key_held_distribute();
 
@@ -109,7 +105,7 @@ ScenePtr<Scene> RecoverCharacterScene::update(Time delta)
 
                     if (auto transporter = origin->cast<Transporter>()) {
                         transporter->recover_character(cursor_loc);
-                        return scene_pool::alloc<ReadyScene>();
+                        return make_scene<ReadyScene>();
                     }
                 }
             }
@@ -117,7 +113,7 @@ ScenePtr<Scene> RecoverCharacterScene::update(Time delta)
     }
 
     if (APP.player().key_down(Key::action_2)) {
-        return scene_pool::alloc<ReadyScene>();
+        return make_scene<ReadyScene>();
     }
 
 

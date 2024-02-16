@@ -143,13 +143,13 @@ void Platform::DynamicTexture::remap(u16 spritesheet_offset)
 }
 
 
-std::optional<DateTime> Platform::SystemClock::initial_time()
+Optional<DateTime> Platform::SystemClock::initial_time()
 {
     return {};
 }
 
 
-std::optional<Platform::DynamicTexturePtr> Platform::make_dynamic_texture()
+Optional<Platform::DynamicTexturePtr> Platform::make_dynamic_texture()
 {
     return {};
 }
@@ -210,7 +210,7 @@ void Platform::set_tile(Layer layer,
                         u16 x,
                         u16 y,
                         u16 val,
-                        std::optional<u16> palette)
+                        Optional<u16> palette)
 {
 }
 
@@ -251,8 +251,8 @@ void Platform::fatal(const char* msg)
 }
 
 
-std::pair<const char*, u32> Platform::load_file(const char* folder,
-                                                const char* filename) const
+Pair<const char*, u32> Platform::load_file(const char* folder,
+                                           const char* filename) const
 {
     return {nullptr, 0};
 }
@@ -307,7 +307,7 @@ Platform::SystemClock::SystemClock()
 }
 
 
-std::optional<DateTime> Platform::SystemClock::now()
+Optional<DateTime> Platform::SystemClock::now()
 {
     return {};
 }
@@ -374,7 +374,7 @@ void Platform::NetworkPeer::update()
 }
 
 
-auto Platform::NetworkPeer::poll_message() -> std::optional<Message>
+auto Platform::NetworkPeer::poll_message() -> Optional<Message>
 {
     // TODO
     return {};
@@ -484,7 +484,7 @@ alignas(16) g2dColor fade_rect[fade_rect_side_length * fade_rect_side_length];
 
 void Platform::Screen::fade(Float amount,
                             ColorConstant k,
-                            std::optional<ColorConstant> base,
+                            Optional<ColorConstant> base,
                             bool include_sprites,
                             bool include_overlay)
 {
@@ -736,7 +736,7 @@ static void display_overlay()
     //     for (int y = 0; y < 32; ++y) {
     //         auto tile = overlay_tiles[x][y];
     //         bool is_glyph = false;
-    //         std::optional<int> ext_palette;
+    //         Optional<int> ext_palette;
 
     //         if (tile & (1 << 15)) {
     //             tile = tile & (~(1 << 15));
@@ -952,9 +952,8 @@ void Platform::Screen::display()
 
     display_map(view_.get_center() * 2.f);
 
-    for (auto& spr : reversed(::sprite_queue)) {
-        display_sprite(*this, spr);
-    }
+    foreach_reversed(::sprite_queue,
+                     [&](auto& spr) { display_sprite(*this, spr); });
 
     sprite_queue.clear();
 
@@ -978,7 +977,7 @@ Platform::Speaker::Speaker()
 
 void Platform::Speaker::play_sound(const char* name,
                                    int priority,
-                                   std::optional<Vec2<Float>> position)
+                                   Optional<Vec2<Float>> position)
 {
     // TODO
 }
@@ -1066,7 +1065,7 @@ Platform::Logger::Logger()
 ////////////////////////////////////////////////////////////////////////////////
 
 
-auto Platform::RemoteConsole::readline() -> std::optional<Line>
+auto Platform::RemoteConsole::readline() -> Optional<Line>
 {
     // TODO
     return {};
@@ -1078,7 +1077,7 @@ auto Platform::RemoteConsole::readline() -> std::optional<Line>
 ////////////////////////////////////////////////////////////////////////////////
 
 
-std::optional<Bitvector<int(Key::count)>> missed_keys;
+Optional<Bitvector<int(Key::count)>> missed_keys;
 
 
 void Platform::Keyboard::rumble(bool)
@@ -1122,7 +1121,7 @@ void Platform::Keyboard::poll()
         states_[int(Key::down)] = true;
     }
 
-    if (UNLIKELY(static_cast<bool>(::missed_keys))) {
+    if (static_cast<bool>(::missed_keys)) [[unlikely]] {
         for (int i = 0; i < (int)Key::count; ++i) {
             if ((*::missed_keys)[i]) {
                 states_[i] = true;

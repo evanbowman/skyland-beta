@@ -35,13 +35,12 @@
 #pragma once
 
 #include "fadeInScene.hpp"
-#include "modules/datetimeModule.hpp"
 #include "modules/macrocosmFreebuildModule.hpp"
-#include "platform/flash_filesystem.hpp"
+#include "platform/conf.hpp"
 #include "script/lisp.hpp"
+#include "setLanguageScene.hpp"
 #include "skyland/latency.hpp"
 #include "skyland/player/coOpTeam.hpp"
-#include "skyland/scene/introCreditsScene.hpp"
 #include "skyland/scene/modules/skylandForever.hpp"
 #include "skyland/scene_pool.hpp"
 #include "skyland/skyland.hpp"
@@ -51,10 +50,6 @@
 
 namespace skyland
 {
-
-
-
-static constexpr const char* lang_file = "/lang.txt";
 
 
 
@@ -68,133 +63,6 @@ void __draw_image(TileDesc start_tile,
                   u16 width,
                   u16 height,
                   Layer layer);
-
-
-
-class LanguageSelectScene : public Scene
-{
-private:
-    using LanguageOptions =
-        Buffer<std::pair<StringBuffer<48>, StringBuffer<48>>, 16>;
-    DynamicMemory<LanguageOptions> opts_;
-
-    int sel_ = 0;
-
-    Buffer<Text, 8> text_opts_;
-
-    bool clean_boot_;
-
-public:
-    LanguageSelectScene(bool clean_boot)
-        : opts_(load_language_options()), clean_boot_(clean_boot)
-    {
-    }
-
-
-    void enter(Scene& prev) override
-    {
-        if (opts_->size() > 1) {
-            u8 row = 3;
-            for (auto& opt : *opts_) {
-                text_opts_.emplace_back(opt.first.c_str(),
-                                        OverlayCoord{3, row});
-                row += 2;
-            }
-        }
-    }
-
-
-    void exit(Scene& prev) override
-    {
-        text_opts_.clear();
-        for (int y = 0; y < 20; ++y) {
-            PLATFORM.set_tile(Layer::overlay, 1, y, 0);
-        }
-    }
-
-
-    ScenePtr<Scene> update(Time delta) override
-    {
-        auto show_cursor = [&] {
-            for (int y = 0; y < 20; ++y) {
-                PLATFORM.set_tile(Layer::overlay, 1, y, 0);
-            }
-            PLATFORM.set_tile(Layer::overlay, 1, 3 + sel_ * 2, 396);
-        };
-
-        show_cursor();
-
-        if (key_down<Key::up>()) {
-            if (sel_ > 0) {
-                --sel_;
-                PLATFORM.speaker().play_sound("click_wooden", 2);
-            }
-        } else if (key_down<Key::down>()) {
-            if (sel_ < (int)opts_->size() - 1) {
-                ++sel_;
-                PLATFORM.speaker().play_sound("click_wooden", 2);
-            }
-        } else if (opts_->empty() or opts_->size() == 1 or
-                   key_down<Key::action_1>()) {
-            if (opts_->size() > 1) {
-                auto path = (*opts_)[sel_].second.c_str();
-                systemstring_bind_file(path);
-                flash_filesystem::store_file_data(
-                    lang_file, path, strlen(path));
-            }
-            auto has_clock = PLATFORM.system_clock().initial_time();
-            if (clean_boot_ and has_clock) {
-                auto next = scene_pool::alloc<DatetimeModule>();
-                next->next_scene_ =
-                    scene_pool::make_deferred_scene<IntroCreditsScene>();
-                return next;
-            } else {
-                if (PLATFORM.device_name() == "MacroDesktopDemo") {
-                    APP.gp_.stateflags_.set(
-                        GlobalPersistentData::freebuild_unlocked, true);
-                    return scene_pool::alloc<MacrocosmFreebuildModule>();
-                }
-
-                return scene_pool::alloc<IntroCreditsScene>();
-            }
-        }
-
-        return null_scene();
-    }
-
-
-private:
-    static DynamicMemory<LanguageOptions> load_language_options()
-    {
-        auto result = allocate_dynamic<LanguageOptions>("lang-table");
-
-        auto cp = PLATFORM.load_file_contents("strings", "lang.txt");
-
-        std::pair<StringBuffer<48>, StringBuffer<48>> current;
-        int parse_state = 0;
-        utf8::scan(
-            [&](utf8::Codepoint cp, const char* raw, int) {
-                if (cp == '=') {
-                    parse_state = 1;
-                } else if (cp == '\n') {
-                    parse_state = 0;
-                    result->emplace_back(current);
-                    current.first.clear();
-                    current.second.clear();
-                } else {
-                    if (parse_state == 0) {
-                        current.first += raw;
-                    } else {
-                        current.second += raw;
-                    }
-                }
-            },
-            cp,
-            strlen(cp));
-
-        return result;
-    }
-};
 
 
 
@@ -226,7 +94,6 @@ public:
         PLATFORM.system_call("vsync", 0);
         PLATFORM.enable_glyph_mode(true);
         PLATFORM.load_overlay_texture("overlay");
-        PLATFORM.load_tile1_texture("boot_img_flattened");
 
         auto fc = FontColors{amber_color, back_color};
 
@@ -239,8 +106,10 @@ public:
             }
         }
 
-
         __draw_image(1, 0, 0, 30, 12, Layer::map_1);
+        PLATFORM.load_tile1_texture("boot_img_flattened");
+
+
 
         PLATFORM.screen().schedule_fade(0.f);
 
@@ -385,52 +254,79 @@ public:
 
         info(format("boot took %", t2 - t1));
 
+        Conf conf;
+#define CONF_STR(NAME) (*conf.expect<Conf::String>("startup", #NAME))
+
+        const bool show_button_hint = CONF_STR(show_button_hint) == "yes";
+
         PLATFORM.fill_overlay(0);
-        PLATFORM.screen().schedule_fade(1.f);
+        if (show_button_hint) {
+            PLATFORM.system_call("vsync", 0);
+            for (int y = 0; y < 20; ++y) {
+                for (int x = 0; x < 30; ++x) {
+                    PLATFORM.set_raw_tile(Layer::map_1, x, y, 0);
+                }
+            }
+            PLATFORM.screen().schedule_fade(
+                1.f, back_color, true, true, true, true);
+        } else {
+            PLATFORM.screen().schedule_fade(1.f);
+        }
+
         PLATFORM.screen().clear();
         PLATFORM.screen().display();
         PLATFORM.sleep(10);
 
-        // Special case: if we're connected to a networked multiplayer peer upon
-        // boot, then we've started a multiboot game, and should progress
-        // immediately to a co op match after starting up.
-        if (PLATFORM.network_peer().is_connected()) {
-            state_bit_store(StateBit::multiboot, true);
-            globals().room_pools_.create("room-mem");
-            globals().entity_pools_.create("entity-mem");
-            APP.time_stream().enable_pushes(false);
-            APP.invoke_script("/scripts/config/rooms.lisp");
-            APP.invoke_script("/scripts/config/damage.lisp");
-            APP.invoke_script("/scripts/config/timing.lisp");
-            init_clouds();
-            PLATFORM.load_tile0_texture(
-                APP.environment().player_island_texture());
-            PLATFORM.load_tile1_texture(
-                APP.environment().opponent_island_texture());
-            PLATFORM.load_sprite_texture(APP.environment().sprite_texture());
-            PLATFORM.load_background_texture(
-                APP.environment().background_texture());
-            PLATFORM.system_call("v-parallax", (void*)true);
-            SkylandForever::init(1, rng::get(rng::critical_state));
-            APP.persistent_data().score_.set(0);
-            APP.set_coins(std::max(0, APP.coins() - 1000));
-            APP.swap_player<CoOpTeam>();
-            APP.game_mode() = App::GameMode::co_op;
+        auto fc = FontColors{amber_color, back_color};
 
-            for (auto& room : APP.player_island().rooms()) {
-                network::packet::RoomConstructed packet;
-                packet.metaclass_index_.set(room->metaclass_index());
-                packet.x_ = room->position().x;
-                packet.y_ = room->position().y;
-                network::transmit(packet);
+        if (show_button_hint) {
+            PLATFORM.load_tile1_texture("button_hint_flattened");
+
+            PLATFORM.screen().schedule_fade(
+                0.f, back_color, true, false, true, false);
+            PLATFORM.screen().schedule_fade(
+                1.f, back_color, true, false, true, false);
+            __draw_image(1, 0, 3, 30, 12, Layer::map_1);
+
+            Text::print(CONF_STR(default_btns).c_str(), {6, 1}, fc);
+            Text::print(CONF_STR(next).c_str(), {6, 18}, fc);
+            Text::print(CONF_STR(btn_A).c_str(), {23, 8}, fc);
+            Text::print(CONF_STR(btn_B).c_str(), {23, 10}, fc);
+            Text::print(CONF_STR(btn_L).c_str(), {5, 4}, fc);
+            Text::print(CONF_STR(btn_R).c_str(), {23, 4}, fc);
+            Text::print(CONF_STR(btn_SEL).c_str(), {9, 14}, fc);
+            Text::print(CONF_STR(btn_START).c_str(), {0, 11}, fc);
+            Text::print(CONF_STR(btn_DPAD).c_str(), {0, 9}, fc);
+
+            while (1) {
+                PLATFORM.keyboard().poll();
+                PLATFORM.system_call("feed-watchdog", nullptr);
+
+                if (PLATFORM.keyboard()
+                        .down_transition<Key::action_1,
+                                         Key::action_2,
+                                         Key::up,
+                                         Key::down,
+                                         Key::left,
+                                         Key::right,
+                                         Key::start,
+                                         Key::select,
+                                         Key::alt_1,
+                                         Key::alt_2>()) {
+                    break;
+                }
+
+                PLATFORM.screen().clear();
+                PLATFORM.screen().display();
             }
 
-            return scene_pool::alloc<FadeInScene>();
+            PLATFORM.fill_overlay(0);
+            PLATFORM.screen().schedule_fade(1.f);
         }
 
         if (not flash_filesystem::file_exists(lang_file) or clean_boot_) {
             info("lang selection...");
-            return scene_pool::alloc<LanguageSelectScene>(clean_boot_);
+            return make_scene<LanguageSelectScene>(clean_boot_);
         } else {
             message("bind strings file...");
             Vector<char> data;
@@ -439,9 +335,10 @@ public:
                 for (char c : data) {
                     path.push_back(c);
                 }
-                systemstring_bind_file(path.c_str());
+                PLATFORM.fill_overlay(0);
+                systemstring_bind_language(path.c_str());
             }
-            return scene_pool::alloc<IntroCreditsScene>();
+            return make_scene<IntroCreditsScene>();
         }
     }
 };

@@ -43,7 +43,8 @@ DataCart::LabelString DataCart::get_label_string(const char* field) const
 {
     auto f = config();
     Conf c;
-    auto result = c.get(f, "label", field);
+    auto result =
+        c.get(f, format("label_%", systemstring_bound_lang()).c_str(), field);
     if (auto val = std::get_if<Conf::String>(&result)) {
         return (*val)->c_str();
     } else {
@@ -68,7 +69,7 @@ DataCart::ContentString DataCart::expect_content_string(const char* field) const
 
 
 
-std::optional<DataCart::ContentString>
+Optional<DataCart::ContentString>
 DataCart::get_content_string(const char* field) const
 {
     auto f = config();
@@ -77,7 +78,7 @@ DataCart::get_content_string(const char* field) const
     if (auto val = std::get_if<Conf::String>(&result)) {
         return std::move(*val);
     } else {
-        return std::nullopt;
+        return nullopt();
     }
 }
 
@@ -147,7 +148,7 @@ void DataCartLibrary::store(DataCart cart)
 
 
 
-std::optional<DataCart> DataCartLibrary::load(int id) const
+Optional<DataCart> DataCartLibrary::load(int id) const
 {
     if (carts_ & (1 << id)) {
         return DataCart(id);

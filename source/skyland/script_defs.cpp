@@ -39,6 +39,7 @@
 #include "eternal/eternal.hpp"
 #include "heap_data.hpp"
 #include "macrocosmEngine.hpp"
+#include "platform/conf.hpp"
 #include "platform/flash_filesystem.hpp"
 #include "player/autopilotPlayer.hpp"
 #include "player/opponent/enemyAI.hpp"
@@ -98,7 +99,7 @@ bool is_x_behind_storm_frontier(int x, int storm_offset);
 
 
 
-std::pair<App*, Platform*> interp_get_context()
+Pair<App*, Platform*> interp_get_context()
 {
     return {&APP, lisp::interp_get_pfrm()};
 }
@@ -199,12 +200,12 @@ BINDING_TABLE({
      {1,
       [](int argc) {
           L_EXPECT_OP(0, string);
-          systemstring_bind_file(L_LOAD_STRING(0));
+          systemstring_bind_language(L_LOAD_STRING(0));
           return L_NIL;
       }}},
     {"lang",
      {0,
-      [](int argc) { return lisp::make_string(systemstring_bound_file()); }}},
+      [](int argc) { return lisp::make_string(systemstring_bound_lang()); }}},
     {"log",
      {1,
       [](int argc) {
@@ -356,13 +357,11 @@ BINDING_TABLE({
     {"help",
      {0,
       [](int argc) {
-          using scene_pool::make_deferred_scene;
-
           if (argc == 0) {
               push_menu_queue.emplace_back([] {
                   UserContext ctx;
                   ctx.browser_exit_scene_ = make_deferred_scene<ReadyScene>();
-                  return scene_pool::alloc<FileBrowserModule>(
+                  return make_scene<FileBrowserModule>(
                       std::move(ctx), "/help/", true);
               });
           }
@@ -376,8 +375,6 @@ BINDING_TABLE({
           auto menu_name = L_LOAD_STRING(1);
           auto param_list = lisp::get_op(0);
 
-          using scene_pool::make_deferred_scene;
-
           if (str_eq(menu_name, "ready")) {
               push_menu_queue.push_back(make_deferred_scene<ReadyScene>());
           } else if (str_eq(menu_name, "item-shop")) {
@@ -386,7 +383,7 @@ BINDING_TABLE({
               auto sym = param_list->cons().car()->symbol().name();
               push_menu_queue.push_back([sym]() {
                   auto idx = metaclass_index(sym);
-                  auto ret = scene_pool::alloc<GlossaryViewerModule>(idx);
+                  auto ret = make_scene<GlossaryViewerModule>(idx);
                   ret->set_next_scene(make_deferred_scene<ReadyScene>());
                   ret->skip_categories();
                   ret->disable_fade_on_exit_ = true;
@@ -400,7 +397,7 @@ BINDING_TABLE({
           } else if (str_eq(menu_name, "qrcode")) {
               auto tmp = save_str(param_list->cons().car()->string().value());
               push_menu_queue.emplace_back([tmp]() mutable {
-                  auto next = scene_pool::alloc<QRViewerScene>(
+                  auto next = make_scene<QRViewerScene>(
                       tmp->data_,
                       "",
                       make_deferred_scene<ReadyScene>(),
@@ -414,7 +411,7 @@ BINDING_TABLE({
               // to hide a pure lisp string from the garbage collector when
               // passed through a lambda capture clause.
               push_menu_queue.push_back([tmp]() {
-                  return scene_pool::alloc<ScriptedMenuScene>(tmp->data_);
+                  return make_scene<ScriptedMenuScene>(tmp->data_);
               });
           }
           return L_NIL;
@@ -658,6 +655,48 @@ BINDING_TABLE({
      {0,
       [](int argc) {
           APP.key_callback_processor().clear();
+          return L_NIL;
+      }}},
+    {"lc-dialog-get",
+     {2,
+      [](int argc) {
+          L_EXPECT_OP(0, string);
+          L_EXPECT_OP(1, string);
+
+          if (auto f = systemstring_dialog_file()) {
+              Conf c;
+              auto res = c.get(f, L_LOAD_STRING(1), L_LOAD_STRING(0));
+              if (auto val = std::get_if<Conf::String>(&res)) {
+                  return lisp::make_string((*val)->c_str());
+              }
+          }
+
+          return L_NIL;
+      }}},
+    {"lc-dialog-load",
+     {2,
+      [](int argc) {
+          L_EXPECT_OP(0, string);
+          L_EXPECT_OP(1, string);
+
+          if (auto f = systemstring_dialog_file()) {
+              Conf c;
+              auto res = c.get(f, L_LOAD_STRING(1), L_LOAD_STRING(0));
+              if (auto val = std::get_if<Conf::String>(&res)) {
+                  if (not APP.dialog_buffer()) {
+                      APP.dialog_buffer().emplace(
+                          allocate_dynamic<DialogString>("dialog-buffer"));
+                  }
+                  **APP.dialog_buffer() += (*val)->c_str();
+              }
+          }
+
+          return L_NIL;
+      }}},
+    {"force-save",
+     {0,
+      [](int argc) {
+          save::store(APP.persistent_data());
           return L_NIL;
       }}},
     {"has-dialog?",
@@ -1136,7 +1175,8 @@ BINDING_TABLE({
               if ((*room->metaclass())->category() == Room::Category::power) {
                   int pwr_cnt = 0;
                   for (auto& o : island->rooms()) {
-                      if ((*o->metaclass())->category() == Room::Category::power) {
+                      if ((*o->metaclass())->category() ==
+                          Room::Category::power) {
                           ++pwr_cnt;
                       }
                   }
@@ -1493,9 +1533,9 @@ BINDING_TABLE({
               // auto current = macrocosm(*app).data_->p().coins_.get();
               // current += L_LOAD_INT(0);
               // macrocosm(*app).data_->p().coins_.set(
-              //     std::min(std::numeric_limits<macro::Coins>::max(), current));
+              //     util::min(std::numeric_limits<macro::Coins>::max(), current));
           } else {
-              APP.set_coins(std::max(0, (int)(L_LOAD_INT(0) + APP.coins())));
+              APP.set_coins(util::max(0, (int)(L_LOAD_INT(0) + APP.coins())));
           }
 
           return L_NIL;
@@ -1508,7 +1548,7 @@ BINDING_TABLE({
           if (APP.macrocosm()) {
               // auto val = L_LOAD_INT(0);
               // macrocosm(*app).data_->p().coins_.set(
-              //     std::min(std::numeric_limits<macro::Coins>::max(), val));
+              //     util::min(std::numeric_limits<macro::Coins>::max(), val));
           } else {
               APP.set_coins(L_LOAD_INT(0));
           }

@@ -38,9 +38,9 @@
 #include "function.hpp"
 #include "number/endian.hpp"
 #include "number/numeric.hpp"
+#include "optional.hpp"
 #include "platform/libc.hpp"
 #include "string.hpp"
-#include <optional>
 
 
 
@@ -118,7 +118,7 @@ inline bool scan(Callback&& callback, const char* data, size_t len)
 template <typename CharType>
 inline Codepoint getc(const CharType* data, int* consumed = nullptr)
 {
-    std::optional<Codepoint> front;
+    Optional<Codepoint> front;
     scan(
         [&front, &consumed](const Codepoint& cp, const char* raw, int) {
             if (not front) {

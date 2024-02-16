@@ -6,15 +6,15 @@
 
 (setq on-fadein
       (lambda
-        (dialog "<c:crew:5>Those goblins noticed us and are about to jump away to bring help! Destroy them before they can get away!")))
+        (lc-dialog-load "challenges" "hint-ch-beacon")))
 
 
 (defn challenge-hint [0]
-  (dialog "Are you sure you want a hint?")
+  (lc-dialog-load "challenges" "are-you-sure")
   (dialog-await-y/n)
 
   (defn on-dialog-accepted [0]
-    (dialog "Cannons and missiles aren't going to work here. You'll need to find a way to punch a hole inside the enemy's walls and deploy a drone..."))
+    (lc-dialog-load "challenges" "intro-ch-beacon"))
 
   (setq on-dialog-declined (lambda '())))
 

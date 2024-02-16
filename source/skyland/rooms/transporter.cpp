@@ -312,7 +312,7 @@ void Transporter::recover_character(const RoomCoord& position)
 
 
 
-void Transporter::transport_occupant(std::optional<RoomCoord> destination)
+void Transporter::transport_occupant(Optional<RoomCoord> destination)
 {
     begin_recharge();
 
@@ -334,7 +334,7 @@ void Transporter::transport_occupant(std::optional<RoomCoord> destination)
         return;
     }
 
-    std::optional<RoomCoord> dest;
+    Optional<RoomCoord> dest;
 
     if (not destination) {
         bool matrix[16][16];
@@ -456,7 +456,7 @@ ScenePtr<Scene> Transporter::select_impl(const RoomCoord& cursor)
         }
 
         if (parent()->has_radar() and is_player_island(parent())) {
-            return scene_pool::alloc<TransportCharacterScene>(position());
+            return make_scene<TransportCharacterScene>(position());
         } else {
             transport_occupant();
         }
@@ -464,7 +464,7 @@ ScenePtr<Scene> Transporter::select_impl(const RoomCoord& cursor)
         return null_scene();
     } else {
         if (is_player_island(parent())) {
-            return scene_pool::alloc<RecoverCharacterScene>(position());
+            return make_scene<RecoverCharacterScene>(position());
         } else {
             PLATFORM.speaker().play_sound("beep_error", 3);
             return null_scene();

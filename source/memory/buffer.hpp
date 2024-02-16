@@ -34,9 +34,9 @@
 
 #pragma once
 
+#include "containers/array.hpp"
 #include "number/numeric.hpp"
 #include "util.hpp"
-#include <array>
 #include <new>
 
 
@@ -49,9 +49,6 @@ public:
     // (only for stl compatibility)
     using iterator = Iterator;
     using value_type = ValueType;
-    using reverse_iterator = std::reverse_iterator<iterator>;
-
-    using ReverseIterator = reverse_iterator;
 
 
     Buffer() : mem_{}, begin_((Iterator)mem_.data()), end_(begin_)
@@ -114,18 +111,6 @@ public:
     Iterator end()
     {
         return end_;
-    }
-
-
-    ReverseIterator rbegin()
-    {
-        return ReverseIterator(end());
-    }
-
-
-    ReverseIterator rend()
-    {
-        return ReverseIterator(begin());
     }
 
 
@@ -298,7 +283,7 @@ public:
 
 
 private:
-    alignas(T) std::array<u8, Capacity * sizeof(T)> mem_;
+    alignas(T) Array<u8, Capacity * sizeof(T)> mem_;
     Iterator begin_;
     Iterator end_;
 };

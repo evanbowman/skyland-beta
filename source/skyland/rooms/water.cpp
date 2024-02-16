@@ -195,7 +195,7 @@ void Water::update(Time delta)
 void Water::render_interior(App* app, TileId buffer[16][16])
 {
     auto above = parent()->get_room({position().x, (u8)(position().y - 1)});
-    if (above and (*above->metaclass())->properties() & RoomProperties::fluid) {
+    if (above and above->has_prop(RoomProperties::fluid)) {
         buffer[position().x][position().y] = InteriorTile::water_column;
     } else {
         u8 x = position().x;
@@ -217,7 +217,7 @@ void Water::render_interior(App* app, TileId buffer[16][16])
 void Water::render_exterior(App* app, TileId buffer[16][16])
 {
     auto above = parent()->get_room({position().x, (u8)(position().y - 1)});
-    if (above and (*above->metaclass())->properties() & RoomProperties::fluid) {
+    if (above and above->has_prop(RoomProperties::fluid)) {
         buffer[position().x][position().y] = Tile::water_column;
     } else {
         u8 x = position().x;

@@ -1,5 +1,5 @@
 
-(dialog "<b:/scripts/misc/img/farm_colony.img.bin>A nearby farming colony requests assistance...")
+(lc-dialog-load "lemon-quest" "intro")
 
 
 (opponent-init 8 'neutral)
@@ -37,14 +37,13 @@
 
 (secret
  4 11
- "Farms in Skyland grow crops cultivated for cold air. Even so, nothing would grow at this altitude without heat from the island core...")
+ (lc-dialog-get "lemon-quest" "secret"))
 
 (defn on-converge [0]
   (let ((m (eval-file "/scripts/event/quest/make_quest_marker.lisp")))
     (if m
         (progn
-          (dialog
-           "<c:Farmer Meyer:9>Looks like a bad storm's coming this way! Hey, I have an idea! How about you do me a favor and relocate my orchard of lemon trees to my brother's island... I'll tell him to pay you 1400@ for each one that you successfully deliver!")
+          (lc-dialog-load "lemon-quest" "offer")
 
           (defn on-dialog-closed [0]
             (map
@@ -69,8 +68,8 @@
 
             (adventure-log-add 18 (list (rcnt (player) 'lemon-tree)))
 
-            (dialog "<c:Farmer Meyer:9>Please take good care of them! I marked my brother's address on your sky chart with an *!")
+            (lc-dialog-load "lemon-quest" "instructions")
             (setq on-dialog-closed exit)))
       (progn
-        (dialog "<c:Farmer Meyer:9>I was going to ask you to help relocate some of these lemon trees, but the storm's getting closer and I need to move out! Maybe we'll meet again, someday...")
+        (lc-dialog-load "lemon-quest" "skip")
         (setq on-dialog-closed exit)))))

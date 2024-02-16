@@ -48,13 +48,9 @@ namespace skyland
 
 
 
-void systemstring_drop_index_cache();
-
-
-
-void systemstring_bind_file(const char* path);
-const char* systemstring_bound_file();
-
+void systemstring_bind_language(const char* lang);
+const char* systemstring_bound_lang();
+const char* systemstring_dialog_file();
 
 
 enum class SystemString {
@@ -758,6 +754,17 @@ enum class SystemString {
 
     flag,
     flag_fmt,
+
+    adventure_log,
+
+    machine_translation,
+
+    cart_location,
+    cart_found,
+
+    set_language,
+
+    hp_suffix,
 
     count,
 };

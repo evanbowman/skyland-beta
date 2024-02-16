@@ -69,9 +69,9 @@ ScenePtr<Scene> RepairDroneRangeScene::update(Time delta)
         PLATFORM.fill_overlay(0);
 
         if (is_far_camera()) {
-            return scene_pool::alloc<InspectP2Scene>();
+            return make_scene<InspectP2Scene>();
         } else {
-            return scene_pool::alloc<ReadyScene>();
+            return make_scene<ReadyScene>();
         }
     }
 

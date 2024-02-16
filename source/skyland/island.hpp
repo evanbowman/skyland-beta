@@ -48,8 +48,23 @@
 
 
 
+// NOTE:
+//
+// Throughout the code, you will see mentions of the player island, and the
+// opponent island, or the near island, and the far island.
+//
+// The near, or player island, is the player controlled island at the left side
+// of the screen.
+//
+// The far, or opponent island, is the opponennt controlled island on the right
+// side of the screen.
+//
+
+
+
 namespace skyland
 {
+
 
 
 class Island
@@ -59,22 +74,10 @@ public:
     Island(const Island&) = delete;
 
 
-    using Rooms = RoomTable<92, 16>;
+    using Rooms = RoomTable;
 
 
-    bool add_room(RoomPtr<Room> insert, bool do_repaint = true)
-    {
-        if (rooms().full()) {
-            return false;
-        }
-        auto result = rooms_.insert_room(std::move(insert));
-        if (do_repaint) {
-            repaint();
-        }
-        recalculate_power_usage();
-        on_layout_changed(insert->position());
-        return result;
-    }
+    bool add_room(RoomPtr<Room> insert, bool do_repaint = true);
 
 
     template <typename T, typename... Args>
@@ -94,7 +97,6 @@ public:
                 return true;
             }
         }
-        PLATFORM.fatal("room pool exhausted");
         return false;
     }
 
@@ -139,16 +141,13 @@ public:
     Room* get_room(const RoomCoord& coord);
 
 
-    std::optional<SharedEntityRef<Drone>> get_drone(const RoomCoord& coord);
+    Optional<SharedEntityRef<Drone>> get_drone(const RoomCoord& coord);
 
 
     void destroy_room(const RoomCoord& coord);
 
 
-    s8 get_ambient_movement()
-    {
-        return ambient_movement_;
-    }
+    s8 get_ambient_movement();
 
 
     Layer layer() const
@@ -183,7 +182,7 @@ public:
     BasicCharacter* character_at_location(const RoomCoord& loc);
 
 
-    std::pair<BasicCharacter*, Room*> find_character_by_id(CharacterId id);
+    Pair<BasicCharacter*, Room*> find_character_by_id(CharacterId id);
 
 
     // NOTE: generally, you should use render() intead of repaint().
@@ -237,28 +236,15 @@ public:
     }
 
 
-    u8 workshop_count() const
-    {
-        return workshop_count_;
-    }
+    u8 workshop_count() const;
+    u8 manufactory_count() const;
+    u8 core_count() const;
 
 
-    u8 manufactory_count() const
-    {
-        return manufactory_count_;
-    }
+    EntityList<Entity>& projectiles();
 
 
-    u8 core_count() const
-    {
-        return core_count_;
-    }
-
-
-    EntityList<Entity>& projectiles()
-    {
-        return projectiles_;
-    }
+    SharedEntityList<Drone>& drones();
 
 
     void test_collision(Entity& entity);
@@ -270,71 +256,37 @@ public:
     }
 
 
-    bool is_destroyed()
-    {
-        return destroyed_;
-    }
+    bool is_destroyed();
 
 
-    std::optional<RoomCoord> chimney_loc() const
-    {
-        return chimney_loc_;
-    }
+    Optional<RoomCoord> chimney_loc() const;
 
 
-    Power power_supply() const
-    {
-        return power_supply_;
-    }
+    Power power_supply() const;
 
 
-    Power power_drain() const
-    {
-        return power_drain_;
-    }
+    Power power_drain() const;
 
 
-    void set_owner(Player& player)
-    {
-        owner_ = &player;
-    }
+    void set_owner(Player& player);
 
 
-    bool has_radar() const
-    {
-        return has_radar_;
-    }
+    bool has_radar() const;
 
 
-    bool is_boarded() const
-    {
-        return is_boarded_;
-    }
+    bool is_boarded() const;
 
 
     void on_layout_changed(const RoomCoord& room_added_removed_coord);
 
 
-    SharedEntityList<Drone>& drones()
-    {
-        return drones_;
-    }
-
-
-
     HitBox hitbox() const;
 
 
-    std::optional<RoomCoord> flag_pos()
-    {
-        return flag_pos_;
-    }
+    Optional<RoomCoord> flag_pos();
 
 
-    const Bitmatrix<16, 16>& rooms_plot() const
-    {
-        return rooms_plot_;
-    }
+    const Bitmatrix<16, 16>& rooms_plot() const;
 
 
     void dispatch_room(Room* room);
@@ -368,7 +320,7 @@ public:
     }
 
 
-    std::optional<Platform::DynamicTexturePtr> fire_texture();
+    Optional<Platform::DynamicTexturePtr> fire_texture();
 
 
     bool fire_present(const RoomCoord& coord) const;
@@ -378,10 +330,7 @@ public:
     void fires_extinguish();
 
 
-    const EntityList<BasicCharacter>& outdoor_characters()
-    {
-        return characters_;
-    }
+    const EntityList<BasicCharacter>& outdoor_characters();
 
 
     RoomCoord critical_core_loc() const
@@ -458,7 +407,7 @@ private:
     struct FireState
     {
         Bitmatrix<16, 16> positions_;
-        std::optional<Platform::DynamicTexturePtr> texture_;
+        Optional<Platform::DynamicTexturePtr> texture_;
         Time spread_timer_ = 0;
         Time damage_timer_ = 0;
         Time anim_timer_ = 0;
@@ -512,9 +461,9 @@ private:
     // matrix of bitflags. We use the result to speed up collision checking.
     Bitmatrix<16, 16> rooms_plot_;
 
-    std::optional<RoomCoord> flag_pos_;
+    Optional<RoomCoord> flag_pos_;
 
-    std::optional<RoomCoord> chimney_loc_;
+    Optional<RoomCoord> chimney_loc_;
 };
 
 
@@ -529,7 +478,13 @@ Island* opponent_island();
 
 
 
+// (See documentation for 'near' and 'far' island above)
+Island* get_island(bool island_is_near);
+
+
+
 bool is_player_island(Island* isle);
+bool is_near_island(Island* isle);
 
 
 
@@ -546,6 +501,7 @@ bool speaker_data_store(Island& island, const char* path);
 
 
 bool speaker_data_load(Island& island, const char* path);
+
 
 
 } // namespace skyland

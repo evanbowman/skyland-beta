@@ -85,7 +85,7 @@ void render_cost(macro::EngineImpl& state,
                  Text& text,
                  bool harvest,
                  Text::OptColors text_colors = {},
-                 std::optional<terrain::Cost> inp_c = {});
+                 Optional<terrain::Cost> inp_c = {});
 
 
 
@@ -95,14 +95,14 @@ static const TileOptionsScene::OptionInfo options[] = {
      2584,
      [](macro::EngineImpl&, terrain::Type, Text&) {},
      [](MacrocosmScene& s, macro::EngineImpl& state) -> ScenePtr<Scene> {
-         return scene_pool::alloc<CreateBlockScene>();
+         return make_scene<CreateBlockScene>();
      }},
     {SystemString::macro_build_improvement,
      2520,
      2536,
      [](macro::EngineImpl&, terrain::Type, Text&) {},
      [](MacrocosmScene& s, macro::EngineImpl& state) -> ScenePtr<Scene> {
-         return scene_pool::alloc<BuildImprovementScene>();
+         return make_scene<BuildImprovementScene>();
      }},
     {SystemString::macro_demolish,
      2600,
@@ -116,13 +116,13 @@ static const TileOptionsScene::OptionInfo options[] = {
          auto tp = state.sector().get_block(c).type();
          if (tp == terrain::Type::dynamite) {
              state.sector().ref_block(c).data_ = 1;
-             return scene_pool::alloc<SelectorScene>();
+             return make_scene<SelectorScene>();
          } else if (not harvest_block(state, state.sector(), c)) {
              Platform::instance().speaker().play_sound("beep_error", 2);
-             return scene_pool::alloc<TileOptionsScene>();
+             return make_scene<TileOptionsScene>();
          } else {
              s.update_ui(state);
-             return scene_pool::alloc<SelectorScene>();
+             return make_scene<SelectorScene>();
          }
      }}};
 
@@ -138,14 +138,14 @@ ScenePtr<Scene> TileOptionsScene::update(Player& player,
         // If z == 0, no tiles beneath, so you can't improve or remove a
         // block. Go directly to the block creation menu.
         last_option_ = &options[0];
-        return scene_pool::alloc<CreateBlockScene>();
+        return make_scene<CreateBlockScene>();
     } else {
         auto c = state.sector().cursor();
         --c.z;
         auto& beneath = state.sector().get_block(c);
         if (beneath.type() == terrain::Type::air) {
             last_option_ = &options[0];
-            return scene_pool::alloc<CreateBlockScene>();
+            return make_scene<CreateBlockScene>();
         }
     }
 
@@ -157,7 +157,7 @@ ScenePtr<Scene> TileOptionsScene::update(Player& player,
     }
 
     if (player.key_down(Key::action_2)) {
-        return scene_pool::alloc<SelectorScene>();
+        return make_scene<SelectorScene>();
     }
 
     if (player.key_down(Key::left)) {

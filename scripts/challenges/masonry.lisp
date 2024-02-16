@@ -6,15 +6,12 @@
 
 (setq on-fadein
       (lambda
-        (dialog
-         "<c:goblin king:3>Masssonry! Massonry! I hate it! Sssooo old fasshioned! "
-         "Destroy all of it for me? Don't desstroy anything else!")))
+        (lc-dialog-load "challenges" "intro-masonry")))
 
 
 
 (defn challenge-hint [0]
-  (dialog "Sorry, no hints for this one."))
-
+  (lc-dialog-load "challenges" "no-hints"))
 
 
 (setq on-room-destroyed
@@ -22,7 +19,7 @@
         (if (equal $0 (opponent))
             (if (not (equal $1 'masonry))
                 (progn
-                  (dialog "<c:goblin king:3>Gaahh, I ssaid only masssonry!")
+                  (lc-dialog-load "challenges" "masonry-fail")
                   (setq on-room-destroyed nil)
                   (setq on-dialog-closed
                         (lambda
@@ -31,7 +28,7 @@
               ;; destroyed, it still exists on the island.
               (if (equal 1 (rcnt (opponent) 'masonry))
                   (progn
-                    (dialog "<c:goblin king:3>Wowowow! Beautiful! Ssspectacular!")
+                    (lc-dialog-load "challenges" "masonry-win")
                     (challenge-complete 3)
                     (setq on-dialog-closed
                           (lambda

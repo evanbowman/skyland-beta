@@ -47,6 +47,7 @@
 #include "skyland/scene/notificationScene.hpp"
 #include "skyland/tile.hpp"
 #include "timeStreamEvent.hpp"
+#include <limits>
 
 
 
@@ -174,6 +175,7 @@ MetaclassIndex Room::metaclass_index() const
 }
 
 
+
 Power Room::power_usage() const
 {
     if (powerdown_) {
@@ -183,10 +185,74 @@ Power Room::power_usage() const
 }
 
 
+
 bool Room::is_decoration() const
 {
     return (*metaclass())->category() == Room::Category::decoration;
 }
+
+
+
+void Room::append_name_suffix(StringBuffer<32>& result)
+{
+    return;
+}
+
+
+
+void Room::__unsafe__ignore_finalizer()
+{
+    finalized_ = true;
+}
+
+
+
+Optional<RoomCoord> Room::get_target() const
+{
+    return {};
+}
+
+
+
+void Room::set_target(const RoomCoord& target, bool pinned)
+{
+}
+
+
+
+void Room::unset_target()
+{
+}
+
+
+
+Time Room::reload_time_remaining() const
+{
+    return 0;
+}
+
+
+
+Time Room::reload_interval() const
+{
+    return 1;
+}
+
+
+
+void Room::override_reload_timer(Time new_time)
+{
+    // ...
+}
+
+
+
+void Room::__set_health(Health amount)
+{
+    health_ = amount;
+    update_description();
+}
+
 
 
 void Room::display(Platform::Screen& screen)
@@ -549,10 +615,10 @@ ScenePtr<Scene> Room::reject_if_friendly()
         // always be bound to the opponent island.
         (static_cast<Opponent&>(APP.opponent_island()->owner()))
             .is_friendly()) {
-        auto future_scene = []() { return scene_pool::alloc<ReadyScene>(); };
+        auto future_scene = []() { return make_scene<ReadyScene>(); };
         PLATFORM.speaker().play_sound("beep_error", 3);
         auto str = SYSTR(error_friendly);
-        return scene_pool::alloc<NotificationScene>(str->c_str(), future_scene);
+        return make_scene<NotificationScene>(str->c_str(), future_scene);
     }
 
     return null_scene();
@@ -624,8 +690,10 @@ ScenePtr<Scene> Room::do_select()
 
                         using Next = ModifyCharacterScene;
                         using Await = MultiplayerCoOpAwaitChrLockScene;
-                        auto n =
-                            scene_pool::make_deferred_scene<Next>(ch_id, near);
+
+                        auto n = [ch_id, near]() -> ScenePtr<Scene> {
+                            return make_scene<Next>(ch_id, near);
+                        };
 
                         if (is_co_op) {
                             // NOTE: in co-op mode, we do not allow a player to
@@ -637,8 +705,7 @@ ScenePtr<Scene> Room::do_select()
                                 pkt.chr_id_.set(character->id());
                                 network::transmit(pkt);
 
-                                return scene_pool::alloc<Await>(
-                                    n, character->id());
+                                return make_scene<Await>(n, character->id());
                             }
                         } else {
                             return n();
@@ -683,10 +750,10 @@ ScenePtr<Scene> Room::select(const RoomCoord& cursor)
             return scn;
         }
 
-        auto future_scene = []() { return scene_pool::alloc<ReadyScene>(); };
+        auto future_scene = []() { return make_scene<ReadyScene>(); };
         PLATFORM.speaker().play_sound("beep_error", 2);
         auto str = SYSTR(error_powered_off);
-        return scene_pool::alloc<NotificationScene>(str->c_str(), future_scene);
+        return make_scene<NotificationScene>(str->c_str(), future_scene);
     }
 
     return select_impl(cursor);
@@ -808,11 +875,6 @@ void Room::apply_damage(Health damage)
                 APP.time_stream().push(APP.level_timer(), e);
             }
         }
-    }
-
-    auto diff = damage;
-    if (diff > health_) {
-        diff -= diff - health_;
     }
 
     if (damage > health_) {
@@ -962,7 +1024,14 @@ void Room::heal(Health amount)
     }
 
     const Health new_health = health_ + amount;
-    health_ = std::min((*metaclass())->full_health(), new_health);
+    health_ = util::min((*metaclass())->full_health(), new_health);
+}
+
+
+
+Health Room::health_upper_limit()
+{
+    return std::numeric_limits<Health>::max();
 }
 
 
@@ -1424,7 +1493,7 @@ void Room::detach_drone(bool quiet)
 
 
 
-std::optional<SharedEntityRef<Drone>> Room::drone() const
+Optional<SharedEntityRef<Drone>> Room::drone() const
 {
     // Unimplemented.
     // TODO: raise fatal error?
@@ -1500,8 +1569,6 @@ void Room::render_scaffolding(TileId buffer[16][16])
                 placed_strut = true;
             }
         }
-        placed_strut = false;
-
         return;
     }
 
@@ -1540,6 +1607,13 @@ void Room::render_scaffolding(TileId buffer[16][16])
 
 
 
+bool Room::has_prop(RoomProperties::Value prop)
+{
+    return (*metaclass())->properties() & prop;
+}
+
+
+
 ScenePtr<Scene> Room::co_op_acquire_lock(DeferredScene next)
 {
     if (co_op_locked_) {
@@ -1555,7 +1629,7 @@ ScenePtr<Scene> Room::co_op_acquire_lock(DeferredScene next)
     pkt.y_ = position().y;
     network::transmit(pkt);
 
-    return scene_pool::alloc<MultiplayerCoOpAwaitLockScene>(next, position());
+    return make_scene<MultiplayerCoOpAwaitLockScene>(next, position());
 }
 
 

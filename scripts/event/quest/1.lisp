@@ -1,7 +1,5 @@
 
-(dialog
- "<b:/scripts/misc/img/banana_cover.img.bin>"
- "You can't quite believe what you're seeing! A castle appears as if out of nowhere. Through the window, you see a man rushing about frantically, dressed in a banana suit!?")
+(lc-dialog-load "banana-quest" "intro")
 
 
 (opponent-init 8 'neutral)
@@ -38,18 +36,18 @@
 
 (secret
  4 13
- "I'm not going crazy, I'm not going crazy, I'm not going crazy...")
+ (lc-dialog-get "banana-quest" "secret1"))
 
 (secret
  5 14
- "BANANA! BANANAA!!! BANANA! BANANA?")
+ (lc-dialog-get "banana-quest" "secret2"))
 
 
 (setq on-converge
       (lambda
-        (dialog
-         "<c:banana man:8>Waaa! My precious b'nanas! Stolen by goblins! Why do I need them, you ask!? That's TOP SECRET! Help me teach those goblins a lesson?")
-        (dialog-await-binary-q "of course!" "I'm kind of busy…")
+        (lc-dialog-load "banana-quest" "offer")
+        (dialog-await-binary-q (lc-dialog-get "banana-quest" "opt1")
+                               (lc-dialog-get "banana-quest" "opt2"))
 
         (setq on-dialog-accepted
               (lambda
@@ -61,11 +59,11 @@
                         (push 'qids 1)
                         (push 'quests (cons "/scripts/event/quest_marker/nanas.lisp"
                                             m))
-                        (dialog "<c:banana man:8>No time to waste! I know exactly where they've taken my bananas, and I marked the location on your sky chart with an *!"))
+                        (lc-dialog-load "banana-quest" "accepted"))
                     (progn
-                      (dialog "Without warning, banana man became distracted by something and cut the transmission. Such a shame, he was interesting!"))))))
+                      (lc-dialog-load "banana-quest" "impossible"))))))
 
         (setq on-dialog-declined
               (lambda
-                (dialog "<c:banana man:8>You won't help me!? _sigh_ Nobody helps banana man these days...")
+                (lc-dialog-load "banana-quest" "declined")
                 (setq on-dialog-closed exit)))))

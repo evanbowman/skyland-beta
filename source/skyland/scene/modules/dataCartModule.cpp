@@ -59,7 +59,7 @@ void DataCartModule::show_cart(int index)
     auto cart = carts_->load(index);
     if (not cart) {
         DataCart missing(index);
-        tmp.append(" location: ", colors);
+        tmp.append(SYS_CSTR(cart_location), colors);
         tmp.append(missing.get_label_string("location").c_str(), colors);
 
         draw_image(376, 14, 8, 2, 4, Layer::overlay);
@@ -67,7 +67,7 @@ void DataCartModule::show_cart(int index)
         Text::print(format("cart_%", index + 1).c_str(), {12, 6}, colors);
 
     } else {
-        tmp.append(" found at ", colors);
+        tmp.append(SYS_CSTR(cart_found), colors);
         auto exact = cart->get_label_string("exact_location");
         for (char& c : exact) {
             // FIXME: ini conf library ignoring whitespace in strings. Fix conf.cpp.
@@ -135,7 +135,7 @@ ScenePtr<Scene> DataCartModule::update(Time delta)
         APP.gp_.stateflags_.set(prompt_flag, true);
         save::store_global_data(APP.gp_);
         auto next = []() -> ScenePtr<Scene> {
-            auto ret = scene_pool::alloc<DataCartModule>(true);
+            auto ret = make_scene<DataCartModule>(true);
             ret->skip_dialog_ = true;
             return ret;
         };
@@ -143,7 +143,7 @@ ScenePtr<Scene> DataCartModule::update(Time delta)
             SystemString::dialog_datacarts_prompt, next, "archivist");
     } else if (not skip_dialog_) {
         auto next = []() -> ScenePtr<Scene> {
-            auto ret = scene_pool::alloc<DataCartModule>(true);
+            auto ret = make_scene<DataCartModule>(true);
             ret->skip_dialog_ = true;
             return ret;
         };
@@ -152,10 +152,6 @@ ScenePtr<Scene> DataCartModule::update(Time delta)
     }
 
     APP.player().update(delta);
-
-    auto test_key = [&](Key k) {
-        return APP.player().test_key(k, milliseconds(500), milliseconds(100));
-    };
 
     if (not PLATFORM.speaker().is_sound_playing("archivist")) {
         PLATFORM.speaker().play_sound("archivist", 9);
@@ -294,7 +290,7 @@ ScenePtr<Scene> DataCartModule::update(Time delta)
         break;
 
     case State::exit:
-        return scene_pool::alloc<TitleScreenScene>(3);
+        return make_scene<TitleScreenScene>(3);
 
     case State::anim_out: {
         timer_ += delta;
@@ -402,7 +398,7 @@ public:
     {
         if (APP.player().key_down(Key::action_2)) {
             PLATFORM.fill_overlay(0);
-            auto next = scene_pool::alloc<DataCartModule>();
+            auto next = make_scene<DataCartModule>();
             next->skip_dialog_ = true;
             next->set_index(cart_id_);
             return next;
@@ -448,7 +444,7 @@ public:
     }
 
 private:
-    std::optional<TextView> text_;
+    Optional<TextView> text_;
     int cart_id_;
     bool flipped_ = false;
 };
@@ -464,16 +460,16 @@ ScenePtr<Scene> DataCartModule::boot_cart(int cart_index)
     if (*type == "reboot") {
         PLATFORM.system_call("restart", nullptr);
     } else if (*type == "checkers") {
-        return scene_pool::alloc<CheckersModule>();
+        return make_scene<CheckersModule>();
     } else if (*type == "image") {
         PLATFORM.speaker().play_sound("tw_bell", 2);
-        return scene_pool::alloc<CartPhotoViewScene>(cart_index);
+        return make_scene<CartPhotoViewScene>(cart_index);
     } else if (*type == "textview") {
         PLATFORM.speaker().play_sound("tw_bell", 2);
-        auto tv = scene_pool::alloc<TextviewScene>(
+        auto tv = make_scene<TextviewScene>(
             cart.expect_content_string("text")->c_str());
         tv->next_ = [cart_index]() {
-            auto ret = scene_pool::alloc<DataCartModule>();
+            auto ret = make_scene<DataCartModule>();
             ret->skip_dialog_ = true;
             ret->set_index(cart_index);
             return ret;
@@ -481,7 +477,7 @@ ScenePtr<Scene> DataCartModule::boot_cart(int cart_index)
         return tv;
     }
 
-    return scene_pool::alloc<TitleScreenScene>(3);
+    return make_scene<TitleScreenScene>(3);
 }
 
 

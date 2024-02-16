@@ -79,7 +79,9 @@ void ModifyCharacterScene::exit(Scene& next)
         island = APP.opponent_island();
     }
 
-    island->render_interior_fast();
+    if (island) {
+        island->render_interior_fast();
+    }
 
     if (APP.game_mode() == App::GameMode::co_op) {
 
@@ -112,6 +114,10 @@ void ModifyCharacterScene::enter(Scene& prev)
     }
 
     auto found = BasicCharacter::find_by_id(chr_id_);
+
+    if (not island) {
+        return;
+    }
 
     island->plot_walkable_zones(*matrix_, found.first);
 
@@ -189,6 +195,8 @@ ScenePtr<Scene> ModifyCharacterScene::update(Time delta)
         island = &APP.player_island();
     } else if (APP.opponent_island()) {
         island = APP.opponent_island();
+    } else {
+        return make_scene<ReadyScene>();
     }
 
     RoomCoord* cursor_loc = nullptr;
@@ -198,10 +206,6 @@ ScenePtr<Scene> ModifyCharacterScene::update(Time delta)
     } else {
         cursor_loc = &globals().far_cursor_loc_;
     }
-
-    auto test_key = [&](Key k) {
-        return APP.player().test_key(k, milliseconds(500), milliseconds(100));
-    };
 
     APP.player().key_held_distribute();
 
@@ -246,9 +250,9 @@ ScenePtr<Scene> ModifyCharacterScene::update(Time delta)
 
     if (APP.player().key_down(Key::action_2)) {
         if (near_) {
-            return scene_pool::alloc<ReadyScene>();
+            return make_scene<ReadyScene>();
         } else {
-            return scene_pool::alloc<InspectP2Scene>();
+            return make_scene<InspectP2Scene>();
         }
     }
 
@@ -305,9 +309,9 @@ ScenePtr<Scene> ModifyCharacterScene::update(Time delta)
         }
 
         if (near_) {
-            return scene_pool::alloc<ReadyScene>();
+            return make_scene<ReadyScene>();
         } else {
-            return scene_pool::alloc<InspectP2Scene>();
+            return make_scene<InspectP2Scene>();
         }
     }
 
@@ -371,7 +375,7 @@ u32 flood_fill(u8 matrix[16][16], u8 replace, u8 x, u8 y)
 
     auto stack = mem.alloc<Buffer<Coord, 16 * 16>>();
 
-    if (UNLIKELY(not stack)) {
+    if (not stack) [[unlikely]] {
         PLATFORM.fatal("fatal error in floodfill");
     }
 

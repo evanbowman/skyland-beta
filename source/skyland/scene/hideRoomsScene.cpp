@@ -157,10 +157,6 @@ ScenePtr<Scene> HideRoomsScene::update(Time delta)
         changed_ = true;
     }
 
-    auto test_key = [&](Key k) {
-        return player().test_key(k, milliseconds(500), milliseconds(100));
-    };
-
     int limit = (int)(*data_)->room_classes_.size();
     if (test_key(Key::down) and index_ < limit - 1) {
         ++index_;

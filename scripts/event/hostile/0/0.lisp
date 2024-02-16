@@ -9,9 +9,7 @@
 (flag-show (opponent) 0)
 
 
-(dialog
- "Your castle sails through the clouds, buffeted by a cool breeze. "
- "Another fortress approaches, flying a black flag...")
+(lc-dialog-load "first-isle" "intro")
 
 
 (if (not (equal (choice 3) 0))

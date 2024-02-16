@@ -8,7 +8,7 @@
  (if (not mercenary-event)
      "<b:/scripts/misc/img/marauder.img.bin> "
    "")
- "You discover a fortress inhabited by some mercenaries...")
+ (lc-dialog-get "mercenary" "intro"))
 
 
 (opponent-init 5 'neutral)
@@ -74,10 +74,7 @@
 
 (setq on-converge
       (lambda
-        (dialog "One of the mercenaries offers to join you crew, for a cost of "
-                (string (* 400 (zone)))
-                "@. Accept offer?")
-
+        (lc-dialog-load-fmt "mercenary" "offer" (* 400 (zone)))
         (dialog-await-y/n)
         (setq on-converge nil)))
 
@@ -86,7 +83,7 @@
   (let ((dest (chr-slots (player))))
     (if (> (* 400 (zone)) (coins))
         (progn
-          (dialog "You cannot afford to pay. The mercenaries become impatient, and cut the transmission.")
+          (lc-dialog-load "mercenary" "low-funds")
           (exit))
       (if dest
           (progn
@@ -94,21 +91,21 @@
             (setq dest (sample dest))
             (chr-new (player) (car dest) (cdr dest) 'neutral nil)
             (chr-del (opponent) 0 14)
-            (dialog "<c:mercenary:17> Ahoy! Ready to knock some heads!?")
+            (lc-dialog-load "mercenary" "approve")
             (defn on-dialog-closed [0]
               (setq on-dialog-closed nil)
-              (dialog "The mercenary joined your crew!")
+              (lc-dialog-load "mercenary" "join")
               (exit))
             (adventure-log-add 27 (list (* 400 (zone)))))
         (progn
-          (dialog "Sadly, there's no room...")
+          (lc-dialog-load "mercenary" "no-room")
           (exit))))))
 
 
 
 (setq on-dialog-declined
       (lambda
-        (dialog "The mercenaries became angry, and cut the transmission.")
+        (lc-dialog-load "mercenary" "decline")
         (adventure-log-add 28 '())
         (exit)))
 

@@ -1,8 +1,5 @@
 
-(dialog
- "A distress call sounds over your radio! <B:0> "
- "<b:/scripts/misc/img/destroyed_town.img.bin>"
- "The remnants of a town appear, wrecked by war..")
+(lc-dialog-load "orphan" "intro")
 
 (opponent-init 8 'neutral)
 
@@ -34,12 +31,11 @@
 
 (setq on-converge
       (lambda
-        (dialog
-         "<c:girl:14>Heya! I'm so lucky someone showed up! Damned goblins took my whole village as hostages. Somehow I slept through the whole thing... Anyway, please take me with you! I promise not to get in the way!")
+        (lc-dialog-load "orphan" "greeting")
 
         (setq on-dialog-closed
               (lambda
-                (dialog "She seems harmless, invite her aboard?")
+                (lc-dialog-load "orphan" "offer")
                 (dialog-await-y/n)
                 (setq on-dialog-closed '())))
 
@@ -51,32 +47,32 @@
         (let ((temp (chr-slots (player)))
               (end (lambda
                      ((eval-file "/scripts/util/pickup_cart.lisp") 2
-                      "<c:girl:14>.<d:500>.<d:500>.<d:500> Actually, I was wondering if you can do me one more small favor? I brought this data cartridge with an old photo of my village, can you hold onto it for me?"))))
+                      (lc-dialog-get "orphan" "cart")))))
           (if temp
               (progn
                 (setq temp (get temp (choice (length temp))))
                 (chr-new (player) (car temp) (cdr temp) 'neutral nil)
                 (chr-del (opponent) 1 12)
                 (adventure-log-add 15 '())
-                (dialog "The villager girl joined your crew!")
+                (lc-dialog-load "orphan" "join")
                 (end))
             (progn
-              (dialog "Sadly, there's no room...")
+              (lc-dialog-load "orphan" "no-room")
               (defn on-dialog-closed [0]
-                (dialog "<c:girl:14>Wait up a second, I know your castle's pretty full, but don't leave me here! This island is literally burning! I'll even sleep in a cargo bay...")
+                (lc-dialog-load "orphan" "beg")
                 (defn on-dialog-closed [0]
                   (alloc-space 'cargo-bay)
                   (sel-input 'cargo-bay
-                             "Place cargo bay (1x2):"
+                             (lc-dialog-get "orphan" "build")
                              (lambda
                                (sound "build0")
                                (room-new (player) `(cargo-bay ,$1 ,$2))
                                (chr-del (opponent) 1 12)
                                (chr-new (player) $1 (+ 1 $2) 'neutral nil)
-                               (dialog "<c:girl:14>Wait, you're serious! I guess I asked for it haha...")
+                               (lc-dialog-load "orphan" "ungrateful")
                                (defn on-dialog-closed [0]
                                  (adventure-log-add 15 '())
-                                 (dialog "The villager girl joined your crew!")
+                                 (lc-dialog-load "orphan" "result")
                                  (end)))))))))
 
         (exit)))

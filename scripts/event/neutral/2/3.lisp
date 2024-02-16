@@ -3,7 +3,7 @@
 ;;;
 
 
-(dialog "A small fortress hurtles through the air, with goblins in pursuit. The captain calls for help...")
+(lc-dialog-load "decimator" "intro")
 
 
 (opponent-init 9 'neutral)
@@ -25,7 +25,7 @@
 
 
 (defn on-converge [0]
-  (dialog "<c:captain:7> I managed to steal this decimator from some goblins, but they're catching up to me! I know... I could sell you the weapon! I'll install it on your island for @1500...")
+  (lc-dialog-load "decimator" "offer")
   (setq on-converge nil)
   (dialog-await-binary-q "Here's the money…" "no thanks"))
 
@@ -38,13 +38,13 @@
 
   (if (< (coins) 1500)
       (progn
-        (dialog "<c:captain:7> Sorry, I went to all this trouble, I really can't sell you this tech for less than @1500. Do you want to salvage some stuff to come up with the funds? I'll check back in in 15 seconds?")
+        (lc-dialog-load "decimator" "low-funds")
         (dialog-await-y/n)
         (let ((f (this)))
           (defn fut [0]
             (if (> (coins) 1499)
                 (progn
-                  (dialog "<c:captain:7> Seems like you have enough now!")
+                  (lc-dialog-load "decimator" "funds-good")
                   (setq on-dialog-closed f))
               (f))))
         (setq on-dialog-accepted (lambda (on-timeout 15000 'fut)))
@@ -61,11 +61,11 @@
 
       (sel-input
        'decimator
-       "Place weapon where? (2x2)"
+       (lc-dialog-get "decimator" "place")
        (lambda
          (room-new (player) (list 'decimator $1 $2))
          (room-del (opponent) 0 13)
-         (dialog "<c:captain:7> Ok, all finished! The weapon recharges quite slowly, but nothing's more destructive! You need to move one of your crew into the weapon, though, or it won't recharge.")
+         (lc-dialog-load "decimator" "installed")
          (adventure-log-add 44 '())
 
          (setq on-dialog-closed '())

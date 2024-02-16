@@ -1,9 +1,6 @@
 
 
-(dialog
- "<b:/scripts/misc/img/market_quest.img.bin>"
- "You arrive at a busy trading outpost. "
- "Some merchants broadcast a message asking for assistance...")
+(lc-dialog-load "market-quest" "intro")
 
 
 (opponent-init 9 'neutral)
@@ -48,12 +45,9 @@
 
 (setq on-converge
       (lambda
-        (dialog
-         "<c:merchant:7>We promised to deliver some cargo to our customers, but with "
-         "this storm approaching, we don't think we can make the delivery. "
-         "Can you help? We'll pay you a bit upfront, and I'm sure that they'll tip "
-         "you generously.")
-        (dialog-await-binary-q "I accept!" "sorry, but no.")
+        (lc-dialog-load "market-quest" "offer")
+        (dialog-await-binary-q (lc-dialog-get "market-quest" "opt1")
+                               (lc-dialog-get "market-quest" "opt2"))
 
         (setq on-dialog-accepted
               (lambda
@@ -67,14 +61,11 @@
                         (push 'quests (cons "/scripts/event/quest_marker/delivery.lisp"
                                             m))
                         (cargo-set (player) (car c) (cdr c) "parcel")
-                        (dialog "<c:merchant:7>Wonderful! I'll mark the address "
-                                "with an * on your sky chart!")
+                        (lc-dialog-load "market-quest" "accepted")
                         ((eval-file "/scripts/util/pickup_cart.lisp") 5
-                         "Amazed by the picturesque view from the market center, one of your crew members took a photo, and recorded it on a data cartridge..."))
+                         (lc-dialog-get "market-quest" "cart")))
                     (progn
-                      (dialog
-                       "<c:merchant:7>Oh, I'm so sorry! I just got a call from the customer, "
-                       "she had to relocate to flee the storm. Here's 400@ for your trouble.")
+                      (lc-dialog-load "market-quest" "canceled")
                       (setq on-dialog-closed
                             (lambda
                               (coins-add 400)
@@ -82,5 +73,5 @@
 
         (setq on-dialog-declined
               (lambda
-                (dialog "<c:merchant:7>I understand... I guess we'll try to find someone else...")
+                (lc-dialog-load "market-quest" "declined")
                 (setq on-dialog-closed exit)))))

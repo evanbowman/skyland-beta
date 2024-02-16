@@ -155,8 +155,8 @@ private:
 
         Buffer<Text, 14> text_opts_;
 
-        std::optional<UIMetric> coins_;
-        std::optional<Text> character_name_text_;
+        Optional<UIMetric> coins_;
+        Optional<Text> character_name_text_;
 
         DeferredScene next_scene_ = []() { return null_scene(); };
     };
@@ -217,11 +217,9 @@ public:
         }
 
         if (is_far_camera()) {
-            dialog_scene_.set_next_scene(
-                scene_pool::make_deferred_scene<InspectP2Scene>());
+            dialog_scene_.set_next_scene(make_deferred_scene<InspectP2Scene>());
         } else {
-            dialog_scene_.set_next_scene(
-                scene_pool::make_deferred_scene<ReadyScene>());
+            dialog_scene_.set_next_scene(make_deferred_scene<ReadyScene>());
         }
     }
 

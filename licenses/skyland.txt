@@ -5,7 +5,7 @@
  purposes. All copies of the software must be distributed along with this
  license document.
 
- 1. DEFINITION OF SOFTWARE: The term "Software" refers to the SKYLAND,
+ 1. DEFINITION OF SOFTWARE: The term "Software" refers to SKYLAND,
  including any updates, modifications, or associated documentation provided by
  Licensor.
 
@@ -28,4 +28,14 @@
  breaches any of its terms and conditions. Upon termination, Licensee must
  cease all use of the Software and destroy all copies.
 
+ DEFINITION OF COMMERCIAL USE: Any means of distributing the compiled code with
+ the intention of generating profit, including, but not limited to: 1) Selling
+ digital copies of the game, 2) Selling physical media containing the game, 3)
+ Providing the game as a free download, but with advertising attached to or
+ injected into it.
 
+ EXAMPLES OF NON-COMMERCIAL USE: 1) Hosting the game as a free download on
+ Google Drive, Homebrew Hub, or any other website that does not restrict access
+ to the game via a paywall, 2) Flashing the game onto a physical cartridge and
+ playing it yourself, 3) Flashing the game onto a physical cartridge and giving
+ it to a friend as a gift.

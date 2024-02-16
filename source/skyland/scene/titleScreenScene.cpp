@@ -56,6 +56,7 @@
 #include "skyland/skyland.hpp"
 #include "skyland/systemString.hpp"
 #include "zoneImageScene.hpp"
+#include <limits>
 
 
 
@@ -453,7 +454,7 @@ void TitleScreenScene::put_module_text()
 
     const auto len = utf8::len(buffer.c_str());
 
-    auto margin = centered_text_margins(buffer.length());
+    auto margin = centered_text_margins(len);
     text_.emplace(
 
         buffer.c_str(),
@@ -468,9 +469,9 @@ void TitleScreenScene::put_menu_text()
     redraw_margins();
 
     const auto st = calc_screen_tiles();
-    StringBuffer<32> buffer(SYS_CSTR(game_title));
+    StringBuffer<64> buffer(SYS_CSTR(game_title));
     buffer += ":   ";
-    const auto prefix_len = buffer.length();
+    const auto prefix_len = utf8::len(buffer.c_str());
     buffer += *loadstr(menu_text[menu_selection_]);
 
     const auto len = utf8::len(buffer.c_str());
@@ -588,7 +589,7 @@ void TitleScreenScene::play_gust_sound()
 
 
 u8 TitleScreenScene::module_page_;
-std::optional<Vec2<u8>> TitleScreenScene::module_cursor_;
+Optional<Vec2<u8>> TitleScreenScene::module_cursor_;
 
 
 
@@ -768,8 +769,7 @@ ScenePtr<Scene> TitleScreenScene::update(Time delta)
     case State::macro_island_enter:
         timer_ += delta;
 
-        if (PLATFORM.keyboard().pressed<Key::action_1>() or
-            APP.player().tap_released()) {
+        if (PLATFORM.keyboard().pressed<Key::action_1>()) {
             timer_ = 0;
             state_ = State::macro_island_exit;
             repeat_action1_ = true;
@@ -831,8 +831,7 @@ ScenePtr<Scene> TitleScreenScene::update(Time delta)
 
     case State::macro_island:
 
-        if (PLATFORM.keyboard().pressed<Key::action_1>() or
-            APP.player().tap_released()) {
+        if (PLATFORM.keyboard().pressed<Key::action_1>()) {
             timer_ = 0;
             state_ = State::macro_island_exit;
             repeat_action1_ = true;
@@ -977,8 +976,7 @@ ScenePtr<Scene> TitleScreenScene::update(Time delta)
             }
         }
 
-        if (repeat_action1_ or PLATFORM.keyboard().pressed<Key::action_1>() or
-            APP.player().tap_released()) {
+        if (repeat_action1_ or PLATFORM.keyboard().pressed<Key::action_1>()) {
             state_ = State::fade_out;
             if (menu_selection_ == 3) {
                 state_ = State::fade_modules_1;
@@ -1003,10 +1001,7 @@ ScenePtr<Scene> TitleScreenScene::update(Time delta)
         }
 
         if (repeat_right_ or APP.player().key_pressed(Key::right) or
-            APP.player().key_pressed(Key::down) or
-            (APP.player().touch_held(milliseconds(150)) and
-             APP.player().touch_velocity().x and
-             APP.player().touch_velocity().x * delta < -0.08f)) {
+            APP.player().key_pressed(Key::down)) {
             repeat_right_ = false;
             if (menu_selection_ == 0) {
                 menu_selection_ = 1;
@@ -1040,8 +1035,7 @@ ScenePtr<Scene> TitleScreenScene::update(Time delta)
             }
         }
         if (repeat_left_ or APP.player().key_pressed(Key::left) or
-            APP.player().key_pressed(Key::up) or
-            APP.player().touch_velocity().x * delta > 0.08f) {
+            APP.player().key_pressed(Key::up)) {
             repeat_left_ = false;
             if (menu_selection_ == 1) {
                 menu_selection_ = 0;
@@ -1270,7 +1264,7 @@ ScenePtr<Scene> TitleScreenScene::update(Time delta)
                 auto tutorial_flag = GlobalPersistentData::tutorial_prompt;
 
                 if (APP.gp_.stateflags_.get(tutorial_flag)) {
-                    return scene_pool::alloc<NewgameScene>();
+                    return make_scene<NewgameScene>();
                 } else {
 
                     module_cursor_ = {0, 0};
@@ -1295,8 +1289,8 @@ ScenePtr<Scene> TitleScreenScene::update(Time delta)
                     cursor_loc.x = 0;
                     cursor_loc.y = 14;
 
-                    auto next = scene_pool::alloc<BoxedDialogSceneWS>(
-                        std::move(dialog));
+                    auto next =
+                        make_scene<BoxedDialogSceneWS>(std::move(dialog));
 
                     return next;
                 }
@@ -1306,7 +1300,7 @@ ScenePtr<Scene> TitleScreenScene::update(Time delta)
             case 1: {
                 APP.game_mode() = App::GameMode::challenge;
                 run_init_scripts(true);
-                return scene_pool::alloc<SelectChallengeScene>();
+                return make_scene<SelectChallengeScene>();
             }
 
             case 2:
@@ -1333,7 +1327,7 @@ ScenePtr<Scene> TitleScreenScene::update(Time delta)
 
                 APP.invoke_script("/scripts/reset_hooks.lisp");
 
-                return scene_pool::alloc<MacrocosmLoaderModule>();
+                return make_scene<MacrocosmLoaderModule>();
 
             case 3:
                 PLATFORM.fatal("logic error, this should be unreachable");
@@ -1431,11 +1425,6 @@ ScenePtr<Scene> TitleScreenScene::update(Time delta)
             PLATFORM.fill_overlay(0);
             redraw_margins();
         } else if (module_cursor_) {
-
-            auto test_key = [&](Key k) {
-                return APP.player().test_key(
-                    k, milliseconds(500), milliseconds(100));
-            };
 
             auto click_sound = [&] {
                 PLATFORM.speaker().play_sound("click_wooden", 2);
@@ -1874,7 +1863,7 @@ void TitleScreenScene::Pong::display(int x_scroll)
     PLATFORM.screen().draw(sprite);
 
     u8 blend = 0;
-    for (auto& p : reversed(pad1_trail_)) {
+    foreach_reversed(pad1_trail_, [&](auto& p) {
         blend += 48;
         sprite.set_position(
             Vec2<Fixnum>{
@@ -1887,7 +1876,7 @@ void TitleScreenScene::Pong::display(int x_scroll)
             scl);
         sprite.set_mix({custom_color(0x236f5b), blend});
         PLATFORM.screen().draw(sprite);
-    }
+    });
 
     sprite.set_mix({});
 
@@ -1901,7 +1890,7 @@ void TitleScreenScene::Pong::display(int x_scroll)
     PLATFORM.screen().draw(sprite);
 
     blend = 0;
-    for (auto& p : reversed(pad2_trail_)) {
+    foreach_reversed(pad2_trail_, [&](auto& p) {
         blend += 48;
         sprite.set_position(
             Vec2<Fixnum>{Fixnum((anchor.x + 24.0_fixed) -
@@ -1912,7 +1901,7 @@ void TitleScreenScene::Pong::display(int x_scroll)
 
         sprite.set_mix({custom_color(0x236f5b), blend});
         PLATFORM.screen().draw(sprite);
-    }
+    });
 
     sprite.set_mix({});
 
@@ -1926,7 +1915,7 @@ void TitleScreenScene::Pong::display(int x_scroll)
     PLATFORM.screen().draw(sprite);
 
     blend = 0;
-    for (auto& b : reversed(ball_trail_)) {
+    foreach_reversed(ball_trail_, [&](auto& b) {
         blend += 48;
         sprite.set_position(
             Vec2<Fixnum>{(Fixnum::from_integer(b.x) + anchor.x) -
@@ -1935,7 +1924,7 @@ void TitleScreenScene::Pong::display(int x_scroll)
             scl);
         sprite.set_mix({custom_color(0x236f5b), blend});
         PLATFORM.screen().draw(sprite);
-    }
+    });
 }
 
 

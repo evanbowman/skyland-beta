@@ -67,7 +67,7 @@ int scratch_buffers_in_use()
 
 
 
-std::optional<Function<4 * sizeof(void*), void()>> scratch_buffer_oom_handler;
+Optional<Function<4 * sizeof(void*), void()>> scratch_buffer_oom_handler;
 
 
 
@@ -87,7 +87,7 @@ ScratchBufferPtr make_scratch_buffer(const ScratchBuffer::Tag& tag)
 
             if (not scratch_buffers_remaining()) {
 #ifndef __TEST__
-                Platform::instance().logger().clear();
+                log_clear();
 #endif
             }
         }

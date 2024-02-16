@@ -110,7 +110,7 @@ void AchievementViewerModule::load_page(int page)
     temp += stringify((*mt)->consumes_power());
     temp += "` ";
     temp += stringify((*mt)->full_health());
-    temp += "hp";
+    temp += SYS_CSTR(hp_suffix);
 
     item_details_->assign(temp.c_str());
 
@@ -200,10 +200,6 @@ ScenePtr<Scene> AchievementViewerModule::update(Time delta)
 
     APP.player().update(delta);
 
-    auto test_key = [&](Key k) {
-        return APP.player().test_key(k, milliseconds(500), milliseconds(100));
-    };
-
     if (test_key(Key::right) and
         // -1 because we skip the first Achievement::none enumeration
         page_ < achievements::count - 2) {
@@ -215,7 +211,7 @@ ScenePtr<Scene> AchievementViewerModule::update(Time delta)
     }
 
     if (APP.player().key_down(Key::action_2)) {
-        return scene_pool::alloc<TitleScreenScene>(3);
+        return make_scene<TitleScreenScene>(3);
     }
 
 

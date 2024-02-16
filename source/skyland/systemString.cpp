@@ -41,24 +41,35 @@ namespace skyland
 
 
 
-static StringBuffer<32> lang_file;
-static bool lang_file_changed = true;
+static StringBuffer<32> lang;
+static bool lang_changed = true;
 const char* idf_file = nullptr;
 const char* idx_file = nullptr;
+const char* dialog_file = nullptr;
 
 
 
-void systemstring_bind_file(const char* path)
+void systemstring_bind_language(const char* l)
 {
-    lang_file = path;
-    lang_file_changed = true;
+    lang = l;
+    lang_changed = true;
+
+    dialog_file = PLATFORM.load_file_contents(
+        "", format("/strings/dialog/%.ini", l).c_str());
 }
 
 
 
-const char* systemstring_bound_file()
+const char* systemstring_bound_lang()
 {
-    return lang_file.c_str();
+    return lang.c_str();
+}
+
+
+
+const char* systemstring_dialog_file()
+{
+    return dialog_file;
 }
 
 
@@ -67,9 +78,9 @@ SystemStringBuffer loadstr(SystemString str)
 {
     auto result = allocate_dynamic<StringBuffer<1900>>("system-string");
 
-    if (lang_file_changed) {
-        auto path = lang_file;
-        auto index = lang_file;
+    if (lang_changed) {
+        auto path = lang;
+        auto index = lang;
         path += ".idf";
         index += ".idx";
         idf_file = PLATFORM.load_file_contents("strings", path.c_str());
@@ -79,7 +90,7 @@ SystemStringBuffer loadstr(SystemString str)
             PLATFORM.fatal("system strings file missing!");
         }
 
-        lang_file_changed = false;
+        lang_changed = false;
     }
 
     auto data = idf_file;

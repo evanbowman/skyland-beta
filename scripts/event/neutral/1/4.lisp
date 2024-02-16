@@ -3,9 +3,7 @@
 ;;;
 
 
-(dialog
- "<b:/scripts/misc/img/overgrown_isle.img.bin>"
- "A nearby island seems to be transmitting an unusual distress signal...")
+(lc-dialog-load "overgrown-isle" "intro")
 
 
 (opponent-init 7 'neutral)
@@ -47,14 +45,14 @@
 
 
 (defn on-converge [0]
-  (dialog "Upon closer inspection, you find that the castle may contain valuable cargo, but it's overgrown with mycelium. You can explore, although there's some risk of cross-contamination. Board anyway?")
+  (lc-dialog-load "overgrown-isle" "offer")
   (dialog-await-y/n))
 
 
 (defn on-dialog-accepted [0]
   (let ((end (lambda
                ((eval-file "/scripts/util/pickup_cart.lisp") 6
-                "One of your crewmembers finds a data cartridge tangled in the fungal roots..."))))
+                (lc-dialog-get "overgrown-isle" "cart")))))
     (if (choice 3)
         (progn
           (let ((locs (construction-sites (player) '(1 . 1))))
@@ -62,10 +60,10 @@
               (let ((c (get locs (choice (length locs)))))
                 (room-new (player) (list 'mycelium (car c) (cdr c))))
               (adventure-log-add 34 '())
-              (dialog "While attempting to board, several spores on the castle burst, infesting your island with mycelium!")))
+              (lc-dialog-load "overgrown-isle" "infected")))
           (end))
       (let ((temp (+ 1000 (choice 1000))))
-        (dialog "You explore, and find cargo worth " (string temp) "@!")
+        (lc-dialog-load-fmt "overgrown-isle" "reward" temp)
         (coins-add temp)
         (adventure-log-add 35 (list temp))
         (end)))))

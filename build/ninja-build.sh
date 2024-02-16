@@ -1,0 +1,3 @@
+
+ninja
+./bundle.sh

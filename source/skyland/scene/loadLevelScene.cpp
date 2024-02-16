@@ -48,6 +48,7 @@
 #include "skyland/weather/blizzard.hpp"
 #include "skyland/weather/slightlyOvercast.hpp"
 #include "skyland/weather/typhoon.hpp"
+#include <limits>
 
 
 
@@ -140,7 +141,7 @@ void prep_level()
     }
 
     APP.persistent_data().score_.set(
-        std::max((s32)0, APP.persistent_data().score_.get()));
+        util::max((s32)0, APP.persistent_data().score_.get()));
 
 
     APP.level_begin_score() = APP.persistent_data().score_.get();
@@ -297,13 +298,13 @@ ScenePtr<Scene> LoadLevelScene::update(Time delta)
                 APP.swap_environment<weather::Typhoon>();
             }
 
-            return scene_pool::alloc<FadeInScene>();
+            return make_scene<FadeInScene>();
         };
-        return scene_pool::alloc<FullscreenDialogScene>(std::move(buffer),
-                                                        future_scene);
+        return make_scene<FullscreenDialogScene>(std::move(buffer),
+                                                 future_scene);
     }
 
-    return scene_pool::alloc<FadeInScene>();
+    return make_scene<FadeInScene>();
 }
 
 

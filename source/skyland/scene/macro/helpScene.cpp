@@ -150,13 +150,9 @@ ScenePtr<Scene> HelpScene::update(Time delta)
 {
     player().update(delta);
 
-    auto test_key = [&](Key k) {
-        return APP.player().test_key(k, milliseconds(500), milliseconds(100));
-    };
-
     if (player().key_down(Key::action_1) or player().key_down(Key::action_2)) {
 
-        return scene_pool::alloc<SelectorScene>();
+        return make_scene<SelectorScene>();
     }
 
     if (test_key(Key::right)) {

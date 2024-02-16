@@ -3,7 +3,7 @@
 ;;;
 
 
-(dialog "A shop approaches! Looks like they specialize in selling various types of hull...")
+(lc-dialog-load "hull-shop" "intro")
 
 
 

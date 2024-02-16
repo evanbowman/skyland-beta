@@ -87,6 +87,12 @@ void Speaker::update(Time delta)
 {
     Room::update(delta);
 
+    if (not PLATFORM.speaker().psg()) {
+        return;
+    }
+
+    using Channel = Platform::Speaker::PSG::Channel;
+
     if (playing_) {
         Room::ready();
     } else if (end_music_) {
@@ -95,17 +101,10 @@ void Speaker::update(Time delta)
             timer_ += delta;
             if (timer_ > milliseconds(750)) {
 
-                PLATFORM.speaker().stop_chiptune_note(
-                    Platform::Speaker::Channel::square_1);
-
-                PLATFORM.speaker().stop_chiptune_note(
-                    Platform::Speaker::Channel::square_2);
-
-                PLATFORM.speaker().stop_chiptune_note(
-                    Platform::Speaker::Channel::noise);
-
-                PLATFORM.speaker().stop_chiptune_note(
-                    Platform::Speaker::Channel::wave);
+                PLATFORM.speaker().psg()->stop_note(Channel::square_1);
+                PLATFORM.speaker().psg()->stop_note(Channel::square_2);
+                PLATFORM.speaker().psg()->stop_note(Channel::noise);
+                PLATFORM.speaker().psg()->stop_note(Channel::wave);
 
                 end_music_ = false;
             }
@@ -150,35 +149,35 @@ void Speaker::update(Time delta)
         }
 
 
-        PLATFORM.speaker().init_chiptune_square_1(settings_.square_1_);
-        PLATFORM.speaker().init_chiptune_square_2(settings_.square_2_);
-        PLATFORM.speaker().init_chiptune_noise(settings_.noise_);
+        PLATFORM.speaker().psg()->init_square_1(settings_.square_1_);
+        PLATFORM.speaker().psg()->init_square_2(settings_.square_2_);
+        PLATFORM.speaker().psg()->init_noise(settings_.noise_);
 
         timer_ = 0;
 
-        auto play_note = [&](Platform::Speaker::Channel ch, Synth& s) {
+        auto play_note = [&](Channel ch, Synth& s) {
             auto note = s.notes()[index_];
-            PLATFORM.speaker().play_chiptune_note(ch, note);
+            PLATFORM.speaker().psg()->play_note(ch, note);
         };
 
 
         if (auto p = square_1()) {
-            play_note(Platform::Speaker::Channel::square_1, *p);
+            play_note(Channel::square_1, *p);
         }
 
 
         if (auto p = square_2()) {
-            play_note(Platform::Speaker::Channel::square_2, *p);
+            play_note(Channel::square_2, *p);
         }
 
 
         if (auto w = wave()) {
-            play_note(Platform::Speaker::Channel::wave, *w);
+            play_note(Channel::wave, *w);
         }
 
 
         if (auto n = noise()) {
-            play_note(Platform::Speaker::Channel::noise, *n);
+            play_note(Channel::noise, *n);
         }
     }
 
@@ -187,26 +186,26 @@ void Speaker::update(Time delta)
     }
 
     if (auto p = square_1()) {
-        PLATFORM.speaker().apply_chiptune_effect(
-            Platform::Speaker::Channel::square_1,
-            load_effect((int)Platform::Speaker::Channel::square_1),
+        PLATFORM.speaker().psg()->apply_effect(
+            Channel::square_1,
+            load_effect((int)Channel::square_1),
             p->effect_parameters()[index_].value_,
             delta);
     }
 
 
     if (auto n = noise()) {
-        PLATFORM.speaker().apply_chiptune_effect(
-            Platform::Speaker::Channel::noise,
-            load_effect((int)Platform::Speaker::Channel::noise),
+        PLATFORM.speaker().psg()->apply_effect(
+            Channel::noise,
+            load_effect((int)Channel::noise),
             n->effect_parameters()[index_].value_,
             delta);
     }
 
     if (auto p = square_2()) {
-        PLATFORM.speaker().apply_chiptune_effect(
-            Platform::Speaker::Channel::square_2,
-            load_effect((int)Platform::Speaker::Channel::square_2),
+        PLATFORM.speaker().psg()->apply_effect(
+            Channel::square_2,
+            load_effect((int)Channel::square_2),
             p->effect_parameters()[index_].value_,
             delta);
     }
@@ -214,7 +213,7 @@ void Speaker::update(Time delta)
 
 
 
-Platform::Speaker::Effect Speaker::load_effect(int channel)
+Platform::Speaker::PSG::Effect Speaker::load_effect(int channel)
 {
     return effect_flags_.load(channel, index_);
 }
@@ -404,13 +403,12 @@ void Speaker::finalize()
 
     if (playing_) {
 
-        PLATFORM.speaker().stop_chiptune_note(
-            Platform::Speaker::Channel::square_1);
-        PLATFORM.speaker().stop_chiptune_note(
-            Platform::Speaker::Channel::square_2);
-        PLATFORM.speaker().stop_chiptune_note(
-            Platform::Speaker::Channel::noise);
-        PLATFORM.speaker().stop_chiptune_note(Platform::Speaker::Channel::wave);
+        using Channel = Platform::Speaker::PSG::Channel;
+
+        PLATFORM.speaker().psg()->stop_note(Channel::square_1);
+        PLATFORM.speaker().psg()->stop_note(Channel::square_2);
+        PLATFORM.speaker().psg()->stop_note(Channel::noise);
+        PLATFORM.speaker().psg()->stop_note(Channel::wave);
     }
 }
 

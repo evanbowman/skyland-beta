@@ -1,6 +1,5 @@
 
-(dialog
- "While passing by a small ship, a the owner frantically signals you with his radio...")
+(lc-dialog-load "taxi-quest" "intro")
 
 
 
@@ -12,10 +11,10 @@
 
 
 (defn on-converge [0]
-  (dialog
-   "<c:chauffeur:11>Hey man, I was supposed to pick up a whole bunch of people and give em a lift outa here, but the skies've been crawling with goblins ever since these storm clouds started rollin' in, I don't think I can make it there in time. You've got a big, powerful fortress, wanna help a fella out?")
+  (lc-dialog-load "taxi-quest" "offer")
 
-  (dialog-await-binary-q "I accept!" "I'm kind of busy…"))
+  (dialog-await-binary-q (lc-dialog-get "taxi-quest" "opt1")
+                         (lc-dialog-get "taxi-quest" "opt2")))
 
 
 (defn on-dialog-accepted [0]
@@ -26,11 +25,11 @@
           (push 'qids 3)
           (push 'quests (cons "/scripts/event/quest_marker/pickup.lisp" m))
           (adventure-log-add 19 '())
-          (dialog "<c:chauffeur:11>Thanks a lot! I just marked the location your sky chart with an *!"))
+          (lc-dialog-load "taxi-quest" "accepted"))
       (progn
-        (dialog "<c:chauffeur:11>Ya know, now that I look at this map, I don't think you can make it there in time either, I hope they won't get too mad at me...")))))
+        (lc-dialog-load "taxi-quest" "skip")))))
 
 
 (defn on-dialog-declined [0]
-  (dialog "<c:chauffeur:11>Hey, don't worry, I understand...")
+  (lc-dialog-load "taxi-quest" "declined")
   (setq on-dialog-closed exit))

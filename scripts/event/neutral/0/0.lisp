@@ -3,8 +3,7 @@
 ;;;
 
 
-(dialog
- "In the distance, you see an island inhabited by a lone castaway...")
+(lc-dialog-load "castaway" "intro")
 
 
 (opponent-init 6 'neutral)
@@ -19,7 +18,7 @@
 
 (secret
  5 14
- "Days stranded: |||| |||| |||| |||| ||||...")
+ (lc-dialog-get "castaway" "secret"))
 
 
 (chr-new (opponent) 1 14 'neutral 0)
@@ -27,14 +26,11 @@
 
 (setq on-converge
       (lambda
-        (dialog
-         "<c:castaway:1>Fancy meeting you here! I've been marooned on this island... "
-         "who knows how long! Looks like a nasty storm's brewing, mind "
-         "if I hitch a ride?")
+        (lc-dialog-load "castaway" "greet")
 
         (setq on-dialog-closed
               (lambda
-                (dialog "He seems harmless, invite him aboard?")
+                (lc-dialog-load "castaway" "offer")
                 (dialog-await-y/n)
                 (setq on-dialog-closed '())))
 
@@ -53,26 +49,26 @@
                 (chr-new (player) (car temp) (cdr temp) 'neutral nil)
                 (chr-del (opponent) 1 14)
                 (if (or (equal (choice 2) 1) (< (coins) 300))
-                    (join "The castaway joined your crew!")
+                    (join (lc-dialog-get "castaway" "join1"))
                   (progn
                     (coins-set (- (coins) 300))
-                    (join "The castaway joined your crew. Starving, he ate 300@ of your food supplies!"))))
+                    (join (lc-dialog-get "castaway" "join2")))))
             (progn
-              (dialog "Sadly, there's no room...")
+              (lc-dialog-load "castaway" "full")
               (defn on-dialog-closed [0]
-                (dialog "<c:castaway:1>Hold on, don't leave me here! I may not meet anyone else for a long time... I'll help you build an addition onto your castle, then there'll be enough space for me to sleep! Let's see... I've got just enough supplies to build a ladder...")
+                (lc-dialog-load "castaway" "plead")
                 (defn on-dialog-closed [0]
                   (alloc-space 'ladder)
                   (sel-input 'ladder
-                             "Place ladder (1x2):"
+                             (lc-dialog-get "castaway" "place_ladder")
                              (lambda
                                (sound "build0")
                                (room-new (player) `(ladder ,$1 ,$2))
                                (chr-del (opponent) 1 14)
                                (chr-new (player) $1 (+ 1 $2) 'neutral nil)
-                               (dialog "<c:castaway:1> Thanks for rescuing me! I'll try to help out however I can!")
+                               (lc-dialog-load "castaway" "thanks")
                                (defn on-dialog-closed [0]
-                                 (join "The castaway joined your crew!")
+                                 (join (lc-dialog-get "castaway" "join1"))
                                  (setq on-dialog-closed nil)
                                  (exit)))))))))
         (exit)))

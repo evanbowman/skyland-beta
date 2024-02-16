@@ -33,6 +33,7 @@
 
 
 #include "autopilotPlayer.hpp"
+#include "platform/conf.hpp"
 #include "skyland/skyland.hpp"
 
 
@@ -69,7 +70,7 @@ void AutopilotPlayer::on_room_damaged(Room& room)
 
 
 
-static std::pair<Key, bool> button_name_to_key(const char* name)
+static Pair<Key, bool> button_name_to_key(const char* name)
 {
     if (str_cmp(name, "Right") == 0) {
         return {Key::right, true};
@@ -220,6 +221,19 @@ void AutopilotPlayer::update(Time delta)
                         APP.dialog_buffer().emplace(
                             allocate_dynamic<DialogString>("dialog-buffer"));
                         **APP.dialog_buffer() += key->string().value();
+                    } else if (key->type() == lisp::Value::Type::cons) {
+                        lisp::eval(key);
+                        PLATFORM.delta_clock().reset();
+                        if (lisp::get_op0()->type() ==
+                            lisp::Value::Type::string) {
+                            PLATFORM.fill_overlay(0);
+                            APP.dialog_buffer().emplace(
+                                allocate_dynamic<DialogString>(
+                                    "dialog-buffer"));
+                            **APP.dialog_buffer() +=
+                                lisp::get_op0()->string().value();
+                        }
+                        lisp::pop_op();
                     }
                 } else {
                     PLATFORM.fatal("invalid autopilot list format");

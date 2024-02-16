@@ -84,9 +84,9 @@ public:
 
     bool large_board_ = false;
 
-    std::optional<Text> board_size_text_;
-    std::optional<Text> small_text_;
-    std::optional<Text> large_text_;
+    Optional<Text> board_size_text_;
+    Optional<Text> small_text_;
+    Optional<Text> large_text_;
 };
 
 

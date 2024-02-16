@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Copyright (C) 2023  Evan Bowman. Some rights reserved.
+// Copyright (C) 2024  Evan Bowman. Some rights reserved.
 //
 // This program is source-available; the source code is provided for educational
 // purposes. All copies of the software must be distributed along with this
@@ -34,26 +34,44 @@
 
 #pragma once
 
-#include "gba_platform_soundcontext.hpp"
+
+#include "skyland/scene/module.hpp"
 
 
 
-static const int audio_buffer_count = 4;
-
-
-extern AudioBuffer audio_buffers[audio_buffer_count];
-extern int audio_front_buffer;
-extern volatile bool audio_buffers_consumed[audio_buffer_count];
-extern SoundContext snd_ctx;
+namespace skyland
+{
 
 
 
-AudioBuffer* audio_mix();
+class ChangeLanguageModule : public Module<ChangeLanguageModule>
+{
+public:
+    ScenePtr<Scene> update(Time delta) override;
+
+
+    static SystemString module_name()
+    {
+        return SystemString::set_language;
+    }
+
+
+    static u16 icon()
+    {
+        return 3336;
+    }
+
+
+    static bool run_scripts()
+    {
+        return true;
+    }
+
+
+private:
+    static Factory factory_;
+};
 
 
 
-AudioBuffer* audio_mix_music_only();
-
-
-
-void audio_buffer_mixin_sfx(AudioBuffer* mixing_buffer);
+} // namespace skyland

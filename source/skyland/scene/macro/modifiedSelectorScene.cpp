@@ -98,10 +98,6 @@ ScenePtr<Scene> ModifiedSelectorScene::update(Player& player,
         return scene;
     }
 
-    auto test_key = [&](Key k) {
-        return player.test_key(k, milliseconds(500), milliseconds(100));
-    };
-
     auto& sector = state.sector();
 
     if (player.key_pressed(Key::alt_1) or player.key_pressed(Key::alt_2)) {
@@ -184,7 +180,7 @@ ScenePtr<Scene> ModifiedSelectorScene::update(Player& player,
         }
 
     } else {
-        return scene_pool::alloc<SelectorScene>();
+        return make_scene<SelectorScene>();
     }
 
     return null_scene();

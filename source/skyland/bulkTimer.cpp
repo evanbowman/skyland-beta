@@ -74,7 +74,7 @@ void BulkTimer::update(Time elapsed_delta)
         const auto next = list->next_;
 
         list->clock_ -= elapsed_delta;
-        if (list->clock_ <= 0) {
+        if (list->clock_ <= 0) [[unlikely]] {
             list->timer_expired();
         } else {
             // Not finished counting down, re-link the timer to the update

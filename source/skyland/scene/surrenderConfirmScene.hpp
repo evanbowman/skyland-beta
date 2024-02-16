@@ -79,7 +79,7 @@ public:
                 APP.exit_condition() = App::ExitCondition::defeat;
                 PLATFORM.speaker().stop_music();
             }
-            return scene_pool::alloc<ReadyScene>();
+            return make_scene<ReadyScene>();
         }
 
         return null_scene();
@@ -109,9 +109,9 @@ public:
 private:
     bool selection_ = false;
 
-    std::optional<Text> msg_;
-    std::optional<Text> yes_text_;
-    std::optional<Text> no_text_;
+    Optional<Text> msg_;
+    Optional<Text> yes_text_;
+    Optional<Text> no_text_;
 };
 
 

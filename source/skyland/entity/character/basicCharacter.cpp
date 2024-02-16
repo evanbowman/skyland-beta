@@ -37,7 +37,6 @@
 #include "skyland/room_metatable.hpp"
 #include "skyland/rooms/decimator.hpp"
 #include "skyland/rooms/infirmary.hpp"
-#include "skyland/rooms/mindControl.hpp"
 #include "skyland/rooms/replicator.hpp"
 #include "skyland/rooms/transporter.hpp"
 #include "skyland/skyland.hpp"
@@ -363,7 +362,7 @@ void BasicCharacter::update(Time delta, Room* room)
 
     if (radiation_counter_) {
         if (radiation_counter_) {
-            radiation_counter_ -= std::min((u8)4, radiation_counter_);
+            radiation_counter_ -= util::min((u8)4, radiation_counter_);
             sprite_.set_mix({custom_color(0xe81858), radiation_counter_});
         }
     } else {
@@ -922,7 +921,7 @@ bool BasicCharacter::reassign_room(const RoomCoord& old_coord,
 
     if (auto room = parent_->get_room(old_coord)) {
 
-        std::optional<EntityRef<BasicCharacter>> self;
+        Optional<EntityRef<BasicCharacter>> self;
 
         for (auto it = room->characters().begin();
              it not_eq room->characters().end();) {
@@ -930,6 +929,7 @@ bool BasicCharacter::reassign_room(const RoomCoord& old_coord,
             if (it->get() == this) {
                 self = std::move(*it);
                 it = room->edit_characters().erase(it);
+                break;
             } else {
                 ++it;
             }
@@ -979,7 +979,7 @@ bool BasicCharacter::co_op_locked() const
 
 
 
-std::pair<BasicCharacter*, Room*> BasicCharacter::find_by_id(CharacterId id)
+Pair<BasicCharacter*, Room*> BasicCharacter::find_by_id(CharacterId id)
 {
     auto found = APP.player_island().find_character_by_id(id);
     if (found.first) {

@@ -37,6 +37,7 @@
 #include "int.h"
 #include <ciso646> // For MSVC. What an inept excuse for a compiler.
 
+#include "../util.hpp"
 #include "fixnum.hpp"
 
 
@@ -386,14 +387,12 @@ inline Float fast_atan_approx(Float x)
 }
 
 
-#include <algorithm>
-
 // This is really inefficient. Ideally, I'd convert all these numbers to
 // degrees, instead of multipying by 57.2f at the end. I think there's room for
 // improvement here, but math theory has never been one of my strong suits.
 inline Float fast_atan2_approx(Float x, Float y)
 {
-    auto a = std::min(abs(x), abs(y)) / std::max(abs(x), abs(y));
+    auto a = util::min(abs(x), abs(y)) / util::max(abs(x), abs(y));
     auto s = a * a;
     auto r = ((-0.0464f * s + 0.1593f) * s - 0.3276f) * s * a + a;
     if (abs(y) > abs(x)) {

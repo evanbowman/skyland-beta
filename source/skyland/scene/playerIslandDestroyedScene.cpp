@@ -274,7 +274,7 @@ redden_shader(ShaderPalette p, ColorConstant k, int var, int index)
         return k;
     }
 
-    auto k1 = contrast_shader(p, k, std::max(-(var / 2), -64), index);
+    auto k1 = contrast_shader(p, k, util::max(-(var / 2), -64), index);
 
     static constexpr const Color ao(ColorConstant::aerospace_orange);
     const Color input(k1);
@@ -656,10 +656,11 @@ ScenePtr<Scene> PlayerIslandDestroyedScene::update(Time delta)
 
                 PLATFORM.screen().fade(1.f);
 
-                auto next =
-                    scene_pool::make_deferred_scene<PlayerIslandDestroyedScene>(
-                        island_, true);
-                return scene_pool::alloc<AchievementNotificationScene>(
+                auto next = [isle = island_]() -> ScenePtr<Scene> {
+                    return make_scene<PlayerIslandDestroyedScene>(isle, true);
+                };
+
+                return make_scene<AchievementNotificationScene>(
                     achievement, next, true);
             }
         }
@@ -748,10 +749,10 @@ ScenePtr<Scene> PlayerIslandDestroyedScene::update(Time delta)
                         }
                     }
 
-                    return scene_pool::alloc<CoOpSyncScene>();
+                    return make_scene<CoOpSyncScene>();
                 }
 
-                return scene_pool::alloc<ReadyScene>();
+                return make_scene<ReadyScene>();
 
             } else {
                 anim_state_ = AnimState::fade_out;
@@ -828,12 +829,12 @@ ScenePtr<Scene> PlayerIslandDestroyedScene::update(Time delta)
                 if (APP.game_mode() == App::GameMode::multiplayer and
                     PLATFORM.network_peer().is_connected()) {
                     PLATFORM.network_peer().disconnect();
-                    return scene_pool::alloc<LinkScene>();
+                    return make_scene<LinkScene>();
                 }
 
                 switch (APP.game_mode()) {
                 case App::GameMode::challenge:
-                    return scene_pool::alloc<SelectChallengeScene>();
+                    return make_scene<SelectChallengeScene>();
 
                 case App::GameMode::adventure: {
                     if (APP.world_graph()
@@ -847,8 +848,8 @@ ScenePtr<Scene> PlayerIslandDestroyedScene::update(Time delta)
                         auto dialog =
                             allocate_dynamic<DialogString>("dialog-buffer");
                         *dialog = SYS_CSTR(adventure_completed_message);
-                        auto next = scene_pool::alloc<BoxedDialogScene>(
-                            std::move(dialog));
+                        auto next =
+                            make_scene<BoxedDialogScene>(std::move(dialog));
 
                         next->disallow_fastforward();
 
@@ -858,35 +859,34 @@ ScenePtr<Scene> PlayerIslandDestroyedScene::update(Time delta)
                         }
 
                         next->set_next_scene([] {
-                            auto next = scene_pool::alloc<AdventureLogScene>();
+                            auto next = make_scene<AdventureLogScene>();
 
                             next->set_next_scene([] {
-                                return scene_pool::alloc<HighscoresScene>(true,
-                                                                          1);
+                                return make_scene<HighscoresScene>(true, 1);
                             });
                             return next;
                         });
 
                         return next;
                     } else {
-                        return scene_pool::alloc<ZoneImageScene>();
+                        return make_scene<ZoneImageScene>();
                     }
                 }
 
                 case App::GameMode::sandbox:
-                    return scene_pool::alloc<SandboxResetScene>();
+                    return make_scene<SandboxResetScene>();
 
                 case App::GameMode::co_op:
                     Platform::fatal("logic error: co_op 111");
 
                 case App::GameMode::skyland_forever:
-                    return scene_pool::alloc<ReadyScene>();
+                    return make_scene<ReadyScene>();
 
                 case App::GameMode::multiplayer:
-                    return scene_pool::alloc<LinkScene>();
+                    return make_scene<LinkScene>();
 
                 default:
-                    return scene_pool::alloc<TitleScreenScene>(3);
+                    return make_scene<TitleScreenScene>(3);
                 }
                 Platform::fatal("fallthrough in playerIslandDestroyedScene");
             } else {
@@ -898,30 +898,30 @@ ScenePtr<Scene> PlayerIslandDestroyedScene::update(Time delta)
 
                 if (PLATFORM.network_peer().is_connected()) {
                     PLATFORM.network_peer().disconnect();
-                    return scene_pool::alloc<LinkScene>();
+                    return make_scene<LinkScene>();
                 }
 
                 switch (APP.game_mode()) {
                 case App::GameMode::challenge:
-                    return scene_pool::alloc<SelectChallengeScene>();
+                    return make_scene<SelectChallengeScene>();
 
                 case App::GameMode::adventure: {
                     lisp::dostring("(adventure-log-add 5 '())");
-                    return scene_pool::alloc<HighscoresScene>(true, 1);
+                    return make_scene<HighscoresScene>(true, 1);
                 }
 
                 case App::GameMode::sandbox:
-                    return scene_pool::alloc<SandboxResetScene>();
+                    return make_scene<SandboxResetScene>();
 
                 case App::GameMode::multiplayer:
-                    return scene_pool::alloc<LinkScene>();
+                    return make_scene<LinkScene>();
 
                 case App::GameMode::co_op:
                 case App::GameMode::skyland_forever:
-                    return scene_pool::alloc<HighscoresScene>(true, 3);
+                    return make_scene<HighscoresScene>(true, 3);
 
                 default:
-                    return scene_pool::alloc<TitleScreenScene>(3);
+                    return make_scene<TitleScreenScene>(3);
                 }
             }
         } else {
@@ -937,8 +937,7 @@ ScenePtr<Scene> PlayerIslandDestroyedScene::update(Time delta)
     case AnimState::idle:
         coins_.reset();
         power_.reset();
-        if (APP.player().key_down(Key::action_1) or
-            APP.player().tap_released()) {
+        if (APP.player().key_down(Key::action_1)) {
             timer_ = 0;
             PLATFORM.fill_overlay(0);
 
@@ -965,8 +964,8 @@ ScenePtr<Scene> PlayerIslandDestroyedScene::update(Time delta)
 
 
     case AnimState::show_options:
-        return scene_pool::alloc<LevelCompleteOptionsScene>(
-            false, std::move(confetti_));
+        return make_scene<LevelCompleteOptionsScene>(false,
+                                                     std::move(confetti_));
     }
 
     switch (confetti_state_) {
@@ -1106,7 +1105,7 @@ void PlayerIslandDestroyedScene::enter(Scene& prev)
 
     auto lv_score = APP.score().get() - APP.level_begin_score();
     auto score_time_penalty =
-        0.5f * (lv_score - (lv_score / (std::max(1, level_seconds_ / 60))));
+        0.5f * (lv_score - (lv_score / (util::max(1, level_seconds_ / 60))));
     APP.score().set(APP.score().get() - score_time_penalty);
 
     if (lv_score < 0) {
@@ -1142,10 +1141,14 @@ void PlayerIslandDestroyedScene::exit(Scene& next)
     PLATFORM.load_overlay_texture("overlay");
     PLATFORM.screen().pixelate(0);
 
-    PLATFORM.speaker().stop_chiptune_note(Platform::Speaker::Channel::square_1);
-    PLATFORM.speaker().stop_chiptune_note(Platform::Speaker::Channel::square_2);
-    PLATFORM.speaker().stop_chiptune_note(Platform::Speaker::Channel::noise);
-    PLATFORM.speaker().stop_chiptune_note(Platform::Speaker::Channel::wave);
+    using Channel = Platform::Speaker::PSG::Channel;
+
+    if (PLATFORM.speaker().psg()) {
+        PLATFORM.speaker().psg()->stop_note(Channel::square_1);
+        PLATFORM.speaker().psg()->stop_note(Channel::square_2);
+        PLATFORM.speaker().psg()->stop_note(Channel::noise);
+        PLATFORM.speaker().psg()->stop_note(Channel::wave);
+    }
 
     if (restore_volume_) {
         PLATFORM.speaker().set_music_volume(

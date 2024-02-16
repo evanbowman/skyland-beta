@@ -147,9 +147,7 @@ ScenePtr<Scene> IntroCreditsScene::update(Time delta)
                                                ColorConstant::rich_black});
         }
 
-        auto t = PLATFORM.screen().touch();
-        if (timer_ > milliseconds(5500) or key_down<Key::action_2>() or
-            (t and t->up_transition())) {
+        if (timer_ > milliseconds(5500) or key_down<Key::action_2>()) {
             text_.reset();
             copyright_text_.reset();
             PLATFORM.fill_overlay(0);
@@ -161,7 +159,7 @@ ScenePtr<Scene> IntroCreditsScene::update(Time delta)
     } else {
         if (timer_ > milliseconds(400)) {
             PLATFORM.set_overlay_origin(0, 0);
-            return scene_pool::alloc<TitleScreenScene>();
+            return make_scene<TitleScreenScene>();
         }
     }
 

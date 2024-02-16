@@ -1,33 +1,26 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Copyright (C) 2023  Evan Bowman. Some rights reserved.
+// MIT License
 //
-// This program is source-available; the source code is provided for educational
-// purposes. All copies of the software must be distributed along with this
-// license document.
+// Copyright (c) 2020-2024 Evan Bowman
 //
-// 1. DEFINITION OF SOFTWARE: The term "Software" refers to SKYLAND,
-// including any updates, modifications, or associated documentation provided by
-// Licensor.
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
 //
-// 2. DERIVATIVE WORKS: Licensee is permitted to modify the source code.
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
 //
-// 3. COMMERCIAL USE: Commercial use is not allowed.
-//
-// 4. ATTRIBUTION: Licensee is required to provide attribution to Licensor.
-//
-// 5. INTELLECTUAL PROPERTY RIGHTS: All intellectual property rights in the
-// Software shall remain the property of Licensor. The Licensee does not acquire
-// any rights to the Software except for the limited use rights specified in
-// this Agreement.
-//
-// 6. WARRANTY AND LIABILITY: The Software is provided "as is" without warranty
-// of any kind. Licensor shall not be liable for any damages arising out of or
-// related to the use or inability to use the Software.
-//
-// 7. TERMINATION: This Agreement shall terminate automatically if Licensee
-// breaches any of its terms and conditions. Upon termination, Licensee must
-// cease all use of the Software and destroy all copies.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -39,8 +32,7 @@
 // Platform Implementation for Nintendo Gameboy Advance
 //
 // Generally, the code in this file is a mess, as the gba hardware is set in
-// stone and I don't need to maintain this stuff, so I didn't bother to write
-// organized code.
+// stone and I don't need to maintain this stuff.
 //
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -52,25 +44,25 @@
 #include "containers/vector.hpp"
 #include "critical_section.hpp"
 #include "filesystem.hpp"
+#include "gba_platform_audio.hpp"
 #include "gbp_logo.hpp"
 #include "graphics/overlay.hpp"
 #include "images.cpp"
 #include "localization.hpp"
-#include "mixer.hpp"
 #include "number/random.hpp"
 #include "platform/color.hpp"
 #include "platform/conf.hpp"
 #include "platform/flash_filesystem.hpp"
-#include "platform/platform.hpp"
+#include "platform_flags.hpp"
 #include "rumble.h"
 #include "script/lisp.hpp"
 #include "send_multiboot.h"
+#include "skyland_mgba.hpp"
 #include "string.hpp"
 #include "util.hpp"
-#include <algorithm>
 #include <limits>
 #include <setjmp.h>
-#include "skyland_mgba.hpp"
+
 
 
 extern "C" {
@@ -254,26 +246,6 @@ static int overlay_y = 0;
 
 
 
-enum class GlobalFlag {
-    rtc_faulty,
-    gbp_unlocked,
-    multiplayer_connected,
-    save_using_flash,
-    glyph_mode,
-    parallax_clouds,
-    v_parallax,
-    partial_palette_sync,
-    palette_sync,
-    sound_startup_monkeypatch,
-    key_poll_called,
-    watchdog_disabled,
-    effect_window_mode,
-    iris_effect_mode,
-    skyland_custom_mgba,
-    count
-};
-
-
 static Bitvector<static_cast<int>(GlobalFlag::count)> gflags;
 
 
@@ -299,13 +271,13 @@ Platform::ModelName Platform::model_name() const
 
 
 
-static void set_gflag(GlobalFlag f, bool val)
+void set_gflag(GlobalFlag f, bool val)
 {
     gflags.set(static_cast<int>(f), val);
 }
 
 
-static bool get_gflag(GlobalFlag f)
+bool get_gflag(GlobalFlag f)
 {
     return gflags.get(static_cast<int>(f));
 }
@@ -333,8 +305,8 @@ Platform::DeviceName Platform::device_name() const
 // code.
 extern "C" {
 __attribute__((section(".iwram"), long_call)) void
-memcpy32(void* dst, const void* src, uint wcount);
-void memcpy16(void* dst, const void* src, uint hwcount);
+memcpy32(void* dst, const void* src, unsigned int wcount);
+void memcpy16(void* dst, const void* src, unsigned int hwcount);
 }
 
 
@@ -344,20 +316,6 @@ __attribute__((section(".iwram"), long_call)) void blit_tile(u16* out, u16* in);
 
 __attribute__((section(".iwram"), long_call)) void
 win_circle(u16 winh[], int x0, int y0, int rr);
-
-
-__attribute__((section(".iwram"), long_call)) void audio_update_fast_isr();
-
-
-static int audio_timer_frequency(int words_per_call)
-{
-    // NOTE: 0xffff represents the max timer value. The subtracted value
-    // represents the number of timer tics to wait before running the irq
-    // again. Upon each tic of the timer, the direct sound chip loads one sample
-    // from audio FIFO A. The fifo is a 32bit register, so we write four samples
-    // to the fifo at a time.
-    return 0xffff - ((4 * words_per_call) - 1);
-}
 
 
 
@@ -465,7 +423,7 @@ static inline void on_stack_overflow();
 
 
 EWRAM_DATA
-static std::optional<Platform::UnrecoverrableErrorCallback>
+static Optional<Platform::UnrecoverrableErrorCallback>
     unrecoverrable_error_callback;
 
 
@@ -500,7 +458,7 @@ int main(int argc, char** argv)
 
 void print_char(utf8::Codepoint c,
                 const OverlayCoord& coord,
-                const std::optional<FontColors>& colors = {});
+                const Optional<FontColors>& colors = {});
 
 
 
@@ -534,100 +492,12 @@ static inline void on_stack_overflow()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// DeltaClock
-////////////////////////////////////////////////////////////////////////////////
-
-
-Platform::DeltaClock::DeltaClock() : impl_(nullptr)
-{
-}
-
-
-static size_t delta_total;
-
-
-static int delta_read_tics()
-{
-    return REG_TM3CNT_L + delta_total;
-}
-
-
-static Microseconds delta_convert_tics(int tics)
-{
-    //
-    // IMPORTANT: Already well into development, I discovered that the Gameboy
-    // Advance does not refresh at exactly 60 frames per second. Rather than
-    // change all of the code, I am going to keep the timestep as-is. Anyone
-    // porting the code to a new platform should make the appropriate
-    // adjustments in their implementation of DeltaClock. I believe the actual
-    // refresh rate on the GBA is something like 59.59.
-    //
-    // P.S.: Now, I've discovered that the screen refresh rate is actually 59.73
-    // Hz. Sorry to have created a headache for anyone in the future who may be
-    // attempting to port this game.
-    //
-    return ((tics * (59.59f / 60.f)) * 60.f) / 1000.f;
-}
-
-
-Platform::DeltaClock::TimePoint Platform::DeltaClock::sample() const
-{
-    return delta_read_tics();
-}
-
-
-Microseconds Platform::DeltaClock::duration(TimePoint t1, TimePoint t2)
-{
-    return delta_convert_tics(t2 - t1);
-}
-
-
-
-static EWRAM_DATA Microseconds last_delta = 0;
-
-
-
-Microseconds Platform::DeltaClock::reset()
-{
-    // (1 second / 60 frames) x (1,000,000 microseconds / 1 second) =
-    // 16,666.6...
-
-    irqDisable(IRQ_TIMER3);
-    const auto tics = delta_read_tics();
-    REG_TM3CNT_H = 0;
-
-    irqEnable(IRQ_TIMER3);
-
-    delta_total = 0;
-
-    REG_TM3CNT_L = 0;
-    REG_TM3CNT_H = 1 << 7 | 1 << 6;
-
-    ::last_delta = delta_convert_tics(tics);
-    return ::last_delta;
-}
-
-
-
-Microseconds Platform::DeltaClock::last_delta() const
-{
-    return ::last_delta;
-}
-
-
-
-Platform::DeltaClock::~DeltaClock()
-{
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
 // Keyboard
 ////////////////////////////////////////////////////////////////////////////////
 
 
 
-std::optional<Bitvector<int(Key::count)>> missed_keys;
+Optional<Bitvector<int(Key::count)>> missed_keys;
 
 
 
@@ -657,7 +527,7 @@ void Platform::Keyboard::poll()
 
     poll_keys(states_);
 
-    if (UNLIKELY(static_cast<bool>(::missed_keys))) {
+    if (static_cast<bool>(::missed_keys)) [[unlikely]] {
         for (int i = 0; i < (int)Key::count; ++i) {
             if ((*::missed_keys)[i]) {
                 states_[i] = true;
@@ -805,12 +675,12 @@ static bool last_fade_include_sprites;
 #define REG_BLENDALPHA (*((volatile u16*)0x04000052))
 
 #define BLD_BUILD(top, bot, mode)                                              \
-    ((((bot)&63) << 8) | (((mode)&3) << 6) | ((top)&63))
+    ((((bot) & 63) << 8) | (((mode) & 3) << 6) | ((top) & 63))
 #define BLD_OBJ 0x0010
 #define BLD_BG0 0x0001
 #define BLD_BG1 0x0002
 #define BLD_BG3 0x0008
-#define BLDA_BUILD(eva, evb) (((eva)&31) | (((evb)&31) << 8))
+#define BLDA_BUILD(eva, evb) (((eva) & 31) | (((evb) & 31) << 8))
 
 
 static auto blend(const Color& c1, const Color& c2, u8 amt)
@@ -1240,13 +1110,13 @@ static PaletteBank color_mix(ColorConstant k, u8 amount)
 
     // Skip over any palettes that are in use
     while (palette_info[palette_counter].locked_) {
-        if (UNLIKELY(palette_counter == palette_count)) {
+        if (palette_counter == palette_count) [[unlikely]] {
             return 0;
         }
         ++palette_counter;
     }
 
-    if (UNLIKELY(palette_counter == palette_count)) {
+    if (palette_counter == palette_count) [[unlikely]] {
         // Ok, so in this instance, we ran out of unused palettes, but there may
         // be a palette that was used in the last frame, and which has not yet
         // been referenced while rendering the current frame. Unlock that
@@ -1328,7 +1198,7 @@ u16 find_dynamic_mapping(u16 virtual_index)
 
 
 
-static std::optional<Vec2<s32>> cached_view_center;
+static Optional<Vec2<s32>> cached_view_center;
 
 
 
@@ -1376,7 +1246,7 @@ void Platform::Screen::draw(const FastSpriteMatrix mat)
     for (auto& spr : mat.data_[0]) {
         const auto target_index = 2 + spr.tile_ * tx_scale;
 
-        if (UNLIKELY(oam_write_index == oam_count)) {
+        if (oam_write_index == oam_count) [[unlikely]] {
             return;
         }
 
@@ -1450,7 +1320,7 @@ void Platform::Screen::draw_batch(TextureIndex t,
     const auto target_index = 2 + t * tx_scale;
 
     for (auto& c : coords) {
-        if (UNLIKELY(oam_write_index == oam_count)) {
+        if (oam_write_index == oam_count) [[unlikely]] {
             return;
         }
 
@@ -1485,7 +1355,7 @@ void Platform::Screen::draw_batch(TextureIndex t,
 
 void Platform::Screen::draw(const Sprite& spr)
 {
-    if (UNLIKELY(spr.get_alpha() == Sprite::Alpha::transparent)) {
+    if (spr.get_alpha() == Sprite::Alpha::transparent) [[unlikely]] {
         return;
     }
 
@@ -1498,7 +1368,7 @@ void Platform::Screen::draw(const Sprite& spr)
 
 
     auto pb = [&]() -> PaletteBank {
-        if (UNLIKELY(mix.color_ not_eq ColorConstant::null)) {
+        if (mix.color_ not_eq ColorConstant::null) [[unlikely]] {
             if (const auto pal_bank = color_mix(mix.color_, mix.amount_)) {
                 return ATTR2_PALBANK(pal_bank);
             } else {
@@ -1518,7 +1388,7 @@ void Platform::Screen::draw(const Sprite& spr)
                            int scale,
                            int shape,
                            int size) {
-        if (UNLIKELY(oam_write_index == oam_count)) {
+        if (oam_write_index == oam_count) [[unlikely]] {
             return;
         }
         const auto position =
@@ -1839,12 +1709,12 @@ TileDesc Platform::map_tile1_chunk(TileDesc src)
 
 #define BIT_MASK(len) ((1 << (len)) - 1)
 
-static void __toncset(void* dst, u32 fill, uint size)
+static void __toncset(void* dst, u32 fill, unsigned int size)
 {
     if (size == 0 || dst == NULL)
         return;
 
-    uint left = (u32)dst & 3;
+    unsigned int left = (u32)dst & 3;
     u32* dst32 = (u32*)((char*)dst - left);
     u32 count, mask;
 
@@ -1865,7 +1735,7 @@ static void __toncset(void* dst, u32 fill, uint size)
 
     // Main stint.
     count = size / 4;
-    uint tmp = count & 3;
+    unsigned int tmp = count & 3;
     count /= 4;
 
     switch (tmp) {
@@ -2109,16 +1979,8 @@ Platform::EncodedTile Platform::encode_tile(u8 tile_data[16][16])
 
 
 
-const Platform::Screen::Touch* Platform::Screen::touch() const
-{
-    // No touchscreen on the gba!
-    return nullptr;
-}
-
-
-
-using OptDmaBufferData = std::array<u16, 161>;
-EWRAM_DATA std::optional<DynamicMemory<OptDmaBufferData>> opt_dma_buffer_;
+using OptDmaBufferData = Array<u16, 161>;
+EWRAM_DATA Optional<DynamicMemory<OptDmaBufferData>> opt_dma_buffer_;
 EWRAM_DATA int dma_effect_params[3];
 
 
@@ -2656,7 +2518,7 @@ static void vblank_isr()
     rumble_update();
 
     const auto ten_seconds = 600; // approx. 60 fps
-    if (UNLIKELY(::watchdog_counter > ten_seconds)) {
+    if (::watchdog_counter > ten_seconds) [[unlikely]] {
 
         ::watchdog_counter = 0;
 
@@ -2731,12 +2593,12 @@ void Platform::fatal(const char* msg)
     Text text({1, 1});
     text.append("fatal error:", text_colors_inv);
 
-    std::optional<Text> text2;
+    Optional<Text> text2;
 
 
     Buffer<Text, 6> line_buffer;
 
-    std::optional<TextView> verbose_error;
+    Optional<TextView> verbose_error;
 
 
     auto show_default_scrn = [&] {
@@ -2857,7 +2719,7 @@ static bool overlay_was_faded = false;
 // Screen::display() call...
 void Platform::Screen::fade(float amount,
                             ColorConstant k,
-                            std::optional<ColorConstant> base,
+                            Optional<ColorConstant> base,
                             bool include_sprites,
                             bool include_overlay)
 {
@@ -3085,7 +2947,7 @@ void Platform::DynamicTexture::remap(u16 spritesheet_offset)
 }
 
 
-std::optional<Platform::DynamicTexturePtr> Platform::make_dynamic_texture()
+Optional<Platform::DynamicTexturePtr> Platform::make_dynamic_texture()
 {
     auto finalizer =
         [](PooledRcControlBlock<DynamicTexture, dynamic_texture_count>* ctrl) {
@@ -3130,7 +2992,7 @@ void Platform::load_sprite_texture(const char* name)
             // end of the tile memory.
             memcpy16((void*)&MEM_TILE[4][1],
                      info.tile_data_,
-                     std::min((u32)16128, info.tile_data_length_ / 2));
+                     util::min((u32)16128, info.tile_data_length_ / 2));
 
             // We need to do this, otherwise whatever screen fade is currently
             // active will be overwritten by the copy.
@@ -3248,8 +3110,8 @@ void Platform::load_tile0_texture(const char* name)
             } else {
                 memcpy16((void*)&MEM_SCREENBLOCKS[sbb_t0_texture][0],
                          info.tile_data_,
-                         std::min((int)charblock_size / 2,
-                                  (int)info.tile_data_length_ / 2));
+                         util::min((int)charblock_size / 2,
+                                   (int)info.tile_data_length_ / 2));
             }
 
             return;
@@ -3297,8 +3159,8 @@ void Platform::load_tile1_texture(const char* name)
             } else {
                 memcpy16((void*)&MEM_SCREENBLOCKS[sbb_t1_texture][0],
                          info.tile_data_,
-                         std::min((int)charblock_size / 2,
-                                  (int)info.tile_data_length_ / 2));
+                         util::min((int)charblock_size / 2,
+                                   (int)info.tile_data_length_ / 2));
             }
 
             return;
@@ -3693,887 +3555,6 @@ void Platform::erase_save_sector()
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// Logger
-////////////////////////////////////////////////////////////////////////////////
-
-
-
-Platform::Logger::Logger()
-{
-}
-
-
-
-static Severity log_threshold;
-
-
-
-void Platform::Logger::set_threshold(Severity severity)
-{
-    log_threshold = severity;
-}
-
-
-
-std::optional<Vector<char>> log_data_;
-
-
-
-Vector<char>* Platform::Logger::data()
-{
-    if (log_data_) {
-        return &*log_data_;
-    }
-
-    return nullptr;
-}
-
-
-
-void Platform::Logger::log(Severity level, const char* msg)
-{
-    if (::__platform__ == nullptr) {
-        return;
-    }
-
-    ScratchBuffer::Tag t = "syslog_data";
-
-    if (not log_data_) {
-        log_data_.emplace(t);
-    }
-
-    if (mgba_detect()) {
-        mgba_log(msg);
-    }
-
-    while (*msg not_eq '\0') {
-        log_data_->push_back(*msg, t);
-        ++msg;
-    }
-
-    log_data_->push_back('\n', t);
-}
-
-
-
-void Platform::Logger::clear()
-{
-    log_data_.reset();
-}
-
-
-
-void Platform::Logger::flush()
-{
-    if (not log_data_) {
-        return;
-    }
-
-    flash_filesystem::store_file_data_binary("/log.txt", *log_data_);
-
-    // log_data_.reset();
-}
-
-
-
-////////////////////////////////////////////////////////////////////////////////
-// Speaker
-//
-// For music, the Speaker class uses the GameBoy's direct sound chip to play
-// 8-bit signed raw audio, at 16kHz.
-//
-////////////////////////////////////////////////////////////////////////////////
-
-
-
-#include "gba_platform_soundcontext.hpp"
-
-
-
-#include "data/music_box.hpp"
-#include "data/music_life_in_silco.hpp"
-#include "data/music_rain.hpp"
-#include "data/music_sb_solecism.hpp"
-#include "data/music_unaccompanied_wind.hpp"
-#include "data/shadows.hpp"
-
-
-static const int null_music_len = AudioBuffer::sample_count * 2;
-static const u32 null_music[null_music_len] = {0};
-
-
-#define DEF_AUDIO(__STR_NAME__, __TRACK_NAME__, __DIV__)                       \
-    {                                                                          \
-        STR(__STR_NAME__), (AudioSample*)__TRACK_NAME__,                       \
-            __TRACK_NAME__##Len / __DIV__                                      \
-    }
-
-
-#define DEF_MUSIC(__STR_NAME__, __TRACK_NAME__)                                \
-    DEF_AUDIO(__STR_NAME__, __TRACK_NAME__, 4)
-
-
-#define DEF_SOUND(__STR_NAME__, __TRACK_NAME__)                                \
-    DEF_AUDIO(__STR_NAME__, __TRACK_NAME__, 1)
-
-
-
-// static const
-static const struct AudioTrack
-{
-    const char* name_;
-    const AudioSample* data_;
-    int length_; // NOTE: For music, this is the track length in 32 bit words,
-                 // but for sounds, length_ reprepresents bytes.
-} music_tracks[] = {
-    DEF_MUSIC(box, music_box),
-    DEF_MUSIC(shadows, shadows),
-    DEF_MUSIC(unaccompanied_wind, music_unaccompanied_wind),
-    DEF_MUSIC(rain, music_rain),
-    DEF_MUSIC(life_in_silco, music_life_in_silco),
-    DEF_MUSIC(solecism, music_sb_solecism),
-};
-
-
-static const AudioTrack* find_music(const char* name)
-{
-    for (auto& track : music_tracks) {
-
-        if (str_cmp(name, track.name_) == 0) {
-            return &track;
-        }
-    }
-
-    return nullptr;
-}
-
-
-// NOTE: Between remixing the audio track down to 8-bit 16kHz signed, generating
-// assembly output, adding the file to CMake, adding the include, and adding the
-// sound to the sounds array, it's just too tedious to keep working this way...
-#include "data/music_struttin.hpp"
-#include "data/sound_archivist.hpp"
-#include "data/sound_beep_error.hpp"
-#include "data/sound_bell.hpp"
-#include "data/sound_build0.hpp"
-#include "data/sound_button_wooden.hpp"
-#include "data/sound_cancel.hpp"
-#include "data/sound_cannon.hpp"
-#include "data/sound_click.hpp"
-#include "data/sound_click_negative.hpp"
-#include "data/sound_click_wooden.hpp"
-#include "data/sound_cling.hpp"
-#include "data/sound_coin.hpp"
-#include "data/sound_core_destroyed.hpp"
-#include "data/sound_creaking.hpp"
-#include "data/sound_cursor_click.hpp"
-#include "data/sound_digital_click_1.hpp"
-#include "data/sound_door.hpp"
-#include "data/sound_drone_beep.hpp"
-#include "data/sound_explosion1.hpp"
-#include "data/sound_explosion2.hpp"
-#include "data/sound_fizzle.hpp"
-#include "data/sound_footstep1.hpp"
-#include "data/sound_footstep2.hpp"
-#include "data/sound_footstep3.hpp"
-#include "data/sound_glass_break.hpp"
-#include "data/sound_gravel.hpp"
-#include "data/sound_gust.hpp"
-#include "data/sound_gust2.hpp"
-#include "data/sound_insert_cart.hpp"
-#include "data/sound_ion_cannon.hpp"
-#include "data/sound_missile.hpp"
-#include "data/sound_missile_explosion.hpp"
-#include "data/sound_msg.hpp"
-#include "data/sound_open_book.hpp"
-#include "data/sound_openbag.hpp"
-#include "data/sound_page_flip.hpp"
-#include "data/sound_pong_blip1.hpp"
-#include "data/sound_pong_blip2.hpp"
-#include "data/sound_powerdown.hpp"
-#include "data/sound_poweron.hpp"
-#include "data/sound_scroll.hpp"
-#include "data/sound_seagull_1.hpp"
-#include "data/sound_seagull_2.hpp"
-#include "data/sound_thunder_1.hpp"
-#include "data/sound_thunder_2.hpp"
-#include "data/sound_thunder_close_1.hpp"
-#include "data/sound_transporter.hpp"
-#include "data/sound_tw_bell.hpp"
-#include "data/sound_typewriter.hpp"
-#include "data/sound_weapon_target.hpp"
-
-
-static const AudioTrack sounds[] = {
-    DEF_SOUND(explosion1, sound_explosion1),
-    DEF_SOUND(explosion2, sound_explosion2),
-    DEF_SOUND(glass_break, sound_glass_break),
-    DEF_SOUND(build0, sound_build0),
-    DEF_SOUND(missile, sound_missile),
-    DEF_SOUND(impact, sound_missile_explosion),
-    DEF_SOUND(fizzle, sound_fizzle),
-    DEF_SOUND(gravel, sound_gravel),
-    DEF_SOUND(beep_error, sound_beep_error),
-    DEF_SOUND(drone_beep, sound_drone_beep),
-    DEF_SOUND(typewriter, sound_typewriter),
-    DEF_SOUND(footstep1, sound_footstep1),
-    DEF_SOUND(footstep2, sound_footstep2),
-    DEF_SOUND(footstep3, sound_footstep3),
-    DEF_SOUND(ion_cannon, sound_ion_cannon),
-    DEF_SOUND(gust1, sound_gust),
-    DEF_SOUND(gust2, sound_gust2),
-    DEF_SOUND(openbag, sound_openbag),
-    DEF_SOUND(tw_bell, sound_tw_bell),
-    DEF_SOUND(click, sound_scroll),
-    DEF_SOUND(cursor_tick, sound_cursor_click),
-    // DEF_SOUND(click_negative, sound_click_negative),
-    DEF_SOUND(click_wooden, sound_click_wooden),
-    DEF_SOUND(button_wooden, sound_button_wooden),
-    DEF_SOUND(click_digital_1, sound_digital_click_1),
-    DEF_SOUND(cannon, sound_cannon),
-    DEF_SOUND(cling, sound_cling),
-    DEF_SOUND(weapon_target, sound_weapon_target),
-    DEF_SOUND(transporter, sound_transporter),
-    DEF_SOUND(thunder_1, sound_thunder_1),
-    DEF_SOUND(thunder_2, sound_thunder_2),
-    DEF_SOUND(thunder_close_1, sound_thunder_close_1),
-    DEF_SOUND(core_destroyed, sound_core_destroyed),
-    DEF_SOUND(pong_blip_1, sound_pong_blip1),
-    DEF_SOUND(pong_blip_2, sound_pong_blip2),
-    DEF_SOUND(struttin, music_struttin),
-    DEF_SOUND(creaking, sound_creaking),
-    DEF_SOUND(coin, sound_coin),
-    DEF_SOUND(bell, sound_bell),
-    DEF_SOUND(archivist, sound_archivist),
-    DEF_SOUND(cancel, sound_cancel),
-    DEF_SOUND(seagull_1, sound_seagull_1),
-    DEF_SOUND(seagull_2, sound_seagull_2),
-    DEF_SOUND(msg, sound_msg),
-    DEF_SOUND(door, sound_door),
-    DEF_SOUND(insert_cart, sound_insert_cart),
-    DEF_SOUND(powerdown, sound_powerdown),
-    DEF_SOUND(poweron, sound_poweron),
-    DEF_SOUND(page_flip, sound_page_flip)};
-
-
-static const AudioTrack* get_sound(const char* name)
-{
-    for (auto& sound : sounds) {
-        if (str_cmp(name, sound.name_) == 0) {
-            return &sound;
-        }
-    }
-    return nullptr;
-}
-
-
-Microseconds Platform::Speaker::track_length(const char* name)
-{
-    if (const auto music = find_music(name)) {
-        return (music->length_ * wordsize) / 0.016f;
-    }
-
-    if (const auto sound = get_sound(name)) {
-        return sound->length_ / 0.016f;
-    }
-
-    return 0;
-}
-
-
-namespace detail
-{
-template <std::size_t... Is> struct seq
-{
-};
-template <std::size_t N, std::size_t... Is>
-struct gen_seq : gen_seq<N - 1, N - 1, Is...>
-{
-};
-template <std::size_t... Is> struct gen_seq<0, Is...> : seq<Is...>
-{
-};
-
-
-template <class Generator, std::size_t... Is>
-constexpr auto generate_array_helper(Generator g, seq<Is...>)
-    -> std::array<decltype(g(std::size_t{}, sizeof...(Is))), sizeof...(Is)>
-{
-    return {{g(Is, sizeof...(Is))...}};
-}
-
-template <std::size_t tcount, class Generator>
-constexpr auto generate_array(Generator g)
-    -> decltype(generate_array_helper(g, gen_seq<tcount>{}))
-{
-    return generate_array_helper(g, gen_seq<tcount>{});
-}
-} // namespace detail
-
-
-constexpr auto make_volume_lut(float scale)
-{
-    return detail::generate_array<256>(
-        [scale](std::size_t curr, std::size_t total) -> s8 {
-            const auto real = (s8)((u8)curr);
-            return real * scale;
-        });
-}
-
-
-// Each table entry contains the whole number space of a signed 8-bit value,
-// scaled by a fraction.
-static constexpr std::array<VolumeScaleLUT, 20> volume_scale_LUTs = {
-    {{make_volume_lut(0.05f)}, {make_volume_lut(0.10f)},
-     {make_volume_lut(0.15f)}, {make_volume_lut(0.20f)},
-     {make_volume_lut(0.25f)}, {make_volume_lut(0.30f)},
-     {make_volume_lut(0.35f)}, {make_volume_lut(0.40f)},
-     {make_volume_lut(0.45f)}, {make_volume_lut(0.50f)},
-     {make_volume_lut(0.55f)}, {make_volume_lut(0.60f)},
-     {make_volume_lut(0.65f)}, {make_volume_lut(0.70f)},
-     {make_volume_lut(0.75f)}, {make_volume_lut(0.80f)},
-     {make_volume_lut(0.85f)}, {make_volume_lut(0.90f)},
-     {make_volume_lut(0.95f)}, {make_volume_lut(1.0f)}},
-};
-
-
-
-static std::optional<ActiveSoundInfo> make_sound(const char* name)
-{
-    if (auto sound = get_sound(name)) {
-        return ActiveSoundInfo{
-            0, sound->length_, sound->data_, 0, sound->name_};
-    } else {
-        return {};
-    }
-}
-
-
-// FIXME: comment out of date
-// If you're going to edit any of the variables used by the interrupt handler
-// for audio playback, you should use this helper function.
-template <typename F> auto modify_audio(F&& callback)
-{
-    // irqDisable(IRQ_TIMER0);
-    callback();
-    // irqEnable(IRQ_TIMER0);
-}
-
-
-bool Platform::Speaker::is_sound_playing(const char* name)
-{
-    bool playing = false;
-
-    modify_audio([&] {
-        for (const auto& info : snd_ctx.active_sounds) {
-            if (str_eq(name, info.name_)) {
-                playing = true;
-                return;
-            }
-        }
-    });
-
-    return playing;
-}
-
-
-
-bool Platform::Speaker::is_music_playing(const char* name)
-{
-    bool playing = false;
-
-    if (auto track = find_music(name)) {
-        modify_audio([&] {
-            if (track->data_ == snd_ctx.music_track) {
-                playing = true;
-            }
-        });
-    }
-
-    return playing;
-}
-
-
-
-Buffer<const char*, 4> completed_sounds_buffer;
-volatile bool completed_sounds_lock = false;
-const char* completed_music;
-
-
-
-const char* Platform::Speaker::completed_music()
-{
-    auto ret = ::completed_music;
-    ::completed_music = nullptr;
-    return ret;
-}
-
-
-
-Buffer<const char*, 4> Platform::Speaker::completed_sounds()
-{
-    while (completed_sounds_lock)
-        ;
-
-    Buffer<const char*, 4> result;
-
-    completed_sounds_lock = true;
-
-    result = completed_sounds_buffer;
-    completed_sounds_buffer.clear();
-
-    completed_sounds_lock = false;
-
-    return result;
-}
-
-
-
-void Platform::Speaker::stop_sound(const char* name)
-{
-    modify_audio([&] {
-        for (auto it = snd_ctx.active_sounds.begin();
-             it not_eq snd_ctx.active_sounds.end();) {
-            if (str_eq(name, it->name_)) {
-                it = snd_ctx.active_sounds.erase(it);
-            } else {
-                ++it;
-            }
-        }
-    });
-}
-
-
-
-void Platform::Speaker::clear_sounds()
-{
-    modify_audio([&] { snd_ctx.active_sounds.clear(); });
-}
-
-
-static void add_sound(Buffer<ActiveSoundInfo, 3>& sounds,
-                      const ActiveSoundInfo& info)
-{
-    if (not sounds.full()) {
-        sounds.push_back(info);
-    } else {
-        ActiveSoundInfo* lowest = sounds.begin();
-        for (auto it = sounds.begin(); it not_eq sounds.end(); ++it) {
-            if (it->priority_ < lowest->priority_) {
-                lowest = it;
-            }
-        }
-
-        if (lowest not_eq sounds.end() and lowest->priority_ < info.priority_) {
-            sounds.erase(lowest);
-            sounds.push_back(info);
-        }
-    }
-}
-
-
-
-static constexpr const uint __snd_rates[13] = {
-    0,
-    8013, // C
-    7566, // C#
-    7144, // D
-    6742, // D#
-    6362, // E
-    6005, // F
-    5666, // F#
-    5346, // G
-    5048, // G#
-    4766, // A
-    4499, // A#
-    4246, // B
-};
-
-
-// 131072/(2048-n)Hz
-#define SND_RATE(note, oct) (2048 - (__snd_rates[note] >> ((2 + oct))))
-
-
-
-static constexpr const struct NoiseFrequencyTableEntry
-{
-    u8 shift_;
-    u8 ratio_;
-} noise_frequency_table_[57] = {
-    {0, 0},  {1, 0},  {2, 0},  {0, 3},  {3, 0},  {0, 5},  {1, 3},  {0, 7},
-    {4, 0},  {1, 5},  {2, 3},  {1, 7},  {5, 0},  {2, 5},  {3, 3},  {2, 7},
-    {6, 0},  {3, 5},  {4, 3},  {3, 7},  {7, 0},  {4, 5},  {5, 3},  {4, 7},
-    {8, 0},  {5, 5},  {6, 3},  {5, 7},  {9, 0},  {6, 5},  {7, 3},  {6, 7},
-    {10, 0}, {7, 5},  {8, 3},  {7, 7},  {11, 0}, {8, 5},  {9, 3},  {8, 7},
-    {12, 0}, {9, 5},  {10, 3}, {9, 7},  {13, 0}, {10, 5}, {11, 3}, {10, 7},
-    {11, 5}, {12, 3}, {11, 7}, {12, 5}, {13, 3}, {12, 7}, {13, 5}, {13, 7}};
-
-
-
-struct AnalogChannel
-{
-    Platform::Speaker::Note last_note_;
-    u8 last_octave_;
-    Microseconds effect_timer_;
-};
-
-
-
-static EWRAM_DATA AnalogChannel analog_channel[4];
-
-
-
-void Platform::Speaker::stop_chiptune_note(Channel channel)
-{
-    switch (channel) {
-    case Channel::square_1:
-        REG_SNDDMGCNT = REG_SNDDMGCNT & ~(1 << 8);
-        REG_SNDDMGCNT = REG_SNDDMGCNT & ~(1 << 0xc);
-        break;
-
-    case Channel::square_2:
-        REG_SNDDMGCNT = REG_SNDDMGCNT & ~(1 << 9);
-        REG_SNDDMGCNT = REG_SNDDMGCNT & ~(1 << 0xd);
-        break;
-
-    case Channel::noise:
-        // FIXME!?
-        REG_SNDDMGCNT = REG_SNDDMGCNT & ~SDMG_LNOISE;
-        REG_SNDDMGCNT = REG_SNDDMGCNT & ~SDMG_RNOISE;
-        break;
-
-    case Channel::wave:
-        REG_SNDDMGCNT = REG_SNDDMGCNT & ~(1 << 0xb);
-        REG_SNDDMGCNT = REG_SNDDMGCNT & ~(1 << 0xf);
-        break;
-
-    default:
-        // TODO!
-        break;
-    }
-
-    // Turn directsound back on!
-    REG_SOUNDCNT_H = REG_SOUNDCNT_H | (1 << 9);
-    REG_SOUNDCNT_H = REG_SOUNDCNT_H | (1 << 8);
-}
-
-
-
-void Platform::Speaker::play_chiptune_note(Channel channel, NoteDesc note_desc)
-{
-    auto note = note_desc.regular_.note_;
-    u8 octave = note_desc.regular_.octave_;
-
-    if (channel == Channel::noise and
-        note_desc.noise_freq_.frequency_select_ == 0) {
-        return;
-    } else if (channel not_eq Channel::noise and
-               ((u8)note >= (u8)Note::count or note == Note::invalid)) {
-        return;
-    }
-
-
-    // Turn off directsound!
-    REG_SOUNDCNT_H = REG_SOUNDCNT_H & ~(1 << 8);
-    REG_SOUNDCNT_H = REG_SOUNDCNT_H & ~(1 << 9);
-
-    switch (channel) {
-    case Channel::square_1:
-        REG_SNDDMGCNT = REG_SNDDMGCNT | SDMG_LSQR1;
-        REG_SNDDMGCNT = REG_SNDDMGCNT | SDMG_RSQR1;
-        analog_channel[(int)channel].last_note_ = note;
-        analog_channel[(int)channel].last_octave_ = octave;
-        analog_channel[(int)channel].effect_timer_ = 0;
-        REG_SND1FREQ = SFREQ_RESET | SND_RATE((u8)note, octave);
-        break;
-
-    case Channel::square_2:
-        REG_SNDDMGCNT = REG_SNDDMGCNT | SDMG_LSQR2;
-        REG_SNDDMGCNT = REG_SNDDMGCNT | SDMG_RSQR2;
-        analog_channel[(int)channel].last_note_ = note;
-        analog_channel[(int)channel].last_octave_ = octave;
-        analog_channel[(int)channel].effect_timer_ = 0;
-        REG_SND2FREQ = SFREQ_RESET | SND_RATE((u8)note, octave);
-        break;
-
-    case Channel::noise: {
-        REG_SNDDMGCNT = REG_SNDDMGCNT | SDMG_LNOISE;
-        REG_SNDDMGCNT = REG_SNDDMGCNT | SDMG_RNOISE;
-        analog_channel[(int)channel].last_note_ = note;
-        analog_channel[(int)channel].last_octave_ = octave;
-        analog_channel[(int)channel].effect_timer_ = 0;
-        auto freq = note_desc.noise_freq_.frequency_select_;
-        auto entry = noise_frequency_table_[freq];
-        REG_SND4FREQ = 0;
-        REG_SND4FREQ = SFREQ_RESET | ((0x0f & entry.shift_) << 4) |
-                       (0x07 & entry.ratio_) |
-                       (note_desc.noise_freq_.wide_mode_ << 3);
-        break;
-    }
-
-    case Channel::wave:
-        REG_SNDDMGCNT = REG_SNDDMGCNT | SDMG_LWAVE;
-        REG_SNDDMGCNT = REG_SNDDMGCNT | SDMG_RWAVE;
-        analog_channel[(int)channel].last_note_ = note;
-        analog_channel[(int)channel].last_octave_ = octave;
-        analog_channel[(int)channel].effect_timer_ = 0;
-        break;
-
-    default:
-        // TODO...
-        break;
-    }
-}
-
-
-
-void Platform::Speaker::apply_chiptune_effect(Channel channel,
-                                              Effect effect,
-                                              u8 argument,
-                                              Microseconds delta)
-{
-    if (channel == Channel::invalid) {
-        return;
-    }
-
-
-    const auto ch_num = (int)channel;
-
-
-    auto apply_vibrato = [&](volatile u16* freq_register) {
-        auto amplitude = argument & 0x0f;
-        auto freq = (argument & 0xf0) >> 4;
-
-        // We're using freq as a divisor. Zero isn't valid
-        freq++;
-
-        analog_channel[ch_num].effect_timer_ += delta;
-        auto rate = SND_RATE(analog_channel[ch_num].last_note_,
-                             analog_channel[ch_num].last_octave_);
-
-
-        auto vib = float(cosine(analog_channel[ch_num].effect_timer_ / freq)) /
-                   std::numeric_limits<s16>::max();
-
-        vib *= (amplitude << 2);
-        rate += vib;
-        *freq_register = *freq_register & ~SFREQ_RATE_MASK;
-        *freq_register = *freq_register | rate;
-    };
-
-
-    auto apply_duty = [&](volatile u16* ctrl_register) {
-        *ctrl_register = *ctrl_register & ~SSQR_DUTY_MASK;
-        // (Only four possible duty cycles, hence the mask)
-        *ctrl_register = *ctrl_register | SSQR_DUTY((argument >> 4) & 0x03);
-    };
-
-
-    auto apply_envelope = [&](volatile u16* ctrl_register) {
-        auto duty = (*ctrl_register & SSQR_DUTY_MASK) >> SSQR_DUTY_SHIFT;
-        auto length = (*ctrl_register & SSQR_LEN_MASK) >> SSQR_LEN_SHIFT;
-
-        // To match LSDJ: first nibble: volume, second nibble: 1-7: release with
-        // decreasing envelope, 8-f: release with increasing envelope.
-
-        int dir = 0;
-
-        if ((argument & 0x0f) < 8) {
-            dir = 0; // decreasing
-        } else {
-            dir = 1;
-        }
-
-        *ctrl_register = SSQR_BUILD(
-            (argument & 0xf0) >> 4, dir, (argument & 0x07), duty, length);
-    };
-
-
-    auto cancel_effect = [&](volatile u16* freq_register) {
-        *freq_register = *freq_register & ~SFREQ_RATE_MASK;
-        *freq_register =
-            *freq_register | SND_RATE(analog_channel[ch_num].last_note_,
-                                      analog_channel[ch_num].last_octave_);
-
-        analog_channel[ch_num].effect_timer_ = 0;
-    };
-
-
-    switch (channel) {
-    case Channel::square_1: {
-        switch (effect) {
-        case Effect::vibrato:
-            apply_vibrato(&REG_SND1FREQ);
-            break;
-
-        case Effect::none:
-            cancel_effect(&REG_SND1FREQ);
-            break;
-
-        case Effect::duty:
-            apply_duty(&REG_SND1CNT);
-            break;
-
-        case Effect::envelope:
-            apply_envelope(&REG_SND1CNT);
-            break;
-        }
-        break;
-    }
-
-    case Channel::square_2:
-        switch (effect) {
-        case Effect::vibrato:
-            apply_vibrato(&REG_SND2FREQ);
-            break;
-
-        case Effect::none:
-            cancel_effect(&REG_SND2FREQ);
-            break;
-
-        case Effect::duty:
-            apply_duty(&REG_SND2CNT);
-            break;
-
-        case Effect::envelope:
-            apply_envelope(&REG_SND2CNT);
-            break;
-        }
-        break;
-
-    case Channel::noise:
-        switch (effect) {
-        case Effect::duty:
-            apply_duty(&REG_SND4CNT);
-            break;
-
-        case Effect::envelope:
-            apply_envelope(&REG_SND4CNT);
-            break;
-
-        default:
-            break;
-        }
-        break;
-
-    default:
-        // TODO...
-        break;
-    }
-}
-
-
-
-void Platform::Speaker::play_sound(const char* name,
-                                   int priority,
-                                   std::optional<Vec2<Float>> position)
-{
-    (void)position; // We're not using position data, because on the gameboy
-                    // advance, we aren't supporting spatial audio.
-
-    if (auto info = make_sound(name)) {
-        info->priority_ = priority;
-
-        modify_audio([&] { add_sound(snd_ctx.active_sounds, *info); });
-    }
-}
-
-
-static void clear_music()
-{
-    // The audio interrupt handler can be smaller and simpler if we use a track
-    // of empty bytes to represent scenarios where music is not playing, rather
-    // than adding another if condition to the audio isr.
-    snd_ctx.music_track = reinterpret_cast<const AudioSample*>(null_music);
-    snd_ctx.music_track_length = null_music_len - 1;
-    snd_ctx.music_track_name = "(null)";
-    snd_ctx.music_track_pos = 0;
-}
-
-
-static void stop_music()
-{
-    modify_audio([] { clear_music(); });
-}
-
-
-
-void Platform::Speaker::stop_music()
-{
-    ::stop_music();
-}
-
-
-
-static void play_music(const char* name, Microseconds offset)
-{
-    const auto track = find_music(name);
-    if (track == nullptr) {
-        return;
-    }
-
-    const Microseconds sample_offset = offset * 0.016f; // NOTE: because 16kHz
-
-    modify_audio([&] {
-        snd_ctx.music_track_length = track->length_;
-        snd_ctx.music_track = track->data_;
-        snd_ctx.music_track_pos = (sample_offset / 4) % track->length_;
-        snd_ctx.music_track_name = name;
-    });
-}
-
-
-
-static void audio_update_halfspeed_isr();
-void Platform::Speaker::play_music(const char* name, Microseconds offset)
-{
-    // NOTE: The sound sample needs to be mono, and 8-bit signed. To export this
-    // format from Audacity, convert the tracks to mono via the Tracks dropdown,
-    // and then export as raw, in the format 8-bit signed.
-    //
-    // Also, important to convert the sound file frequency to 16kHz.
-
-    this->stop_music();
-
-    ::play_music(name, offset);
-
-    // FIXME!!!!!! Mysteriously, there's a weird audio glitch, where the sound
-    // effects, but not the music, get all glitched out until two sounds are
-    // played consecutively. I've spent hours trying to figure out what's going
-    // wrong, and I haven't solved this one yet, so for now, just play a couple
-    // quiet sounds. To add further confusion, after adjusting the instruction
-    // prefetch and waitstats, I need to play three sounds
-    // consecutively... obviously my interrupt service routine for the audio is
-    // flawed somehow. Do I need to completely disable the timers and sound
-    // chip, as well as the audio interrupts, when playing new sounds? Does
-    // disabling the audio interrupts when queueing a new sound effect cause
-    // audio artifacts, because the sound chip is not receiving samples?
-    play_sound("footstep1", 0);
-    play_sound("footstep2", 0);
-    play_sound("footstep3", 0);
-
-    // auto tmp = allocate_dynamic<OptDmaBufferData>("test");
-    // auto before = __platform__->delta_clock().sample();
-    // // audio_update_fast_isr();
-
-    // alignas(4) u16 tmp2[162];
-
-    // win_circle(tmp->data(),
-    //            0,
-    //            0,
-    //            156);
-
-    // auto after = __platform__->delta_clock().sample();
-    // Platform::fatal(format("dt %", after - before));
-}
-
-
-Platform::Speaker::Speaker()
-{
-}
-
-
-////////////////////////////////////////////////////////////////////////////////
 // Misc
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -4586,8 +3567,8 @@ void Platform::on_unrecoverrable_error(UnrecoverrableErrorCallback callback)
 
 
 
-std::pair<const char*, u32> Platform::load_file(const char* folder,
-                                                const char* filename) const
+Pair<const char*, u32> Platform::load_file(const char* folder,
+                                           const char* filename) const
 {
     StringBuffer<64> path("/");
 
@@ -4673,585 +3654,10 @@ int gc_glyphs()
 
 
 
-static const VolumeScaleLUT* music_volume_lut = &volume_scale_LUTs[19];
-static const VolumeScaleLUT* sound_volume_lut = &volume_scale_LUTs[19];
-
-
-struct SoundMixerCallback
-{
-    void (*isr_)();
-    int output_words_per_callback_;
-};
-
-
-#define SOUND_MIXER_CALLBACK(NAME, RATE)                                       \
-    static const SoundMixerCallback NAME##_cb                                  \
-    {                                                                          \
-        NAME##_isr, RATE                                                       \
-    }
-
-
-SOUND_MIXER_CALLBACK(audio_update_fast, 2);
-
-
-static void audio_update_music_volume_isr()
-{
-    alignas(4) AudioSample mixing_buffer[4];
-
-    // NOTE: audio tracks in ROM should therefore have four byte alignment!
-    *((u32*)mixing_buffer) =
-        ((u32*)(snd_ctx.music_track))[snd_ctx.music_track_pos++];
-
-    if (UNLIKELY(snd_ctx.music_track_pos > snd_ctx.music_track_length)) {
-        snd_ctx.music_track_pos = 0;
-        completed_music = snd_ctx.music_track_name;
-    }
-
-    for (AudioSample& s : mixing_buffer) {
-        s = (*music_volume_lut)[s];
-    }
-
-    for (auto it = snd_ctx.active_sounds.begin();
-         it not_eq snd_ctx.active_sounds.end();) {
-
-        auto pos = it->position_;
-        it->position_ += 4;
-
-        if (UNLIKELY(it->position_ >= it->length_)) {
-            it = snd_ctx.active_sounds.erase(it);
-        } else {
-            auto buf = mixing_buffer;
-            *(buf++) += (*sound_volume_lut)[(u8)it->data_[pos++]];
-            *(buf++) += (*sound_volume_lut)[(u8)it->data_[pos++]];
-            *(buf++) += (*sound_volume_lut)[(u8)it->data_[pos++]];
-            *(buf++) += (*sound_volume_lut)[(u8)it->data_[pos]];
-            ++it;
-        }
-    }
-
-    REG_SGFIFOA = *((u32*)mixing_buffer);
-}
-SOUND_MIXER_CALLBACK(audio_update_music_volume, 1);
-
-
-
-static void audio_update_slow_rewind_music_isr()
-{
-    alignas(4) AudioSample mixing_buffer[4];
-
-    *((u32*)mixing_buffer) =
-        ((u32*)(snd_ctx.music_track))[snd_ctx.music_track_pos];
-
-    std::swap(mixing_buffer[0], mixing_buffer[3]);
-    std::swap(mixing_buffer[1], mixing_buffer[2]);
-
-    snd_ctx.music_track_pos -= 1;
-    if (snd_ctx.music_track_pos < 1) {
-        snd_ctx.music_track_pos = snd_ctx.music_track_length;
-    }
-
-    for (auto it = snd_ctx.active_sounds.begin();
-         it not_eq snd_ctx.active_sounds.end();) {
-        if (UNLIKELY(it->position_ == 0)) {
-            it->position_ = it->length_ - 1;
-            ++it;
-        } else if (UNLIKELY(it->position_ - 4 <= 0)) {
-            it = snd_ctx.active_sounds.erase(it);
-        } else {
-            for (int i = 0; i < 4; ++i) {
-                mixing_buffer[3 - i] += (u8)it->data_[it->position_];
-                it->position_ -= 1;
-            }
-            ++it;
-        }
-    }
-
-    REG_SGFIFOA = *((u32*)mixing_buffer);
-}
-SOUND_MIXER_CALLBACK(audio_update_slow_rewind_music, 1);
-
-
-
-static void audio_update_rewind_music_isr()
-{
-    alignas(4) AudioSample mixing_buffer[4];
-    alignas(4) AudioSample mixing_buffer2[4];
-
-    *((u32*)mixing_buffer) =
-        ((u32*)(snd_ctx.music_track))[snd_ctx.music_track_pos - 2];
-
-    *((u32*)mixing_buffer2) =
-        ((u32*)(snd_ctx.music_track))[snd_ctx.music_track_pos - 1];
-
-    // NOTE: we're dropping half of the samples and putting the other half into
-    // the ouptut buffer in reverse order, to rewind the music at 2x speed. But
-    // of course, we can't just drop the first half of the samples and keep the
-    // second half, we drop every other note. mixing_buffer[2] happens to be in
-    // the correct position already.
-    mixing_buffer[3] = mixing_buffer[0];
-    mixing_buffer[0] = mixing_buffer2[2];
-    mixing_buffer[1] = mixing_buffer2[0];
-
-    snd_ctx.music_track_pos -= 2;
-    if (snd_ctx.music_track_pos < 2) {
-        snd_ctx.music_track_pos = snd_ctx.music_track_length;
-    }
-
-    for (auto it = snd_ctx.active_sounds.begin();
-         it not_eq snd_ctx.active_sounds.end();) {
-        if (UNLIKELY(it->position_ == 0)) {
-            it->position_ = it->length_ - 1;
-            ++it;
-        } else if (UNLIKELY(it->position_ - 8 <= 0)) {
-            it = snd_ctx.active_sounds.erase(it);
-        } else {
-            for (int i = 0; i < 4; ++i) {
-                mixing_buffer[3 - i] += (u8)it->data_[it->position_];
-                it->position_ -= 2;
-            }
-            ++it;
-        }
-    }
-
-    REG_SGFIFOA = *((u32*)mixing_buffer);
-}
-SOUND_MIXER_CALLBACK(audio_update_rewind_music, 1);
-
-
-
-static void audio_update_rewind4x_music_isr()
-{
-    alignas(4) AudioSample mixing_buffer[4];
-
-    // Four-times rewind speed. Pick the first byte of the prior four words.
-    mixing_buffer[0] =
-        *(s8*)(((u32*)(snd_ctx.music_track)) + snd_ctx.music_track_pos--);
-    mixing_buffer[1] =
-        *(s8*)(((u32*)(snd_ctx.music_track)) + snd_ctx.music_track_pos--);
-    mixing_buffer[2] =
-        *(s8*)(((u32*)(snd_ctx.music_track)) + snd_ctx.music_track_pos--);
-    mixing_buffer[3] =
-        *(s8*)(((u32*)(snd_ctx.music_track)) + snd_ctx.music_track_pos--);
-
-    if (snd_ctx.music_track_pos < 4) {
-        snd_ctx.music_track_pos = snd_ctx.music_track_length;
-    }
-
-    for (auto it = snd_ctx.active_sounds.begin();
-         it not_eq snd_ctx.active_sounds.end();) {
-        if (UNLIKELY(it->position_ == 0)) {
-            it->position_ = it->length_ - 1;
-            ++it;
-        } else if (UNLIKELY(it->position_ - 16 <= 0)) {
-            it = snd_ctx.active_sounds.erase(it);
-        } else {
-            for (int i = 0; i < 4; ++i) {
-                mixing_buffer[3 - i] += (s8)it->data_[it->position_];
-                it->position_ -= 4;
-            }
-            ++it;
-        }
-    }
-
-    REG_SGFIFOA = *((u32*)mixing_buffer);
-}
-SOUND_MIXER_CALLBACK(audio_update_rewind4x_music, 1);
-
-
-
-static void audio_update_rewind8x_music_isr()
-{
-    alignas(4) AudioSample mixing_buffer[4];
-
-    // Four-times rewind speed. Pick the first byte of the prior four words.
-    mixing_buffer[0] =
-        *(s8*)(((u32*)(snd_ctx.music_track)) + snd_ctx.music_track_pos);
-    snd_ctx.music_track_pos -= 2;
-    mixing_buffer[1] =
-        *(s8*)(((u32*)(snd_ctx.music_track)) + snd_ctx.music_track_pos);
-    snd_ctx.music_track_pos -= 2;
-    mixing_buffer[2] =
-        *(s8*)(((u32*)(snd_ctx.music_track)) + snd_ctx.music_track_pos);
-    snd_ctx.music_track_pos -= 2;
-    mixing_buffer[3] =
-        *(s8*)(((u32*)(snd_ctx.music_track)) + snd_ctx.music_track_pos);
-    snd_ctx.music_track_pos -= 2;
-
-    if (snd_ctx.music_track_pos < 8) {
-        snd_ctx.music_track_pos = snd_ctx.music_track_length;
-    }
-
-    for (auto it = snd_ctx.active_sounds.begin();
-         it not_eq snd_ctx.active_sounds.end();) {
-        if (UNLIKELY(it->position_ == 0)) {
-            it->position_ = it->length_ - 1;
-            ++it;
-        } else if (UNLIKELY(it->position_ - 32 <= 0)) {
-            it = snd_ctx.active_sounds.erase(it);
-        } else {
-            for (int i = 0; i < 4; ++i) {
-                mixing_buffer[3 - i] += (s8)it->data_[it->position_];
-                it->position_ -= 8;
-            }
-            ++it;
-        }
-    }
-
-    REG_SGFIFOA = *((u32*)mixing_buffer);
-}
-SOUND_MIXER_CALLBACK(audio_update_rewind8x_music, 1);
-
-
-
-static void audio_update_doublespeed_isr()
-{
-    alignas(4) AudioSample mixing_buffer[4];
-    alignas(4) AudioSample mixing_buffer2[4];
-
-    *((u32*)mixing_buffer) =
-        ((u32*)(snd_ctx.music_track))[snd_ctx.music_track_pos - 2];
-
-    *((u32*)mixing_buffer2) =
-        ((u32*)(snd_ctx.music_track))[snd_ctx.music_track_pos - 1];
-
-    mixing_buffer[1] = mixing_buffer[2];
-    mixing_buffer[2] = mixing_buffer2[0];
-    mixing_buffer[3] = mixing_buffer2[2];
-
-
-    snd_ctx.music_track_pos += 2;
-
-    if (UNLIKELY(snd_ctx.music_track_pos > snd_ctx.music_track_length + 2)) {
-        snd_ctx.music_track_pos = 0;
-        completed_music = snd_ctx.music_track_name;
-    }
-
-    for (auto it = snd_ctx.active_sounds.begin();
-         it not_eq snd_ctx.active_sounds.end();) {
-        if (UNLIKELY(it->position_ + 8 >= it->length_)) {
-            if (not completed_sounds_lock) {
-                completed_sounds_buffer.push_back(it->name_);
-            }
-            it = snd_ctx.active_sounds.erase(it);
-        } else {
-            for (int i = 0; i < 4; ++i) {
-                mixing_buffer[i] += (u8)it->data_[it->position_];
-                it->position_ += 2;
-            }
-            ++it;
-        }
-    }
-
-    REG_SGFIFOA = *((u32*)mixing_buffer);
-}
-SOUND_MIXER_CALLBACK(audio_update_doublespeed, 1);
-
-
-
-static void audio_update_halfspeed_isr()
-{
-    // NOTE: rather than change the logic for indices into the music track, I
-    // just exploit the unused depth of the sound fifo and run the isr half the
-    // time.
-    alignas(4) AudioSample mixing_buffer[4];
-
-    // NOTE: audio tracks in ROM should therefore have four byte alignment!
-    *((u32*)mixing_buffer) =
-        ((u32*)(snd_ctx.music_track))[snd_ctx.music_track_pos++];
-
-    if (UNLIKELY(snd_ctx.music_track_pos > snd_ctx.music_track_length)) {
-        snd_ctx.music_track_pos = 0;
-        completed_music = snd_ctx.music_track_name;
-    }
-
-    for (auto it = snd_ctx.active_sounds.begin();
-         it not_eq snd_ctx.active_sounds.end();) {
-        if (UNLIKELY(it->position_ + 4 >= it->length_)) {
-            if (not completed_sounds_lock) {
-                completed_sounds_buffer.push_back(it->name_);
-            }
-            it = snd_ctx.active_sounds.erase(it);
-        } else {
-            for (int i = 0; i < 4; ++i) {
-                mixing_buffer[i] += (u8)it->data_[it->position_];
-                ++it->position_;
-            }
-            ++it;
-        }
-    }
-
-    alignas(4) AudioSample mixing_buffer_out_1[4];
-    alignas(4) AudioSample mixing_buffer_out_2[4];
-
-    mixing_buffer_out_1[0] = mixing_buffer[0];
-    mixing_buffer_out_1[1] = mixing_buffer[0];
-
-    mixing_buffer_out_1[2] = mixing_buffer[1];
-    mixing_buffer_out_1[3] = mixing_buffer[1];
-
-    mixing_buffer_out_2[0] = mixing_buffer[2];
-    mixing_buffer_out_2[1] = mixing_buffer[2];
-
-    mixing_buffer_out_2[2] = mixing_buffer[3];
-    mixing_buffer_out_2[3] = mixing_buffer[3];
-
-    REG_SGFIFOA = *((u32*)mixing_buffer_out_1);
-    REG_SGFIFOA = *((u32*)mixing_buffer_out_2);
-}
-SOUND_MIXER_CALLBACK(audio_update_halfspeed, 2);
-
-
-
-EWRAM_DATA static volatile bool audio_update_swapflag;
-EWRAM_DATA static void (*audio_update_current_isr)() = audio_update_fast_isr;
-EWRAM_DATA static u8 audio_update_current_freq;
-EWRAM_DATA static u8 audio_update_new_freq;
-
-
-
-static void audio_update_swap_isr()
-{
-    audio_update_current_isr();
-
-    // If the new isr fires less often than the replacement, fill the audio fifo
-    // accordingly.
-    const s8 gap_fill = (audio_update_new_freq - audio_update_current_freq) - 1;
-    for (s8 i = 0; i < gap_fill; ++i) {
-        audio_update_current_isr();
-    }
-
-    audio_update_swapflag = true;
-}
-
-
-
-static void audio_update_swap(const SoundMixerCallback& cb)
-{
-    audio_update_swapflag = false;
-
-    audio_update_new_freq = cb.output_words_per_callback_;
-
-    irqSet(IRQ_TIMER1, audio_update_swap_isr);
-
-    // We have to poll on a flag, because we want to change the timer frequency
-    // in some cases. We can't write a new value to the timer configuration
-    // register until just after it's fired, or sound stuff could get out of
-    // sync.
-    while (not audio_update_swapflag)
-        ;
-
-    audio_update_current_freq = audio_update_new_freq;
-
-    REG_TM1CNT_L = audio_timer_frequency(cb.output_words_per_callback_);
-    irqSet(IRQ_TIMER1, cb.isr_);
-    audio_update_current_isr = cb.isr_;
-}
-
-
-
-void Platform::Speaker::set_music_speed(MusicSpeed speed)
-{
-    if (__platform__->network_peer().is_connected()) {
-        audio_update_swap(audio_update_fast_cb);
-        return;
-    }
-
-    switch (speed) {
-    default:
-    case MusicSpeed::regular:
-        audio_update_swap(audio_update_fast_cb);
-        break;
-
-    case MusicSpeed::doubled:
-        audio_update_swap(audio_update_doublespeed_cb);
-        break;
-
-    case MusicSpeed::reversed:
-        audio_update_swap(audio_update_rewind_music_cb);
-        break;
-
-    case MusicSpeed::reversed4x:
-        audio_update_swap(audio_update_rewind4x_music_cb);
-        break;
-
-    case MusicSpeed::reversed8x:
-        audio_update_swap(audio_update_rewind8x_music_cb);
-        break;
-
-    case MusicSpeed::reversed_slow:
-        audio_update_swap(audio_update_slow_rewind_music_cb);
-        break;
-
-    case MusicSpeed::halved:
-        audio_update_swap(audio_update_halfspeed_cb);
-        break;
-    }
-}
-
-
-
-void Platform::Speaker::set_music_volume(u8 volume)
-{
-    if (volume >= volume_scale_LUTs.size()) {
-        return;
-    }
-
-    if (volume == volume_scale_LUTs.size() - 1) {
-        // Ok, so... I'm aware that the platform header would appear to support
-        // changing sound effect volume without modifying music volume. Maybe
-        // I'll fix it sometime... but for now, sound volume may only be
-        // adjusted when music volume is not at maximum. I just never had a
-        // reason to fade sounds without fading music as well.
-        //
-        // Maybe, I'll fix it sometime. But my future plans for this project,
-        // after the gba release, just involve targetting other platforms, so
-        // eventually, this defficiency won't matter anymore when this file
-        // becomes legacy code.
-        //
-        // Modifying sound/music volume in a timer irq is a heavy operation, so
-        // I have no real incentive to make the sound volume behave as expected
-        // unless I actually need the behavior for implementing features.
-        audio_update_swap(audio_update_fast_cb);
-    } else {
-        music_volume_lut = &volume_scale_LUTs[volume];
-        audio_update_swap(audio_update_music_volume_cb);
-    }
-}
-
-
-
-void Platform::Speaker::set_sounds_volume(u8 volume)
-{
-    if (volume >= volume_scale_LUTs.size()) {
-        return;
-    }
-
-    sound_volume_lut = &volume_scale_LUTs[volume];
-}
-
-
-
-static Buffer<ActiveSoundInfo, 3> sound_stash;
-
-
-
-void Platform::Speaker::stash_sounds()
-{
-    sound_stash.clear();
-
-    modify_audio([&] {
-        sound_stash = snd_ctx.active_sounds;
-        snd_ctx.active_sounds.clear();
-    });
-}
-
-
-
-void Platform::Speaker::restore_sounds()
-{
-    modify_audio([&] { snd_ctx.active_sounds = sound_stash; });
-}
-
-
-
-static void audio_start()
-{
-    clear_music();
-
-    // REG_SOUNDCNT_H =
-    //     0x0B0D | SDS_DMG100; //DirectSound A + fifo reset + max volume to L and R
-    REG_SOUNDCNT_X = 0x0080; //turn sound chip on
-
-    REG_SOUNDCNT_H = SDS_DMG100 | 1 << 2 | 1 << 3 | 1 << 8 | 1 << 9;
-
-
-    // Required for stereo, currently unused.
-    // // Both direct sound channels, FIFO reset, A is R, B is L.
-    // REG_SOUNDCNT_H = 0b1010100100001111;
-    // REG_SOUNDCNT_X = 0x0080; //turn sound chip on
-
-    audio_update_fast_isr();
-
-
-    irqEnable(IRQ_TIMER1);
-    irqSet(IRQ_TIMER1, audio_update_fast_isr);
-    audio_update_current_freq = audio_update_fast_cb.output_words_per_callback_;
-
-    REG_TM0CNT_L = 0xffff;
-    REG_TM1CNT_L = audio_timer_frequency(audio_update_current_freq);
-
-    // While it may look like TM0 is unused, it is in fact used for setting the
-    // sample rate for the digital audio chip.
-    REG_TM0CNT_H = 0x0083;
-    REG_TM1CNT_H = 0x00C3;
-
-
-    // turn sound on
-    REG_SNDSTAT = SSTAT_ENABLE;
-
-    // on left/right ; both full volume
-    REG_SNDDMGCNT =
-        SDMG_BUILD_LR(SDMG_SQR1 | SDMG_SQR2 | SDMG_WAVE | SDMG_NOISE, 7);
-
-    // no sweep
-    REG_SND1SWEEP = SSW_OFF;
-
-    // envelope: vol=12, decay, max step time (7) ; 50% duty
-    REG_SND1CNT = SSQR_ENV_BUILD(12, 0, 7) | SSQR_DUTY1_2;
-    REG_SND1FREQ = 0;
-
-    REG_SND2CNT = SSQR_ENV_BUILD(12, 0, 7) | SSQR_DUTY1_4;
-    REG_SND2FREQ = 0;
-
-    REG_SND4CNT = SSQR_ENV_BUILD(12, 0, 7) | SSQR_DUTY1_4;
-    REG_SND4FREQ = 0;
-}
-
-
-
-void Platform::Speaker::init_chiptune_square_1(ChannelSettings settings)
-{
-    REG_SND1CNT = SSQR_BUILD(settings.volume_,
-                             settings.envelope_direction_,
-                             settings.envelope_step_,
-                             settings.duty_,
-                             settings.length_);
-}
-
-
-
-void Platform::Speaker::init_chiptune_square_2(ChannelSettings settings)
-{
-    REG_SND2CNT = SSQR_BUILD(settings.volume_,
-                             settings.envelope_direction_,
-                             settings.envelope_step_,
-                             settings.duty_,
-                             settings.length_);
-}
-
-
-
-void Platform::Speaker::init_chiptune_wave(u16 config)
-{
-}
-
-
-
-void Platform::Speaker::init_chiptune_noise(ChannelSettings settings)
-{
-    REG_SND4CNT = SSQR_BUILD(settings.volume_,
-                             settings.envelope_direction_,
-                             settings.envelope_step_,
-                             settings.duty_,
-                             settings.length_);
-}
-
-
-
 // We want our code to be resiliant to cartridges lacking an RTC chip. Run the
 // timer-based delta clock for a while, and make sure that the RTC also counted
 // up.
-static bool rtc_verify_operability(std::optional<DateTime> tm1)
+static bool rtc_verify_operability(Optional<DateTime> tm1)
 {
     if (get_gflag(GlobalFlag::rtc_faulty)) {
         return false;
@@ -5269,11 +3675,11 @@ static bool rtc_verify_operability(std::optional<DateTime> tm1)
 }
 
 
-static std::optional<DateTime> start_time;
+static Optional<DateTime> start_time;
 
 
 
-static void remote_console_start();
+void remote_console_start();
 
 
 
@@ -5532,8 +3938,8 @@ bool Platform::load_overlay_texture(const char* name)
             } else {
                 memcpy16((void*)&MEM_SCREENBLOCKS[sbb_overlay_texture][0],
                          info.tile_data_,
-                         std::min((size_t)info.tile_data_length_ / 2,
-                                  charblock_size / 2));
+                         util::min((size_t)info.tile_data_length_ / 2,
+                                   charblock_size / 2));
             }
 
             if (get_gflag(GlobalFlag::glyph_mode)) {
@@ -5558,7 +3964,7 @@ bool Platform::load_overlay_texture(const char* name)
 }
 
 
-static const TileDesc bad_glyph = 495;
+static const TileDesc bad_glyph = 111;
 
 
 // Rather than doing tons of extra work to keep the palettes
@@ -5836,7 +4242,7 @@ void Platform::set_tile(u16 x, u16 y, TileDesc glyph, const FontColors& colors)
         invoke_shader(real_color(colors.background_), ShaderPalette::overlay, 0)
             .bgr_hex_555();
 
-    auto existing_mapping = [&]() -> std::optional<PaletteBank> {
+    auto existing_mapping = [&]() -> Optional<PaletteBank> {
         for (auto i = custom_text_palette_begin; i < custom_text_palette_end;
              ++i) {
             if (MEM_BG_PALETTE[i * 16 + default_colors.fg_] == fg_color_hash and
@@ -5986,7 +4392,7 @@ void Platform::set_tile(Layer layer,
                         u16 x,
                         u16 y,
                         u16 val,
-                        std::optional<u16> palette)
+                        Optional<u16> palette)
 {
     switch (layer) {
     case Layer::overlay:
@@ -6032,686 +4438,6 @@ void Platform::set_tile(Layer layer,
 // NetworkPeer
 ////////////////////////////////////////////////////////////////////////////////
 
-
-Platform::NetworkPeer::NetworkPeer()
-{
-}
-
-
-static int multiplayer_is_master()
-{
-    return (REG_SIOCNT & (1 << 2)) == 0 and (REG_SIOCNT & (1 << 3));
-}
-
-
-// NOTE: you may only call this function immediately after a transmission,
-// otherwise, may return a garbage value.
-static int multiplayer_error()
-{
-    return REG_SIOCNT & (1 << 6);
-}
-
-
-// NOTE: This function should only be called in a serial interrupt handler,
-// otherwise, may return a garbage value.
-
-
-static bool multiplayer_validate_modes()
-{
-    // 1 if all GBAs are in the correct mode, 0 otherwise.
-    return REG_SIOCNT & (1 << 3);
-}
-
-
-static bool multiplayer_validate()
-{
-    if (not multiplayer_validate_modes()) {
-        return false;
-    } else {
-    }
-    return true;
-}
-
-
-// The gameboy Multi link protocol always sends data, no matter what, even if we
-// do not have any new data to put in the send buffer. Because there is no
-// distinction between real data and empty transmits, we will transmit in
-// fixed-size chunks. The receiver knows when it's received a whole message,
-// after a specific number of iterations. Now, there are other ways, potentially
-// better ways, to handle this situation. But this way seems easiest, although
-// probably uses a lot of unnecessary bandwidth. Another drawback: the poller
-// needs ignore messages that are all zeroes. Accomplished easily enough by
-// prefixing the sent message with an enum, where the zeroth enumeration is
-// unused.
-static const int message_iters =
-    Platform::NetworkPeer::max_message_size / sizeof(u16);
-
-
-struct WireMessage
-{
-    u16 data_[message_iters] = {};
-};
-
-
-using TxInfo = WireMessage;
-using RxInfo = WireMessage;
-
-
-struct MultiplayerComms
-{
-    int rx_loss = 0;
-    int tx_loss = 0;
-
-    int rx_message_count = 0;
-    int tx_message_count = 0;
-
-
-    static constexpr const int tx_ring_size = 64;
-    ObjectPool<TxInfo, tx_ring_size> tx_message_pool;
-
-    int tx_ring_write_pos = 0;
-    int tx_ring_read_pos = 0;
-    TxInfo* tx_ring[tx_ring_size] = {nullptr};
-
-
-    static constexpr const int rx_ring_size = 64;
-    ObjectPool<RxInfo, rx_ring_size> rx_message_pool;
-
-    int rx_ring_write_pos = 0;
-    int rx_ring_read_pos = 0;
-    RxInfo* rx_ring[rx_ring_size] = {nullptr};
-
-    int rx_iter_state = 0;
-    RxInfo* rx_current_message =
-        nullptr; // Note: we will drop the first message, oh well.
-
-    // The multi serial io mode always transmits, even when there's nothing to
-    // send. At first, I was allowing zeroed out messages generated by the
-    // platform to pass through to the user. But doing so takes up a lot of
-    // space in the rx buffer, so despite the inconvenience, for performance
-    // reasons, I am going to have to require that messages containing all
-    // zeroes never be sent by the user.
-    bool rx_current_all_zeroes = true;
-
-    int transmit_busy_count = 0;
-
-
-    int tx_iter_state = 0;
-    TxInfo* tx_current_message = nullptr;
-
-    int null_bytes_written = 0;
-
-    bool is_host = false;
-
-    RxInfo* poller_current_message = nullptr;
-
-
-    MultiplayerComms()
-        : tx_message_pool("transmit-packet-pool"),
-          rx_message_pool("receive-packet-pool")
-    {
-    }
-};
-
-
-static MultiplayerComms multiplayer_comms;
-
-
-static TxInfo* tx_ring_pop()
-{
-    auto& mc = multiplayer_comms;
-
-
-    TxInfo* msg = nullptr;
-
-    for (int i = mc.tx_ring_read_pos; i < mc.tx_ring_read_pos + mc.tx_ring_size;
-         ++i) {
-        auto index = i % mc.tx_ring_size;
-        if (mc.tx_ring[index]) {
-            msg = mc.tx_ring[index];
-            mc.tx_ring[index] = nullptr;
-            mc.tx_ring_read_pos = index;
-            return msg;
-        }
-    }
-
-    mc.tx_ring_read_pos += 1;
-    mc.tx_ring_read_pos %= mc.tx_ring_size;
-
-    // The transmit ring is completely empty!
-    return nullptr;
-}
-
-
-static void rx_ring_push(RxInfo* message)
-{
-    auto& mc = multiplayer_comms;
-
-    mc.rx_message_count += 1;
-
-    if (mc.rx_ring[mc.rx_ring_write_pos]) {
-        // The reader does not seem to be keeping up!
-        mc.rx_loss += 1;
-
-        auto lost_message = mc.rx_ring[mc.rx_ring_write_pos];
-
-        mc.rx_ring[mc.rx_ring_write_pos] = nullptr;
-        mc.rx_message_pool.free(lost_message);
-    }
-
-    mc.rx_ring[mc.rx_ring_write_pos] = message;
-    mc.rx_ring_write_pos += 1;
-    mc.rx_ring_write_pos %= mc.rx_ring_size;
-}
-
-
-static RxInfo* rx_ring_pop()
-{
-    auto& mc = multiplayer_comms;
-
-    RxInfo* msg = nullptr;
-
-    for (int i = mc.rx_ring_read_pos; i < mc.rx_ring_read_pos + mc.rx_ring_size;
-         ++i) {
-        auto index = i % mc.rx_ring_size;
-
-        if (mc.rx_ring[index]) {
-            msg = mc.rx_ring[index];
-            mc.rx_ring[index] = nullptr;
-            mc.rx_ring_read_pos = index;
-
-            return msg;
-        }
-    }
-
-    mc.rx_ring_read_pos += 1;
-    mc.rx_ring_read_pos %= mc.rx_ring_size;
-
-    return nullptr;
-}
-
-
-static void multiplayer_rx_receive()
-{
-    auto& mc = multiplayer_comms;
-
-    if (mc.rx_iter_state == message_iters) {
-        if (mc.rx_current_message) {
-            if (mc.rx_current_all_zeroes) {
-                mc.rx_message_pool.free(mc.rx_current_message);
-            } else {
-                rx_ring_push(mc.rx_current_message);
-            }
-        }
-
-        mc.rx_current_all_zeroes = true;
-
-        mc.rx_current_message = mc.rx_message_pool.alloc();
-        if (not mc.rx_current_message) {
-            mc.rx_loss += 1;
-        }
-        mc.rx_iter_state = 0;
-    }
-
-    if (mc.rx_current_message) {
-        const auto val =
-            multiplayer_is_master() ? REG_SIOMULTI1 : REG_SIOMULTI0;
-        if (mc.rx_current_all_zeroes and val) {
-            mc.rx_current_all_zeroes = false;
-        }
-        mc.rx_current_message->data_[mc.rx_iter_state++] = val;
-
-    } else {
-        mc.rx_iter_state++;
-    }
-}
-
-
-static bool multiplayer_busy()
-{
-    return REG_SIOCNT & SIO_START;
-}
-
-
-
-int Platform::NetworkPeer::send_queue_capacity() const
-{
-    return MultiplayerComms::tx_ring_size;
-}
-
-
-
-int Platform::NetworkPeer::send_queue_size() const
-{
-    int result = 0;
-
-    for (auto ptr : multiplayer_comms.tx_ring) {
-        if (ptr) {
-            ++result;
-        }
-    }
-
-    return result;
-}
-
-
-bool Platform::NetworkPeer::send_message(const Message& message)
-{
-    if (message.length_ > sizeof(TxInfo::data_)) {
-        ::__platform__->fatal("invalid network packet size");
-    }
-
-    if (not is_connected()) {
-        return false;
-    }
-
-    // TODO: uncomment this block if we actually see issues on the real hardware...
-    // if (tx_iter_state == message_iters) {
-    //     // Decreases the likelihood of manipulating data shared by the interrupt
-    //     // handlers. See related comment in the poll_message() function.
-    //     return false;
-    // }
-
-    auto& mc = multiplayer_comms;
-
-
-    if (mc.tx_ring[mc.tx_ring_write_pos]) {
-        // The writer does not seem to be keeping up! Guess we'll have to drop a
-        // message :(
-        mc.tx_loss += 1;
-
-        auto lost_message = mc.tx_ring[mc.tx_ring_write_pos];
-        mc.tx_ring[mc.tx_ring_write_pos] = nullptr;
-
-        mc.tx_message_pool.free(lost_message);
-    }
-
-    auto msg = mc.tx_message_pool.alloc();
-    if (not msg) {
-        // error! Could not transmit messages fast enough, i.e. we've exhausted
-        // the message pool! How to handle this condition!?
-        mc.tx_loss += 1;
-        return false;
-    }
-
-    __builtin_memcpy(msg->data_, message.data_, message.length_);
-
-    mc.tx_ring[mc.tx_ring_write_pos] = msg;
-    mc.tx_ring_write_pos += 1;
-    mc.tx_ring_write_pos %= mc.tx_ring_size;
-
-    return true;
-}
-
-
-static void multiplayer_tx_send()
-{
-    auto& mc = multiplayer_comms;
-
-    if (mc.tx_iter_state == message_iters) {
-        if (mc.tx_current_message) {
-            mc.tx_message_pool.free(mc.tx_current_message);
-            mc.tx_message_count += 1;
-        }
-        mc.tx_current_message = tx_ring_pop();
-        mc.tx_iter_state = 0;
-    }
-
-    if (mc.tx_current_message) {
-        REG_SIOMLT_SEND = mc.tx_current_message->data_[mc.tx_iter_state++];
-    } else {
-        mc.null_bytes_written += 2;
-        mc.tx_iter_state++;
-        REG_SIOMLT_SEND = 0;
-    }
-}
-
-
-// We want to wait long enough for the minions to prepare TX data for the
-// master.
-static void multiplayer_schedule_master_tx()
-{
-    REG_TM2CNT_H = 0x00C1;
-    REG_TM2CNT_L = 65000; // Be careful with this delay! Due to manufacturing
-                          // differences between Gameboy Advance units, you
-                          // really don't want to get too smart, and try to
-                          // calculate the time right up to the boundary of
-                          // where you expect the interrupt to happen. Allow
-                          // some extra wiggle room, for other devices that may
-                          // raise a serial receive interrupt later than you
-                          // expect. Maybe, this timer could be sped up a bit,
-                          // but I don't really know... here's the thing, this
-                          // code CURRENTLY WORKS, so don't use a faster timer
-                          // interrupt until you've tested the code on a bunch
-                          // different real gba units (try out the code on the
-                          // original gba, both sp models, etc.)
-
-    irqEnable(IRQ_TIMER2);
-    irqSet(IRQ_TIMER2, [] {
-        if (multiplayer_busy()) {
-            ++multiplayer_comms.transmit_busy_count;
-            return; // still busy, try again. The only thing that should kick
-                    // off this timer, though, is the serial irq, and the
-                    // initial connection, so not sure how we could get into
-                    // this state.
-        } else {
-            irqDisable(IRQ_TIMER2);
-            multiplayer_tx_send();
-            REG_SIOCNT = REG_SIOCNT | SIO_START;
-        }
-    });
-}
-
-
-static void multiplayer_schedule_tx()
-{
-    // If we're the minion, simply enter data into the send queue. The
-    // master will wait before initiating another transmit.
-    if (multiplayer_is_master()) {
-        multiplayer_schedule_master_tx();
-    } else {
-        multiplayer_tx_send();
-    }
-}
-
-
-static void multiplayer_serial_isr()
-{
-    if (UNLIKELY(multiplayer_error())) {
-        ::__platform__->network_peer().disconnect();
-        return;
-    }
-
-    multiplayer_comms.is_host = multiplayer_is_master();
-
-    multiplayer_rx_receive();
-    multiplayer_schedule_tx();
-}
-
-
-std::optional<Platform::NetworkPeer::Message>
-Platform::NetworkPeer::poll_message()
-{
-    auto& mc = multiplayer_comms;
-
-    if (mc.rx_iter_state == message_iters) {
-        // This further decreases the likelihood of messing up the receive
-        // interrupt handler by manipulating shared data. We really should be
-        // declaring stuff volatile and disabling interrupts, but we cannot
-        // easily do those things, for various practical reasons, so we're just
-        // hoping that a problematic interrupt during a transmit or a poll is
-        // just exceedingly unlikely in practice. The serial interrupt handler
-        // runs approximately twice per frame, and the game only transmits a few
-        // messages per second. Furthermore, the interrupt handlers only access
-        // shared state when rx_iter_state == message_iters, so only one in six
-        // interrupts manipulates shared state, i.e. only one occurrence every
-        // three or so frames. And for writes to shared data to even be a
-        // problem, the interrupt would have to occur between two instructions
-        // when writing to the message ring or to the message pool. And on top
-        // of all that, we are leaving packets in the rx buffer while
-        // rx_iter_state == message iters, so we really shouldn't be writing at
-        // the same time anyway. So in practice, the possibility of manipulating
-        // shared data is just vanishingly small, although I acknowledge that
-        // it's a potential problem. There _IS_ a bug, but I've masked it pretty
-        // well (I hope). No issues detectable in an emulator, but we'll see
-        // about the real hardware... once my link cable arrives in the mail.
-        // P.S.: Tested on actual hardware, works fine.
-        return {};
-    }
-    if (auto msg = rx_ring_pop()) {
-        if (UNLIKELY(mc.poller_current_message not_eq nullptr)) {
-            // failure to deallocate/consume message!
-            mc.rx_message_pool.free(msg);
-            disconnect();
-            return {};
-        }
-        mc.poller_current_message = msg;
-        return Platform::NetworkPeer::Message{
-            reinterpret_cast<u8*>(msg->data_),
-            static_cast<int>(sizeof(WireMessage::data_))};
-    }
-    return {};
-}
-
-
-void Platform::NetworkPeer::poll_consume(u32 size)
-{
-    auto& mc = multiplayer_comms;
-
-    if (mc.poller_current_message) {
-        mc.rx_message_pool.free(mc.poller_current_message);
-    } else {
-        ::__platform__->fatal("logic error in net poll");
-    }
-    mc.poller_current_message = nullptr;
-}
-
-
-
-static void multiplayer_init()
-{
-    Microseconds delta = 0;
-
-MASTER_RETRY:
-    ::__platform__->network_peer().disconnect();
-
-    ::__platform__->sleep(5);
-
-    REG_RCNT = R_MULTI;
-    REG_SIOCNT = SIO_MULTI;
-    REG_SIOCNT = REG_SIOCNT | SIO_IRQ | SIO_115200;
-
-    irqEnable(IRQ_SERIAL);
-    irqSet(IRQ_SERIAL, multiplayer_serial_isr);
-
-    // Put this here for now, not sure whether it's really necessary...
-    REG_SIOMLT_SEND = 0x5555;
-
-    ::__platform__->delta_clock().reset();
-
-    while (not multiplayer_validate()) {
-        delta += ::__platform__->delta_clock().reset();
-        if (delta > seconds(20)) {
-            if (not multiplayer_validate_modes()) {
-                error("not all GBAs are in MULTI mode");
-            }
-            ::__platform__->network_peer()
-                .disconnect(); // just for good measure
-            REG_SIOCNT = 0;
-            irqDisable(IRQ_SERIAL);
-            return;
-        }
-        ::__platform__->system_call("feed-watchdog", nullptr);
-    }
-
-    const char* handshake =
-        "lnsk06"; // Link cable program, skyland, 6 byte packet.
-
-    if (strlen(handshake) not_eq Platform::NetworkPeer::max_message_size) {
-        ::__platform__->network_peer().disconnect();
-        error("handshake string does not equal message size");
-        return;
-    }
-
-    set_gflag(GlobalFlag::multiplayer_connected, true);
-
-    ::__platform__->network_peer().send_message(
-        {(u8*)handshake, sizeof handshake});
-
-    multiplayer_schedule_tx();
-
-    if (multiplayer_is_master()) {
-        info("I am the master");
-    }
-
-    while (true) {
-        ::__platform__->system_call("feed-watchdog", nullptr);
-        delta += ::__platform__->delta_clock().reset();
-        if (delta > seconds(20)) {
-            StringBuffer<64> err =
-                "no valid handshake received within a reasonable window ";
-            err += stringify(multiplayer_comms.rx_message_count);
-            error(err.c_str());
-            ::__platform__->network_peer().disconnect();
-            return;
-        } else if (auto msg = ::__platform__->network_peer().poll_message()) {
-            for (u32 i = 0; i < sizeof handshake; ++i) {
-                if (((u8*)msg->data_)[i] not_eq handshake[i]) {
-                    if (multiplayer_is_master()) {
-                        // For the master, if none of the other GBAs are in
-                        // multi serial mode yet, the SIOCNT register will show
-                        // that all gbas are in a ready state (all of one
-                        // device). The master will, therefore, push out a
-                        // message, and receive back garbage data. So we want to
-                        // keep retrying, in order to account for the scenario
-                        // where the other device is not yet plugged in, or the
-                        // other player has not initiated their own connection.
-                        info("master retrying...");
-
-                        StringBuffer<32> temp = "got: ";
-                        for (u32 i = 0; i < sizeof handshake; ++i) {
-                            temp.push_back(((char*)msg->data_)[i]);
-                        }
-                        info(temp.c_str());
-
-                        // busy-wait for a bit. This is sort of necessary;
-                        // Platform::sleep() does not contribute to the
-                        // delta clock offset (by design), so if we don't
-                        // burn up some time here, we will take a _long_
-                        // time to reach the timeout interval.
-                        busy_wait(10000);
-                        goto MASTER_RETRY; // lol yikes a goto
-                    } else {
-                        ::__platform__->network_peer().disconnect();
-                        info("invalid handshake");
-                        return;
-                    }
-                }
-            }
-            info("validated handshake");
-            ::__platform__->network_peer().poll_consume(sizeof handshake);
-            return;
-        }
-    }
-}
-
-
-
-void Platform::NetworkPeer::connect(const char* peer)
-{
-    // If the gameboy player is active, any multiplayer initialization would
-    // clobber the Normal_32 serial transfer between the gameboy player and the
-    // gameboy advance.
-    if (get_gflag(GlobalFlag::gbp_unlocked)) {
-        return;
-    }
-
-    audio_update_swap(audio_update_fast_cb);
-
-    multiplayer_init();
-}
-
-
-void Platform::NetworkPeer::listen()
-{
-    if (get_gflag(GlobalFlag::gbp_unlocked)) {
-        return;
-    }
-
-    multiplayer_init();
-}
-
-
-void Platform::NetworkPeer::update()
-{
-}
-
-
-bool Platform::NetworkPeer::is_connected() const
-{
-    return get_gflag(GlobalFlag::multiplayer_connected);
-}
-
-
-bool Platform::NetworkPeer::is_host() const
-{
-    return multiplayer_comms.is_host;
-}
-
-
-void Platform::NetworkPeer::disconnect()
-{
-    // Be very careful editing this function. We need to get ourselves back to a
-    // completely clean slate, otherwise, we won't be able to reconnect (e.g. if
-    // you leave a message sitting in the transmit ring, it may be erroneously
-    // sent out when you try to reconnect, instead of the handshake message);
-    if (is_connected()) {
-
-        info("disconnected!");
-        set_gflag(GlobalFlag::multiplayer_connected, false);
-        irqDisable(IRQ_SERIAL);
-        irqDisable(IRQ_TIMER2);
-        REG_SIOCNT = 0;
-
-        auto& mc = multiplayer_comms;
-
-        if (mc.poller_current_message) {
-            // Not sure whether this is the correct thing to do here...
-            mc.rx_message_pool.free(mc.poller_current_message);
-            mc.poller_current_message = nullptr;
-        }
-
-        mc.rx_iter_state = 0;
-        if (mc.rx_current_message) {
-            mc.rx_message_pool.free(mc.rx_current_message);
-            mc.rx_current_message = nullptr;
-        }
-        mc.rx_current_all_zeroes = true;
-        for (auto& msg : mc.rx_ring) {
-            if (msg) {
-                StringBuffer<32> note = "consumed msg containing ";
-                note.push_back(((char*)msg->data_)[0]);
-                note.push_back(((char*)msg->data_)[1]);
-                note.push_back(((char*)msg->data_)[2]);
-                note.push_back(((char*)msg->data_)[4]);
-                note.push_back(((char*)msg->data_)[5]);
-                note.push_back(((char*)msg->data_)[6]);
-                note += " during disconnect";
-                info(note.c_str());
-                mc.rx_message_pool.free(msg);
-                msg = nullptr;
-            }
-        }
-        mc.rx_ring_write_pos = 0;
-        mc.rx_ring_read_pos = 0;
-
-        mc.tx_iter_state = 0;
-        if (mc.tx_current_message) {
-            mc.tx_message_pool.free(mc.tx_current_message);
-            mc.tx_current_message = nullptr;
-        }
-        for (auto& msg : mc.tx_ring) {
-            if (msg) {
-                mc.tx_message_pool.free(msg);
-                msg = nullptr;
-            }
-        }
-        mc.tx_ring_write_pos = 0;
-        mc.tx_ring_read_pos = 0;
-    }
-}
-
-
-Platform::NetworkPeer::Interface Platform::NetworkPeer::interface() const
-{
-    return Interface::serial_cable;
-}
-
-
-Platform::NetworkPeer::~NetworkPeer()
-{
-    // ...
-}
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -6816,7 +4542,7 @@ static auto rtc_get_datetime()
 
 
 
-static void rtc_set_datetime(std::array<u8, 7> vals)
+static void rtc_set_datetime(Array<u8, 7> vals)
 {
     GPIO_PORT_DATA = 1;
     GPIO_PORT_DATA = 5;
@@ -6885,7 +4611,7 @@ void critical_section_exit(IrqState state)
 
 
 
-std::optional<DateTime> Platform::SystemClock::initial_time()
+Optional<DateTime> Platform::SystemClock::initial_time()
 {
     return start_time;
 }
@@ -6898,7 +4624,7 @@ std::optional<DateTime> Platform::SystemClock::initial_time()
 
 void Platform::SystemClock::configure(DateTime dt)
 {
-    std::array<u8, 7> data;
+    Array<u8, 7> data;
     data[0] = BCD_ENCODE(dt.date_.year_);
     data[1] = BCD_ENCODE(dt.date_.month_);
     data[2] = BCD_ENCODE(dt.date_.day_);
@@ -6922,7 +4648,7 @@ void Platform::SystemClock::configure(DateTime dt)
 
 
 
-std::optional<DateTime> Platform::SystemClock::now()
+Optional<DateTime> Platform::SystemClock::now()
 {
     if (get_gflag(GlobalFlag::rtc_faulty)) {
         return {};
@@ -6974,250 +4700,6 @@ void Platform::SystemClock::init()
 // 6 GND blu <-------> 1 GND blk
 //
 ////////////////////////////////////////////////////////////////////////////////
-
-
-using ConsoleLine = Platform::RemoteConsole::Line;
-
-
-struct RemoteConsoleState
-{
-    // NOTE: Some of these vars should probably be volatile, but, as we're
-    // dealing with keystrokes, which happen on a human timescale, the
-    // probability of anything getting messed up is pretty small.
-
-    std::optional<DynamicMemory<ConsoleLine>> rx_in_progress_;
-    Buffer<DynamicMemory<ConsoleLine>, 4> rx_full_lines_;
-
-    std::optional<DynamicMemory<ConsoleLine>> tx_msg_;
-};
-
-
-static EWRAM_DATA std::optional<RemoteConsoleState> remote_console_state;
-
-
-
-static bool uart_echo_skip = false;
-
-
-
-static void uart_serial_isr()
-{
-    if (uart_echo_skip) {
-        uart_echo_skip = false;
-        return;
-    }
-
-    auto& state = *::remote_console_state;
-
-    const char data = REG_SIODATA8;
-
-    const bool is_uart_error = REG_SIOCNT & (1 << 6);
-    if (is_uart_error) {
-        // just for debugging purposes
-        ++multiplayer_comms.rx_loss;
-        return;
-    }
-
-    // NOTE: a later discovery: in addition to is_rcv not working in the
-    // commented out code (below), send_ready also does not work. i.e. we cannot
-    // receive while we're sending.
-    const bool send_ready = !(REG_SIOCNT & 0x0010);
-    if (send_ready and state.tx_msg_ and not(*state.tx_msg_)->empty()) {
-
-        // just for debugging purposes
-        ++multiplayer_comms.tx_message_count;
-
-        REG_SIODATA8 = *((*state.tx_msg_)->end() - 1);
-        (*state.tx_msg_)->pop_back();
-        state.rx_in_progress_.reset();
-        return;
-    } else if (state.tx_msg_ and (*state.tx_msg_)->empty()) {
-        state.tx_msg_.reset();
-    }
-
-    // FIXME: I'm not seeing the receive_ready flag for some reason, but this
-    // code really _should_ be checking the state of the receive flag in the
-    // serial control register before reading a byte. What I'm doing here is
-    // possibly undefined behavior that happens to work, because my code is
-    // ignoring the null bytes.
-    //
-    // const bool is_rcv = !(REG_SIOCNT & 0x0020);
-    // if (is_rcv) {
-
-    if (data == '\r') {
-        if (state.rx_in_progress_) {
-            state.rx_full_lines_.push_back(std::move(*state.rx_in_progress_));
-            state.rx_in_progress_.reset();
-        }
-    } else if (data == 0x08 /* ASCII backspace */ or
-               data == 0x7f /* Strange char used by picocom as a backspace */) {
-        if (state.rx_in_progress_) {
-            (*state.rx_in_progress_)->pop_back();
-        }
-    } else if (data == '\0') {
-        // Hmm... how'd we end up with a null byte!?
-    } else {
-        if (not state.rx_in_progress_) {
-            state.rx_in_progress_ =
-                allocate_dynamic<ConsoleLine>("uart-rx-buffer");
-        }
-
-        if (state.rx_in_progress_) {
-            (*state.rx_in_progress_)->push_back(data);
-        }
-    }
-
-    if (data not_eq '\r') {
-        if (data == 0x7f) {
-            // Why would you send 0x7f but not handle it upon echo? I have no
-            // idea why some terminals send a backspace character yet don't
-            // understand THE BACKSPACE CHARACTER THAT THEMSELVES SENT! Anyway,
-            // I echo back a proper ascii backspace instead, because apparently
-            // the developers who wrote these serial consoles were really
-            // stupid. Or am I stupid? Someone is clearly an idiot.
-            //
-            // Description of the problem: In bash, running picocom, I type
-            // backspace. GBA receives 0x7f. Whatever, it's not an ascii
-            // backspace, but at least it's sort of standardized. I echo back
-            // 0x7f, picocom in bash DOES NOTHING.
-            REG_SIODATA8 = 0x08;
-        } else if (data == 0x04) {
-            // Don't echo ctrl-D back to the terminal. Causes problems in some
-            // client shells.
-            REG_SIODATA8 = '!';
-        } else if (data == '\t') {
-            // Don't echo back a tab character. The server interprets tabs as
-            // autocomplete requests.
-        } else {
-            REG_SIODATA8 = data;
-        }
-
-        // Most serial consoles are super dumb, and assume that the server will
-        // echo back everything that they type. If we do the echo now, we'll
-        // raise another serial interrupt, which we want to ignore.
-        //
-        // NOTE: I was relying on local echo for a while, rather than
-        // implementing server-side echo. But then, I discovered that Putty
-        // echos everything except for newline characters with local echo turned
-        // on, and basically, I don't trust the authors of serial terminals to
-        // get anything right, based on my experience so far. That's why the
-        // server is handling everything and relies on the minimal possible
-        // subset of uart functionality. 9600 baud, no local echo, no flow
-        // control.
-        uart_echo_skip = true;
-    }
-
-
-    // }
-}
-
-
-
-static void remote_console_start()
-{
-    ::remote_console_state.emplace();
-
-    irqEnable(IRQ_SERIAL);
-
-    irqSet(IRQ_SERIAL, uart_serial_isr);
-
-    // Stick a character in the data register. This stops the GBA transmitting a
-    // Character as soon as it goes into UART mode (?!?)
-    // REG_SIODATA8 = 'A';
-
-    // Now to go into UART mode
-    REG_RCNT = 0;
-    REG_SIOCNT = 0;
-
-    // NOTE: see gba.h for constants
-    REG_SIOCNT = SIO_9600 | SIO_UART_LENGTH_8 | SIO_UART_SEND_ENABLE |
-                 SIO_UART_RECV_ENABLE | SIO_UART | SIO_IRQ;
-}
-
-
-
-void Platform::RemoteConsole::start()
-{
-    remote_console_start();
-}
-
-
-
-auto Platform::RemoteConsole::peek_buffer() -> Line*
-{
-    auto& state = *::remote_console_state;
-    if (state.rx_in_progress_) {
-        return &**state.rx_in_progress_;
-    }
-    return nullptr;
-}
-
-
-
-auto Platform::RemoteConsole::readline() -> std::optional<Line>
-{
-    auto& state = *::remote_console_state;
-
-    if (not state.rx_full_lines_.empty()) {
-        auto ret = std::move(*state.rx_full_lines_.begin());
-
-        state.rx_full_lines_.erase(state.rx_full_lines_.begin());
-
-        return *ret;
-    }
-    return {};
-}
-
-
-bool Platform::RemoteConsole::printline(const char* text, const char* prompt)
-{
-    auto& state = *::remote_console_state;
-
-    if (state.tx_msg_ and not(*state.tx_msg_)->empty()) {
-        // TODO: add a queue for output messages! At the moment, there's already
-        // a message being written, so we'll need to ignore the input.
-        return false;
-    }
-
-    state.tx_msg_ = allocate_dynamic<ConsoleLine>("uart-console-output");
-
-    std::optional<char> first_char;
-
-    if (*text not_eq '\0') {
-        first_char = *text;
-        ++text;
-    }
-
-    while (*text not_eq '\0') {
-        // yeah, this isn't great. We're inserting chars into our buffer in
-        // reverse order in the printline call, so that we can simply call
-        // pop_back(), which is a constant-time operation, in the more
-        // time-critical interrupt handler. Every insert() will essentially
-        // memmove what's in the buffer by one byte to the right.
-        (*state.tx_msg_)->insert((*state.tx_msg_)->begin(), *text);
-        ++text;
-    }
-
-    (*state.tx_msg_)->insert((*state.tx_msg_)->begin(), '\r');
-    (*state.tx_msg_)->insert((*state.tx_msg_)->begin(), '\n');
-
-    while (*prompt not_eq '\0') {
-        (*state.tx_msg_)->insert((*state.tx_msg_)->begin(), *prompt);
-        ++prompt;
-    }
-
-    if (first_char) {
-        // Now that we're done copying the output message, place the first
-        // character in the uart shift register, to kick off the send.
-        REG_SIODATA8 = *first_char;
-    } else {
-        auto first = *((*state.tx_msg_)->end() - 1);
-        (*state.tx_msg_)->pop_back();
-        REG_SIODATA8 = first;
-    }
-
-    return true;
-}
 
 
 
@@ -7545,15 +5027,6 @@ void* Platform::system_call(const char* feature_name, void* arg)
 
 
 
-void Platform::Speaker::start()
-{
-    audio_start();
-    clear_music();
-    play_music("unaccompanied_wind", 0);
-}
-
-
-
 static void publisher_logo_anim()
 {
     PLATFORM.screen().schedule_fade(1, ColorConstant::silver_white, true, true);
@@ -7610,17 +5083,19 @@ static void publisher_logo_anim()
 
 
 
+void start_deltaclock();
+
+
+
 Platform::Platform()
 {
     ::__platform__ = this;
 
     const auto tm1 = system_clock_.now();
 
-    logger().set_threshold(Severity::fatal);
-
-    if (skyland_mgba_invoke_command(Command::identify, "HELLO.") == "ACKNOWLEDGED.") {
-        info("skyland-mgba detected!");
-    }
+    // if (skyland_mgba_invoke_command(Command::identify, "HELLO.") == "ACKNOWLEDGED.") {
+    //     info("skyland-mgba detected!");
+    // }
 
 
     keyboard().poll();
@@ -7747,13 +5222,7 @@ Platform::Platform()
 
     irqEnable(IRQ_VBLANK);
 
-    irqSet(IRQ_TIMER3, [] {
-        delta_total += 0xffff;
-
-        REG_TM3CNT_H = 0;
-        REG_TM3CNT_L = 0;
-        REG_TM3CNT_H = 1 << 7 | 1 << 6;
-    });
+    start_deltaclock();
     delta_clock().reset();
 
     irqSet(IRQ_VBLANK, vblank_isr);

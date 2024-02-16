@@ -3,7 +3,7 @@
 ;;;
 
 
-(dialog "The remains of an abandoned island emerge from the mist, floating towards you...")
+(lc-dialog-load "abandoned-isle" "intro")
 
 
 (let ((opts
@@ -32,7 +32,7 @@
 (if (choice 2)
     (secret
      1 12
-     "To the earth below, I will not go"))
+     (lc-dialog-get "abandoned-isle" "secret")))
 
 
 
@@ -44,12 +44,11 @@
     (when (equal (zone) 3)
       (setq amt (+ 800 (choice 900))))
 
-    (dialog
-     "You explore, and discover " (string amt) "@ amongst the ruins!")
+    (lc-dialog-load-fmt "abandoned-isle" "award" amt)
 
     (adventure-log-add 11 (list amt))
 
     (coins-add amt)
 
     ((eval-file "/scripts/util/pickup_cart.lisp") 1
-     "Just as you're turning to leave, you spot a data cartridge sitting on an unfinished game of checkers.")))
+     (lc-dialog-get "abandoned-isle" "cart"))))

@@ -40,6 +40,7 @@
 #include "selectorScene.hpp"
 #include "skyland/scene/modules/checkersModule.hpp"
 #include "skyland/scene_pool.hpp"
+#include <algorithm>
 
 
 
@@ -212,7 +213,7 @@ inline bool checker_has_jumps(const CheckerBoard& board, const Vec2<u8>& pos)
 
 
 
-inline std::optional<std::pair<CheckerBoard::Checker, Vec2<u8>>>
+inline Optional<Pair<CheckerBoard::Checker, Vec2<u8>>>
 checker_move(CheckerBoard& board, const Vec2<u8>& from, const Vec2<u8>& to)
 {
     const auto type = board.data_[from.x][from.y];
@@ -249,7 +250,7 @@ checker_move(CheckerBoard& board, const Vec2<u8>& from, const Vec2<u8>& to)
         auto took = board.data_[midpoint.x][midpoint.y];
         board.data_[midpoint.x][midpoint.y] = CheckerBoard::Checker::none;
 
-        return std::make_pair(took, midpoint);
+        return make_pair(took, midpoint);
     }
 
     return {};
@@ -378,11 +379,11 @@ inline MinimaxResult checkers_minimax(CheckerBoard& board,
             auto result =
                 checkers_minimax(board, depth + 1, alpha, beta, next_move);
             if (minimize) {
-                best = std::min(best, result);
-                beta = std::min(best, beta);
+                best = util::min(best, result);
+                beta = util::min(best, beta);
             } else {
-                best = std::max(best, result);
-                alpha = std::max(best, alpha);
+                best = util::max(best, result);
+                alpha = util::max(best, alpha);
             }
 
             // Undo each state change, as we're doing everything
@@ -412,10 +413,10 @@ DONE:
 
 
 
-inline std::pair<Vec2<u8>, Vec2<u8>>
+inline Pair<Vec2<u8>, Vec2<u8>>
 checkers_opponent_move(CheckerBoard& board,
                        bool first_move,
-                       std::optional<Vec2<u8>> piece = {})
+                       Optional<Vec2<u8>> piece = {})
 {
     struct Move
     {
@@ -582,18 +583,18 @@ public:
     ScenePtr<Scene> update(Player& player, macro::EngineImpl& state) override
     {
         if (not player_won_) {
-            return scene_pool::alloc<SelectorScene>();
+            return make_scene<SelectorScene>();
         } else if (not player_won_ or player.key_down(Key::action_1) or
                    player.key_down(Key::action_2)) {
 
-            return scene_pool::alloc<CheckersModule>();
+            return make_scene<CheckersModule>();
         }
 
         return null_scene();
     }
 
     bool player_won_;
-    std::optional<Text> text_;
+    Optional<Text> text_;
 };
 
 
@@ -601,9 +602,9 @@ public:
 class OpponentMoveCheckerScene : public MacrocosmScene
 {
 public:
-    std::optional<Vec2<u8>> piece_;
+    Optional<Vec2<u8>> piece_;
 
-    OpponentMoveCheckerScene(std::optional<Vec2<u8>> piece = {}) : piece_(piece)
+    OpponentMoveCheckerScene(Optional<Vec2<u8>> piece = {}) : piece_(piece)
     {
     }
 
@@ -655,13 +656,13 @@ public:
                 }
                 // We have jumps left for this checker, we must jump again!
                 if (not slots.empty()) {
-                    return scene_pool::alloc<OpponentMoveCheckerScene>(opp_to);
+                    return make_scene<OpponentMoveCheckerScene>(opp_to);
                 }
             }
         }
 
 
-        return scene_pool::alloc<CheckersVictoryScene>();
+        return make_scene<CheckersVictoryScene>();
     }
 };
 
@@ -678,7 +679,7 @@ public:
     }
 
 
-    std::optional<Text> text_;
+    Optional<Text> text_;
 
 
     void enter(macro::EngineImpl& state, Scene& prev) override
@@ -718,7 +719,7 @@ public:
 
             sector.set_cursor(piece_loc_);
 
-            return scene_pool::alloc<SelectorScene>();
+            return make_scene<SelectorScene>();
 
         } else if (player.key_down(Key::action_1)) {
 
@@ -763,14 +764,14 @@ public:
                 }
                 // We have jumps left for this checker, we must jump again!
                 if (not slots.empty()) {
-                    return scene_pool::alloc<MoveCheckerScene>(
+                    return make_scene<MoveCheckerScene>(
                         Vec3<u8>{slot.x, slot.y, 1}, slots, false);
                 }
             } else {
                 sector.set_cursor(piece_loc_);
             }
 
-            return scene_pool::alloc<OpponentMoveCheckerScene>();
+            return make_scene<OpponentMoveCheckerScene>();
 
         } else if (player.key_down(Key::up)) {
             Vec2<u8> pl = {piece_loc_.x, piece_loc_.y};

@@ -52,6 +52,8 @@
 #include "skyland/rooms/synth.hpp"
 #include "skyland/timeStreamEvent.hpp"
 #include "tile.hpp"
+#include <algorithm>
+#include <limits>
 
 
 
@@ -156,7 +158,7 @@ BasicCharacter* Island::character_at_location(const RoomCoord& loc)
 
 
 
-std::pair<BasicCharacter*, Room*> Island::find_character_by_id(CharacterId id)
+Pair<BasicCharacter*, Room*> Island::find_character_by_id(CharacterId id)
 {
     for (auto& room : rooms_) {
         for (auto& character : room->characters()) {
@@ -172,7 +174,7 @@ std::pair<BasicCharacter*, Room*> Island::find_character_by_id(CharacterId id)
 
 static auto fire_alloc_texture(Island& island)
 {
-    std::optional<Platform::DynamicTexturePtr> result;
+    Optional<Platform::DynamicTexturePtr> result;
 
     // Check to see if the other island already has a texture allocated
     // for the fire effect. If so, share the texture.
@@ -387,7 +389,7 @@ void Island::set_hidden(bool hidden)
 
 
 
-std::optional<Platform::DynamicTexturePtr> Island::fire_texture()
+Optional<Platform::DynamicTexturePtr> Island::fire_texture()
 {
     return fire_.texture_;
 }
@@ -1220,7 +1222,7 @@ void Island::display()
 
     if (flag_pos_ and show_flag_) {
 
-        std::optional<u16> palette;
+        Optional<u16> palette;
 
         if (layer_ == Layer::map_0_ext) {
             // NOTE: the player can design his/her own flag, so we reserve a
@@ -1487,6 +1489,134 @@ void Island::recalculate_power_usage()
 
 
 
+const EntityList<BasicCharacter>& Island::outdoor_characters()
+{
+    return characters_;
+}
+
+
+
+EntityList<Entity>& Island::projectiles()
+{
+    return projectiles_;
+}
+
+
+
+SharedEntityList<Drone>& Island::drones()
+{
+    return drones_;
+}
+
+
+
+Optional<RoomCoord> Island::flag_pos()
+{
+    return flag_pos_;
+}
+
+
+
+const Bitmatrix<16, 16>& Island::rooms_plot() const
+{
+    return rooms_plot_;
+}
+
+
+
+bool Island::is_destroyed()
+{
+    return destroyed_;
+}
+
+
+
+Optional<RoomCoord> Island::chimney_loc() const
+{
+    return chimney_loc_;
+}
+
+
+
+Power Island::power_supply() const
+{
+    return power_supply_;
+}
+
+
+
+Power Island::power_drain() const
+{
+    return power_drain_;
+}
+
+
+
+void Island::set_owner(Player& player)
+{
+    owner_ = &player;
+}
+
+
+
+bool Island::has_radar() const
+{
+    return has_radar_;
+}
+
+
+
+bool Island::is_boarded() const
+{
+    return is_boarded_;
+}
+
+
+
+s8 Island::get_ambient_movement()
+{
+    return ambient_movement_;
+}
+
+
+
+u8 Island::workshop_count() const
+{
+    return workshop_count_;
+}
+
+
+
+u8 Island::manufactory_count() const
+{
+    return manufactory_count_;
+}
+
+
+
+u8 Island::core_count() const
+{
+    return core_count_;
+}
+
+
+
+bool Island::add_room(RoomPtr<Room> insert, bool do_repaint)
+{
+    if (rooms().full()) {
+        return false;
+    }
+    auto result = rooms_.insert_room(std::move(insert));
+    if (do_repaint) {
+        repaint();
+    }
+    recalculate_power_usage();
+    on_layout_changed(insert->position());
+    return result;
+}
+
+
+
 bool Island::add_character(EntityRef<BasicCharacter> character)
 {
     if (auto room = get_room(character->grid_position())) {
@@ -1723,7 +1853,7 @@ void Island::repaint_partial()
     for (auto& room : rooms_) {
         if (room->is_powered_down()) {
 
-            // std::optional<u16> pal = 9;
+            // Optional<u16> pal = 9;
             auto p = room->position();
             for (int x = 0; x < room->size().x; ++x) {
                 for (int y = 0; y < room->size().y; ++y) {
@@ -1831,7 +1961,7 @@ void Island::repaint()
     bool placed_flag = false;
     bool placed_chimney = false;
 
-    std::optional<RoomCoord> flag_loc;
+    Optional<RoomCoord> flag_loc;
 
     rooms_plot_.clear();
 
@@ -2043,7 +2173,7 @@ Vec2<Fixnum> Island::visual_origin() const
 
 
 
-std::optional<SharedEntityRef<Drone>> Island::get_drone(const RoomCoord& coord)
+Optional<SharedEntityRef<Drone>> Island::get_drone(const RoomCoord& coord)
 {
     for (auto& drone_sp : drones()) {
         if (drone_sp->position() == coord) {
@@ -2121,7 +2251,7 @@ void Island::resolve_cancelled_dispatch()
     // If a room was destroyed, we could try to fix dangling pointer issues
     // around the dispatch list, but it's simpler just to destroy the list and
     // recreate it.
-    if (UNLIKELY(dispatch_cancelled_)) {
+    if (dispatch_cancelled_) [[unlikely]] {
         dispatch_list_ = nullptr;
         drawfirst_ = nullptr;
         for (auto& room : rooms_) {
@@ -2258,7 +2388,7 @@ bool speaker_data_store(Island& island, const char* path)
         }
     }
 
-    if (not data.size() == 0) {
+    if (data.size() not_eq 0) {
         return flash_filesystem::store_file_data_binary(path, data);
     } else {
         flash_filesystem::unlink_file(path);
@@ -2305,9 +2435,7 @@ bool speaker_data_load(Island& island, const char* path)
                         ++current;
                     }
 
-                    memcpy(
-                        speaker->effect_flags().vector_.data(), &v, sizeof v);
-
+                    speaker->effect_flags().vector_ = v;
 
                     Speaker::Settings settings;
 
@@ -2361,7 +2489,7 @@ bool synth_notes_store(Island& island, const char* path)
         }
     }
 
-    if (not data.size() == 0) {
+    if (data.size() not_eq 0) {
         return flash_filesystem::store_file_data_binary(path, data);
     } else {
         flash_filesystem::unlink_file(path);
@@ -2437,6 +2565,20 @@ bool synth_notes_load(Island& island, const char* path)
 bool is_player_island(Island* isle)
 {
     return isle == &APP.player_island();
+}
+
+
+
+Island* get_island(bool island_is_near)
+{
+    return island_is_near ? &player_island() : opponent_island();
+}
+
+
+
+bool is_near_island(Island* isle)
+{
+    return is_player_island(isle);
 }
 
 

@@ -48,6 +48,7 @@
 #include "sound.hpp"
 #include "timeStreamEvent.hpp"
 #include "weather/storm.hpp"
+#include <limits>
 extern "C" {
 // FIXME! CMake target_link_libraries isn't working for some reason?
 #include "heatshrink/heatshrink_encoder.c"
@@ -127,6 +128,7 @@ void store_hidden_rooms()
 App* __app__;
 
 
+
 App::App(bool clean_boot)
     : level_timer_(0), stat_timer_(0),
       world_state_(allocate_dynamic<WorldState>("env-buffer",
@@ -170,7 +172,7 @@ App::App(bool clean_boot)
             backup_->store();
         }
         if (is_developer_mode()) {
-            PLATFORM.logger().flush();
+            log_flush();
         }
     });
 
@@ -371,7 +373,7 @@ void App::update(Time delta)
     TIMEPOINT(t2);
 
     auto line = PLATFORM.remote_console().readline();
-    if (UNLIKELY(static_cast<bool>(line))) {
+    if (static_cast<bool>(line)) [[unlikely]] {
         if (not console_state_) {
             console_state_.emplace(allocate_dynamic<ConsoleState>("console"));
         }

@@ -51,7 +51,8 @@
 #endif
 
 
-namespace lisp {
+namespace lisp
+{
 
 
 static int run_gc();
@@ -68,7 +69,8 @@ static const u32 string_intern_table_size = 2900;
 #define VALUE_POOL_SIZE 200000
 #endif
 
-union ValueMemory {
+union ValueMemory
+{
     Value value_;
     HeapNode heap_node_;
     Nil nil_;
@@ -99,7 +101,7 @@ static HEAP_DATA char symbol_intern_table[string_intern_table_size];
 const char* intern(const char* string);
 
 
-std::pair<ValuePoolUsed, ValuePoolFree> value_pool_info()
+Pair<ValuePoolUsed, ValuePoolFree> value_pool_info()
 {
     int values_remaining = 0;
     Value* current = value_pool;
@@ -108,7 +110,8 @@ std::pair<ValuePoolUsed, ValuePoolFree> value_pool_info()
         current = current->heap_node().next_;
     }
 
-    return {VALUE_POOL_SIZE - values_remaining, values_remaining};
+    return {(ValuePoolUsed)(VALUE_POOL_SIZE - values_remaining),
+            (ValuePoolFree)values_remaining};
 }
 
 
@@ -149,7 +152,8 @@ void value_pool_free(Value* value)
 }
 
 
-struct Context {
+struct Context
+{
     using OperandStack = Buffer<Value*, 497>;
 
 
@@ -186,7 +190,8 @@ struct Context {
     u8 current_fn_argc_ = 0;
     bool strict_ = false;
 
-    struct GensymState {
+    struct GensymState
+    {
         u8 char_1_ : 6;
         u8 char_2_ : 6;
         u8 char_3_ : 6;
@@ -199,7 +204,7 @@ struct Context {
 };
 
 
-static std::optional<Context> bound_context;
+static Optional<Context> bound_context;
 
 
 static void push_callstack(Value* function)
@@ -934,7 +939,7 @@ Value* make_string_from_literal(const char* str)
 }
 
 
-std::pair<Value*, int> store_string(const char* string, u32 len)
+Pair<Value*, int> store_string(const char* string, u32 len)
 {
     Value* existing_buffer = nullptr;
     auto free = bound_context->string_buffer_remaining_;
@@ -1672,7 +1677,8 @@ static void gc_mark()
 
 using Finalizer = void (*)(Value*);
 
-struct FinalizerTableEntry {
+struct FinalizerTableEntry
+{
     constexpr FinalizerTableEntry(Finalizer fn) : fn_(fn)
     {
     }
@@ -1840,8 +1846,10 @@ static int run_gc()
 using EvalBuffer = StringBuffer<900>;
 
 
-namespace {
-class EvalPrinter : public Printer {
+namespace
+{
+class EvalPrinter : public Printer
+{
 public:
     EvalPrinter(EvalBuffer& buffer) : buffer_(buffer)
     {
@@ -2959,7 +2967,7 @@ Value* stacktrace()
 #endif
 
 using RequiredArgc = int;
-using Builtin = std::pair<RequiredArgc, lisp::Value* (*)(int)>;
+using Builtin = Pair<RequiredArgc, lisp::Value* (*)(int)>;
 // clang-format off
 BUILTIN_TABLE(
     // clang-format on
@@ -3484,9 +3492,7 @@ BUILTIN_TABLE(
                v >>= 4;
            }
            StringBuffer<10> result("0x");
-           for (char c : reversed(stack)) {
-               result.push_back(c);
-           }
+           foreach_reversed(stack, [&](char c) { result.push_back(c); });
            return make_string(result.c_str());
        }}},
      {"+",
@@ -3977,10 +3983,11 @@ BUILTIN_TABLE(
 
            while (index < len) {
 
-               for (auto& lat : reversed(inp_lats)) {
+               foreach_reversed(inp_lats, [&](auto& lat) {
                    push_op(lat->cons().car());
                    lat = lat->cons().cdr();
-               }
+               });
+
                funcall(fn, inp_lats.size());
                auto fc_result = get_op0();
 
@@ -3998,7 +4005,7 @@ BUILTIN_TABLE(
        [](int argc) {
            L_EXPECT_OP(0, cons);
 
-           std::optional<int> index;
+           Optional<int> index;
 
            int i = 0;
            foreach (get_op0(), [&](Value* v) {
@@ -4716,7 +4723,7 @@ Value* __get_local(LocalVariableOffset off)
 }
 
 
-std::optional<LocalVariableOffset> __find_local(const char* intern_str)
+Optional<LocalVariableOffset> __find_local(const char* intern_str)
 {
     LocalVariableOffset ret{0, 0};
 
@@ -4746,7 +4753,7 @@ std::optional<LocalVariableOffset> __find_local(const char* intern_str)
         }
     }
 
-    return std::nullopt;
+    return nullopt();
 }
 
 

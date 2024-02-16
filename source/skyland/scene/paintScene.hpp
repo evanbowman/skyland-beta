@@ -105,7 +105,7 @@ public:
             flash_filesystem::store_file_data_binary(file_path_.c_str(),
                                                      output);
 
-            return scene_pool::alloc<FileBrowserModule>();
+            return make_scene<FileBrowserModule>();
         }
 
         return Paint::update(delta);
