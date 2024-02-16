@@ -16,7 +16,7 @@ frecuencia de tiempo de espera (seg)
 duración del tiempo de espera (seg)
 aire
 aniquilador
-arma-de-arco
+arcoeléctrico
 arco
 núcleo-inactivo
 globo
@@ -39,7 +39,7 @@ módulo-de-comando
 cohete-astilla
 cesio
 brazo-de-salvamento
-cosechas (¡podridas! ¡recoge pronto!)
+cosechas (¡podridas!)
 cristal-tallado
 cristal
 pilar-de-cristal
@@ -48,16 +48,16 @@ nieve
 casco-apilado
 casco-espejo
 control-mental
-puerta-de-casco
+portaestanque
 cañón
 bodega-de-carga
 núcleo
 decimador
-bahía-de-drones
+hangar-de-drones
 baliza-de-escape
 casa-de-campo
 cañón-de-artillería
-carga-de-fuego
+proyectil-de-fuego
 comida
 campo-de-fuerza
 campo-de-fuerza*
@@ -124,7 +124,7 @@ columna-de-piedra
 pistón-pegajoso
 girasol
 interruptor
-sintético
+sintetizador
 computadora-de-apuntado
 té
 terreno
@@ -146,7 +146,7 @@ taller
 /enredaderas
 /ladrillo
 /buen-chico
-/monstruo-de-bolsillo
+/pocket-monster
 /troll-amistoso
 /tengo-que-ir-rápido
 rojo
