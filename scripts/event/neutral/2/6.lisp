@@ -3,7 +3,7 @@
 ;;;
 
 
-(load-dialog "burning-isle" "intro")
+(lc-dialog-load "burning-isle" "intro")
 
 
 (opponent-init 7 'neutral)
@@ -30,17 +30,17 @@
 
 
 (defn on-converge [0]
-  (load-dialog "burning-isle" "award")
+  (lc-dialog-load "burning-isle" "award")
   (setq on-converge nil)
   (alloc-space 'incinerator)
   (adventure-log-add 46 '())
   (sel-input 'incinerator
-             (get-dialog "burning-isle" "place")
+             (lc-dialog-get "burning-isle" "place")
              (lambda
                (room-new (player) (list 'incinerator $1 $2))
                  (room-del (opponent) 0 13)
                (sound "build0")
-               (load-dialog "burning-isle" "done")
+               (lc-dialog-load "burning-isle" "done")
                (run-util-script "pickup_cart.lisp"
                                 7
-                                (get-dialog "burning-isle" "cart")))))
+                                (lc-dialog-get "burning-isle" "cart")))))

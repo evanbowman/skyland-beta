@@ -3,7 +3,7 @@
 ;;;
 
 
-(load-dialog "forsaken-town" "intro")
+(lc-dialog-load "forsaken-town" "intro")
 
 
 
@@ -39,12 +39,12 @@
   (let ((c (choice 5))
         (end (lambda
                ((eval-file "/scripts/util/pickup_cart.lisp") 4
-         (get-dialog "forsaken-town" "cart")))))
+         (lc-dialog-get "forsaken-town" "cart")))))
     (cond
      ((equal c 0)
       (let ((amt (+ 200 (choice 400))))
         (coins-add amt)
-        (load-dialog "forsaken-town" "nothing" amt)
+        (lc-dialog-load-fmt "forsaken-town" "nothing" amt)
         (adventure-log-add 38 (list amt))
         (end)))
      (true
@@ -57,20 +57,20 @@
                     splitter)))
         (let ((pick (sample opts)))
           (dialog
-           (get-dialog "forsaken-town" "found1")
+           (lc-dialog-get "forsaken-town" "found1")
            (rinfo 'name pick)
-           (get-dialog "forsaken-town" "found2"))
+           (lc-dialog-get "forsaken-town" "found2"))
           (adventure-log-add 38 (rinfo 'name pick))
           (defn on-dialog-closed [0]
             (setq on-dialog-closed nil)
             (alloc-space pick)
             (sel-input
              pick
-             (format (get-dialog "forsaken-town" "pick")
+             (format (lc-dialog-get "forsaken-town" "pick")
                      (car (rinfo 'size pick))
                      (cdr (rinfo 'size pick)))
              (lambda
                (room-new (player) `(,pick ,$1 ,$2))
                (sound "build0")
-               (load-dialog "forsaken-town" "done")
+               (lc-dialog-load "forsaken-town" "done")
                (end))))))))))

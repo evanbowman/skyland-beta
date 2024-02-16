@@ -3,7 +3,7 @@
 ;;;
 
 
-(load-dialog "castaway" "intro")
+(lc-dialog-load "castaway" "intro")
 
 
 (opponent-init 6 'neutral)
@@ -18,7 +18,7 @@
 
 (secret
  5 14
- (get-dialog "castaway" "secret"))
+ (lc-dialog-get "castaway" "secret"))
 
 
 (chr-new (opponent) 1 14 'neutral 0)
@@ -26,11 +26,11 @@
 
 (setq on-converge
       (lambda
-        (load-dialog "castaway" "greet")
+        (lc-dialog-load "castaway" "greet")
 
         (setq on-dialog-closed
               (lambda
-                (load-dialog "castaway" "offer")
+                (lc-dialog-load "castaway" "offer")
                 (dialog-await-y/n)
                 (setq on-dialog-closed '())))
 
@@ -49,26 +49,26 @@
                 (chr-new (player) (car temp) (cdr temp) 'neutral nil)
                 (chr-del (opponent) 1 14)
                 (if (or (equal (choice 2) 1) (< (coins) 300))
-                    (join (get-dialog "castaway" "join1"))
+                    (join (lc-dialog-get "castaway" "join1"))
                   (progn
                     (coins-set (- (coins) 300))
-                    (join (get-dialog "castaway" "join2")))))
+                    (join (lc-dialog-get "castaway" "join2")))))
             (progn
-              (load-dialog "castaway" "full")
+              (lc-dialog-load "castaway" "full")
               (defn on-dialog-closed [0]
-                (load-dialog "castaway" "plead")
+                (lc-dialog-load "castaway" "plead")
                 (defn on-dialog-closed [0]
                   (alloc-space 'ladder)
                   (sel-input 'ladder
-                             (get-dialog "castaway" "place_ladder")
+                             (lc-dialog-get "castaway" "place_ladder")
                              (lambda
                                (sound "build0")
                                (room-new (player) `(ladder ,$1 ,$2))
                                (chr-del (opponent) 1 14)
                                (chr-new (player) $1 (+ 1 $2) 'neutral nil)
-                               (load-dialog "castaway" "thanks")
+                               (lc-dialog-load "castaway" "thanks")
                                (defn on-dialog-closed [0]
-                                 (join (get-dialog "castaway" "join1"))
+                                 (join (lc-dialog-get "castaway" "join1"))
                                  (setq on-dialog-closed nil)
                                  (exit)))))))))
         (exit)))

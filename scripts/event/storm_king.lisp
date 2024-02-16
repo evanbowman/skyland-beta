@@ -6,17 +6,17 @@
 
 
 (dialog
- (get-dialog "storm-king" "intro")
+ (lc-dialog-get "storm-king" "intro")
  (cond
-  ((equal (zone) 0) (get-dialog "storm-king" "zone1"))
-  ((equal (zone) 1) (get-dialog "storm-king" "zone2"))
-  ((equal (zone) 2) (get-dialog "storm-king" "zone3"))
-  ((equal (zone) 3) (get-dialog "storm-king" "zone4"))))
+  ((equal (zone) 0) (lc-dialog-get "storm-king" "zone1"))
+  ((equal (zone) 1) (lc-dialog-get "storm-king" "zone2"))
+  ((equal (zone) 2) (lc-dialog-get "storm-king" "zone3"))
+  ((equal (zone) 3) (lc-dialog-get "storm-king" "zone4"))))
 
 
 (setq on-fadein
       (lambda
-        (load-dialog "storm-king" "greeting")))
+        (lc-dialog-load "storm-king" "greeting")))
 
 
 (adventure-log-add 48 '())

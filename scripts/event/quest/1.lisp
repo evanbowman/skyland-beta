@@ -1,5 +1,5 @@
 
-(load-dialog "banana-quest" "intro")
+(lc-dialog-load "banana-quest" "intro")
 
 
 (opponent-init 8 'neutral)
@@ -36,18 +36,18 @@
 
 (secret
  4 13
- (get-dialog "banana-quest" "secret1"))
+ (lc-dialog-get "banana-quest" "secret1"))
 
 (secret
  5 14
- (get-dialog "banana-quest" "secret2"))
+ (lc-dialog-get "banana-quest" "secret2"))
 
 
 (setq on-converge
       (lambda
-        (load-dialog "banana-quest" "offer")
-        (dialog-await-binary-q (get-dialog "banana-quest" "opt1")
-                               (get-dialog "banana-quest" "opt2"))
+        (lc-dialog-load "banana-quest" "offer")
+        (dialog-await-binary-q (lc-dialog-get "banana-quest" "opt1")
+                               (lc-dialog-get "banana-quest" "opt2"))
 
         (setq on-dialog-accepted
               (lambda
@@ -59,11 +59,11 @@
                         (push 'qids 1)
                         (push 'quests (cons "/scripts/event/quest_marker/nanas.lisp"
                                             m))
-                        (load-dialog "banana-quest" "accepted"))
+                        (lc-dialog-load "banana-quest" "accepted"))
                     (progn
-                      (load-dialog "banana-quest" "impossible"))))))
+                      (lc-dialog-load "banana-quest" "impossible"))))))
 
         (setq on-dialog-declined
               (lambda
-                (load-dialog "banana-quest" "declined")
+                (lc-dialog-load "banana-quest" "declined")
                 (setq on-dialog-closed exit)))))

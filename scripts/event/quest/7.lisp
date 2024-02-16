@@ -1,5 +1,5 @@
 
-(load-dialog "mining-quest" "intro")
+(lc-dialog-load "mining-quest" "intro")
 
 
 (opponent-init 12 'neutral)
@@ -61,9 +61,9 @@
 
 (defn on-converge [0]
   (setq on-converge nil)
-  (load-dialog "mining-quest" "greet")
+  (lc-dialog-load "mining-quest" "greet")
   (defn on-dialog-closed [0]
-    (load-dialog "mining-quest" "offer")
+    (lc-dialog-load "mining-quest" "offer")
     (dialog-await-y/n))
 
   (defn on-dialog-accepted [0]
@@ -76,7 +76,7 @@
             ;; push adventure log
             (push 'qids 7)
             (push 'quests (cons "/scripts/event/quest_marker/dynamite-ii.lisp" m))
-            (load-dialog "mininq-quest" "cargo")
+            (lc-dialog-load "mining-quest" "cargo")
             (adventure-log-add 57 nil)
 
             (defn on-dialog-closed [0]
@@ -87,7 +87,7 @@
                      (alloc-space bloc)
                      (sel-input
                       bloc
-                      (string (get-dialog "mining-quest" "place") (+ cnt 1) "/7:")
+                      (string (lc-dialog-get "mining-quest" "place") (+ cnt 1) "/7:")
                       (lambda
                         (room-new (player) (list bloc $1 $2))
                         (sound "build0")
@@ -98,11 +98,11 @@
 
                         (if (equal cnt 7)
                             (progn
-                              (load-dialog "mining-quest" "instructions")
+                              (lc-dialog-load "mining-quest" "instructions")
                               (setq on-dialog-closed exit))
                           (t))))))))))
         (progn
-          (load-dialog "mining-quest" "skip")
+          (lc-dialog-load "mining-quest" "skip")
           (exit)))))
 
   (setq on-dialog-declined exit))

@@ -1,6 +1,6 @@
 
 
-(load-dialog "market-quest" "intro")
+(lc-dialog-load "market-quest" "intro")
 
 
 (opponent-init 9 'neutral)
@@ -45,9 +45,9 @@
 
 (setq on-converge
       (lambda
-        (load-dialog "market-quest" "offer")
-        (dialog-await-binary-q (get-dialog "market-quest" "opt1")
-                               (get-dialog "market-quest" "opt2"))
+        (lc-dialog-load "market-quest" "offer")
+        (dialog-await-binary-q (lc-dialog-get "market-quest" "opt1")
+                               (lc-dialog-get "market-quest" "opt2"))
 
         (setq on-dialog-accepted
               (lambda
@@ -61,11 +61,11 @@
                         (push 'quests (cons "/scripts/event/quest_marker/delivery.lisp"
                                             m))
                         (cargo-set (player) (car c) (cdr c) "parcel")
-                        (load-dialog "market-quest" "accepted")
+                        (lc-dialog-load "market-quest" "accepted")
                         ((eval-file "/scripts/util/pickup_cart.lisp") 5
-                         (get-dialog "market-quest" "cart")))
+                         (lc-dialog-get "market-quest" "cart")))
                     (progn
-                      (load-dialog "market-quest" "canceled")
+                      (lc-dialog-load "market-quest" "canceled")
                       (setq on-dialog-closed
                             (lambda
                               (coins-add 400)
@@ -73,5 +73,5 @@
 
         (setq on-dialog-declined
               (lambda
-                (load-dialog "market-quest" "declined")
+                (lc-dialog-load "market-quest" "declined")
                 (setq on-dialog-closed exit)))))

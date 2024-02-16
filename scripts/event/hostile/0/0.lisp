@@ -9,7 +9,7 @@
 (flag-show (opponent) 0)
 
 
-(load-dialog "first-isle" "intro")
+(lc-dialog-load "first-isle" "intro")
 
 
 (if (not (equal (choice 3) 0))

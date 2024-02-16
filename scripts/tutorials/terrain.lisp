@@ -20,7 +20,7 @@
 
 (autopilot
  '((2000 nil)
-   (100 (get-dialog "tutorials" "tr1"))
+   (100 (lc-dialog-get "tutorials" "tr1"))
    (801 Right)
    (233 Right)
    (250 Right)

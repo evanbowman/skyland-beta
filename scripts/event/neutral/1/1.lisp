@@ -3,7 +3,7 @@
 ;;;
 
 
-(load-dialog "risky-castle" "intro")
+(lc-dialog-load "risky-castle" "intro")
 
 
 
@@ -21,7 +21,7 @@
 
 (secret
  0 13
- (get-dialog "risky-castle" "secret"))
+ (lc-dialog-get "risky-castle" "secret"))
 
 
 
@@ -31,7 +31,7 @@
       (lambda
         (if (not trap)
             (let ((val (+ 600 (choice 300))))
-              (load-dialog "risky-castle" "award" val)
+              (lc-dialog-load-fmt "risky-castle" "award" val)
               (coins-add val)
               (adventure-log-add 29 (list val))
               (exit))
@@ -48,17 +48,17 @@
             (opponent-mode 'hostile)
             (flag-show (opponent) 0)
             (adventure-log-add 30 '())
-            (load-dialog "risky-castle" "trap"))))))
+            (lc-dialog-load "risky-castle" "trap"))))))
 
 
 (setq on-converge
       (lambda
-        (load-dialog "risky-castle" "offer")
+        (lc-dialog-load "risky-castle" "offer")
         (setq on-converge '())
         (dialog-await-y/n)))
 
 
 (setq on-dialog-declined
       (lambda
-        (load-dialog "risky-castle" "decline")
+        (lc-dialog-load "risky-castle" "decline")
         (exit)))

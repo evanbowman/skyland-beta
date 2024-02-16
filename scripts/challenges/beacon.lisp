@@ -6,15 +6,15 @@
 
 (setq on-fadein
       (lambda
-        (load-dialog "challenges" "hint-ch-beacon")))
+        (lc-dialog-load "challenges" "hint-ch-beacon")))
 
 
 (defn challenge-hint [0]
-  (load-dialog "challenges" "are-you-sure")
+  (lc-dialog-load "challenges" "are-you-sure")
   (dialog-await-y/n)
 
   (defn on-dialog-accepted [0]
-    (load-dialog "challenges" "intro-ch-beacon"))
+    (lc-dialog-load "challenges" "intro-ch-beacon"))
 
   (setq on-dialog-declined (lambda '())))
 

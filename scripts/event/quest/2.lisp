@@ -1,5 +1,5 @@
 
-(load-dialog "lemon-quest" "intro")
+(lc-dialog-load "lemon-quest" "intro")
 
 
 (opponent-init 8 'neutral)
@@ -37,13 +37,13 @@
 
 (secret
  4 11
- (get-dialog "lemon-quest" "secret"))
+ (lc-dialog-get "lemon-quest" "secret"))
 
 (defn on-converge [0]
   (let ((m (eval-file "/scripts/event/quest/make_quest_marker.lisp")))
     (if m
         (progn
-          (load-dialog "lemon-quest" "offer")
+          (lc-dialog-load "lemon-quest" "offer")
 
           (defn on-dialog-closed [0]
             (map
@@ -68,8 +68,8 @@
 
             (adventure-log-add 18 (list (rcnt (player) 'lemon-tree)))
 
-            (load-dialog "lemon-quest" "instructions")
+            (lc-dialog-load "lemon-quest" "instructions")
             (setq on-dialog-closed exit)))
       (progn
-        (load-dialog "lemon-quest" "skip")
+        (lc-dialog-load "lemon-quest" "skip")
         (setq on-dialog-closed exit)))))

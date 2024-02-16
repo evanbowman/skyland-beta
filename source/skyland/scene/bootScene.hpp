@@ -336,7 +336,7 @@ public:
                     path.push_back(c);
                 }
                 PLATFORM.fill_overlay(0);
-                systemstring_bind_file(path.c_str());
+                systemstring_bind_language(path.c_str());
             }
             return make_scene<IntroCreditsScene>();
         }

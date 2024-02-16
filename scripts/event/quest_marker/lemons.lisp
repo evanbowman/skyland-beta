@@ -1,6 +1,6 @@
 
 
-(load-dialog "lemon-quest" "dest-intro")
+(lc-dialog-load "lemon-quest" "dest-intro")
 
 
 
@@ -39,11 +39,11 @@
                                         (rooms (player)))))))))
           (if (equal c 0)
               (progn
-                (load-dialog "lemon-quest" "dest-failed")
+                (lc-dialog-load "lemon-quest" "dest-failed")
                 (setq on-dialog-closed exit))
             (progn
 
-              (load-dialog "lemon-quest" "dest-reward" c)
+              (lc-dialog-load-fmt "lemon-quest" "dest-reward" c)
 
               (adventure-log-add 23 (list c (rcnt (player) 'lemon-tree)))
 

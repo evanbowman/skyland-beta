@@ -12,16 +12,16 @@
 
 
 (defn challenge-hint [0]
-  (load-dialog "challenges" "no-hints"))
+  (lc-dialog-load "challenges" "no-hints"))
 
 
 (setq on-fadein
       (lambda
-        (load-dialog "challenges" "intro-raid-1")
+        (lc-dialog-load "challenges" "intro-raid-1")
 
         (setq on-dialog-closed
               (lambda
-                (load-dialog "challenges" "intro-raid-2")
+                (lc-dialog-load "challenges" "intro-raid-2")
                 (setq on-dialog-closed nil)))))
 
 

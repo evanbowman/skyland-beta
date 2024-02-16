@@ -1191,6 +1191,9 @@ ScenePtr<Scene> WorldMapScene::update(Time delta)
         PLATFORM.load_tile1_texture("savegame_flattened");
         __draw_image(1, 0, 4, 30, 13, Layer::map_1);
         heading_.emplace(SYSTR(wg_saved)->c_str(), OverlayCoord{1, 1});
+        for (int i = 1 + heading_->len(); i < 30; ++i) {
+            PLATFORM.set_tile(Layer::overlay, i, 1, 112);
+        }
         PLATFORM.speaker().play_sound("button_wooden", 3);
         PLATFORM.speaker().stop_music();
         break;

@@ -1,5 +1,5 @@
 
-(load-dialog "crew-gamble2" "intro")
+(lc-dialog-load "crew-gamble2" "intro")
 
 
 (opponent-init 8 'neutral)
@@ -41,7 +41,7 @@
 
 
 (defn on-converge [0]
-  (load-dialog "crew-gamble2" "offer")
+  (lc-dialog-load "crew-gamble2" "offer")
   (dialog-await-y/n)
   (setq on-converge nil))
 
@@ -74,16 +74,16 @@
              (if (equal (car $0) 'hull)
                  (room-mut (opponent) (get $0 1) (get $0 2) 'mirror-hull)))
            (rooms (opponent)))
-      (load-dialog "crew-gamble2" "trap")
+      (lc-dialog-load "crew-gamble2" "trap")
       (defn on-dialog-closed [0]
-        (load-dialog "crew-gamble2" "goblin-taunt")
+        (lc-dialog-load "crew-gamble2" "goblin-taunt")
         (setq on-dialog-closed nil))
       (opponent-mode 'hostile))
      (true
       (move 'neutral)
       (if (chrs (opponent))
-          (load-dialog "crew-gamble2" "join")
-        (load-dialog "crew-gamble2" "join2"))
+          (lc-dialog-load "crew-gamble2" "join")
+        (lc-dialog-load "crew-gamble2" "join2"))
       (defn on-dialog-closed [0]
         (dialog "...")
         (setq on-dialog-closed exit))))))

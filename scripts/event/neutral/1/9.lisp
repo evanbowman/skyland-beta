@@ -1,5 +1,5 @@
 
-(load-dialog "drone-carrier" "intro")
+(lc-dialog-load "drone-carrier" "intro")
 
 
 (opponent-init 7 'neutral)
@@ -40,12 +40,12 @@
 
 (defn on-converge [0]
   ;; want drones?
-  (load-dialog "drone-carrier" "question1")
+  (lc-dialog-load "drone-carrier" "question1")
   (dialog-await-y/n)
 
   (defn on-dialog-accepted [0]
     ;; less than 2?
-    (load-dialog "drone-carrier" "question2")
+    (lc-dialog-load "drone-carrier" "question2")
     (dialog-await-y/n)
 
     (adventure-log-add 39 '())
@@ -55,11 +55,11 @@
       (alloc-space 'drone-bay)
 
       (sel-input 'drone-bay
-                 (get-dialog "drone-carrier" "pick")
+                 (lc-dialog-get "drone-carrier" "pick")
                  (lambda
                    (sound "build0")
                    (room-new (player) `(drone-bay ,$1 ,$2))
-                   (load-dialog "drone-carrier" "success")
+                   (lc-dialog-load "drone-carrier" "success")
                    (exit))))
 
     (defn on-dialog-declined [0]
@@ -68,17 +68,17 @@
       (alloc-space 'drone-bay)
 
       (sel-input 'drone-bay
-                 (get-dialog "drone-carrier" "pick2")
+                 (lc-dialog-get "drone-carrier" "pick2")
                  (lambda
                    (sound "build0")
                    (room-new (player) `(drone-bay ,$1 ,$2))
 
                    (sel-input 'drone-bay
-                              (get-dialog "drone-carrier" "pick3")
+                              (lc-dialog-get "drone-carrier" "pick3")
                               (lambda
                                 (sound "build0")
                                 (room-new (player) `(drone-bay ,$1 ,$2))
-                                (load-dialog "drone-carrier" "success")
+                                (lc-dialog-load "drone-carrier" "success")
                                 (exit)))))))
 
   (setq on-dialog-declined exit))

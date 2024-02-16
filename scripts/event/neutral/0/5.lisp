@@ -1,5 +1,5 @@
 
-(load-dialog "orphan" "intro")
+(lc-dialog-load "orphan" "intro")
 
 (opponent-init 8 'neutral)
 
@@ -31,11 +31,11 @@
 
 (setq on-converge
       (lambda
-        (load-dialog "orphan" "greeting")
+        (lc-dialog-load "orphan" "greeting")
 
         (setq on-dialog-closed
               (lambda
-                (load-dialog "orphan" "offer")
+                (lc-dialog-load "orphan" "offer")
                 (dialog-await-y/n)
                 (setq on-dialog-closed '())))
 
@@ -47,32 +47,32 @@
         (let ((temp (chr-slots (player)))
               (end (lambda
                      ((eval-file "/scripts/util/pickup_cart.lisp") 2
-                      (get-dialog "orphan" "cart")))))
+                      (lc-dialog-get "orphan" "cart")))))
           (if temp
               (progn
                 (setq temp (get temp (choice (length temp))))
                 (chr-new (player) (car temp) (cdr temp) 'neutral nil)
                 (chr-del (opponent) 1 12)
                 (adventure-log-add 15 '())
-                (load-dialog "orphan" "join")
+                (lc-dialog-load "orphan" "join")
                 (end))
             (progn
-              (load-dialog "orphan" "no-room")
+              (lc-dialog-load "orphan" "no-room")
               (defn on-dialog-closed [0]
-                (load-dialog "orphan" "beg")
+                (lc-dialog-load "orphan" "beg")
                 (defn on-dialog-closed [0]
                   (alloc-space 'cargo-bay)
                   (sel-input 'cargo-bay
-                             (get-dialog "orphan" "build")
+                             (lc-dialog-get "orphan" "build")
                              (lambda
                                (sound "build0")
                                (room-new (player) `(cargo-bay ,$1 ,$2))
                                (chr-del (opponent) 1 12)
                                (chr-new (player) $1 (+ 1 $2) 'neutral nil)
-                               (load-dialog "orphan" "ungrateful")
+                               (lc-dialog-load "orphan" "ungrateful")
                                (defn on-dialog-closed [0]
                                  (adventure-log-add 15 '())
-                                 (load-dialog "orphan" "result")
+                                 (lc-dialog-load "orphan" "result")
                                  (end)))))))))
 
         (exit)))

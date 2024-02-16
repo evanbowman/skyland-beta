@@ -14,7 +14,7 @@
 
 
 (defn sb-help [0]
-  (load-dialog "sandbox" "help"))
+  (lc-dialog-load "sandbox" "help"))
 
 
 (if (not (save-bit-load 3))
@@ -22,8 +22,8 @@
           (lambda
             (setq on-fadein nil)
             (save-bit-store 3 1)
-            (load-dialog "sandbox" "welcome")
-            (dialog-await-binary-q (get-dialog "sandbox" "opt1") (get-dialog "sandbox" "opt2"))
+            (lc-dialog-load "sandbox" "welcome")
+            (dialog-await-binary-q (lc-dialog-get "sandbox" "opt1") (lc-dialog-get "sandbox" "opt2"))
             (setq on-dialog-accepted sb-help)
             (setq on-dialog-declined nil))))
 

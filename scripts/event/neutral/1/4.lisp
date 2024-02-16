@@ -3,7 +3,7 @@
 ;;;
 
 
-(load-dialog "overgrown-isle" "intro")
+(lc-dialog-load "overgrown-isle" "intro")
 
 
 (opponent-init 7 'neutral)
@@ -45,14 +45,14 @@
 
 
 (defn on-converge [0]
-  (load-dialog "overgrown-isle" "offer")
+  (lc-dialog-load "overgrown-isle" "offer")
   (dialog-await-y/n))
 
 
 (defn on-dialog-accepted [0]
   (let ((end (lambda
                ((eval-file "/scripts/util/pickup_cart.lisp") 6
-                (get-dialog "overgrown-isle" "cart")))))
+                (lc-dialog-get "overgrown-isle" "cart")))))
     (if (choice 3)
         (progn
           (let ((locs (construction-sites (player) '(1 . 1))))
@@ -60,10 +60,10 @@
               (let ((c (get locs (choice (length locs)))))
                 (room-new (player) (list 'mycelium (car c) (cdr c))))
               (adventure-log-add 34 '())
-              (load-dialog "overgrown-isle" "infected")))
+              (lc-dialog-load "overgrown-isle" "infected")))
           (end))
       (let ((temp (+ 1000 (choice 1000))))
-        (load-dialog "overgrown-isle" "reward" temp)
+        (lc-dialog-load-fmt "overgrown-isle" "reward" temp)
         (coins-add temp)
         (adventure-log-add 35 (list temp))
         (end)))))

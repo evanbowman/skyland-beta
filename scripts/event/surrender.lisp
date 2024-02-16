@@ -12,4 +12,4 @@
     (eval-file (string p "crew.lisp")))
    (true
     (if (equal 0 (choice 3))
-        (load-dialog "surrender" "never")))))
+        (lc-dialog-load "surrender" "never")))))

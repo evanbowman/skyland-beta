@@ -1,13 +1,13 @@
 
-(load-dialog "surrender" "plead")
+(lc-dialog-load "surrender" "plead")
 
 (defn on-dialog-closed [0]
     (setq on-dialog-closed '())
   (let ((c (+ (/ (coins-victory) 2) (/ (coins-victory) 6))))
-    (load-dialog "surrender" "offer")
+    (lc-dialog-load "surrender" "offer")
 
     (dialog-opts-reset)
-    (dialog-opts-push (format (get-dialog "surrender" "opt-crew") c)
+    (dialog-opts-push (format (lc-dialog-get "surrender" "opt-crew") c)
                       (lambda
                           (coins-add c)
                         (let ((g (chrs (opponent)))
@@ -31,28 +31,28 @@
                                          'neutral
                                          '((race . 1)))
                                 (adventure-log-add 51 '())
-                                (load-dialog "surrender" "add-crew")
+                                (lc-dialog-load "surrender" "add-crew")
                                 (run-util-script "pickup_cart.lisp"
                                                  8
-                                                 (get-dialog "surrender" "cart")))))
+                                                 (lc-dialog-get "surrender" "cart")))))
                         (exit 2)))
 
     (let ((cnt 0)
-          (tot (/ (length (rooms (opponent))) 6)))
+          (tot (/ (length (rooms (opponent))) 5)))
       (setq cnt tot)
       (when cnt
         (dialog-opts-push
-         (format (get-dialog "surrender" "opt-salvage") cnt)
+         (format (lc-dialog-get "surrender" "opt-salvage") cnt)
          (lambda
            (let ((rtry (this)))
              (sel-input-opponent
               nil
-              (format (get-dialog "surrender" "take") (- tot cnt) tot)
+              (format (lc-dialog-get "surrender" "take") (- tot cnt) tot)
               (lambda
                 (let ((took (car (room-load (opponent) $1 $2))))
                   (if (room-is-critical (opponent) $1 $2)
                       (progn
-                        (load-dialog "surrender" "salvage-failed")
+                        (lc-dialog-load "surrender" "salvage-failed")
                         (if (equal 1 (length (rooms (opponent))))
                             (exit 2)
                             (setq on-dialog-closed rtry)))
@@ -62,26 +62,26 @@
                         (alloc-space took)
                         (sel-input
                          took
-                         (format (get-dialog "surrender" "place") (- tot cnt) tot)
+                         (format (lc-dialog-get "surrender" "place") (- tot cnt) tot)
                          (lambda
                            (room-new (player) (list took $1 $2))
                            (sound "build0")
                            (setq cnt (- cnt 1))
                            (if (equal cnt 0)
                                (progn
-                                 (dialog (format (get-dialog "surrender" "done") tot))
+                                 (dialog (format (lc-dialog-get "surrender" "done") tot))
                                  (adventure-log-add 62 '())
                                  (setq on-dialog-closed (curry exit 2)))
                                (rtry))))))))))))))
 
 
     (let ((rtry (this)))
-      (dialog-opts-push (get-dialog "surrender" "opt-help")
+      (dialog-opts-push (lc-dialog-get "surrender" "opt-help")
                         (lambda
-                          (load-dialog "surrender" "help" (coins-victory))
+                          (lc-dialog-load-fmt "surrender" "help" (coins-victory))
                           (setq on-dialog-closed rtry))))
 
 
-    (dialog-opts-push (get-dialog "surrender" "opt-refuse") (lambda nil))))
+    (dialog-opts-push (lc-dialog-get "surrender" "opt-refuse") (lambda nil))))
 
 (gc)

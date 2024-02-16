@@ -8,7 +8,7 @@
  (if (not mercenary-event)
      "<b:/scripts/misc/img/marauder.img.bin> "
    "")
- (get-dialog "mercenary" "intro"))
+ (lc-dialog-get "mercenary" "intro"))
 
 
 (opponent-init 5 'neutral)
@@ -74,7 +74,7 @@
 
 (setq on-converge
       (lambda
-        (load-dialog "mercenary" "offer" (* 400 (zone)))
+        (lc-dialog-load-fmt "mercenary" "offer" (* 400 (zone)))
         (dialog-await-y/n)
         (setq on-converge nil)))
 
@@ -83,7 +83,7 @@
   (let ((dest (chr-slots (player))))
     (if (> (* 400 (zone)) (coins))
         (progn
-          (load-dialog "mercenary" "low-funds")
+          (lc-dialog-load "mercenary" "low-funds")
           (exit))
       (if dest
           (progn
@@ -91,21 +91,21 @@
             (setq dest (sample dest))
             (chr-new (player) (car dest) (cdr dest) 'neutral nil)
             (chr-del (opponent) 0 14)
-            (load-dialog "mercenary" "approve")
+            (lc-dialog-load "mercenary" "approve")
             (defn on-dialog-closed [0]
               (setq on-dialog-closed nil)
-              (load-dialog "mercenary" "join")
+              (lc-dialog-load "mercenary" "join")
               (exit))
             (adventure-log-add 27 (list (* 400 (zone)))))
         (progn
-          (load-dialog "mercenary" "no-room")
+          (lc-dialog-load "mercenary" "no-room")
           (exit))))))
 
 
 
 (setq on-dialog-declined
       (lambda
-        (load-dialog "mercenary" "decline")
+        (lc-dialog-load "mercenary" "decline")
         (adventure-log-add 28 '())
         (exit)))
 

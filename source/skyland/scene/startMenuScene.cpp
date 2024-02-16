@@ -296,7 +296,7 @@ AGAIN:
                 if (qr) {
                     PLATFORM.screen().pixelate(0);
                     PLATFORM.fill_overlay(0);
-                    auto show_qr = [&code = *qr]() -> ScenePtr<Scene> {
+                    auto show_qr = [code = *qr]() -> ScenePtr<Scene> {
                         return make_scene<QRViewerScene>(
                             code,
                             []() {
@@ -308,18 +308,9 @@ AGAIN:
                             },
                             ColorConstant::rich_black);
                     };
-                    if (qr->size() > 76) {
-                        PLATFORM.screen().schedule_fade(0.f);
-                        auto dialog =
-                            allocate_dynamic<DialogString>("dialog-buffer");
-                        *dialog = SYS_CSTR(qr_code_size_warning);
-                        auto next =
-                            make_scene<BoxedDialogScene>(std::move(dialog));
-                        next->set_next_scene(show_qr);
-                        return next;
-                    } else {
-                        return show_qr();
-                    }
+
+                    return show_qr();
+
                 } else {
                     PLATFORM.screen().schedule_fade(0.f);
                     PLATFORM.screen().pixelate(0);

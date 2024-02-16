@@ -109,7 +109,7 @@ void GlossaryViewerModule::load_page(int page)
     temp += stringify(mt[page]->consumes_power());
     temp += "` ";
     temp += stringify(mt[page]->full_health());
-    temp += "hp";
+    temp += SYS_CSTR(hp_suffix);
 
     item_details_->assign(temp.c_str());
 

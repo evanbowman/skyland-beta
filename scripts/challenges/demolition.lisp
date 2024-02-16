@@ -5,20 +5,20 @@
 
 
 (defn on-fadein [0]
-  (load-dialog "challenges" "intro-demol-1")
+  (lc-dialog-load "challenges" "intro-demol-1")
   (defn on-dialog-closed [0]
-    (load-dialog "challenges" "intro-demol-2")
+    (lc-dialog-load "challenges" "intro-demol-2")
     (defn on-dialog-closed [0]
-      (load-dialog "challenges" "intro-demol-3")
+      (lc-dialog-load "challenges" "intro-demol-3")
       (setq on-dialog-closed nil))))
 
 
 (defn challenge-hint [0]
-  (load-dialog "challenges" "are-you-sure")
+  (lc-dialog-load "challenges" "are-you-sure")
   (dialog-await-y/n)
 
   (defn on-dialog-accepted [0]
-    (load-dialog "challenges" "hint-ch-demol"))
+    (lc-dialog-load "challenges" "hint-ch-demol"))
 
   (setq on-dialog-declined (lambda '())))
 
@@ -47,7 +47,7 @@
               (setq hint (cons "(" hint))
               (setq hint (apply string hint))
 
-              (dialog (get-dialog "challenges" "demol-fail")
+              (dialog (lc-dialog-get "challenges" "demol-fail")
                       hint)
               (setq skip 1)
               (exit 3)))

@@ -1,5 +1,5 @@
 
-(load-dialog "banana-quest" "dest-intro")
+(lc-dialog-load "banana-quest" "dest-intro")
 
 
 (opponent-init 11 'hostile)
@@ -29,13 +29,13 @@
 
 (setq on-converge
       (lambda
-        (load-dialog "banana-quest" "dest-demand")
+        (lc-dialog-load "banana-quest" "dest-demand")
 
         (setq on-converge nil)
 
         (setq on-dialog-closed
               (lambda
-                (load-dialog "banana-quest" "dest-goblins")
+                (lc-dialog-load "banana-quest" "dest-goblins")
                 (setq on-dialog-closed
                       (lambda
                         (island-configure
@@ -64,7 +64,7 @@
 
                         (adventure-log-add 24 '())
 
-                        (load-dialog "banana-quest" "dest-success")
+                        (lc-dialog-load "banana-quest" "dest-success")
                         (setq on-dialog-closed
                               (lambda
                                 (achieve 11)

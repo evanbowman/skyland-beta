@@ -1,5 +1,5 @@
 
-(load-dialog "mining-quest" "dest-intro")
+(lc-dialog-load "mining-quest" "dest-intro")
 
 
 (opponent-init 12 'neutral)
@@ -48,11 +48,11 @@
                                     (rooms (player)))))))))
       (if (equal c 0)
           (progn
-            (load-dialog "mining-quest" "dest-failed")
+            (lc-dialog-load "mining-quest" "dest-failed")
             (setq on-dialog-closed exit))
         (progn
 
-          (load-dialog "mining-quest" "dest-success" c)
+          (lc-dialog-load-fmt "mining-quest" "dest-success" c)
 
           (coins-add c)
 

@@ -3,7 +3,7 @@
 ;;;
 
 
-(load-dialog "missile-platform" "intro")
+(lc-dialog-load "missile-platform" "intro")
 
 
 (opponent-init 5 'neutral)
@@ -40,7 +40,7 @@
 
 
 (defn on-converge [0]
-  (load-dialog "missile-platform" "demand")
+  (lc-dialog-load "missile-platform" "demand")
   (dialog-opts-reset)
   (dialog-await-y/n)
   (setq on-converge nil))
@@ -55,15 +55,15 @@
           (if (< (coins) 600)
               (progn
                 (adventure-log-add 59 '())
-                (scr (get-dialog "missile-platform" "low-funds")))
+                (scr (lc-dialog-get "missile-platform" "low-funds")))
             (progn
               (adventure-log-add 60 (list 600))
               (coins-add -600)
-              (load-dialog "missile-platform" "paid-toll")
+              (lc-dialog-load "missile-platform" "paid-toll")
               (exit)))))
 
 
   (setq on-dialog-declined
         (lambda
           (adventure-log-add 61 '())
-          (scr (get-dialog "missile-platform" "refused-toll")))))
+          (scr (lc-dialog-get "missile-platform" "refused-toll")))))

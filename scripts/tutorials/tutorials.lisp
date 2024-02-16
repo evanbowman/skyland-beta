@@ -9,7 +9,7 @@
 (gc)
 
 (map cons
-     (split (get-dialog "tutorials" "names") ",")
+     (split (lc-dialog-get "tutorials" "names") ",")
      '("tutorials/overview.lisp"
        "tutorials/weapon_groups.lisp"
        "tutorials/salvage.lisp"

@@ -24,7 +24,7 @@
 (autopilot
  '((818 Right)
    (1000 nil)
-   (100 (get-dialog "tutorials" "cons1"))
+   (100 (lc-dialog-get "tutorials" "cons1"))
    (100 R)
    (434 A)
    (2354 Down)
@@ -43,7 +43,7 @@
    (300 B)
    (200 B)
    (100 nil)
-   (100 (get-dialog "tutorials" "cons2"))
+   (100 (lc-dialog-get "tutorials" "cons2"))
    (1000 R)
    (300 A)
    (400 Right)
@@ -58,4 +58,4 @@
    (383 Left)
    (3071 B)
    (1286 B)
-   (100 (get-dialog "tutorials" "cons3"))))
+   (100 (lc-dialog-get "tutorials" "cons3"))))

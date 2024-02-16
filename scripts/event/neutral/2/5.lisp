@@ -3,7 +3,7 @@
 ;;;
 
 
-(load-dialog "hull-shop" "intro")
+(lc-dialog-load "hull-shop" "intro")
 
 
 

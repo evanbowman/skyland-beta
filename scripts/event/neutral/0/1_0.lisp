@@ -3,7 +3,7 @@
 ;;;
 
 
-(load-dialog "redbeard" "intro")
+(lc-dialog-load "redbeard" "intro")
 
 
 (opponent-init 5 'neutral)
@@ -27,11 +27,11 @@
 
 
 (defn on-converge [0]
-  (load-dialog "redbeard" "demand")
+  (lc-dialog-load "redbeard" "demand")
   (dialog-opts-reset)
-  (dialog-opts-push (get-dialog "redbeard" "opt1") on-dialog-accepted)
+  (dialog-opts-push (lc-dialog-get "redbeard" "opt1") on-dialog-accepted)
 
-  (dialog-opts-push (get-dialog "redbeard" "opt2")
+  (dialog-opts-push (lc-dialog-get "redbeard" "opt2")
                     (lambda
 
                       (defn cb0 [0]
@@ -44,9 +44,9 @@
                         (emit (opponent) 0 14 (terrain (player)) 0))
 
                       (defn cb3 [0]
-                        (load-dialog "redbeard" "demand2")
-                        (dialog-await-binary-q (get-dialog "redbeard" "opt2_1")
-                                               (get-dialog "redbeard" "opt2_2"))
+                        (lc-dialog-load "redbeard" "demand2")
+                        (dialog-await-binary-q (lc-dialog-get "redbeard" "opt2_1")
+                                               (lc-dialog-get "redbeard" "opt2_2"))
                         (unbind 'cb0 'cb1 'cb2 'cb3))
 
                       (on-timeout 400 'cb0)
@@ -54,7 +54,7 @@
                       (on-timeout 800 'cb2)
                       (on-timeout 2000 'cb3)))
 
-  (dialog-opts-push (get-dialog "redbeard" "opt3") on-dialog-declined)
+  (dialog-opts-push (lc-dialog-get "redbeard" "opt3") on-dialog-declined)
   (setq on-converge nil))
 
 
@@ -62,9 +62,9 @@
        (lambda
          (dialog $0)
          (defn on-dialog-closed [0]
-           (load-dialog "redbeard" "goblin_resp")
+           (lc-dialog-load "redbeard" "goblin_resp")
            (defn on-dialog-closed [0]
-             (load-dialog "redbeard" "hangup")
+             (lc-dialog-load "redbeard" "hangup")
              (setq on-dialog-closed nil)))
          (opponent-mode 'hostile))))
   (setq on-dialog-accepted
@@ -72,15 +72,15 @@
           (if (< (coins) 600)
               (progn
                 (adventure-log-add 12 '())
-                (scr (get-dialog "redbeard" "angry")))
+                (scr (lc-dialog-get "redbeard" "angry")))
             (progn
               (adventure-log-add 13 (list 600))
               (coins-add -600)
-              (load-dialog "redbeard" "smug")
+              (lc-dialog-load "redbeard" "smug")
               (exit)))))
 
 
   (setq on-dialog-declined
         (lambda
           (adventure-log-add 14 '())
-          (scr (get-dialog "redbeard" "angry2")))))
+          (scr (lc-dialog-get "redbeard" "angry2")))))

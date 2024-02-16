@@ -200,12 +200,12 @@ BINDING_TABLE({
      {1,
       [](int argc) {
           L_EXPECT_OP(0, string);
-          systemstring_bind_file(L_LOAD_STRING(0));
+          systemstring_bind_language(L_LOAD_STRING(0));
           return L_NIL;
       }}},
     {"lang",
      {0,
-      [](int argc) { return lisp::make_string(systemstring_bound_file()); }}},
+      [](int argc) { return lisp::make_string(systemstring_bound_lang()); }}},
     {"log",
      {1,
       [](int argc) {
@@ -655,6 +655,48 @@ BINDING_TABLE({
      {0,
       [](int argc) {
           APP.key_callback_processor().clear();
+          return L_NIL;
+      }}},
+    {"lc-dialog-get",
+     {2,
+      [](int argc) {
+          L_EXPECT_OP(0, string);
+          L_EXPECT_OP(1, string);
+
+          if (auto f = systemstring_dialog_file()) {
+              Conf c;
+              auto res = c.get(f, L_LOAD_STRING(1), L_LOAD_STRING(0));
+              if (auto val = std::get_if<Conf::String>(&res)) {
+                  return lisp::make_string((*val)->c_str());
+              }
+          }
+
+          return L_NIL;
+      }}},
+    {"lc-dialog-load",
+     {2,
+      [](int argc) {
+          L_EXPECT_OP(0, string);
+          L_EXPECT_OP(1, string);
+
+          if (auto f = systemstring_dialog_file()) {
+              Conf c;
+              auto res = c.get(f, L_LOAD_STRING(1), L_LOAD_STRING(0));
+              if (auto val = std::get_if<Conf::String>(&res)) {
+                  if (not APP.dialog_buffer()) {
+                      APP.dialog_buffer().emplace(
+                          allocate_dynamic<DialogString>("dialog-buffer"));
+                  }
+                  **APP.dialog_buffer() += (*val)->c_str();
+              }
+          }
+
+          return L_NIL;
+      }}},
+    {"force-save",
+     {0,
+      [](int argc) {
+          save::store(APP.persistent_data());
           return L_NIL;
       }}},
     {"has-dialog?",

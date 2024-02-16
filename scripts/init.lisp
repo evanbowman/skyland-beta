@@ -71,8 +71,8 @@
 ;; needed, but the dialog-opts-reset and dialog-opts-push functions may be
 ;; called manually for more fine-grained control over dialog settings.
 (defn/c dialog-await-y/n [0]
-  (dialog-await-binary-q (get-dialog "global" "yes")
-                         (get-dialog "global" "no")))
+  (dialog-await-binary-q (lc-dialog-get "global" "yes")
+                         (lc-dialog-get "global" "no")))
 
 (defn/c dialog-await-binary-q [2]
   (dialog-opts-reset)
@@ -100,14 +100,10 @@
     (apply (eval-file (string "/scripts/util/" file))
            varg)))
 
-;; Higher level dialog API (for future localization purposes)
-(defn/c get-dialog [2] ; (ini-sector ini-key)
-  (read-ini (string "/strings/dialog/" (lang) ".ini")
-            $0
-            $1))
-
-(defn/c load-dialog [2] ; (ini-sector ini-key substitution-args...)
-  (let ((str (get-dialog $0 $1))
+;; An alternate version of builtin function lc-dialog-load, but uses the loaded
+;; dialog text as a format string and substitutes arguments.
+(defn/c lc-dialog-load-fmt [2] ; (ini-sector ini-key substitution-args...)
+  (let ((str (lc-dialog-get $0 $1))
         (va $V))
     (if (> (length va) 2)
         (setq str (apply format (cons str (cddr va)))))

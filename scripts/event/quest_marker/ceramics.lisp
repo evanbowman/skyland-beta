@@ -1,5 +1,5 @@
 
-(load-dialog "ceramics-quest" "dest-intro")
+(lc-dialog-load "ceramics-quest" "dest-intro")
 
 
 
@@ -41,7 +41,7 @@
 
                   (dialog
                    (format
-                    (get-dialog "ceramics-quest" "dest-reward")
+                    (lc-dialog-get "ceramics-quest" "dest-reward")
                     sale))
 
                   (coins-add sale)
@@ -51,4 +51,4 @@
                   (setq on-dialog-closed exit))
               (progn
                 (setq on-dialog-closed exit)
-                (load-dialog "ceramics-quest" "dest-failed")))))))
+                (lc-dialog-load "ceramics-quest" "dest-failed")))))))

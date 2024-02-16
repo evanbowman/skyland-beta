@@ -44,7 +44,7 @@ DataCart::LabelString DataCart::get_label_string(const char* field) const
     auto f = config();
     Conf c;
     auto result =
-        c.get(f, format("label_%", systemstring_bound_file()).c_str(), field);
+        c.get(f, format("label_%", systemstring_bound_lang()).c_str(), field);
     if (auto val = std::get_if<Conf::String>(&result)) {
         return (*val)->c_str();
     } else {

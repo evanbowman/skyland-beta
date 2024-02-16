@@ -1,5 +1,5 @@
 
-(load-dialog "sylph-quest" "dest-intro")
+(lc-dialog-load "sylph-quest" "dest-intro")
 
 
 (opponent-init 9 'neutral)
@@ -49,7 +49,7 @@
    (bronze-hull 8 14)
    (forcefield* 8 9)))
 
-(secret 4 14 (get-dialog "sylph-quest" "secret"))
+(secret 4 14 (lc-dialog-get "sylph-quest" "secret"))
 
 
 (let ((id (lookup 6 qvar))
@@ -62,13 +62,13 @@
 
   (if boy
       (defn on-converge [0]
-        (load-dialog "sylph-quest" "sylph-greet")
+        (lc-dialog-load "sylph-quest" "sylph-greet")
 
         (defn on-dialog-closed [0]
-          (load-dialog "sylph-quest" "boy-reply")
+          (lc-dialog-load "sylph-quest" "boy-reply")
 
           (defn on-dialog-closed [0]
-            (load-dialog "sylph-quest" "sylph-greet2")
+            (lc-dialog-load "sylph-quest" "sylph-greet2")
 
             (defn on-dialog-closed [0]
               (map (lambda
@@ -77,9 +77,9 @@
                    (chrs (player)))
               (coins-add 3000)
               (adventure-log-add 55 nil)
-              (load-dialog "sylph-quest" "boy-depart")
+              (lc-dialog-load "sylph-quest" "boy-depart")
               (defn on-dialog-closed [0]
-                (load-dialog "sylph-quest" "thanks")
+                (lc-dialog-load "sylph-quest" "thanks")
                 (setq on-dialog-closed (lambda
                                          (on-timeout 500 'fut)
                                          (setq on-dialog-closed nil)))
@@ -93,10 +93,10 @@
                   (on-timeout 1000 'fut)
 
                   (defn fut[0]
-                    (load-dialog "sylph-quest" "award")
+                    (lc-dialog-load "sylph-quest" "award")
                     (unbind 'fut)
                     (setq on-dialog-closed exit))))))))
 
     (defn on-converge [0]
-      (load-dialog "sylph-quest" "failed")
+      (lc-dialog-load "sylph-quest" "failed")
       (exit))))

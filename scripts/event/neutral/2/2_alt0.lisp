@@ -4,7 +4,7 @@
 
 
 
-(load-dialog "warship" "intro")
+(lc-dialog-load "warship" "intro")
 
 
 
@@ -19,7 +19,7 @@
 (let ((val (+ 1000 (choice 800))))
   (setq on-converge
         (lambda
-          (load-dialog "warship" "demand" val)
+          (lc-dialog-load-fmt "warship" "demand" val)
           (dialog-await-y/n)
           (setq on-converge nil)))
 
@@ -30,10 +30,10 @@
               (progn
                 (opponent-mode 'hostile)
                 (adventure-log-add 42 '())
-                (load-dialog "warship" "low-funds"))
+                (lc-dialog-load "warship" "low-funds"))
             (progn
               (coins-add (- val))
-              (load-dialog "warship" "bribe-accepted")
+              (lc-dialog-load "warship" "bribe-accepted")
               (adventure-log-add 43 '())
               (exit))))))
 
@@ -42,4 +42,4 @@
       (lambda
         (opponent-mode 'hostile)
         (adventure-log-add 42 '())
-        (load-dialog "warship" "decline")))
+        (lc-dialog-load "warship" "decline")))

@@ -40,7 +40,7 @@
    (3099 B)
    (866 B)
    (100 nil)
-   (100 (get-dialog "tutorials" "adv1"))
+   (100 (lc-dialog-get "tutorials" "adv1"))
    (2334 R)
    (1116 A)
    (700 Left)

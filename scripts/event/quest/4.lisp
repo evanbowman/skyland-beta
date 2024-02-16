@@ -1,5 +1,5 @@
 
-(load-dialog "ceramics-quest" "intro")
+(lc-dialog-load "ceramics-quest" "intro")
 
 
 (opponent-init 13 'neutral)
@@ -63,12 +63,12 @@
     (setq on-converge nil)
     (dialog
      (format
-      (get-dialog "ceramics-quest" "offer")
+      (lc-dialog-get "ceramics-quest" "offer")
       fee
       (* fee 2)))
 
-    (dialog-await-binary-q (get-dialog "ceramics-quest" "opt1")
-                           (get-dialog "ceramics-quest" "opt2"))
+    (dialog-await-binary-q (lc-dialog-get "ceramics-quest" "opt1")
+                           (lc-dialog-get "ceramics-quest" "opt2"))
 
     (defn on-dialog-accepted [0]
       (let ((m (eval-file "/scripts/event/quest/make_quest_marker.lisp"))
@@ -81,17 +81,17 @@
               (push 'qvar (cons qid fee))
               (coins-set (- (coins) fee))
               (cargo-set (player) (car c) (cdr c) "ceramic tiles")
-              (load-dialog "ceramics-quest" "cargo")
+              (lc-dialog-load "ceramics-quest" "cargo")
               (defn on-dialog-closed [0]
-                (load-dialog "ceramics-quest" "exit")
+                (lc-dialog-load "ceramics-quest" "exit")
                 (exit)
                 (setq on-dialog-closed exit)))
           (progn
-            (load-dialog "ceramics-quest" "skip")
+            (lc-dialog-load "ceramics-quest" "skip")
             (setq on-dialog-closed exit)))))
 
 
     (setq on-dialog-declined
           (lambda
-            (load-dialog "ceramics-quest" "decline")
+            (lc-dialog-load "ceramics-quest" "decline")
             (setq on-dialog-closed exit)))))

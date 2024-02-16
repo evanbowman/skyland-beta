@@ -13,13 +13,13 @@
                     (lambda
                       (sound "click_digital_1")
                       (cart-add n)
-                      (dialog (get-dialog "cart" "pickup1")
+                      (dialog (lc-dialog-get "cart" "pickup1")
                               (car (cart-info n))
-                              (format (get-dialog "cart" "pickup2") (+ n 1)))
+                              (format (lc-dialog-get "cart" "pickup2") (+ n 1)))
                       (setq on-dialog-closed
                             (if (save-bit-load 8)
                                 exit
                               (lambda
-                                (load-dialog "cart" "help")
+                                (lc-dialog-load "cart" "help")
                                 (save-bit-store 8 1)
                                 (setq on-dialog-closed exit)))))))))))

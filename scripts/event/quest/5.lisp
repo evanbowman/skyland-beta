@@ -1,5 +1,5 @@
 
-(load-dialog "wanderer-quest" "intro")
+(lc-dialog-load "wanderer-quest" "intro")
 
 
 (opponent-init 14 'neutral)
@@ -65,10 +65,10 @@
 (defn on-converge [0]
   (setq on-converge nil)
 
-  (load-dialog "wanderer-quest" "offer")
+  (lc-dialog-load "wanderer-quest" "offer")
 
-  (dialog-await-binary-q (get-dialog "wanderer-quest" "opt1")
-                         (get-dialog "wanderer-quest" "opt2"))
+  (dialog-await-binary-q (lc-dialog-get "wanderer-quest" "opt1")
+                         (lc-dialog-get "wanderer-quest" "opt2"))
 
   (defn on-dialog-accepted [0]
     (let ((sl (chr-slots (player))))
@@ -92,14 +92,14 @@
                 (push 'qids 5)
                 (adventure-log-add 52 '())
                 (push 'quests (cons "/scripts/event/quest_marker/traveller.lisp" m))
-                (load-dialog "wanderer-quest" "accepted")
+                (lc-dialog-load "wanderer-quest" "accepted")
                 (defn on-dialog-closed [0]
-                  (load-dialog "wanderer-quest" "join")
+                  (lc-dialog-load "wanderer-quest" "join")
                   (setq on-dialog-closed exit)))
             (progn
-              (load-dialog "wanderer-quest" "skip")
+              (lc-dialog-load "wanderer-quest" "skip")
               (defn on-dialog-closed [0]
-                (load-dialog "wanderer-quest" "join")
+                (lc-dialog-load "wanderer-quest" "join")
                 (setq on-dialog-closed exit))))))))
 
   (defn on-dialog-declined [0]

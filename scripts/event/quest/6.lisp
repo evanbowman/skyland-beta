@@ -1,5 +1,5 @@
 
-(load-dialog "sylph-quest" "intro")
+(lc-dialog-load "sylph-quest" "intro")
 
 
 (opponent-init 9 'neutral)
@@ -11,13 +11,13 @@
 
 
 (defn on-converge [0]
-  (load-dialog "sylph-quest" "greet")
+  (lc-dialog-load "sylph-quest" "greet")
 
   (defn on-dialog-closed [0]
-    (load-dialog "sylph-quest" "boy-speek")
+    (lc-dialog-load "sylph-quest" "boy-speek")
 
     (defn on-dialog-closed [0]
-      (load-dialog "sylph-quest" "offer")
+      (lc-dialog-load "sylph-quest" "offer")
 
       (setq on-dialog-closed nil)
 
@@ -46,10 +46,10 @@
                     (push 'qids 6)
                     (push 'quests (cons "/scripts/event/quest_marker/civ.lisp" m))
                     (push 'qvar (cons 6 id))
-                    (load-dialog "sylph-quest" "join1")
+                    (lc-dialog-load "sylph-quest" "join1")
                     (exit))
                 (progn
-                  (load-dialog "sylph-quest" "join2")
+                  (lc-dialog-load "sylph-quest" "join2")
                   (exit)))))))
 
       (setq on-dialog-declined exit))))

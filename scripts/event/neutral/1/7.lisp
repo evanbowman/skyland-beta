@@ -3,7 +3,7 @@
 ;;;
 
 
-(load-dialog "engineer" "intro")
+(lc-dialog-load "engineer" "intro")
 
 
 (opponent-init 7 'neutral)
@@ -40,12 +40,12 @@
     (let ((cost (* (length r) 160)))
       (if (length r)
           (progn
-            (load-dialog "engineer" "offer" cost)
+            (lc-dialog-load-fmt "engineer" "offer" cost)
             (dialog-await-y/n)
             (defn on-dialog-accepted [0]
               (if (< (coins) cost)
                   (progn
-                    (dialog (get-dialog "engineer" "low-funds") (string (coins) " " cost))
+                    (dialog (lc-dialog-get "engineer" "low-funds") (string (coins) " " cost))
                     (exit))
                 (progn
                   (coins-add (* -1 cost))
@@ -55,14 +55,14 @@
                      (room-mut (player) (get $0 1) (get $0 2) 'stacked-hull))
                    r)
                   (adventure-log-add 37 '())
-                  (load-dialog "engineer" "success")
+                  (lc-dialog-load "engineer" "success")
                   (exit)))))
         (progn
-          (load-dialog "engineer" "fail")
+          (lc-dialog-load "engineer" "fail")
           (exit))
         (setq on-converge nil)))))
 
 
 (defn on-dialog-declined [0]
-  (load-dialog "engineer" "decline")
+  (lc-dialog-load "engineer" "decline")
   (exit))

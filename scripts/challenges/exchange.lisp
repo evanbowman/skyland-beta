@@ -5,7 +5,7 @@
 
 
 (defn challenge-hint [0]
-  (load-dialog "challenges" "no-hints"))
+  (lc-dialog-load "challenges" "no-hints"))
 
 
 (defn on-victory [0]
@@ -13,11 +13,11 @@
 
 
 (defn challenge-hint [0]
-  (load-dialog "challenges" "are-you-sure")
+  (lc-dialog-load "challenges" "are-you-sure")
   (dialog-await-y/n)
 
   (defn on-dialog-accepted [0]
-    (load-dialog "challenges" "hint-ch-exchange"))
+    (lc-dialog-load "challenges" "hint-ch-exchange"))
 
   (setq on-dialog-declined (lambda '())))
 

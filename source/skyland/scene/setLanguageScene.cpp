@@ -45,12 +45,13 @@ void LanguageSelectScene::redraw_title()
 {
     title_.emplace(OverlayCoord{1, 1});
 
-    auto l = get_line_from_file(format("/strings/%.idf", (*opts_)[sel_].second.c_str()).c_str(),
-                                (int)SystemString::set_language + 1);
+    auto l = get_line_from_file(
+        format("/strings/%.idf", (*opts_)[sel_].second.c_str()).c_str(),
+        (int)SystemString::set_language + 1);
 
     title_->assign(l->c_str(),
-                   Text::OptColors{
-                       {ColorConstant::silver_white, ColorConstant::steel_blue}});
+                   Text::OptColors{{ColorConstant::silver_white,
+                                    ColorConstant::steel_blue}});
 }
 
 
@@ -118,7 +119,7 @@ ScenePtr<Scene> LanguageSelectScene::update(Time delta)
                key_down<Key::action_1>()) {
         if (opts_->size() > 1) {
             auto path = (*opts_)[sel_].second.c_str();
-            systemstring_bind_file(path);
+            systemstring_bind_language(path);
             flash_filesystem::store_file_data(lang_file, path, strlen(path));
         }
         auto has_clock = PLATFORM.system_clock().initial_time();

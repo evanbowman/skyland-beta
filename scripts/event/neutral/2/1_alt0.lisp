@@ -1,6 +1,6 @@
 
 
-(load-dialog "crew-gamble" "intro")
+(lc-dialog-load "crew-gamble" "intro")
 
 
 (opponent-init 5 'neutral)
@@ -20,7 +20,7 @@
 
 (setq on-converge
       (lambda
-        (load-dialog "crew-gamble" "offer")
+        (lc-dialog-load "crew-gamble" "offer")
 
         (dialog-await-y/n)
         (setq on-converge nil)))
@@ -32,8 +32,8 @@
       (secret
        4 12
        (if bad
-           (get-dialog "crew-gamble" "hint1")
-         (get-dialog "crew-gamble" "hint2"))))
+           (lc-dialog-get "crew-gamble" "hint1")
+         (lc-dialog-get "crew-gamble" "hint2"))))
 
 
   (setq on-dialog-accepted
@@ -48,19 +48,19 @@
                   (if (not bad)
                       (progn
                         (chr-new (player) (car temp) (cdr temp) 'neutral nil)
-                        (load-dialog "crew-gamble" "success")
+                        (lc-dialog-load "crew-gamble" "success")
                         (adventure-log-add 40 '())
                         (exit))
                     (progn
                       (chr-new (player) (car temp) (cdr temp) 'hostile nil)
-                      (load-dialog "crew-gamble" "raid")
+                      (lc-dialog-load "crew-gamble" "raid")
                       (adventure-log-add 41 '())
                       (setq on-dialog-closed
                             (lambda
-                              (load-dialog "crew-gamble" "goblin-taunt")
+                              (lc-dialog-load "crew-gamble" "goblin-taunt")
                               (setq on-dialog-closed '()))))))
               (progn
-                (load-dialog "crew-gamble" "no-room")
+                (lc-dialog-load "crew-gamble" "no-room")
                 (exit)))))))
 
 

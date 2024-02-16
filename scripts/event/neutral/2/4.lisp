@@ -3,7 +3,7 @@
 ;;;
 
 
-(load-dialog "goblin-stronghold2" "intro")
+(lc-dialog-load "goblin-stronghold2" "intro")
 
 
 
@@ -96,10 +96,10 @@
              (max (list (+ 900 (choice 500))
                         (/ (coins) 2))))))
   (defn on-converge [0]
-    (load-dialog "goblin-stronghold2" "demand" val)
+    (lc-dialog-load-fmt "goblin-stronghold2" "demand" val)
 
-    (dialog-await-binary-q (get-dialog "goblin-stronghold2" "opt1")
-                           (get-dialog "goblin-stronghold2" "opt2"))
+    (dialog-await-binary-q (lc-dialog-get "goblin-stronghold2" "opt1")
+                           (lc-dialog-get "goblin-stronghold2" "opt2"))
     (setq on-converge nil))
 
 
@@ -108,11 +108,11 @@
         (progn
           (opponent-mode 'hostile)
           (adventure-log-add 32 '())
-          (load-dialog "goblin-stronghold2" "low-funds"))
+          (lc-dialog-load "goblin-stronghold2" "low-funds"))
       (progn
         (coins-add (- val))
         (adventure-log-add 31 (list val))
-        (load-dialog "goblin-stronghold2" "extortion" val)
+        (lc-dialog-load-fmt "goblin-stronghold2" "extortion" val)
         (exit)))))
 
 
@@ -120,4 +120,4 @@
 (defn on-dialog-declined [0]
   (opponent-mode 'hostile)
   (adventure-log-add 33 '())
-  (load-dialog "goblin-stronghold2" "decline"))
+  (lc-dialog-load "goblin-stronghold2" "decline"))

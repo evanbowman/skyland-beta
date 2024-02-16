@@ -6,12 +6,12 @@
 
 (setq on-fadein
       (lambda
-        (load-dialog "challenges" "intro-masonry")))
+        (lc-dialog-load "challenges" "intro-masonry")))
 
 
 
 (defn challenge-hint [0]
-  (load-dialog "challenges" "no-hints"))
+  (lc-dialog-load "challenges" "no-hints"))
 
 
 (setq on-room-destroyed
@@ -19,7 +19,7 @@
         (if (equal $0 (opponent))
             (if (not (equal $1 'masonry))
                 (progn
-                  (load-dialog "challenges" "masonry-fail")
+                  (lc-dialog-load "challenges" "masonry-fail")
                   (setq on-room-destroyed nil)
                   (setq on-dialog-closed
                         (lambda
@@ -28,7 +28,7 @@
               ;; destroyed, it still exists on the island.
               (if (equal 1 (rcnt (opponent) 'masonry))
                   (progn
-                    (load-dialog "challenges" "masonry-win")
+                    (lc-dialog-load "challenges" "masonry-win")
                     (challenge-complete 3)
                     (setq on-dialog-closed
                           (lambda

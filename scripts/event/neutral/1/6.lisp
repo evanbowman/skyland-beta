@@ -61,10 +61,10 @@
   (if (or sc (and (not rc) (not pc))) ;; player must have a core and not already have a backup
       (progn
         (defn on-converge [0]
-          (load-dialog "village" "intro2")
+          (lc-dialog-load "village" "intro2")
           (exit)))
     (progn
-      (load-dialog "village" "intro1")
+      (lc-dialog-load "village" "intro1")
       (defn on-converge [0]
 
         (setq on-converge nil)
@@ -73,8 +73,8 @@
         (setq pc (filter (lambda (equal (car $0) 'power-core)) (rooms (player))))
         (setq rc (filter (lambda (equal (car $0) 'reactor)) (rooms (player))))
 
-        (load-dialog "village" "offer")
-        (dialog-await-binary-q (get-dialog "village" "opt1") (get-dialog "village" "opt2"))
+        (lc-dialog-load "village" "offer")
+        (dialog-await-binary-q (lc-dialog-get "village" "opt1") (lc-dialog-get "village" "opt2"))
 
         (setq on-dialog-declined exit)
 
@@ -122,7 +122,7 @@
                      (let ((cb $0))
 
                        (sel-input wpn
-                                  (string (get-dialog "village" "place") (rinfo 'name wpn)
+                                  (string (lc-dialog-get "village" "place") (rinfo 'name wpn)
                                           (format " (%x%):"
                                                   (car (rinfo 'size wpn))
                                                   (cdr (rinfo 'size wpn))))
@@ -134,6 +134,6 @@
                (lambda
                  (impl
                   (lambda
-                    (load-dialog "village" "thanks")
+                    (lc-dialog-load "village" "thanks")
                     ((eval-file "/scripts/util/pickup_cart.lisp") 3
-                     (get-dialog "village" "cart")))))))))))))
+                     (lc-dialog-get "village" "cart")))))))))))))

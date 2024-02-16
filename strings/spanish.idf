@@ -274,7 +274,7 @@ Fluye por una isla, prende fuego a bloques no ignífugos.
 Bloque fuente de lava.
 ...
 ¡Reproduce chiptunes! Conecta hasta tres bloques de sintetizador a la derecha del bloque de altavoz. Cuando termina de reproducir, activa cualquier bloque que esté debajo, si hay alguno.
-¡Ni!
+
 Inflige daño de iones. Ráfagas pasan inofensivas por la mayoría de bloques, causan % de daño cada %.% s a campos de fuerza, reactores, etc.
 Inflige % de daño cada %.% segundos, pero a diferencia de otras armas, el daño se encadena a todas las estructuras idénticas vecinas.
 ¡Casco, pero hecho de bronce! Bastante bonito, ¿verdad?
@@ -290,7 +290,7 @@ Se usa para limitar el movimiento de las partidas enemigas. Tu tripulación atra
 Casco mejorado. Mucho más duradero, pero susceptible al daño de iones.
 Inflige un daño bajo, pero se extiende por áreas grandes. Altamente destructivo cuando se usa en grupos contra castillos con casco delgado.
 Un taller mejorado. Reduce ligeramente el costo de construcción de todos los bloques.
-Aunque ineficaces contra la mayoría de las armas modernas, los aldeanos en Skyland todavía construyen estructuras con piedra porque se ve bien. Haz clic para cambiar el estilo.
+Aunque ineficaz contra la mayoría de las armas modernas, los aldeanos en Skyland aún construyen con piedra por su estética. Haz clic para cambiar el estilo.
 Una estatua de metal brillante. Haz clic para cambiar el estilo.
 Un arma masivamente destructiva con una recarga lenta de %.% segundos. Recarga y dispara solo cuando está habitada por un personaje.
 Una estructura diseñada para atravesar una gran distancia vertical dividiéndola en distancias verticales más pequeñas, a menudo llamadas escalones.
@@ -430,7 +430,7 @@ tienda
 inexplorado
 marcador de búsqueda
 progreso guardado...
-Tu tripulación está tomando un descanso,
+Tu tripulación descansa,
 ¡vuelve pronto!
 mapa del cielo - zona %
 tormenta >>
@@ -452,8 +452,8 @@ normal
 difícil
 maniaco
 El modo más fácil, pero sigue siendo desafiante. Intentos extra si mueres.
-Los enemigos te dan menos recursos. Puntuación x2. Patrones de niveles más difíciles.
-Los enemigos te dan aún menos recursos. Puntuación x4. Patrones de niveles aún más difíciles.
+Menos recursos de enemigos. Puntuación x2. Niveles más difíciles.
+Menos recursos de enemigos. Puntuación x4. Niveles más difíciles.
 Sin pausa. Puntuación x6.
 ¿Salir del tutorial?
 Constructor
@@ -603,9 +603,10 @@ plátano
 SEL: preajustes
 START: inundación
 bandera
-% bandera
+bandera %
 -registro-de-aventuras-
 
  ubicación: 
  de: 
 Establecer Idioma
+ps

@@ -1,7 +1,7 @@
 
 
 (defn challenge-hint [0]
-  (load-dialog "challenges" "no-hints"))
+  (lc-dialog-load "challenges" "no-hints"))
 
 
 (terrain-set (player) 10)

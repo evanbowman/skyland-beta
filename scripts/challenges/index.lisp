@@ -1,6 +1,6 @@
 
 (map cons
-     (split (get-dialog "challenges" "ch-names") ",")
+     (split (lc-dialog-get "challenges" "ch-names") ",")
      '("challenges/goliath.lisp"
        "challenges/goblin_raid.lisp"
        "challenges/backdoor.lisp"

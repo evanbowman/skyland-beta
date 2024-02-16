@@ -1,5 +1,5 @@
 
-(load-dialog "market-quest" "dest-intro")
+(lc-dialog-load "market-quest" "dest-intro")
 
 
 
@@ -29,7 +29,7 @@
                    (cdr (car p))
                    "")
 
-                  (load-dialog "market-quest" "thanks" temp)
+                  (lc-dialog-load-fmt "market-quest" "thanks" temp)
 
                   (coins-add temp)
                   (adventure-log-add 22 (list temp))
@@ -37,4 +37,4 @@
                   (setq on-dialog-closed exit))
               (progn
                 (setq on-dialog-closed exit)
-                (load-dialog "market-quest" "failed")))))))
+                (lc-dialog-load "market-quest" "failed")))))))

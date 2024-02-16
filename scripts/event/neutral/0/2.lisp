@@ -3,7 +3,7 @@
 ;;;
 
 
-(load-dialog "abandoned-isle" "intro")
+(lc-dialog-load "abandoned-isle" "intro")
 
 
 (let ((opts
@@ -32,7 +32,7 @@
 (if (choice 2)
     (secret
      1 12
-     (get-dialog "abandoned-isle" "secret")))
+     (lc-dialog-get "abandoned-isle" "secret")))
 
 
 
@@ -44,11 +44,11 @@
     (when (equal (zone) 3)
       (setq amt (+ 800 (choice 900))))
 
-    (load-dialog "abandoned-isle" "award" amt)
+    (lc-dialog-load-fmt "abandoned-isle" "award" amt)
 
     (adventure-log-add 11 (list amt))
 
     (coins-add amt)
 
     ((eval-file "/scripts/util/pickup_cart.lisp") 1
-     (get-dialog "abandoned-isle" "cart"))))
+     (lc-dialog-get "abandoned-isle" "cart"))))

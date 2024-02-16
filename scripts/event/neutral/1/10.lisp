@@ -1,5 +1,5 @@
 
-(load-dialog "explorer" "intro")
+(lc-dialog-load "explorer" "intro")
 
 (opponent-init -3 'neutral)
 
@@ -13,11 +13,11 @@
 
 
 (defn on-converge [0]
-  (load-dialog "explorer" "greeting")
+  (lc-dialog-load "explorer" "greeting")
 
   (setq on-dialog-closed
         (lambda
-          (load-dialog "explorer" "offer")
+          (lc-dialog-load "explorer" "offer")
           (dialog-await-y/n)
           (setq on-dialog-closed '())))
   (setq on-converge nil))
@@ -35,26 +35,26 @@
           (chr-new (player) (car temp) (cdr temp) 'neutral nil)
           (chr-del (opponent) 1 14)
           (if (or (equal (choice 2) 1) (< (coins) 600))
-              (join (get-dialog "explorer" "join1"))
+              (join (lc-dialog-get "explorer" "join1"))
             (progn
               (coins-set (- (coins) 600))
-              (join (get-dialog "explorer" "join2")))))
+              (join (lc-dialog-get "explorer" "join2")))))
       (progn
-        (load-dialog "explorer" "no-room")
+        (lc-dialog-load "explorer" "no-room")
         (defn on-dialog-closed [0]
-          (load-dialog "explorer" "offer2")
+          (lc-dialog-load "explorer" "offer2")
           (defn on-dialog-closed [0]
             (alloc-space 'ladder)
             (sel-input 'ladder
-                       (get-dialog "explorer" "place")
+                       (lc-dialog-get "explorer" "place")
                        (lambda
                          (sound "build0")
                          (room-new (player) `(ladder ,$1 ,$2))
                          (chr-del (opponent) 1 14)
                          (chr-new (player) $1 (+ 1 $2) 'neutral nil)
-                         (load-dialog "explorer" "thanks")
+                         (lc-dialog-load "explorer" "thanks")
                          (defn on-dialog-closed [0]
-                           (join (get-dialog "explorer" "done"))
+                           (join (lc-dialog-get "explorer" "done"))
                            (setq on-dialog-closed nil)
                            (exit)))))))))
   (exit))

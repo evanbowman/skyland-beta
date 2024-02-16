@@ -3,7 +3,7 @@
 ;;;
 
 
-(load-dialog "decimator" "intro")
+(lc-dialog-load "decimator" "intro")
 
 
 (opponent-init 9 'neutral)
@@ -25,7 +25,7 @@
 
 
 (defn on-converge [0]
-  (load-dialog "decimator" "offer")
+  (lc-dialog-load "decimator" "offer")
   (setq on-converge nil)
   (dialog-await-binary-q "Here's the money…" "no thanks"))
 
@@ -38,13 +38,13 @@
 
   (if (< (coins) 1500)
       (progn
-        (load-dialog "decimator" "low-funds")
+        (lc-dialog-load "decimator" "low-funds")
         (dialog-await-y/n)
         (let ((f (this)))
           (defn fut [0]
             (if (> (coins) 1499)
                 (progn
-                  (load-dialog "decimator" "funds-good")
+                  (lc-dialog-load "decimator" "funds-good")
                   (setq on-dialog-closed f))
               (f))))
         (setq on-dialog-accepted (lambda (on-timeout 15000 'fut)))
@@ -61,11 +61,11 @@
 
       (sel-input
        'decimator
-       (get-dialog "decimator" "place")
+       (lc-dialog-get "decimator" "place")
        (lambda
          (room-new (player) (list 'decimator $1 $2))
          (room-del (opponent) 0 13)
-         (load-dialog "decimator" "installed")
+         (lc-dialog-load "decimator" "installed")
          (adventure-log-add 44 '())
 
          (setq on-dialog-closed '())

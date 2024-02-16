@@ -61,7 +61,7 @@ namespace skyland
 
 static inline int boot_init()
 {
-    systemstring_bind_file("english");
+    systemstring_bind_language("english");
 
     BootScene::init();
 

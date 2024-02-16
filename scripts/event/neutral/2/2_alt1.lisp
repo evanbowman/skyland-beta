@@ -2,7 +2,7 @@
 ;;;
 
 
-(load-dialog "auto-ship" "intro")
+(lc-dialog-load "auto-ship" "intro")
 
 
 (opponent-init 11 'neutral)
@@ -57,13 +57,13 @@
 
 (defn on-converge [0]
   (setq on-converge nil)
-  (load-dialog "auto-ship" "offer")
+  (lc-dialog-load "auto-ship" "offer")
 
   (dialog-opts-reset)
   (apply dialog-opts-push (take 'beam-gun))
   (apply dialog-opts-push (take 'incinerator))
   (apply dialog-opts-push (take 'splitter))
-  (dialog-opts-push (get-dialog "auto-ship" "decline")
+  (dialog-opts-push (lc-dialog-get "auto-ship" "decline")
                     (lambda
                       (unbind 'take)
                       (exit))))
@@ -72,11 +72,11 @@
 (defn take [1]
   (let ((wpn $0))
     (list
-     (string (get-dialog "auto-ship" "take") (rinfo 'name wpn) "…")
+     (string (lc-dialog-get "auto-ship" "take") (rinfo 'name wpn) "…")
      (lambda
        (sel-input
         wpn
-        (get-dialog "auto-ship" "place")
+        (lc-dialog-get "auto-ship" "place")
         (lambda
           (room-new (player) `(,wpn ,$1 ,$2))
 
@@ -87,13 +87,13 @@
 
 
           (sound "build0")
-          (load-dialog "auto-ship" "still-quiet")
+          (lc-dialog-load "auto-ship" "still-quiet")
 
           (let ((opts '(beam-gun incinerator splitter))
                 (wake
                  (lambda
                    (opponent-mode 'hostile)
-                   (load-dialog "auto-ship" "wakeup")
+                   (lc-dialog-load "auto-ship" "wakeup")
                    (defn on-dialog-closed [0]
                      (map (curry room-new (opponent))
                           '((forcefield* 0 10)
@@ -111,14 +111,14 @@
                             (forcefield* 9 9)
                             (forcefield 9 7)
                             (forcefield 10 7)))
-                     (load-dialog "auto-ship" "weapon-charge")
+                     (lc-dialog-load "auto-ship" "weapon-charge")
                      (setq on-dialog-closed nil)))))
 
             (setq opts (filter (lambda (not (equal $0 wpn))) opts))
             (dialog-opts-reset)
-            (dialog-opts-push (string (get-dialog "auto-ship" "take")
+            (dialog-opts-push (string (lc-dialog-get "auto-ship" "take")
                                       (rinfo 'name (get opts 0)) "…") wake)
 
-            (dialog-opts-push (string (get-dialog "auto-ship" "take")
+            (dialog-opts-push (string (lc-dialog-get "auto-ship" "take")
                                       (rinfo 'name (get opts 1)) "…") wake)
             (unbind 'take))))))))

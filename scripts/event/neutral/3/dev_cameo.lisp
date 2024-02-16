@@ -3,7 +3,7 @@
 ;;;
 
 
-(load-dialog "dev-cameo" "intro")
+(lc-dialog-load "dev-cameo" "intro")
 
 
 (opponent-init 7 'neutral)
@@ -39,13 +39,13 @@
 (setq on-converge
       (lambda
         (let ((info (cart-info 0)))
-          (load-dialog "dev-cameo" "meet")
+          (lc-dialog-load "dev-cameo" "meet")
           (setq on-dialog-closed
                 (lambda
                   (sound "click_digital_1")
                   (cart-add 0)
-                  (dialog (get-dialog "dev-cameo" "pickup1")
+                  (dialog (lc-dialog-get "dev-cameo" "pickup1")
                           (get info 0)
-                          (get-dialog "dev-cameo" "pickup2"))
+                          (lc-dialog-get "dev-cameo" "pickup2"))
                   (setq on-dialog-closed nil)
                   (exit))))))

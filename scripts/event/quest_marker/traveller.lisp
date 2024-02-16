@@ -1,6 +1,6 @@
 
 
-(load-dialog "wanderer-quest" "dest-intro")
+(lc-dialog-load "wanderer-quest" "dest-intro")
 
 
 (defn on-fadein [0]
@@ -40,26 +40,26 @@
                   (when (> cost 1000)
                     (setq sel (cons (car pick) sel))))))
 
-            (load-dialog "wanderer-quest" "dest-success")
+            (lc-dialog-load "wanderer-quest" "dest-success")
             (defn on-dialog-closed [0]
               (coins-add 2000)
               (let ((sym0 (get sel 0)))
                 (alloc-space sym0)
                 (sel-input sym0
-                           (string (get-dialog "wanderer-quest" "dest-place") (rinfo 'name sym0))
+                           (string (lc-dialog-get "wanderer-quest" "dest-place") (rinfo 'name sym0))
                            (lambda
                              (sound "build0")
                              (room-new (player) (list sym0 $1 $2))
-                             (load-dialog "wanderer-quest" "goodbye")
+                             (lc-dialog-load "wanderer-quest" "goodbye")
                              (map (lambda
                                     (if (equal id (lookup 'id (cddr $0)))
                                         (chr-del (player) (car $0) (cadr $0))))
                                   (chrs (player)))
                              (defn on-dialog-closed [0]
-                               (load-dialog "wanderer-quest" "depart")
+                               (lc-dialog-load "wanderer-quest" "depart")
                                (setq on-dialog-closed exit))))))))
       (progn
-        (load-dialog "wanderer-quest" "failed")
+        (lc-dialog-load "wanderer-quest" "failed")
         (exit)))))
 
 

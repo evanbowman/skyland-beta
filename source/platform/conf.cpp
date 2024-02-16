@@ -72,6 +72,8 @@ Buffer<Trio<Data, Section, CachedPtr>, 16> conf_cache;
 
 Conf::String get_conf(const char* data, const char* section, const char* key)
 {
+    auto file_start = data;
+
     const int section_len = strlen(section);
     const int key_len = strlen(key);
 
@@ -137,7 +139,7 @@ Conf::String get_conf(const char* data, const char* section, const char* key)
                 if (conf_cache.full()) {
                     conf_cache.erase(conf_cache.begin());
                 }
-                conf_cache.push_back({data, section, section_start});
+                conf_cache.push_back({file_start, section, section_start});
             }
             data += section_len;
             while (true) {

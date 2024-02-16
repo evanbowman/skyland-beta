@@ -30,25 +30,25 @@
     (let ((info (get shop-items item)))
       (if (< (coins) (get info 1))
           (progn
-            (load-dialog "shop" "low-funds")
+            (lc-dialog-load "shop" "low-funds")
             (defn on-dialog-closed [0]
               (push-menu "item-shop" '())))
         (progn
           (dialog
-           (get-dialog "shop" "shopkeeper-label")
+           (lc-dialog-get "shop" "shopkeeper-label")
            name
-           (format (get-dialog "shop" "shopkeeper-offer") (get info 1)))
+           (format (lc-dialog-get "shop" "shopkeeper-offer") (get info 1)))
 
           (dialog-opts-reset)
 
           (dialog-opts-push
-           (get-dialog "shop" "opt-buy")
+           (lc-dialog-get "shop" "opt-buy")
            (lambda
              (coins-add (* -1 (get info 1)))
              (adventure-log-add 50 (list name (get info 1)))
 
              (sel-input (get info 0)
-                        (get-dialog "shop" "pick")
+                        (lc-dialog-get "shop" "pick")
                         (lambda
                           (room-new (player) (list (get info 0) $1 $2))
                           (sound "build0")
@@ -75,24 +75,24 @@
                           (if shop-items
                               (push-menu "item-shop" '())
                             (progn
-                              (load-dialog "shop" "sold-out-of-everything")
+                              (lc-dialog-load "shop" "sold-out-of-everything")
                               (exit)))))))
 
           (dialog-opts-push (if (> (length name) 13)
                                 ;; use alternate text for long block names
                                 (string name " stats?")
-                              (format (get-dialog "shop" "opt-describe") name))
+                              (format (lc-dialog-get "shop" "opt-describe") name))
                             (lambda
                               (push-menu "glossary" (list (car info)))
                               (push-menu "item-shop" '())))
 
-          (dialog-opts-push (get-dialog "shop" "decline")
+          (dialog-opts-push (lc-dialog-get "shop" "decline")
                             (lambda
                               (push-menu "item-shop" '()))))))))
 
 
 (defn on-fadein [0]
-  (load-dialog "shop" "greeting")
+  (lc-dialog-load "shop" "greeting")
 
   (defn on-dialog-closed [0]
     (push-menu "item-shop" '())))

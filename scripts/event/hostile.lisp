@@ -27,7 +27,7 @@
              (equal (wg-current-type) 8) ; uncharted hostile node.
              (not (has-dialog?))         ; sanity check.
              (< ash-storm-count (get '(1 1 2) (difficulty)))) ; not too many...
-    (load-dialog "misc" "dust-storm")
+    (lc-dialog-load "misc" "dust-storm")
     (weather 6)
     (adventure-log-add 56 nil)
     (+= ash-storm-count 1)))

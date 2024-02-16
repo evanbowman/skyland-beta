@@ -27,7 +27,7 @@
 
 (autopilot
  '((100 nil)
-   (100 (get-dialog "tutorials" "sl1"))
+   (100 (lc-dialog-get "tutorials" "sl1"))
    (1767 L-p)
    (50 L-np)
    (1350 Right)
@@ -49,7 +49,7 @@
    (2333 B)
    (1351 B)
    (100 nil)
-   (100 (get-dialog "tutorials" "sl2"))
+   (100 (lc-dialog-get "tutorials" "sl2"))
    (2701 Down)
    (466 Down)
    (416 Down)

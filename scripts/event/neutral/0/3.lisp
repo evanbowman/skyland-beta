@@ -3,7 +3,7 @@
 ;;;
 
 
-(load-dialog "merchants" "intro")
+(lc-dialog-load "merchants" "intro")
 
 
 (opponent-init 5 'neutral)
@@ -37,12 +37,12 @@
 
   (setq on-converge
         (lambda
-          (dialog (get-dialog "merchants" "offer-p1")
+          (dialog (lc-dialog-get "merchants" "offer-p1")
                   (rinfo 'name item)
-                  (get-dialog "merchants" "offer-p2")
+                  (lc-dialog-get "merchants" "offer-p2")
                   (if (< (coins) 1300)
-                      (get-dialog "merchants" "offer-p3_1")
-                    (get-dialog "merchants" "offer-p3_2")))
+                      (lc-dialog-get "merchants" "offer-p3_1")
+                    (lc-dialog-get "merchants" "offer-p3_2")))
           (dialog-await-y/n)
           (setq on-converge nil)))
 
@@ -59,7 +59,7 @@
                   (defn fut
                     (if (> (coins) 1299)
                         (progn
-                          (load-dialog "merchants" "enough-coins")
+                          (lc-dialog-load "merchants" "enough-coins")
                           (setq on-dialog-closed f))
                       (f))))
 
@@ -68,7 +68,7 @@
                       (setq skip 0)
                       (on-timeout 15000 'fut))
                   (progn
-                    (load-dialog "merchants" "retry")
+                    (lc-dialog-load "merchants" "retry")
                     (dialog-await-y/n)
                     (setq on-dialog-accepted (lambda (on-timeout 15000 'fut)))
                     (setq on-dialog-declined (lambda (unbind 'fut) (exit))))))
@@ -79,7 +79,7 @@
               (sel-input
                item
                (string
-                (get-dialog "merchants" "place1")
+                (lc-dialog-get "merchants" "place1")
                 (rinfo 'name item)
                 (format " (%x%):" (car (rinfo 'size item)) (cdr (rinfo 'size item))))
                (lambda
@@ -88,11 +88,11 @@
                  (alloc-space item)
                  (sel-input
                   item
-                  (string (get-dialog "merchants" "place2") (rinfo 'name item) ":")
+                  (string (lc-dialog-get "merchants" "place2") (rinfo 'name item) ":")
                   (lambda
                     (room-new (player) (list item $1 $2))
                     (sound "build0")
-                    (load-dialog "merchants" "done")
+                    (lc-dialog-load "merchants" "done")
                     (setq on-dialog-closed exit))))))))))
 
 (gc) ;; just in case, no harm in running it.

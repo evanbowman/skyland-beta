@@ -85,7 +85,6 @@ public:
 
 
 private:
-
     void redraw_title();
 
     static DynamicMemory<LanguageOptions> load_language_options();

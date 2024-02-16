@@ -3,7 +3,7 @@
 ;;;
 
 
-(load-dialog "raid" "intro")
+(lc-dialog-load "raid" "intro")
 
 
 (opponent-init 8 'neutral)
@@ -29,7 +29,7 @@
 
 (secret
  0 14
- (get-dialog "raid" "secret"))
+ (lc-dialog-get "raid" "secret"))
 
 
 (let ((wpn 'rocket-bomb)
@@ -50,7 +50,7 @@
 
 
   (defn on-converge [0]
-    (load-dialog "raid" "offer")
+    (lc-dialog-load "raid" "offer")
     (dialog-await-y/n)
     (setq on-converge nil))
 
@@ -59,15 +59,15 @@
     (alloc-space wpn)
     (room-del (opponent) (car pos) (cdr pos))
     (sel-input wpn
-               (format (get-dialog "raid" "pick") (car (rinfo 'size wpn)) (cdr (rinfo 'size wpn)))
+               (format (lc-dialog-get "raid" "pick") (car (rinfo 'size wpn)) (cdr (rinfo 'size wpn)))
                (lambda
                  (room-new (player) (list wpn $1 $2))
                  (sound "build0")
                  (cond
                   ((equal wpn 'rocket-bomb)
-                   (load-dialog "raid" "award1"))
+                   (lc-dialog-load "raid" "award1"))
                   ((equal wpn 'splitter)
-                   (load-dialog "raid" "award2"))
+                   (lc-dialog-load "raid" "award2"))
                   (true
                    (dialog "...")))
 
@@ -75,6 +75,6 @@
     (adventure-log-add 9 '()))
 
   (defn on-dialog-declined [0]
-    (load-dialog "raid" "decline")
+    (lc-dialog-load "raid" "decline")
     (adventure-log-add 8 '())
     (setq on-dialog-closed exit)))

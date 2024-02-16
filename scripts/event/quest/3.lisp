@@ -1,5 +1,5 @@
 
-(load-dialog "taxi-quest" "intro")
+(lc-dialog-load "taxi-quest" "intro")
 
 
 
@@ -11,10 +11,10 @@
 
 
 (defn on-converge [0]
-  (load-dialog "taxi-quest" "offer")
+  (lc-dialog-load "taxi-quest" "offer")
 
-  (dialog-await-binary-q (get-dialog "taxi-quest" "opt1")
-                         (get-dialog "taxi-quest" "opt2")))
+  (dialog-await-binary-q (lc-dialog-get "taxi-quest" "opt1")
+                         (lc-dialog-get "taxi-quest" "opt2")))
 
 
 (defn on-dialog-accepted [0]
@@ -25,11 +25,11 @@
           (push 'qids 3)
           (push 'quests (cons "/scripts/event/quest_marker/pickup.lisp" m))
           (adventure-log-add 19 '())
-          (load-dialog "taxi-quest" "accepted"))
+          (lc-dialog-load "taxi-quest" "accepted"))
       (progn
-        (load-dialog "taxi-quest" "skip")))))
+        (lc-dialog-load "taxi-quest" "skip")))))
 
 
 (defn on-dialog-declined [0]
-  (load-dialog "taxi-quest" "declined")
+  (lc-dialog-load "taxi-quest" "declined")
   (setq on-dialog-closed exit))

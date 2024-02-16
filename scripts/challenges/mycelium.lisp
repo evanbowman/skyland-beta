@@ -12,8 +12,8 @@
 (let ((cnt 0))
   (defn challenge-hint [0]
     (dialog (if (equal cnt 0)
-                (get-dialog "challenges" "are-you-sure")
-                (get-dialog "challenges" "hint-again")))
+                (lc-dialog-get "challenges" "are-you-sure")
+                (lc-dialog-get "challenges" "hint-again")))
     (dialog-await-y/n)
 
     (defn on-dialog-accepted [0]
@@ -21,13 +21,13 @@
        (cond
         ((equal cnt 0)
          (+= cnt 1)
-         (get-dialog "challenges" "hint-mycelium-1"))
+         (lc-dialog-get "challenges" "hint-mycelium-1"))
         ((equal cnt 1)
          (+= cnt 1)
-         (get-dialog "challenges" "hint-mycelium-2"))
+         (lc-dialog-get "challenges" "hint-mycelium-2"))
         ((equal cnt 2)
          (setq cnt 0)
-         (get-dialog "challenges" "hint-mycelium-3")))))
+         (lc-dialog-get "challenges" "hint-mycelium-3")))))
 
 
     (setq on-dialog-declined (lambda '()))))

@@ -1,6 +1,6 @@
 
 
-(load-dialog "taxi-quest" "intro")
+(lc-dialog-load "taxi-quest" "intro")
 
 
 (opponent-init 7 'neutral)
@@ -39,12 +39,12 @@
   (adventure-log-add 25 '())
 
   (if (equal 0 (length (chrs (opponent))))
-      (load-dialog "taxi-quest" "join1")
+      (lc-dialog-load "taxi-quest" "join1")
     (if (< 3 (length (chrs (opponent))))
-        (load-dialog "taxi-quest" "join2")
-      (load-dialog "taxi-quest" "join3"))))
+        (lc-dialog-load "taxi-quest" "join2")
+      (lc-dialog-load "taxi-quest" "join3"))))
 
 
 (defn on-converge [0]
-  (load-dialog "taxi-quest" "greeting")
+  (lc-dialog-load "taxi-quest" "greeting")
   (coins-add 1500))
