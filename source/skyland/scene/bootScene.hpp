@@ -328,7 +328,6 @@ public:
             info("lang selection...");
             return make_scene<LanguageSelectScene>(clean_boot_);
         } else {
-            message("bind strings file...");
             Vector<char> data;
             if (flash_filesystem::read_file_data(lang_file, data)) {
                 StringBuffer<48> path;
