@@ -166,6 +166,7 @@ LanguageSelectScene::load_language_options()
                     current.second += raw;
                 }
             }
+            return true;
         },
         cp,
         strlen(cp));
