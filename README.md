@@ -64,4 +64,6 @@ I designed the Skyland to be moddable, and wrote all level scenarios in a custom
 
 All artwork and music assets are proprietary. The software and source code are provided for personal non-commercial use under the terms of the included license document. Basically, you can do whatever you want with the code as long as you don't sell it or use the compiled code commercially. You may even distribute modified copies, as long as you aren't profiting financially by doing so. You absolutely may not sell copies of the game. The license terms are very generous, please don't abuse the privilege. You wouldn't think I'd have to spell this out in detail, but people are already selling pirated copies of the game online 🫠
 
+P.S. I think software licensing is incredibly stupid and I despite the previous paragraph, I don't really care about license terms. If I didn't want people to use the code and learn from it, I would have kept it private. But suppose I had put a super permissive license on the game. Some big company could have just started selling copies of it and there'd be nothing that I could do. Mainly I want to prevent corporations from exploiting the project for commercial purposes. 
+
 [Read the License](LICENSE)
