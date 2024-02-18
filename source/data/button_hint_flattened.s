@@ -9,7 +9,7 @@
 @	+ 361 tiles lz77 compressed
 @	Total size: 32 + 1540 = 1572
 @
-@	Time-stamp: 2024-02-01, 06:55:14
+@	Time-stamp: 2024-02-17, 08:56:50
 @	Exported by Cearn's GBA Image Transmogrifier, v0.9.2
 @	( http://www.coranac.com/projects/#grit )
 @
@@ -74,7 +74,7 @@ button_hint_flattenedTiles:
 	.word 0xF001F001,0xF001F001,0x01F0FF01,0x01F001F0,0x01F001F0,0x01F001F0,0xF0FF01F0,0xF001F001
 	.word 0xF001F001,0xF001F001,0xFF01F001,0x01F001F0,0x01F001F0,0x01F001F0,0x01F001F0,0xF001F0E0
 
-	.word 0x01017001
+	.word 0x00017001
 
 	.section .rodata
 	.align	2
