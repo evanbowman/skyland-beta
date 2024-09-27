@@ -49,6 +49,7 @@
 #include "skyland/skyland.hpp"
 #include "worldMapScene.hpp"
 #include "zoneImageScene.hpp"
+#include "saveSlotScene.hpp"
 
 
 
@@ -61,9 +62,7 @@ void NewgameScene::enter(Scene& prev)
 {
     show_island_exterior(&APP.player_island());
 
-    APP.with_opponent_island([](auto& isle) {
-        show_island_exterior(&isle);
-    });
+    APP.with_opponent_island([](auto& isle) { show_island_exterior(&isle); });
 
     PLATFORM.screen().fade(1.f, ColorConstant::rich_black, {}, true, true);
 
@@ -82,7 +81,7 @@ void NewgameScene::enter(Scene& prev)
     }
 
     if (save::load(APP.persistent_data())) {
-        if (APP.persistent_data().state_flags_.get() & PersistentData::permadeath_on) {
+        if (APP.persistent_data().check_flag(PersistentData::permadeath_on)) {
             save::erase();
         }
 
@@ -92,30 +91,40 @@ void NewgameScene::enter(Scene& prev)
         reset_state();
     }
 
-    if (not (APP.persistent_data().state_flags_.get() & PersistentData::permadeath_on) and
+    if (not(APP.persistent_data().check_flag(PersistentData::permadeath_on)) and
         loaded_) {
 
         PLATFORM.screen().schedule_fade(0, ColorConstant::rich_black);
         PLATFORM.screen().schedule_fade(1.f, ColorConstant::rich_black);
 
-        Text::print(SYSTR(newgame)->c_str(), {3, 4});
-        Text::print(SYSTR(continue_game)->c_str(), {3, 2});
+        auto slot_fmt_str = SYSTR(save_slot_heading);
+
+        Text::print(format(slot_fmt_str->c_str(), save::bound_slot() + 1).c_str(), {1, 1});
+        Text::print(SYSTR(newgame)->c_str(), {3, 6});
+        Text::print(SYSTR(continue_game)->c_str(), {3, 4});
     }
+}
+
+
+
+void NewgameScene::exit(Scene& next)
+{
+    PLATFORM.fill_overlay(0);
 }
 
 
 
 ScenePtr NewgameScene::update(Time delta)
 {
-    if (not (APP.persistent_data().state_flags_.get() & PersistentData::permadeath_on) and
+    if (not(APP.persistent_data().check_flag(PersistentData::permadeath_on)) and
         loaded_) {
 
         if (continue_opt_sel_ == 0) {
-            PLATFORM.set_tile(Layer::overlay, 1, 2, 475);
-            PLATFORM.set_tile(Layer::overlay, 1, 4, 112);
-        } else {
-            PLATFORM.set_tile(Layer::overlay, 1, 2, 112);
             PLATFORM.set_tile(Layer::overlay, 1, 4, 475);
+            PLATFORM.set_tile(Layer::overlay, 1, 6, 112);
+        } else {
+            PLATFORM.set_tile(Layer::overlay, 1, 4, 112);
+            PLATFORM.set_tile(Layer::overlay, 1, 6, 475);
         }
 
         if (key_down<Key::up>()) {
@@ -131,7 +140,10 @@ ScenePtr NewgameScene::update(Time delta)
             }
         }
 
-        if (key_down<Key::action_1>()) {
+        if (key_down<Key::action_2>()) {
+            PLATFORM.speaker().play_sound("cursor_tick", 0);
+            return make_scene<SaveSlotScene>();
+        } else if (key_down<Key::action_1>()) {
             PLATFORM.speaker().play_sound("button_wooden", 3);
             if (continue_opt_sel_ == 1) {
                 loaded_ = false;
@@ -151,8 +163,9 @@ ScenePtr NewgameScene::update(Time delta)
 
     const auto sv_flag = GlobalPersistentData::save_prompt_dont_remind_me;
 
-    const bool skip_save_prompt = APP.gp_.stateflags_.get(sv_flag) or
-        (not (APP.persistent_data().state_flags_.get() & PersistentData::permadeath_on));
+    const bool skip_save_prompt =
+        APP.gp_.stateflags_.get(sv_flag) or
+        (not(APP.persistent_data().check_flag(PersistentData::permadeath_on)));
 
     auto dont_remind = []() {
         APP.gp_.stateflags_.set(sv_flag, true);
@@ -204,11 +217,11 @@ void NewgameScene::reset_state()
     APP.persistent_data().state_flags_.set(0);
 
     if (APP.is_developer_mode()) {
-        APP.persistent_data().set_flag(PersistentData::StateFlag::dev_mode_active);
+        APP.persistent_data().set_flag(
+            PersistentData::StateFlag::dev_mode_active);
     }
 
     lisp::set_var("adventure-log", L_NIL);
-
 }
 
 

@@ -135,8 +135,7 @@ public:
     }
 
 
-    template <typename F>
-    void with_opponent_island(F&& cb)
+    template <typename F> void with_opponent_island(F&& cb)
     {
         if (opponent_island()) {
             cb(*opponent_island());
@@ -297,13 +296,13 @@ public:
     }
 
 
-    int& current_world_location()
+    s32& current_world_location()
     {
         return persistent_data_.current_world_location_;
     }
 
 
-    int& zone()
+    s32& zone()
     {
         return persistent_data_.zone_;
     }

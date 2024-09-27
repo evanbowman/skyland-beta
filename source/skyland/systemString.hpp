@@ -741,6 +741,7 @@ enum class SystemString {
 
     retry,
 
+    save_slot_heading,
     newgame,
     continue_game,
 

@@ -101,8 +101,8 @@ struct PersistentData
 {
     Coins coins_ = 0; // TODO: use HostInteger<> here?
     WorldGraph world_graph_;
-    int current_world_location_ = 0;
-    int zone_ = 0;
+    s32 current_world_location_ = 0;
+    s32 zone_ = 0;
 
     HostInteger<u32> total_seconds_;
     HostInteger<u32> rng_;
@@ -117,6 +117,11 @@ struct PersistentData
         opponent_crew_died = (1 << 2),
         permadeath_on = (1 << 3),
     };
+
+    bool check_flag(StateFlag flag)
+    {
+        return state_flags_.get() & flag;
+    }
 
     void set_flag(StateFlag flag)
     {

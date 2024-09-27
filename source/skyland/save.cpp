@@ -34,6 +34,7 @@
 
 #include "save.hpp"
 #include "flag.hpp"
+#include "heap_data.hpp"
 #include "platform/flash_filesystem.hpp"
 #include "platform/platform.hpp"
 #include "script/lisp.hpp"
@@ -53,9 +54,77 @@ static const u32 global_save_data_magic = 0xABCD + 2;
 
 
 
+static SaveSlotNum save_slot = 0;
+
+
+
+void bind_slot(SaveSlotNum slot)
+{
+    save_slot = slot;
+}
+
+
+
+SaveSlotNum bound_slot()
+{
+    return save_slot;
+}
+
+
+
 const char* global_data_filename = "/save/global.dat";
-const char* save_data_filename = "/save/adventure.dat";
-const char* save_data_lisp_filename = "/save/adventure.lisp";
+
+const char* save_data_legacy_path = "/save/adventure.dat";
+const char* save_data_lisp_legacy_path = "/save/adventure.lisp";
+
+const char* save_data_path = "/save/slot_%/adventure.dat";
+const char* save_data_lisp_path = "/save/slot_%/adventure.lisp";
+
+
+
+StringBuffer<32> save_data_filename()
+{
+    return format<32>(save_data_path, save_slot);
+}
+
+
+
+StringBuffer<32> save_data_lisp_filename()
+{
+    return format<32>(save_data_lisp_path, save_slot);
+}
+
+
+
+void legacy_conversion()
+{
+    // Move a save files to the new save slot directory.
+
+    Vector<char> data;
+
+    flash_filesystem::StorageOptions opts{.use_compression_ = true};
+
+    auto byte_count =
+        flash_filesystem::read_file_data_binary(save_data_legacy_path, data);
+
+    if (byte_count) {
+        flash_filesystem::unlink_file(save_data_legacy_path);
+        flash_filesystem::store_file_data_binary(
+            save_data_filename().c_str(), data, opts);
+    }
+
+    data.clear();
+
+
+    byte_count =
+        flash_filesystem::read_file_data_text(save_data_lisp_legacy_path, data);
+
+    if (byte_count) {
+        flash_filesystem::unlink_file(save_data_lisp_legacy_path);
+        flash_filesystem::store_file_data_text(
+            save_data_lisp_filename().c_str(), data, opts);
+    }
+}
 
 
 
@@ -157,7 +226,7 @@ static void store(const SaveData& sd)
     }
     flash_filesystem::StorageOptions opts{.use_compression_ = true};
     flash_filesystem::store_file_data_binary(
-        save_data_filename, out_buffer, opts);
+        save_data_filename().c_str(), out_buffer, opts);
 }
 
 
@@ -180,7 +249,7 @@ void EmergencyBackup::store()
 
     flash_filesystem::StorageOptions opts{.use_compression_ = true};
     flash_filesystem::store_file_data_text(
-        save_data_lisp_filename, *lisp_data_, opts);
+        save_data_lisp_filename().c_str(), *lisp_data_, opts);
 }
 
 
@@ -210,7 +279,7 @@ void store(const PersistentData& d)
 
     flash_filesystem::StorageOptions opts{.use_compression_ = true};
     flash_filesystem::store_file_data_text(
-        save_data_lisp_filename, p.data_, opts);
+        save_data_lisp_filename().c_str(), p.data_, opts);
 
     synth_notes_store(APP.player_island(), "/save/synth.dat");
     speaker_data_store(APP.player_island(), "/save/speaker.dat");
@@ -218,12 +287,12 @@ void store(const PersistentData& d)
 
 
 
-bool load(PersistentData& d)
+static bool load_persistent_data(PersistentData& d)
 {
     Vector<char> data;
 
-    const auto byte_count =
-        flash_filesystem::read_file_data_binary(save_data_filename, data);
+    const auto byte_count = flash_filesystem::read_file_data_binary(
+        save_data_filename().c_str(), data);
 
     if (byte_count == sizeof(SaveData)) {
         SaveData save_data;
@@ -251,11 +320,44 @@ bool load(PersistentData& d)
         return false;
     }
 
-    data.clear();
+    return true;
+}
 
 
-    auto bytes =
-        flash_filesystem::read_file_data_text(save_data_lisp_filename, data);
+
+Optional<SlotInfo> slot_info(SaveSlotNum slot)
+{
+    PersistentData d;
+
+    Optional<SlotInfo> info;
+
+    auto cached_slot = save_slot;
+    bind_slot(slot);
+
+    if (load_persistent_data(d)) {
+        info.emplace();
+        info->playtime_seconds_ = d.total_seconds_.get();
+        info->coins_ = d.coins_;
+        info->zone_ = d.zone_;
+    }
+
+    bind_slot(cached_slot);
+
+    return info;
+}
+
+
+
+bool load(PersistentData& d)
+{
+    if (not load_persistent_data(d)) {
+        return false;
+    }
+
+    Vector<char> data;
+
+    auto bytes = flash_filesystem::read_file_data_text(
+        save_data_lisp_filename().c_str(), data);
 
     if (bytes == 0) {
         return false;
@@ -297,7 +399,7 @@ bool load(PersistentData& d)
 
 void erase()
 {
-    flash_filesystem::unlink_file(save_data_filename);
+    flash_filesystem::unlink_file(save_data_filename().c_str());
 }
 
 

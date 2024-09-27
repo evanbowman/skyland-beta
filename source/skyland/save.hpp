@@ -121,11 +121,40 @@ bool exists();
 
 
 
+using SaveSlotNum = u8;
+
+
+
+struct SlotInfo
+{
+    u32 playtime_seconds_;
+    Coins coins_;
+    int zone_;
+};
+
+
+
+Optional<SlotInfo> slot_info(SaveSlotNum slot);
+
+
+
+void bind_slot(SaveSlotNum slot);
+
+
+
+SaveSlotNum bound_slot();
+
+
+
 bool load(PersistentData& d);
 
 
 
 void erase();
+
+
+
+void legacy_conversion();
 
 
 

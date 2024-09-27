@@ -168,7 +168,8 @@ void AdventureModeSettingsScene::repaint()
         repaint_autofire(
             APP.gp_.stateflags_.get(GlobalPersistentData::autofire_on), false);
         repaint_permadeath(
-            APP.gp_.stateflags_.get(GlobalPersistentData::permadeath_on), false);
+            APP.gp_.stateflags_.get(GlobalPersistentData::permadeath_on),
+            false);
         break;
 
     case 1:
@@ -176,7 +177,8 @@ void AdventureModeSettingsScene::repaint()
         repaint_autofire(
             APP.gp_.stateflags_.get(GlobalPersistentData::autofire_on), true);
         repaint_permadeath(
-            APP.gp_.stateflags_.get(GlobalPersistentData::permadeath_on), false);
+            APP.gp_.stateflags_.get(GlobalPersistentData::permadeath_on),
+            false);
         break;
 
     case 2:
@@ -265,7 +267,6 @@ void AdventureModeSettingsScene::update_field(bool inc)
         APP.gp_.stateflags_.set(GlobalPersistentData::permadeath_on, pd);
         break;
     }
-
     }
 }
 

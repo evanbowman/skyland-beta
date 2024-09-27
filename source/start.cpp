@@ -93,6 +93,8 @@ static inline int boot_init()
                                           {.use_compression_ = true});
 
         clean_boot = true;
+    } else {
+        save::legacy_conversion();
     }
 
 

@@ -71,6 +71,9 @@ template <u32 length> StringBuffer<length> to_string(int num)
 }
 
 
+StringBuffer<32> format_time(u32 seconds, bool include_hours);
+
+
 void locale_num2str(int num, char* buffer, int base);
 
 

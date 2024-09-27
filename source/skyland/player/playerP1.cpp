@@ -308,7 +308,8 @@ void PlayerP1::AIState::update_weapon_targets(Time delta)
         return;
     }
 
-    if (APP.opponent().is_friendly() or APP.level_timer().total() < seconds(2)) {
+    if (APP.opponent().is_friendly() or
+        APP.level_timer().total() < seconds(2)) {
         // Don't start selecting targets when playing the level entry animation
         // and stuff.
         for (auto& r : APP.player_island().rooms()) {

@@ -47,8 +47,8 @@ namespace skyland
 class NewgameScene : public Scene
 {
 public:
-
     void enter(Scene& prev) override;
+    void exit(Scene& prev) override;
 
 
     ScenePtr update(Time delta) override;

@@ -41,6 +41,7 @@
 #include "modules/macrocosmLoaderModule.hpp"
 #include "multiplayerConnectScene.hpp"
 #include "newgameScene.hpp"
+#include "saveSlotScene.hpp"
 #include "platform/color.hpp"
 #include "platform/flash_filesystem.hpp"
 #include "script/lisp.hpp"
@@ -1274,7 +1275,7 @@ ScenePtr TitleScreenScene::update(Time delta)
                 auto tutorial_flag = GlobalPersistentData::tutorial_prompt;
 
                 if (APP.gp_.stateflags_.get(tutorial_flag)) {
-                    return make_scene<NewgameScene>();
+                    return make_scene<SaveSlotScene>();
                 } else {
 
                     module_cursor_ = {0, 0};

@@ -692,11 +692,13 @@ ScenePtr WorldMapScene::update(Time delta)
         if (timer_ > milliseconds(60)) {
             timer_ = 0;
 
-            if (not (APP.persistent_data().state_flags_.get() & PersistentData::permadeath_on)) {
+            if (not(APP.persistent_data().state_flags_.get() &
+                    PersistentData::permadeath_on)) {
                 state_ = State::save_options;
                 auto opt1 = SYSTR(wg_save_and_continue);
                 auto opt2 = SYSTR(wg_save_and_quit);
-                save_opt_len_ = std::max(utf8::len(opt1->c_str()), utf8::len(opt2->c_str()));
+                save_opt_len_ = std::max(utf8::len(opt1->c_str()),
+                                         utf8::len(opt2->c_str()));
 
                 save_icon_.reset();
                 help_icon_.reset();
