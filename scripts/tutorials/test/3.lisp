@@ -1,1 +1,3 @@
-
+;;;
+;;; firing_patterns.lisp
+;;;
