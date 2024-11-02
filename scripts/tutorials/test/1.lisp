@@ -1,5 +1,5 @@
-;; NOTE: ordering of results in the (rooms) function is not deterministic when
-;; rewinding game logic. hence the difference function.
+;;; NOTE: ordering of results in the (rooms) function is not deterministic when
+;;; rewinding game logic. hence the difference function.
 (assert-eq
  nil
  (difference
