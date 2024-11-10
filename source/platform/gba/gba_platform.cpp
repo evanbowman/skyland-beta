@@ -6829,13 +6829,12 @@ static const Platform::Extensions extensions{
     .feed_watchdog = []() { ::watchdog_counter = 0; },
     .update_parallax_r1 = [](u8 scroll) {
             auto& screen = PLATFORM.screen();
-
             auto center = screen.get_view().int_center().cast<s32>();
-
             if (not get_gflag(GlobalFlag::v_parallax)) {
                 auto offset = center.y / 2;
                 for (int i = 112 - offset; i < 128 - offset; ++i) {
-                    u8 temp = scroll + center.x / 3;
+                    u8 temp = scroll +
+                              center.x / 3;
                     parallax_table[i] = temp;
                 }
 
@@ -6847,11 +6846,12 @@ static const Platform::Extensions extensions{
                 return;
             }
 
-            auto offset = center.y / 4 + 3;
+            auto offset =
+                center.y / 2 * 0.5f + 3;
 
             const auto x_amount =
-                (Fixnum::from_integer(scroll +
-                                      (center.x / 3)) * Fixnum(0.8f)).as_integer();
+                scroll +
+                (center.x / 3) * 0.8f;
 
             for (int i = (112 - offset) - 30; i < 128 - offset; ++i) {
                 parallax_table[i] = x_amount;
@@ -6863,7 +6863,8 @@ static const Platform::Extensions extensions{
                 // stuff if we're about to copy over the palette back buffer. During
                 // fades, the palettes are copied infrequently anyway.
 
-                s16 far_x_offset = center.x / 4 + 3;
+                s16 far_x_offset =
+                    center.x / 2 * 0.5f + 3;
 
                 s16 v_scroll = (offset * 6) / 2 + 24;
 
@@ -6896,20 +6897,21 @@ static const Platform::Extensions extensions{
         [](u8 scroll) {
             auto& screen = PLATFORM.screen();
             auto center = screen.get_view().int_center().cast<s32>();
-
             if (not get_gflag(GlobalFlag::v_parallax)) {
                 auto offset = center.y / 2;
                 for (int i = 128 - offset; i < 160 - offset; ++i) {
-                    u8 temp = scroll + center.x / 3;
+                    u8 temp = scroll +
+                              center.x / 3;
                     parallax_table[i] = temp;
                 }
                 return;
             }
 
             auto offset =
-                (Fixnum::from_integer(center.y / 2) * Fixnum(0.7f) + 3.0_fixed).as_integer();
+                center.y / 2 * 0.7f + 3;
 
-            const auto x_amount = scroll + center.x / 3;
+            const auto x_amount =
+                scroll + center.x / 3;
 
             for (int i = 128 - offset; i < 160 - offset; ++i) {
                 parallax_table[i] = x_amount;
@@ -6920,7 +6922,8 @@ static const Platform::Extensions extensions{
             // unshifted pixels between them, which we need to account for.
             // Otherwise, certain rows that were scrolled last time will not have
             // their y-scroll adjusted, which can create graphical glitches.
-            auto other_row_offset = center.y / 4 + 3;
+            auto other_row_offset =
+                center.y / 2 * 0.5f + 3;
 
             for (int i = 128 - other_row_offset; i < (128 - offset) - 1; ++i) {
                 // We put a layer of solid-colored tiles offscreen, and we scroll
