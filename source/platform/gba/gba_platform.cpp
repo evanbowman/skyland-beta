@@ -6827,8 +6827,7 @@ static const Platform::Extensions extensions{
             set_gflag(GlobalFlag::partial_palette_sync, true);
         },
     .feed_watchdog = []() { ::watchdog_counter = 0; },
-    .update_parallax_r1 =
-        [](u8 scroll) {
+    .update_parallax_r1 = [](u8 scroll) {
             auto& screen = PLATFORM.screen();
 
             auto center = screen.get_view().int_center().cast<s32>();

@@ -676,7 +676,8 @@ void Island::FireState::display(Island& island)
 
     auto o = ivec(island.visual_origin());
 
-    auto batch = allocate_dynamic<Buffer<Vec2<s32>, 64>>("fire-spr-buffer");
+    using Buf = Buffer<Vec2<s32>, 64>;
+    auto batch = allocate_dynamic_fast<Buf>("fire-spr-buffer", Buf::SkipZeroFill{});
 
     for (int x = 0; x < 16; ++x) {
         for (int y = 0; y < 16; ++y) {
@@ -739,11 +740,7 @@ void Island::update_simple(Time dt)
 
 void Island::update(Time dt)
 {
-    TIMEPOINT(t1);
-
     update_simple(dt);
-
-    TIMEPOINT(t2);
 
     if (should_recompute_deflector_shields_) {
         should_recompute_deflector_shields_ = false;
@@ -892,19 +889,8 @@ void Island::update(Time dt)
     drawfirst_ = nullptr;
 
 
-    TIMEPOINT(t3);
-
-    [[maybe_unused]] int dispatch_count = 0;
-    int dispatch_max_lat = 0;
-    int dispatch_min_lat = std::numeric_limits<int>::max();
-    [[maybe_unused]] RoomMeta* max_mt = nullptr;
-
-
     while (room) {
 
-        TIMEPOINT(before);
-
-        ++dispatch_count;
         const auto next = room->dispatch_next();
 
         if (room->health() == 0) {
@@ -1123,21 +1109,8 @@ void Island::update(Time dt)
             update_characters(room, room->edit_characters(), false);
         }
 
-
-        TIMEPOINT(after);
-        const auto lat = after - before;
-        if (lat < dispatch_min_lat) {
-            dispatch_min_lat = lat;
-        }
-        if (lat > dispatch_max_lat) {
-            dispatch_max_lat = lat;
-            max_mt = room->metaclass();
-        }
-
         room = next;
     }
-
-    TIMEPOINT(t4);
 
     if (do_repaint) {
         repaint();
@@ -1148,31 +1121,19 @@ void Island::update(Time dt)
     }
 
 
-    TIMEPOINT(t5);
-
 
     update_characters(nullptr, characters_, true);
 
 
-    TIMEPOINT(t6);
-
-
     update_entities(dt, projectiles_);
-
-
-    TIMEPOINT(t7);
 
 
     if (drift_ not_eq 0.0_fixed) {
         position_.x += drift_ * Fixnum::from_integer(dt);
     }
 
-    TIMEPOINT(t8);
-
     fire_.update(*this, dt);
 
-
-    TIMEPOINT(t9);
 
 // #define ISLAND_PROFILE_LATENCY
 #ifdef ISLAND_PROFILE_LATENCY
