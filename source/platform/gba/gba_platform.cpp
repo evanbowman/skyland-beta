@@ -335,7 +335,7 @@ extern "C" {
 __attribute__((section(".iwram"), long_call)) void
 memcpy32(void* dst, const void* src, uint wcount);
 void memcpy16(void* dst, const void* src, uint hwcount);
-void memset32(void *dst, u32 src, u32 wdn);
+void memset32(void* dst, u32 src, u32 wdn);
 }
 
 
@@ -6827,14 +6827,14 @@ static const Platform::Extensions extensions{
             set_gflag(GlobalFlag::partial_palette_sync, true);
         },
     .feed_watchdog = []() { ::watchdog_counter = 0; },
-    .update_parallax_r1 = [](u8 scroll) {
+    .update_parallax_r1 =
+        [](u8 scroll) {
             auto& screen = PLATFORM.screen();
             auto center = screen.get_view().int_center().cast<s32>();
             if (not get_gflag(GlobalFlag::v_parallax)) {
                 auto offset = center.y / 2;
                 for (int i = 112 - offset; i < 128 - offset; ++i) {
-                    u8 temp = scroll +
-                              center.x / 3;
+                    u8 temp = scroll + center.x / 3;
                     parallax_table[i] = temp;
                 }
 
@@ -6846,12 +6846,9 @@ static const Platform::Extensions extensions{
                 return;
             }
 
-            auto offset =
-                center.y / 2 * 0.5f + 3;
+            auto offset = center.y / 2 * 0.5f + 3;
 
-            const auto x_amount =
-                scroll +
-                (center.x / 3) * 0.8f;
+            const auto x_amount = scroll + (center.x / 3) * 0.8f;
 
             for (int i = (112 - offset) - 30; i < 128 - offset; ++i) {
                 parallax_table[i] = x_amount;
@@ -6863,8 +6860,7 @@ static const Platform::Extensions extensions{
                 // stuff if we're about to copy over the palette back buffer. During
                 // fades, the palettes are copied infrequently anyway.
 
-                s16 far_x_offset =
-                    center.x / 2 * 0.5f + 3;
+                s16 far_x_offset = center.x / 2 * 0.5f + 3;
 
                 s16 v_scroll = (offset * 6) / 2 + 24;
 
@@ -6900,18 +6896,15 @@ static const Platform::Extensions extensions{
             if (not get_gflag(GlobalFlag::v_parallax)) {
                 auto offset = center.y / 2;
                 for (int i = 128 - offset; i < 160 - offset; ++i) {
-                    u8 temp = scroll +
-                              center.x / 3;
+                    u8 temp = scroll + center.x / 3;
                     parallax_table[i] = temp;
                 }
                 return;
             }
 
-            auto offset =
-                center.y / 2 * 0.7f + 3;
+            auto offset = center.y / 2 * 0.7f + 3;
 
-            const auto x_amount =
-                scroll + center.x / 3;
+            const auto x_amount = scroll + center.x / 3;
 
             for (int i = 128 - offset; i < 160 - offset; ++i) {
                 parallax_table[i] = x_amount;
@@ -6922,8 +6915,7 @@ static const Platform::Extensions extensions{
             // unshifted pixels between them, which we need to account for.
             // Otherwise, certain rows that were scrolled last time will not have
             // their y-scroll adjusted, which can create graphical glitches.
-            auto other_row_offset =
-                center.y / 2 * 0.5f + 3;
+            auto other_row_offset = center.y / 2 * 0.5f + 3;
 
             for (int i = 128 - other_row_offset; i < (128 - offset) - 1; ++i) {
                 // We put a layer of solid-colored tiles offscreen, and we scroll
@@ -7081,9 +7073,9 @@ static const Platform::Extensions extensions{
     .watchdog_off = [] { set_gflag(GlobalFlag::watchdog_disabled, true); },
     .get_stack_usage = [] { return max_stack_usage(); },
     .restart = [] { ::restart(); },
-    .memset_words = [](void* dst, u32 src, u32 word_count) {
-        ::memset32(dst, src, word_count);
-    },
+    .memset_words = [](void* dst,
+                       u32 src,
+                       u32 word_count) { ::memset32(dst, src, word_count); },
     .psg_play_note =
         [](Platform::Speaker::Channel channel,
            Platform::Speaker::NoteDesc note_desc) {

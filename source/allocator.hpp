@@ -159,7 +159,8 @@ DynamicMemory<T> allocate_dynamic(const ScratchBuffer::Tag& tag, Args&&... args)
 
 
 template <typename T, typename... Args>
-DynamicMemory<T> allocate_dynamic_fast(const ScratchBuffer::Tag& tag, Args&&... args)
+DynamicMemory<T> allocate_dynamic_fast(const ScratchBuffer::Tag& tag,
+                                       Args&&... args)
 {
     static_assert(sizeof(T) + alignof(T) <= sizeof ScratchBuffer::data_);
 

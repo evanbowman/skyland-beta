@@ -770,8 +770,8 @@ void BasicCharacter::movement_step(Time delta)
             sprite_.set_flip({true, false});
         }
 
-        auto fpos = interpolate_fp(dest, o,
-                                   Fixnum(Float(timer_) / movement_step_duration(race_)));
+        auto fpos = interpolate_fp(
+            dest, o, Fixnum(Float(timer_) / movement_step_duration(race_)));
 
         sprite_.set_position(fpos);
     }

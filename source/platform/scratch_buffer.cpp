@@ -43,10 +43,10 @@
 
 
 using SbrCtrlBlock = PooledRcControlBlock<ScratchBuffer, scratch_buffer_count>;
-using SbrPool = Pool<sizeof(SbrCtrlBlock), scratch_buffer_count, alignof(SbrCtrlBlock)>;
+using SbrPool =
+    Pool<sizeof(SbrCtrlBlock), scratch_buffer_count, alignof(SbrCtrlBlock)>;
 
-static EXT_WORKRAM_DATA
-SbrPool scratch_buffer_pool("scratch-buffers");
+static EXT_WORKRAM_DATA SbrPool scratch_buffer_pool("scratch-buffers");
 
 
 
@@ -71,7 +71,6 @@ create_sbr_rc(void (*finalizer_hook)(SbrCtrlBlock*))
         return {};
     }
 }
-
 
 
 
@@ -120,11 +119,10 @@ ScratchBufferPtr make_scratch_buffer(const ScratchBuffer::Tag& tag,
         }
     }
 
-    auto finalizer =
-        [](SbrCtrlBlock* ctrl) {
-            --scratch_buffers_in_use_;
-            scratch_buffer_pool.free((u8*)ctrl);
-        };
+    auto finalizer = [](SbrCtrlBlock* ctrl) {
+        --scratch_buffers_in_use_;
+        scratch_buffer_pool.free((u8*)ctrl);
+    };
 
     auto maybe_buffer = create_sbr_rc(finalizer);
     if (maybe_buffer) {
