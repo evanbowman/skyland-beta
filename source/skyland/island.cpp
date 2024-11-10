@@ -677,8 +677,7 @@ void Island::FireState::display(Island& island)
     auto o = ivec(island.visual_origin());
 
     using Buf = Buffer<Vec2<s32>, 64>;
-    auto batch =
-        allocate_dynamic_fast<Buf>("fire-spr-buffer", Buf::SkipZeroFill{});
+    auto batch = allocate_dynamic_fast<Buf>("fire-spr-buffer", Buf::SkipZeroFill{});
 
     for (int x = 0; x < 16; ++x) {
         for (int y = 0; y < 16; ++y) {

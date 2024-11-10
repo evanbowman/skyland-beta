@@ -1329,19 +1329,9 @@ u16 find_dynamic_mapping(u16 virtual_index)
 
 
 
-static Optional<Vec2<s32>> cached_view_center;
-
-
-
 static Vec2<s32> get_view_center(const Platform::Screen& screen)
 {
-    Vec2<s32> view_center;
-    if (cached_view_center) {
-        view_center = *cached_view_center;
-    } else {
-        view_center = screen.get_view().get_center().cast<s32>();
-        cached_view_center = view_center;
-    }
+    Vec2<s32> view_center = screen.get_view().int_center().cast<s32>();
 
     return view_center;
 }
@@ -1479,6 +1469,8 @@ void Platform::Screen::draw(const Sprite& spr)
         pb = ATTR2_PALBANK(spr.palette());
     }
 
+    auto spr_scale = spr.get_scale();
+
     auto draw_sprite = [&](int tex_off,
                            int x_off,
                            int scale,
@@ -1503,20 +1495,20 @@ void Platform::Screen::draw(const Sprite& spr)
 
         oa->attribute_0 &= (0xff00 & ~((1 << 8) | (1 << 9))); // clear attr0
 
-        if (spr.get_rotation() or spr.get_scale().x or spr.get_scale().y) {
+        if (spr.get_rotation() or spr_scale.x or spr_scale.y) {
             if (affine_transform_write_index not_eq affine_transform_limit) {
                 auto& affine =
                     affine_transform_back_buffer[affine_transform_write_index];
 
                 if (spr.get_rotation() and
-                    (spr.get_scale().x or spr.get_scale().y)) {
+                    (spr_scale.x or spr_scale.y)) {
                     affine.rot_scale(spr.get_rotation(),
-                                     spr.get_scale().x,
-                                     spr.get_scale().y);
+                                     spr_scale.x,
+                                     spr_scale.y);
                 } else if (spr.get_rotation()) {
                     affine.rotate(spr.get_rotation());
                 } else {
-                    affine.scale(spr.get_scale().x, spr.get_scale().y);
+                    affine.scale(spr_scale.x, spr_scale.y);
                 }
 
                 oa->attribute_0 |= 1 << 8;
@@ -2374,8 +2366,6 @@ void Platform::Screen::display()
             BG1_Y_SCROLL = view_offset.y / 2;
         }
     }
-
-    cached_view_center.reset();
 }
 
 
