@@ -90,7 +90,9 @@ public:
 
     static RoomProperties::Bitmask properties()
     {
-        return RoomProperties::habitable | RoomProperties::multiboot_compatible;
+        return RoomProperties::habitable |
+               RoomProperties::multiboot_compatible |
+               RoomProperties::not_plunderable;
     }
 
 
@@ -159,7 +161,8 @@ public:
     {
         return RoomProperties::habitable |
                RoomProperties::disabled_in_tutorials |
-               RoomProperties::not_constructible;
+               RoomProperties::not_constructible |
+               RoomProperties::not_plunderable;
     }
 };
 
@@ -207,7 +210,8 @@ public:
     {
         return RoomProperties::habitable |
                RoomProperties::disabled_in_tutorials |
-               RoomProperties::not_constructible;
+               RoomProperties::not_constructible |
+               RoomProperties::not_plunderable;
     }
 };
 

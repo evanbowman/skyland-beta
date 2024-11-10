@@ -923,6 +923,8 @@ public:
         u32 (*get_stack_usage)();
         void (*restart)();
 
+        void (*memset_words)(void* dst, u32 src, u32 word_count);
+
         void (*psg_play_note)(Speaker::Channel c, Speaker::NoteDesc note);
         void (*psg_stop_note)(Speaker::Channel c);
         void (*psg_apply_effect)(Speaker::Channel c,

@@ -162,6 +162,8 @@ struct RoomProperties
         multiboot_compatible = (1 << 25),
 
         singleton = (1 << 26),
+
+        not_plunderable = (1 << 27),
     };
 };
 

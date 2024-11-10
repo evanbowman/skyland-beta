@@ -127,7 +127,6 @@ set(SOURCES
   ${SOURCE_DIR}/skyland/weather/night.cpp
   ${SOURCE_DIR}/skyland/weather/storm.cpp
   ${SOURCE_DIR}/skyland/weather/typhoon.cpp
-  ${SOURCE_DIR}/skyland/weather/dynamic.cpp
   ${SOURCE_DIR}/skyland/weather/dustStorm.cpp
   ${SOURCE_DIR}/skyland/weather/blizzard.cpp
   ${SOURCE_DIR}/skyland/weather/clearSkies.cpp

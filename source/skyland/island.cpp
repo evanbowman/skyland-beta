@@ -1774,7 +1774,7 @@ void Island::repaint_partial()
         TileId tiles[16][16];
     };
 
-    auto mem = allocate_dynamic<Memory>("repaint partial buffer");
+    auto mem = allocate_dynamic_fast<Memory>("repaint partial buffer");
 
     for (u32 x = 0; x < terrain_.size(); ++x) {
         for (int y = 0; y < 16; ++y) {

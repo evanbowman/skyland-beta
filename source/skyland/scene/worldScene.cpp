@@ -1034,7 +1034,11 @@ void WorldScene::near_camera()
 
 void WorldScene::set_pause_icon(u16 icon)
 {
+#ifndef __GBA__
     auto st = calc_screen_tiles();
+#else
+    OverlayCoord st{30, 20};
+#endif
 
     if (icon == 0) {
         auto t = PLATFORM.get_tile(Layer::overlay, st.x - 2, 1);

@@ -118,7 +118,7 @@ public:
     static RoomProperties::Bitmask properties()
     {
         return (Decoration::properties() & ~RoomProperties::roof_hidden) |
-               RoomProperties::habitable;
+               RoomProperties::habitable | RoomProperties::not_plunderable;
     }
 
 

@@ -87,7 +87,8 @@ public:
     {
         return RoomProperties::habitable |
                RoomProperties::disabled_in_tutorials |
-               RoomProperties::multiboot_compatible;
+               RoomProperties::multiboot_compatible |
+               RoomProperties::not_plunderable;
     }
 
 
@@ -156,7 +157,8 @@ public:
     {
         return RoomProperties::habitable |
                RoomProperties::disabled_in_tutorials |
-               RoomProperties::not_constructible;
+               RoomProperties::not_constructible |
+               RoomProperties::not_plunderable;
     }
 };
 

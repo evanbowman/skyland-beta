@@ -59,10 +59,6 @@ struct State
         ColorConstant values_[16];
     };
 
-    ColorTable t0_palette_;
-    ColorTable t1_palette_;
-    ColorTable background_palette_;
-    ColorTable sprite_palette_;
     u16 spr_ = 89 * 8;
 
     Vec2<s16> last_camera_;

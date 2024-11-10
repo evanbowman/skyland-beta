@@ -448,14 +448,8 @@ void BasicCharacter::update(Time delta, Room* room)
                     anim_timer_ = 0;
                 } else {
                     if (&room->owner()->owner() not_eq owner()) {
-                        const char* name = (*metac)->name();
-                        if (not str_eq(name, "plundered-room") and
-                            not str_eq(name, "stairwell") and
-                            not str_eq(name, "bridge") and
-                            not str_eq(name, "ladder") and
-                            not str_eq(name, "ladder+") and
-                            not str_eq(name, "stairwell+") and
-                            not str_eq(name, "stairwell++") and
+                        auto props = (*metac)->properties();
+                        if (not(props & RoomProperties::not_plunderable) and
                             not APP.opponent().is_friendly()) {
                             state_ = State::plunder_room;
                             timer_ = 0;
@@ -471,17 +465,18 @@ void BasicCharacter::update(Time delta, Room* room)
                             state_ = State::repair_room;
                             anim_timer_ = 0;
                         } else {
-                            if (room->is_powered_down() or
-                                (not ai_automated_ and
-                                 (not room->cast<Infirmary>() or
-                                  health() == max_health) and
-                                 not room->cast<Replicator>() and
-                                 not room->cast<Decimator>() and
-                                 (not room->cast<Transporter>() or
-                                  (room->cast<Transporter>()->ready())))) {
-                                // At this point, the character has absolutely
-                                // nothing to do at its current location.
-                                ai_automated_ = true;
+                            if (not ai_automated_) {
+                                if (room->is_powered_down() or
+                                    ((not room->cast<Infirmary>() or
+                                      health() == max_health) and
+                                     not room->cast<Replicator>() and
+                                     not room->cast<Decimator>() and
+                                     (not room->cast<Transporter>() or
+                                      (room->cast<Transporter>()->ready())))) {
+                                    // At this point, the character has absolutely
+                                    // nothing to do at its current location.
+                                    ai_automated_ = true;
+                                }
                             }
                         }
                     }
