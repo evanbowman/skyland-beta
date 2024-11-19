@@ -36,6 +36,7 @@
 #include "script/lisp.hpp"
 #include "skyland/scene/selectTutorialScene.hpp"
 #include "skyland/skyland.hpp"
+#include "skyland/scene/fadeInScene.hpp"
 
 
 
@@ -50,6 +51,26 @@ EXT_WORKRAM_DATA s8 test_index = -1;
 
 static const auto bkg_color = custom_color(0x007cbf);
 static const Text::OptColors text_colors{{custom_color(0xffffff), bkg_color}};
+
+
+
+int test_count()
+{
+    if (auto script = PLATFORM.load_file_contents("scripts", "test/index.lisp")) {
+        lisp::BasicCharSequence seq(script);
+        auto result = lisp::dostring(seq, [](lisp::Value& err) {
+            lisp::DefaultPrinter p;
+            lisp::format(&err, p);
+            PLATFORM.fatal(p.data_.c_str());
+        });
+        return lisp::length(result);
+    }
+    return 0;
+}
+
+
+
+void prep_level();
 
 
 
@@ -125,7 +146,10 @@ ScenePtr RegressionModule::update(Time delta)
 
     } else {
 
-        if (test_index > 0) {
+        const auto tutorial_count = SelectTutorialScene::tutorial_count();
+        // const auto t_count = test_count();
+
+        if (test_index > 0 and test_index < tutorial_count + 1) {
             APP.invoke_script("/scripts/tutorials/test/common.lisp");
 
             auto tutorial_list =
@@ -137,9 +161,30 @@ ScenePtr RegressionModule::update(Time delta)
             APP.invoke_script(format("/scripts/tutorials/test/%.lisp",
                                      test_num->integer().value_)
                                   .c_str());
+        } else if (test_index > 0) {
+            PLATFORM.fatal(stringify(test_index));
+            APP.invoke_script("/scripts/tutorials/test/common.lisp");
+            auto test_list = APP.invoke_script("/scripts/test/index.lisp");
+            auto test_file = lisp::get_list(test_list, test_index - tutorial_count);
+            APP.invoke_script(test_file->string().value());
+
+            prep_level();
+            APP.player_island().repaint();
+            APP.player_island().render_exterior();
+            rng::critical_state = 42;
+            PLATFORM.speaker().stream_music(APP.environment().music()->c_str(),
+                                            0);
+
+            APP.time_stream().enable_pushes(true);
+            APP.time_stream().clear();
+
+            time_stream::event::Initial e;
+            APP.time_stream().push(APP.level_timer(), e);
+
+            return make_scene<FadeInScene>();
         }
 
-        if (test_index == SelectTutorialScene::tutorial_count()) {
+        if (test_index == tutorial_count) {
             PLATFORM.fill_overlay(0);
             PLATFORM.screen().schedule_fade(0);
             PLATFORM.screen().schedule_fade(1, bkg_color);

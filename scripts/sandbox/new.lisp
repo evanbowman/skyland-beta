@@ -96,3 +96,7 @@
 (unbind 'conf 'mkch)
 
 (setvar "powerdown_allowed" 1)
+
+
+(when (is-developer-mode)
+  (eval-file "/scripts/sandbox/setup_test.lisp"))

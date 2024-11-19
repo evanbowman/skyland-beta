@@ -1171,6 +1171,23 @@ o----------------------------o
 
 o----------------------------o
 
+ (rng-seed value)
+
+ Set the seed for the game's
+ rng engine.
+
+
+o----------------------------o
+
+ (game-mode-set mode)
+
+ Override the current game
+ mode. Careful! There's
+ rarely a reason to do this...
+
+
+o----------------------------o
+
  (getvar symbol)
 
  Retrieve a SKYLAND engine

@@ -220,6 +220,18 @@ BINDING_TABLE({
           }
           return wrap_island(APP.opponent_island());
       }}},
+    {"game-mode-set",
+     {1,
+      [](int argc) {
+          APP.game_mode() = (App::GameMode)L_LOAD_INT(0);
+          return L_NIL;
+      }}},
+    {"rng-seed",
+     {1,
+      [](int argc) {
+          rng::critical_state = L_LOAD_INT(0);
+          return L_NIL;
+      }}},
     {"-decorate-isle",
      {1,
       [](int argc) {
@@ -1744,6 +1756,9 @@ BINDING_TABLE({
           L_EXPECT_OP(1, integer);
           L_EXPECT_OP(0, integer);
           auto island = unwrap_isle(lisp::get_op(2));
+          if (island == APP.opponent_island()) {
+              island->set_drift(Fixnum(-0.000025f));
+          }
           island->set_position({Fixnum::from_integer(L_LOAD_INT(1)),
                                 Fixnum::from_integer(L_LOAD_INT(0))});
           return L_NIL;

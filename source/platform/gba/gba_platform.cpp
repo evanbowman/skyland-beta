@@ -5585,7 +5585,7 @@ void Platform::set_tile(u16 x, u16 y, TileDesc glyph, const FontColors& colors)
             custom_text_palette_begin;
 
         if (custom_text_palette_write_ptr == custom_text_palette_begin) {
-            warning("wraparound in custom text palette alloc");
+            // warning("wraparound in custom text palette alloc");
         }
     }
 }
