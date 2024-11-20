@@ -274,13 +274,7 @@ bool bootleg_flash_writeback(BootlegFlashType flash_type,
     return true;
 }
 
-#pragma GCC diagnostic push
-// Accessing data past __rom_end__ raises -Warray-bounds errors. These would be
-// real errors, except that they aren't problematic on the gameboy advance, for
-// various reasons, and we're mounting a filesystem at __rom_end__ anyway, so...
 #pragma GCC diagnostic ignored "-Warray-bounds"
-#pragma GCC diagnostic ignored "-Wstringop-overflow"
-#pragma GCC diagnostic ignored "-Wstringop-overread"
 
 extern char __rom_end__;
 extern int save_capacity;
