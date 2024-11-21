@@ -33,3 +33,4 @@ Release
 build/*.png
 build/psp/*.c
 *.pdf
+build/#build.sh
