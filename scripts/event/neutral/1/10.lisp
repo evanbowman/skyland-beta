@@ -60,7 +60,7 @@
                                  (caar slot)
                                  (cdr (car slot))
                                  'neutral
-                                 '((race . 0) (icon . 5)))))
+                                 nil)))
                   (setq on-dialog-closed nil))))
         (optn (lambda ()
                 (dialog "The goblins resume their attack. <B:0> Maybe you weren't strong enough to face them anyway…")
