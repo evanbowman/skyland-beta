@@ -33,7 +33,8 @@
 
 #pragma once
 
-#include "number/endian.hpp"
+#include "skyland/characterId.hpp"
+#include "skyland/scene_pool.hpp"
 
 
 
@@ -42,37 +43,38 @@ namespace skyland
 
 
 
-struct CharacterStats
+class CrewStatsScene : public Scene
 {
-    using BlockRepairCount = u16;
-    using EnemiesVanquished = u8;
-    using FiresExtinguished = u8;
-    using BattlesFought = u8;
-    using StepCount = u16;
-
-    EnemiesVanquished enemies_vanquished_;
-    BattlesFought battles_fought_;
-
-    HostInteger<BlockRepairCount> blocks_repaired_;
-    HostInteger<StepCount> steps_taken_;
-
-    FiresExtinguished fires_extinguished_;
+public:
+    CrewStatsScene(CharacterId selected_chr);
 
 
-    template <typename T> static void inc(T& val)
-    {
-        if (val not_eq std::numeric_limits<T>::max()) {
-            ++val;
-        }
-    }
+    void enter(Scene& prev) override;
+    void exit(Scene& next) override;
 
 
-    template <typename T> static void inc(HostInteger<T>& val)
-    {
-        if (val.get() not_eq std::numeric_limits<T>::max()) {
-            val.set(val.get() + 1);
-        }
-    }
+    ScenePtr update(Time delta) override;
+
+
+    Optional<DeferredScene> next_;
+
+
+    Float bkg_fade_amount_ = 0.5f;
+    Float exit_fade_ = 0.f;
+
+
+private:
+    Vector<CharacterId> chrs_;
+    int page_index_ = 0;
+    int icon_sel_ = 0;
+    bool exit_ = false;
+
+    enum State : u8 {
+        regular,
+        icon_select,
+    } state_ = State::regular;
+
+    void show_page();
 };
 
 

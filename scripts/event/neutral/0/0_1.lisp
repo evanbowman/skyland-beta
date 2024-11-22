@@ -48,6 +48,7 @@
         (progn
           (setq temp (sample temp))
           (chr-new (player) (car temp) (cdr temp) 'neutral '((icon . 27)))
+
           (chr-del (opponent) 1 14)
           (join "The castaway joined your crew!"))
         (progn
