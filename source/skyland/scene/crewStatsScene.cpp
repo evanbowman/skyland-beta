@@ -44,7 +44,7 @@ namespace skyland
 
 
 static const auto bold_colors =
-    FontColors{custom_color(0xf7f7ef), custom_color(0x0e0984)};
+    FontColors{custom_color(0x080884), custom_color(0xced6a5)};
 
 
 
