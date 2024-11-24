@@ -117,13 +117,13 @@ void Drone::update_sprite()
 
     sprite_.set_position(o);
 
-    if (target_) {
+    if (auto target = get_target()) {
         if (destination() == APP.opponent_island() and target_near_) {
             sprite_.set_flip({true, false});
         } else if (is_player_island(destination())) {
             sprite_.set_flip({false, false});
         } else {
-            if (target_->x < grid_pos_.x) {
+            if (target->x < grid_pos_.x) {
                 sprite_.set_flip({true, false});
             } else {
                 sprite_.set_flip({false, false});
@@ -191,29 +191,40 @@ void Drone::set_target(const RoomCoord& target,
 {
     target_pinned_ = target_pinned;
 
-    if (target_) {
-        if (*target_ == target and target_near_ == target_near) {
+    auto prev_target = get_target();
+
+    if (prev_target) {
+        if (*prev_target == target and target_near_ == target_near) {
             // Optimization to save space in the rewind buffer.
             return;
         }
     }
 
+    clear_target_queue();
+
+    target_queue_.push_back(PackedTarget::pack(target));
+    target_near_ = target_near;
+}
+
+
+
+void Drone::clear_target_queue()
+{
+    // FIXME!!!
+
     time_stream::event::DroneSetTarget e;
     e.x_pos_ = grid_pos_.x;
     e.y_pos_ = grid_pos_.y;
-    if (target_) {
+    if (auto target = get_target()) {
         e.has_previous_target_ = true;
-        e.previous_target_x_ = target_->x;
-        e.previous_target_y_ = target_->y;
+        e.previous_target_x_ = target->x;
+        e.previous_target_y_ = target->y;
     } else {
         e.has_previous_target_ = false;
     }
     e.previous_target_near_ = target_near_;
     e.destination_near_ = is_player_island(destination_);
     APP.time_stream().push(APP.level_timer(), e);
-
-    target_ = target;
-    target_near_ = target_near;
 }
 
 
@@ -227,14 +238,17 @@ void Drone::drop_target()
     }
 
     target_pinned_ = false;
-    target_.reset();
+    target_queue_.clear();
 }
 
 
 
 Optional<RoomCoord> Drone::get_target() const
 {
-    return target_;
+    if (not target_queue_.empty()) {
+        return target_queue_.back().coord();
+    }
+    return nullopt();
 }
 
 

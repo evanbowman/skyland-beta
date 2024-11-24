@@ -39,6 +39,7 @@
 #include "skyland/coord.hpp"
 #include "skyland/entity.hpp"
 #include "skyland/scene.hpp"
+#include "skyland/targetQueue.hpp"
 
 
 
@@ -206,6 +207,9 @@ public:
     Room* attached_to();
 
 
+    void clear_target_queue();
+
+
 private:
     Island* parent_;
     Island* destination_;
@@ -223,7 +227,7 @@ private:
     RoomCoord grid_pos_;
 
 protected:
-    Optional<RoomCoord> target_;
+    TargetQueue target_queue_;
     bool target_near_ : 1 = false;
     bool target_pinned_ : 1 = false;
     bool shielded_ : 1 = false;
