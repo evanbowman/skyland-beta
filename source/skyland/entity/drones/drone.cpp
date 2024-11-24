@@ -185,12 +185,32 @@ void Drone::rewind(Time delta)
 
 
 
+void Drone::set_target(const TargetQueue& queue,
+                       bool target_pinned,
+                       bool target_near)
+{
+    if (queue.size() == 1) {
+        set_target(queue[0].coord(), target_pinned, target_near);
+        return;
+    }
+
+    clear_target_queue();
+
+    target_pinned_ = target_pinned;
+
+    for (int i = queue.size() - 1; i > -1; --i) {
+        target_queue_.push_back(queue[i]);
+    }
+
+    target_near_ = target_near;
+}
+
+
+
 void Drone::set_target(const RoomCoord& target,
                        bool target_pinned,
                        bool target_near)
 {
-    target_pinned_ = target_pinned;
-
     auto prev_target = get_target();
 
     if (prev_target) {
@@ -202,6 +222,7 @@ void Drone::set_target(const RoomCoord& target,
 
     clear_target_queue();
 
+    target_pinned_ = target_pinned;
     target_queue_.push_back(PackedTarget::pack(target));
     target_near_ = target_near;
 }
@@ -210,21 +231,44 @@ void Drone::set_target(const RoomCoord& target,
 
 void Drone::clear_target_queue()
 {
-    // FIXME!!!
+    if (target_queue_.size() < 2) {
+        time_stream::event::DroneSetTarget e;
+        e.x_pos_ = grid_pos_.x;
+        e.y_pos_ = grid_pos_.y;
+        if (auto target = get_target()) {
+            e.has_previous_target_ = true;
+            e.previous_target_x_ = target->x;
+            e.previous_target_y_ = target->y;
+        } else {
+            e.has_previous_target_ = false;
+        }
+        e.previous_target_near_ = target_near_;
+        e.destination_near_ = is_player_island(destination_);
+        APP.time_stream().push(APP.level_timer(), e);
 
-    time_stream::event::DroneSetTarget e;
-    e.x_pos_ = grid_pos_.x;
-    e.y_pos_ = grid_pos_.y;
-    if (auto target = get_target()) {
-        e.has_previous_target_ = true;
-        e.previous_target_x_ = target->x;
-        e.previous_target_y_ = target->y;
+        target_queue_.clear();
+
     } else {
-        e.has_previous_target_ = false;
+        for (int i = 0; i < target_queue_.size(); ++i) {
+            time_stream::event::DroneTargetQueuePop e;
+            e.x_pos_ = grid_pos_.x;
+            e.y_pos_ = grid_pos_.y;
+            auto elem = target_queue_[i];
+            e.queue_elem_x_ = elem.x_;
+            e.queue_elem_y_ = elem.y_;
+            e.destination_near_ = is_player_island(destination_);
+            e.previous_target_near_ = target_near_;
+            APP.time_stream().push(APP.level_timer(), e);
+        }
+        target_queue_.clear();
     }
-    e.previous_target_near_ = target_near_;
-    e.destination_near_ = is_player_island(destination_);
-    APP.time_stream().push(APP.level_timer(), e);
+}
+
+
+
+void Drone::__rewind_push_target_queue(const RoomCoord& target)
+{
+    target_queue_.push_back(PackedTarget::pack(target));
 }
 
 
@@ -368,6 +412,32 @@ void Drone::display(Platform::Screen& screen)
 
         sprite_.set_position(cached_pos);
         sprite_.set_alpha(Sprite::Alpha::opaque);
+    }
+}
+
+
+
+void Drone::update_targets()
+{
+    auto isle = target_near_ ? &APP.player_island() : APP.opponent_island();
+    if (not isle) {
+        return;
+    }
+
+    while (target_queue_.size() > 1 and
+           not isle->get_room(target_queue_.back().coord())) {
+
+        time_stream::event::DroneTargetQueuePop e;
+        e.x_pos_ = grid_pos_.x;
+        e.y_pos_ = grid_pos_.y;
+        auto elem = target_queue_.back();
+        e.queue_elem_x_ = elem.x_;
+        e.queue_elem_y_ = elem.y_;
+        e.destination_near_ = is_player_island(destination_);
+        e.previous_target_near_ = target_near_;
+        APP.time_stream().push(APP.level_timer(), e);
+
+        target_queue_.pop_back();
     }
 }
 

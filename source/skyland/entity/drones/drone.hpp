@@ -127,8 +127,8 @@ public:
 
 
 
-    void
-    set_target(const RoomCoord& target, bool target_pinned, bool target_near);
+    void set_target(const RoomCoord& target, bool target_pinned, bool target_near);
+    void set_target(const TargetQueue& target, bool target_pinned, bool target_near);
 
 
     Optional<RoomCoord> get_target() const;
@@ -208,6 +208,12 @@ public:
 
 
     void clear_target_queue();
+
+
+    void update_targets();
+
+
+    void __rewind_push_target_queue(const RoomCoord& c);
 
 
 private:
