@@ -13,7 +13,7 @@
 
 
 (defn challenge-hint ()
-  (dialog "Try upgrading your workshop to a manufactory, regular weapons will not be enough!."))
+  (dialog "Try upgrading your workshop to a manufactory, regular weapons will not be enough!"))
 
 
 
