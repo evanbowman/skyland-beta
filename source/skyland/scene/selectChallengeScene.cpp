@@ -182,7 +182,7 @@ void SelectChallengeScene::exit(Scene& next)
 
     PLATFORM_EXTENSION(vertical_parallax_enable, true);
 
-    PLATFORM.screen().fade(1.f);
+    PLATFORM.screen().schedule_fade(1.f);
 }
 
 
@@ -230,7 +230,7 @@ ScenePtr SelectChallengeScene::update(Time delta)
 
                 APP.player_island().show_flag(false);
 
-                PLATFORM.screen().fade(1.f);
+                PLATFORM.screen().schedule_fade(1.f);
 
                 auto next = make_deferred_scene<SelectChallengeScene>();
                 return make_scene<AchievementNotificationScene>(
@@ -296,7 +296,7 @@ ScenePtr SelectChallengeScene::update(Time delta)
         constexpr auto fade_duration = milliseconds(800);
         if (timer_ > fade_duration) {
             APP.camera()->reset();
-            PLATFORM.screen().fade(
+            PLATFORM.screen().schedule_fade(
                 1.f, ColorConstant::rich_black, {}, true, true);
             auto index = page_ * 5 + cursor_;
             auto choice = lisp::get_list(*challenges_, index);
@@ -328,7 +328,7 @@ ScenePtr SelectChallengeScene::update(Time delta)
             const auto amount =
                 default_fade +
                 (1.f - default_fade) * smoothstep(0.f, fade_duration, timer_);
-            PLATFORM.screen().fade(amount);
+            PLATFORM.screen().schedule_fade(amount);
         }
         break;
     }
