@@ -1283,8 +1283,8 @@ ScenePtr TitleScreenScene::update(Time delta)
                     // Title Screen Graphical bugfix (1)
                     // Text box doesn't show up, need to cycle a fade to fix the
                     // palettes.
-                    PLATFORM.screen().fade(0.95f);
-                    PLATFORM.screen().fade(1.f);
+                    PLATFORM.screen().schedule_fade(0.95f);
+                    PLATFORM.screen().schedule_fade(1.f);
 
                     save::store_global_data(APP.gp_);
                     APP.invoke_script("/scripts/reset_hooks.lisp");
@@ -1501,7 +1501,7 @@ ScenePtr TitleScreenScene::update(Time delta)
 
                     PLATFORM.fill_overlay(0);
                     PLATFORM_EXTENSION(force_vsync);
-                    PLATFORM.screen().fade(
+                    PLATFORM.screen().schedule_fade(
                         1.f, ColorConstant::rich_black, {}, true, true);
                     APP.game_mode() = App::GameMode::challenge;
 
