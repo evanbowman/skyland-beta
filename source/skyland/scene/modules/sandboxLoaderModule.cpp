@@ -225,7 +225,7 @@ void SandboxLoaderModule::exit(Scene& next)
         PLATFORM.load_overlay_texture("overlay");
         PLATFORM_EXTENSION(vertical_parallax_enable, true);
 
-        PLATFORM.screen().fade(1.f, ColorConstant::rich_black, {}, true, true);
+        PLATFORM.screen().schedule_fade(1.f, ColorConstant::rich_black, {}, true, true);
 
         APP.birds().clear();
 
@@ -256,11 +256,11 @@ ScenePtr SandboxLoaderModule::update(Time delta)
     APP.player().update(delta);
 
     if (APP.player().key_down(Key::action_1) or APP.player().tap_released()) {
-        PLATFORM.screen().fade(1.f, ColorConstant::rich_black, {}, true, true);
+        PLATFORM.screen().schedule_fade(1.f, ColorConstant::rich_black, {}, true, true);
         return make_scene<FadeInScene>();
     } else if (APP.player().key_down(Key::action_2)) {
         cancelled_ = true;
-        PLATFORM.screen().fade(1.f, ColorConstant::rich_black, {}, true, true);
+        PLATFORM.screen().schedule_fade(1.f, ColorConstant::rich_black, {}, true, true);
         return make_scene<TitleScreenScene>(3);
     }
 
