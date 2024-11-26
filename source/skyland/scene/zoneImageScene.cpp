@@ -153,7 +153,7 @@ ScenePtr ZoneImageScene::update(Time delta)
 
         constexpr auto fade_duration = milliseconds(800);
         if (timer_ > fade_duration) {
-            PLATFORM.screen().fade(0.f);
+            PLATFORM.screen().schedule_fade(0.f);
             state_ = State::wait;
             timer_ = 0;
         } else {
@@ -177,7 +177,7 @@ ScenePtr ZoneImageScene::update(Time delta)
         constexpr auto fade_duration = milliseconds(1300);
         if (timer_ > fade_duration) {
             text_.reset();
-            PLATFORM.screen().fade(
+            PLATFORM.screen().schedule_fade(
                 1.f, ColorConstant::rich_black, {}, true, true);
 
             if (APP.zone() == 1) {
