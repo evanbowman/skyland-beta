@@ -98,7 +98,7 @@ void HintScene::enter(Scene& prev)
 
 void HintScene::exit(Scene& next)
 {
-    PLATFORM.screen().fade(1.f, ColorConstant::rich_black, {}, true, true);
+    PLATFORM.screen().schedule_fade(1.f, ColorConstant::rich_black, {}, true, true);
     heading_.reset();
     body_.reset();
     PLATFORM.fill_overlay(0);
@@ -118,7 +118,7 @@ ScenePtr HintScene::update(Time delta)
                 true,
                 true);
         } else {
-            PLATFORM.screen().fade(0.f);
+            PLATFORM.screen().schedule_fade(0.f);
             timer_ = 0;
             state_ = State::idle;
         }
@@ -146,13 +146,13 @@ ScenePtr HintScene::update(Time delta)
         static const auto fade_duration = milliseconds(200);
         timer_ += delta;
         if (timer_ < fade_duration) {
-            PLATFORM.screen().fade(1.f - smoothstep(0.f, fade_duration, timer_),
+            PLATFORM.screen().schedule_fade(1.f - smoothstep(0.f, fade_duration, timer_),
                                    custom_color(0x163061),
                                    {},
                                    true,
                                    true);
         } else {
-            PLATFORM.screen().fade(0.f);
+            PLATFORM.screen().schedule_fade(0.f);
             timer_ = 0;
             state_ = State::idle;
         }
@@ -178,13 +178,13 @@ ScenePtr HintScene::update(Time delta)
         static const auto fade_duration = milliseconds(200);
         timer_ += delta;
         if (timer_ < fade_duration) {
-            PLATFORM.screen().fade(smoothstep(0.f, fade_duration, timer_),
+            PLATFORM.screen().schedule_fade(smoothstep(0.f, fade_duration, timer_),
                                    custom_color(0x163061),
                                    {},
                                    true,
                                    true);
         } else {
-            PLATFORM.screen().fade(1.f, custom_color(0x163061), {}, true, true);
+            PLATFORM.screen().schedule_fade(1.f, custom_color(0x163061), {}, true, true);
 
             timer_ = 0;
             state_ = State::swap_img;
