@@ -57,7 +57,7 @@ void IntroCreditsScene::enter(Scene& prev)
     PLATFORM.load_overlay_texture("overlay_skyland_title");
     PLATFORM.load_sprite_texture("spritesheet_title_screen");
 
-    PLATFORM.screen().fade(1.f, ColorConstant::rich_black, {}, false, false);
+    PLATFORM.screen().schedule_fade(1.f, ColorConstant::rich_black, {}, false, false);
 
     rng::critical_state = 2021;
 
