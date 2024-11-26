@@ -45,7 +45,7 @@ namespace skyland
 void LoadModuleScene::enter(Scene& prev)
 {
     show_modules(0);
-    PLATFORM.screen().fade(1.f);
+    PLATFORM.screen().schedule_fade(1.f);
 }
 
 
