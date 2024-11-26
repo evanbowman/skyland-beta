@@ -556,7 +556,7 @@ ScenePtr HighscoresScene::update(Time)
             if (achievement not_eq achievements::Achievement::none) {
                 achievements::award(achievement);
 
-                PLATFORM.screen().fade(1.f);
+                PLATFORM.screen().schedule_fade(1.f);
 
                 const auto pg = title_screen_page_;
 
