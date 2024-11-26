@@ -87,7 +87,7 @@ public:
     {
         auto& m = skyland::macrocosm();
 
-        PLATFORM.screen().fade(1.f);
+        PLATFORM.screen().schedule_fade(1.f);
 
         if (PLATFORM.network_peer().is_connected()) {
             network::poll_messages(*this);
