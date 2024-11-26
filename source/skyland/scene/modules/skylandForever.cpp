@@ -114,7 +114,7 @@ void SkylandForever::enter(Scene& prev)
 
 void SkylandForever::exit(Scene& prev)
 {
-    PLATFORM.screen().fade(1.f, ColorConstant::rich_black, {}, true, true);
+    PLATFORM.screen().schedule_fade(1.f, ColorConstant::rich_black, {}, true, true);
 
     help_.reset();
     title_.reset();
@@ -131,7 +131,7 @@ void SkylandForever::exit(Scene& prev)
     PLATFORM.load_overlay_texture("overlay");
     PLATFORM_EXTENSION(vertical_parallax_enable, true);
 
-    PLATFORM.screen().fade(1.f, ColorConstant::rich_black, {}, true, true);
+    PLATFORM.screen().schedule_fade(1.f, ColorConstant::rich_black, {}, true, true);
 }
 
 
@@ -248,10 +248,10 @@ ScenePtr SkylandForever::update(Time delta)
     }
 
     if (APP.player().key_down(Key::action_1) or APP.player().tap_released()) {
-        PLATFORM.screen().fade(1.f, ColorConstant::rich_black, {}, true, true);
+        PLATFORM.screen().schedule_fade(1.f, ColorConstant::rich_black, {}, true, true);
         return make_scene<FadeInScene>();
     } else if (APP.player().key_down(Key::action_2)) {
-        PLATFORM.screen().fade(1.f, ColorConstant::rich_black, {}, true, true);
+        PLATFORM.screen().schedule_fade(1.f, ColorConstant::rich_black, {}, true, true);
         return make_scene<TitleScreenScene>(3);
     }
 
