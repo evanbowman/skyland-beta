@@ -231,7 +231,7 @@ void MacroverseScene::exit(Scene& prev)
     PLATFORM.screen().set_shader(fluid_shader);
 
     PLATFORM.sleep(1);
-    PLATFORM.screen().fade(1.f);
+    PLATFORM.screen().schedule_fade(1.f);
 
 
     PLATFORM.fill_overlay(0);
@@ -414,7 +414,7 @@ public:
 
         constexpr auto fade_duration = milliseconds(800);
         if (timer_ > fade_duration) {
-            PLATFORM.screen().fade(0.f);
+            PLATFORM.screen().schedule_fade(0.f);
             auto next = make_scene<SelectorScene>();
             next->show_island_size();
             circ_radius_ = 0;
