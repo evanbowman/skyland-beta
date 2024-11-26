@@ -1194,7 +1194,7 @@ ScenePtr WorldMapScene::update(Time delta)
             return make_scene<LoadLevelScene>();
         } else {
             const auto amount = smoothstep(0.f, fade_duration, timer_);
-            PLATFORM.screen().fade(
+            PLATFORM.screen().schedule_fade(
                 amount, ColorConstant::rich_black, {}, true, true);
         }
         break;
@@ -1207,7 +1207,7 @@ ScenePtr WorldMapScene::update(Time delta)
         if (timer_ > fade_duration) {
             timer_ = 0;
             state_ = State::storm_scroll_in;
-            // PLATFORM.screen().fade(1.f, custom_color(0x6057b1), {}, false, false);
+            // PLATFORM.screen().schedule_fade(1.f, custom_color(0x6057b1), {}, false, false);
         } else {
             const auto amount = 1.f - smoothstep(0.f, fade_duration, timer_);
             PLATFORM.screen().schedule_fade(
@@ -1288,7 +1288,7 @@ ScenePtr WorldMapScene::update(Time delta)
             PLATFORM.fill_overlay(0);
         } else {
             const auto amount = smoothstep(0.f, fade_duration, timer_);
-            PLATFORM.screen().fade(
+            PLATFORM.screen().schedule_fade(
                 amount, ColorConstant::rich_black, {}, true, true);
         }
         break;
@@ -1305,7 +1305,7 @@ ScenePtr WorldMapScene::update(Time delta)
             return next;
         } else {
             const auto amount = smoothstep(0.f, fade_duration, timer_);
-            PLATFORM.screen().fade(
+            PLATFORM.screen().schedule_fade(
                 amount, ColorConstant::rich_black, {}, true, true);
         }
         break;
@@ -1320,7 +1320,7 @@ ScenePtr WorldMapScene::update(Time delta)
             return make_scene<HintScene>();
         } else {
             const auto amount = smoothstep(0.f, fade_duration, timer_);
-            PLATFORM.screen().fade(
+            PLATFORM.screen().schedule_fade(
                 amount, ColorConstant::rich_black, {}, true, true);
         }
         break;
@@ -1354,7 +1354,7 @@ ScenePtr WorldMapScene::update(Time delta)
             auto max_vol = Platform::Speaker::music_volume_max;
             u8 vol = max_vol * (1.f - amount);
             PLATFORM.speaker().set_music_volume(clamp(vol, (u8)2, max_vol));
-            PLATFORM.screen().fade(
+            PLATFORM.screen().schedule_fade(
                 amount, ColorConstant::rich_black, {}, true, true);
         }
         break;
@@ -1719,7 +1719,7 @@ void WorldMapScene::enter(Scene& prev_scene)
 {
     PLATFORM.screen().set_shader(passthrough_shader);
 
-    PLATFORM.screen().fade(1.f, ColorConstant::rich_black, {}, true, true);
+    PLATFORM.screen().schedule_fade(1.f, ColorConstant::rich_black, {}, true, true);
 
     APP.swap_player<PlayerP1>();
 
@@ -1828,7 +1828,7 @@ void WorldMapScene::show_map(WorldGraph& map, int storm_depth_offset)
 
 void WorldMapScene::exit(Scene& next_scene)
 {
-    PLATFORM.screen().fade(1.f, ColorConstant::rich_black, {}, true, true);
+    PLATFORM.screen().schedule_fade(1.f, ColorConstant::rich_black, {}, true, true);
 
     PLATFORM.fill_overlay(0);
 
