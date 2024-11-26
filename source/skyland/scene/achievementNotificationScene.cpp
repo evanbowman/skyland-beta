@@ -180,7 +180,7 @@ ScenePtr AchievementNotificationScene::update(Time delta)
             return next_scene_();
         }
         if (timer_ > fade_duration) {
-            PLATFORM.screen().fade(0.f);
+            PLATFORM.screen().schedule_fade(0.f);
             return next_scene_();
         } else {
             const auto amount = 1.f - smoothstep(0.f, fade_duration, timer_);
