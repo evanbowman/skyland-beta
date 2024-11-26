@@ -153,7 +153,7 @@ void AchievementViewerModule::enter(Scene& prev)
     }
 
     load_page(0);
-    PLATFORM.screen().fade(1.f, custom_color(0x39395a));
+    PLATFORM.screen().schedule_fade(1.f, custom_color(0x39395a));
 
     int count = 0;
     for (int i = 0; i < achievements::count; ++i) {
@@ -178,7 +178,7 @@ void AchievementViewerModule::enter(Scene& prev)
 
 void AchievementViewerModule::exit(Scene& next)
 {
-    PLATFORM.screen().fade(1.f);
+    PLATFORM.screen().schedule_fade(1.f);
 
     count_text_.reset();
     achievements_heading_.reset();
