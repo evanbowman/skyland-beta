@@ -589,7 +589,7 @@ ScenePtr PlayerIslandDestroyedScene::update(Time delta)
         anim_state_ = AnimState::fade;
         PLATFORM_EXTENSION(force_vsync);
         PLATFORM.fill_overlay(0);
-        PLATFORM.screen().fade(
+        PLATFORM.screen().schedule_fade(
             1.f, ColorConstant::silver_white, {}, true, true);
 
         auto origin_coord = island_->critical_core_loc();
@@ -615,7 +615,7 @@ ScenePtr PlayerIslandDestroyedScene::update(Time delta)
 
         sink_speed_ += 0.0000013_fixed;
         if (timer_ > fade_duration) {
-            PLATFORM.screen().fade(0.f);
+            PLATFORM.screen().schedule_fade(0.f);
             timer_ = 0;
             if (forced_defeat_) {
                 if (APP.dialog_buffer()) {
@@ -660,7 +660,7 @@ ScenePtr PlayerIslandDestroyedScene::update(Time delta)
             if (achievement not_eq achievements::Achievement::none) {
                 achievements::award(achievement);
 
-                PLATFORM.screen().fade(1.f);
+                PLATFORM.screen().schedule_fade(1.f);
 
                 auto next = make_deferred_scene<PlayerIslandDestroyedScene>(
                     island_, true);
@@ -889,7 +889,7 @@ ScenePtr PlayerIslandDestroyedScene::update(Time delta)
                 PLATFORM.screen().set_shader(APP.environment().shader());
                 PLATFORM.screen().set_shader_argument(0);
                 PLATFORM_EXTENSION(force_vsync);
-                PLATFORM.screen().fade(1.f);
+                PLATFORM.screen().schedule_fade(1.f);
 
                 if (PLATFORM.network_peer().is_connected()) {
                     PLATFORM.network_peer().disconnect();
