@@ -140,7 +140,7 @@ StringBuffer<200> FileBrowserModule::cwd() const
 void FileBrowserModule::repaint()
 {
     // Cover text with black during transition
-    PLATFORM.screen().fade(1.f, custom_color(0x007cbf), {}, true, true);
+    PLATFORM.screen().schedule_fade(1.f, custom_color(0x007cbf), {}, true, true);
     faded_ = true;
 
     // If we clear all the lines, the engine will deallocate all of the tile
@@ -393,12 +393,12 @@ ScenePtr FileBrowserModule::update(Time delta)
 {
     if (faded_) {
         faded_ = false;
-        PLATFORM.screen().fade(
+        PLATFORM.screen().schedule_fade(
             0.95f,
             custom_color(0x007cbf)); // Reset the fade parameters
 
         // Black background behind the text.
-        PLATFORM.screen().fade(1.f, custom_color(0x007cbf));
+        PLATFORM.screen().schedule_fade(1.f, custom_color(0x007cbf));
     }
 
     auto on_dir_changed = [&] {
