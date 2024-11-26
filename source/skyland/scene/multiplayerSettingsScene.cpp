@@ -127,7 +127,7 @@ void MultiplayerSettingsScene::enter(Scene& prev)
         update_parameter(i);
     }
 
-    PLATFORM.screen().fade(0.6f, ColorConstant::rich_black, {}, false, false);
+    PLATFORM.screen().schedule_fade(0.6f, ColorConstant::rich_black, {}, false, false);
 
     PLATFORM_EXTENSION(vertical_parallax_enable, false);
 }
@@ -210,7 +210,7 @@ void set_island_positions(Island& left_island, Island& right_island);
 
 void MultiplayerSettingsScene::exit(Scene& next)
 {
-    PLATFORM.screen().fade(1.f, ColorConstant::rich_black, {}, true, true);
+    PLATFORM.screen().schedule_fade(1.f, ColorConstant::rich_black, {}, true, true);
 
     title_.reset();
     settings_text_.clear();
