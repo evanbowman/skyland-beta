@@ -1540,7 +1540,7 @@ void ConstructionScene::enter(Scene& prev)
         power_fraction_opponent_island_ = true;
     }
 
-    PLATFORM.screen().fade(0.f);
+    PLATFORM.screen().schedule_fade(0.f);
 
     WorldScene::enter(prev);
 
