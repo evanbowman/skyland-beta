@@ -702,8 +702,8 @@ void TextEditorModule::enter(Scene& prev)
 void TextEditorModule::exit(Scene& next)
 {
     PLATFORM_EXTENSION(force_vsync);
-    PLATFORM.screen().fade(0.9f, ColorConstant::rich_black, {}, true, true);
-    PLATFORM.screen().fade(1.f, ColorConstant::rich_black, {}, true, true);
+    PLATFORM.screen().schedule_fade(0.9f, ColorConstant::rich_black, {}, true, true);
+    PLATFORM.screen().schedule_fade(1.f, ColorConstant::rich_black, {}, true, true);
 
     header_.reset();
     status_.reset();
