@@ -195,8 +195,8 @@ void FullscreenDialogScene::enter(Scene& prev)
 
     PLATFORM.fill_overlay(0);
 
-    PLATFORM.screen().fade(1.f, custom_color(0), {}, true, false);
-    PLATFORM.screen().fade(1.f, ColorConstant::rich_black, {}, true, false);
+    PLATFORM.screen().schedule_fade(1.f, custom_color(0), {}, true, false);
+    PLATFORM.screen().schedule_fade(1.f, ColorConstant::rich_black, {}, true, false);
 
     clear_textbox();
 
