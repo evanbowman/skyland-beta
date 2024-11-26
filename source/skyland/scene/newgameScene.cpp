@@ -63,7 +63,7 @@ void NewgameScene::enter(Scene& prev)
 
     APP.with_opponent_island([](auto& isle) { show_island_exterior(&isle); });
 
-    PLATFORM.screen().fade(1.f, ColorConstant::rich_black, {}, true, true);
+    PLATFORM.screen().schedule_fade(1.f, ColorConstant::rich_black, {}, true, true);
 
     switch (APP.gp_.difficulty_) {
     case GlobalPersistentData::Difficulty::beginner:
