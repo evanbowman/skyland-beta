@@ -374,7 +374,7 @@ ScenePtr SelectTutorialScene::update(Time delta)
             text_.clear();
             PLATFORM.fill_overlay(0);
             exit_ = true;
-            PLATFORM.screen().fade(
+            PLATFORM.screen().schedule_fade(
                 1.f, ColorConstant::rich_black, {}, true, true);
         }
         break;
@@ -384,7 +384,7 @@ ScenePtr SelectTutorialScene::update(Time delta)
         constexpr auto fade_duration = milliseconds(800);
         if (timer_ > fade_duration) {
             APP.camera()->reset();
-            PLATFORM.screen().fade(
+            PLATFORM.screen().schedule_fade(
                 1.f, ColorConstant::rich_black, {}, true, true);
 
             state_ = State::quickselect;
@@ -393,7 +393,7 @@ ScenePtr SelectTutorialScene::update(Time delta)
             const auto amount =
                 default_fade +
                 (1.f - default_fade) * smoothstep(0.f, fade_duration, timer_);
-            PLATFORM.screen().fade(amount);
+            PLATFORM.screen().schedule_fade(amount);
         }
         break;
     }
