@@ -48,8 +48,8 @@ namespace skyland
 ScenePtr FactoryResetModule::update(Time delta)
 {
     if (not text_) {
-        PLATFORM.screen().fade(0.9f);
-        PLATFORM.screen().fade(1.f);
+        PLATFORM.screen().schedule_fade(0.9f);
+        PLATFORM.screen().schedule_fade(1.f);
         text_.emplace();
         text_->assign(SYSTR(factory_reset)->c_str(), {1, 1}, {28, 8});
     }
