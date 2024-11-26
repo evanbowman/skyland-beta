@@ -193,8 +193,8 @@ void AdventureModeSettingsScene::enter(Scene& prev)
         PLATFORM.set_tile(Layer::overlay, x, 13, 377);
     }
 
-    PLATFORM.screen().fade(0.96f);
-    PLATFORM.screen().fade(1.f);
+    PLATFORM.screen().schedule_fade(0.96f);
+    PLATFORM.screen().schedule_fade(1.f);
 
     original_ = (u8)APP.gp_.difficulty_;
     stateflags_cached_ = APP.gp_.stateflags_;
