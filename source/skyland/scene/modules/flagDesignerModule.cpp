@@ -526,7 +526,7 @@ void FlagDesignerModule::exit(Scene& next)
         PLATFORM_EXTENSION(force_vsync);
         PLATFORM.screen().clear();
         PLATFORM.screen().display();
-        PLATFORM.screen().fade(1.f);
+        PLATFORM.screen().schedule_fade(1.f);
     }
 }
 
