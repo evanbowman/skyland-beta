@@ -61,7 +61,7 @@ public:
         case State::fade_out: {
             constexpr auto fade_duration = milliseconds(800);
             if (timer_ > fade_duration) {
-                PLATFORM.screen().fade(1.f);
+                PLATFORM.screen().schedule_fade(1.f);
                 state_ = State::wait;
                 timer_ = 0;
 
