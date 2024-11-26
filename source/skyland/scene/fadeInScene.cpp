@@ -159,7 +159,7 @@ ScenePtr FadeInScene::update(Time delta)
 
         state_bit_store(StateBit::disable_autopause, false);
 
-        PLATFORM.screen().fade(0.f);
+        PLATFORM.screen().schedule_fade(0.f);
         auto future_scene = []() {
             auto next = make_scene<ReadyScene>();
             if (APP.game_mode() not_eq App::GameMode::tutorial and
