@@ -113,7 +113,7 @@ ScenePtr FadeOutScene::update(Time delta)
         }
 
         PLATFORM.screen().set_shader(passthrough_shader);
-        PLATFORM.screen().fade(1.f);
+        PLATFORM.screen().schedule_fade(1.f);
 
         if (state_bit_load(StateBit::regression)) {
             return make_scene<LevelExitScene<RegressionModule>>();
