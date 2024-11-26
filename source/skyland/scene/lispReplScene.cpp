@@ -225,7 +225,7 @@ void LispReplScene::exit(Scene& next)
     keyboard_bottom_.reset();
 
     PLATFORM.fill_overlay(0);
-    PLATFORM.screen().fade(0.f);
+    PLATFORM.screen().schedule_fade(0.f);
 
     enable_text_icon_glyphs(true);
 }
@@ -310,14 +310,14 @@ TOP:
     constexpr auto fade_duration = milliseconds(500);
     if (timer_ < fade_duration) {
         if (timer_ + delta > fade_duration) {
-            PLATFORM.screen().fade(0.34f);
+            PLATFORM.screen().schedule_fade(0.34f);
         }
         timer_ += delta;
 
         const auto amount = 0.34f * smoothstep(0.f, fade_duration, timer_);
 
         if (timer_ < fade_duration) {
-            PLATFORM.screen().fade(amount);
+            PLATFORM.screen().schedule_fade(amount);
         }
     }
 
