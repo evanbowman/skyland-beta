@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Copyright (C) 2023  Evan Bowman. Some rights reserved.
+// Copyright (C) 2024  Evan Bowman. Some rights reserved.
 //
 // This program is source-available; the source code is provided for educational
 // purposes. All copies of the software must be distributed along with this
@@ -34,11 +34,10 @@
 
 #pragma once
 
-
 #include "skyland/coins.hpp"
+#include "skyland/room.hpp"
 #include "skyland/sharedVariable.hpp"
 #include "skyland/systemString.hpp"
-#include "weapon.hpp"
 
 
 
@@ -47,32 +46,64 @@ namespace skyland
 
 
 
-class ClumpBomb final : public Weapon
+class Amplifier : public Room
 {
 public:
-    ClumpBomb(Island* parent, const RoomCoord& position);
-
-
-    void fire() override;
-    Time reload_impl() const override;
-
-
-    static WeaponOrientation weapon_orientation()
+    Amplifier(Island* parent, const RoomCoord& position) :
+        Room(parent, name(), position)
     {
-        return WeaponOrientation::vertical;
     }
 
 
-    void render_interior(App* app, TileId buffer[16][16]) override;
-    void render_exterior(App* app, TileId buffer[16][16]) override;
+    void update(Time delta) override
+    {
+        u8 xs = clamp(position().x - 1, 0, 15);
+        u8 ys = clamp(position().y - 1, 0, 15);
+
+        for (u8 x = xs; x < xs + 2; ++x) {
+            for (u8 y = ys; y < ys + 2; ++y) {
+                if (auto r = parent()->get_room({x, y})) {
+                    r->amplify(true);
+                }
+            }
+        }
+    }
 
 
-    static void format_description(StringBuffer<512>& buffer);
+    void rewind(Time delta) override
+    {
+        update(delta);
+    }
+
+
+    void render_interior(App* app, TileId buffer[16][16]) override
+    {
+
+    }
+
+
+    void render_exterior(App* app, TileId buffer[16][16]) override
+    {
+
+    }
+
+
+    void format_description(StringBuffer<512>& buffer)
+    {
+        buffer = SYSTR(description_amplifier)->c_str();
+    }
 
 
     static Category category()
     {
-        return Category::weapon;
+        return Category::misc;
+    }
+
+
+    static RoomProperties::Bitmask properties()
+    {
+        return RoomProperties::roof_hidden | RoomProperties::flag_mount |
+               RoomProperties::sandbox_mode_only;
     }
 
 
@@ -82,56 +113,53 @@ public:
     }
 
 
-    static Vec2<u8> size()
-    {
-        return {2, 2};
-    }
-
-
-    static const char* name()
-    {
-        return "splitter";
-    }
-
-
-    static SystemString ui_name()
-    {
-        return SystemString::block_clump_missile;
-    }
-
-
     static ATP atp_value()
     {
         return 1000.0_atp;
     }
 
 
+    static Vec2<u8> size()
+    {
+        return {1, 1};
+    }
+
+
+    static const char* name()
+    {
+        return "amplifier";
+    }
+
+
+    int debris_tile() override
+    {
+        return 1;
+    }
+
+
+    static SystemString ui_name()
+    {
+        return SystemString::block_amplifier;
+    }
+
+
     static Icon icon()
     {
-        return 2984;
+        return 520;
     }
 
 
     static Icon unsel_icon()
     {
-        return 2968;
+        return 504;
     }
 
+    TileId tile() const;
 
-    static RoomProperties::Bitmask properties()
-    {
-        return RoomProperties::disallow_chimney | RoomProperties::roof_hidden |
-               RoomProperties::multiplayer_unsupported |
-               RoomProperties::only_constructible_in_sandbox;
-    }
-
-
-    void plot_walkable_zones(bool matrix[16][16],
-                             BasicCharacter* for_character) override
-    {
-        // one cannot walk through this tile, intentionally do nothing.
-    }
+protected:
+    TileId last_tile_;
 };
+
 
 
 } // namespace skyland
