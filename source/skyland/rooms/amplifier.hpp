@@ -34,9 +34,8 @@
 
 #pragma once
 
-#include "skyland/coins.hpp"
+#include "skyland/tile.hpp"
 #include "skyland/room.hpp"
-#include "skyland/sharedVariable.hpp"
 #include "skyland/systemString.hpp"
 
 
@@ -55,13 +54,13 @@ public:
     }
 
 
-    void update(Time delta) override
+    void amplify_adjacent()
     {
         u8 xs = clamp(position().x - 1, 0, 15);
         u8 ys = clamp(position().y - 1, 0, 15);
 
-        for (u8 x = xs; x < xs + 2; ++x) {
-            for (u8 y = ys; y < ys + 2; ++y) {
+        for (u8 x = xs; x < xs + 3; ++x) {
+            for (u8 y = ys; y < ys + 3; ++y) {
                 if (auto r = parent()->get_room({x, y})) {
                     r->amplify(true);
                 }
@@ -70,25 +69,35 @@ public:
     }
 
 
+    void update(Time delta) override
+    {
+        Room::update(delta);
+        Room::ready();
+        amplify_adjacent();
+    }
+
+
     void rewind(Time delta) override
     {
-        update(delta);
+        Room::rewind(delta);
+
+        amplify_adjacent();
     }
 
 
     void render_interior(App* app, TileId buffer[16][16]) override
     {
-
+        buffer[position().x][position().y] = Tile::amplifier;
     }
 
 
     void render_exterior(App* app, TileId buffer[16][16]) override
     {
-
+        buffer[position().x][position().y] = Tile::amplifier;
     }
 
 
-    void format_description(StringBuffer<512>& buffer)
+    static void format_description(StringBuffer<512>& buffer)
     {
         buffer = SYSTR(description_amplifier)->c_str();
     }
@@ -100,10 +109,51 @@ public:
     }
 
 
+    void display_on_hover(Platform::Screen& screen,
+                          const RoomCoord& cursor) override
+    {
+        auto pos = position();
+
+        auto origin = parent()->visual_origin();
+
+        Sprite sprite;
+        sprite.set_size(Sprite::Size::w16_h32);
+        sprite.set_texture_index(13);
+        sprite.set_mix({ColorConstant::electric_blue, 255});
+
+        for (int x = pos.x - 1; x < pos.x + 2; ++x) {
+
+            if (x == pos.x) {
+
+                sprite.set_size(Sprite::Size::w16_h16);
+                sprite.set_tidx_16x16(13, 1);
+                sprite.set_position({origin.x + Fixnum::from_integer(x * 16),
+                                     origin.y + Fixnum::from_integer((pos.y - 1) * 16)});
+            } else {
+                sprite.set_size(Sprite::Size::w16_h32);
+                sprite.set_texture_index(13);
+                sprite.set_position({origin.x + Fixnum::from_integer(x * 16),
+                                     origin.y + Fixnum::from_integer((pos.y - 1) * 16)});
+            }
+
+            screen.draw(sprite);
+
+            sprite.set_size(Sprite::Size::w16_h16);
+            sprite.set_tidx_16x16(13, 1);
+            sprite.set_position(
+                                {origin.x + Fixnum::from_integer(x * 16),
+                                 origin.y + Fixnum::from_integer((pos.y + 1) * 16)});
+            screen.draw(sprite);
+            sprite.set_texture_index(13);
+        }
+    }
+
+
     static RoomProperties::Bitmask properties()
     {
         return RoomProperties::roof_hidden | RoomProperties::flag_mount |
-               RoomProperties::sandbox_mode_only;
+               RoomProperties::only_constructible_in_sandbox |
+               RoomProperties::accepts_ion_damage;
     }
 
 
@@ -145,13 +195,13 @@ public:
 
     static Icon icon()
     {
-        return 520;
+        return 4184;
     }
 
 
     static Icon unsel_icon()
     {
-        return 504;
+        return 4168;
     }
 
     TileId tile() const;
