@@ -13,12 +13,18 @@
                         (coins-add c)
                         (let ((g (chrs (opponent)))
                               (ss (chr-slots (player))))
-
+                          ;;; I can place the ladder but not the goblin
                           (unless ss
+                            (dialog "<c:goblin:18> gahh! <B:0> You are out of ssspace! <B:0> NIce hoomansses will not leave us! I'll build an ledarr!")
                             (alloc-space 'ladder)
+                            (sel-input 'ladder
+                                       "Place ladder (1x2):"
+                                       (lambda (isle x y)
+                                           (sound "build0")
+                                          (room-new (player) `(ladder ,x ,y))))
 
                             (let ((s (construction-sites (player) '(1 . 2))))
-                              (room-new (player) (list 'ladder (caar s) (cdr (car s))))
+                            ;;(room-new (player) (list 'ladder (caar s) (cdr (car s))))
                               (setq ss (chr-slots (player)))))
 
                           (if g
