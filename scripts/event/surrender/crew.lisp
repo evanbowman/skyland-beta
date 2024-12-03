@@ -18,8 +18,8 @@
                          "Place block (1x2):"
                          (lambda (x y _)
                            (chr-new (player) x y 'neutral '((race . 1) (icon . 18)))
-                           (adventure-log-add 51 '()) ; write an entry into the adventure log
-                           (dialog "One of the goblins joined your crew!") ; some dialog
+                           (adventure-log-add 51 '())
+                           (dialog "One of the goblins joined your crew!")
                            (run-util-script "hostile-pickup-cart"
                                             8
                                             "While scanning the goblin fortress' computers, you find some fascinating images of the surface world. You record them on a cartridge...")
