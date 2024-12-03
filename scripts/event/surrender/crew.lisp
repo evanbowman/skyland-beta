@@ -11,20 +11,20 @@
     (dialog-opts-push (format "+1 crew, +%@" c)
                       (lambda ()
                         (coins-add c)
-                        (run-util-script   ; run a script from the utility folder
-                         "find-crew-slot" ; name of script
-                         "<c:goblin:18> gahh! <B:0> You are out of ssspace! <B:0> NIce hoomansses will not leave us! I'll build an ledarr!" ; text to show if there's no space
-                         'ladder ; block to create if there's no space
-                         "Place block (1x2):"    ; <-- added line
-                         (lambda (x y _) ; callback function, invoked with the x,y coordinates where we can safely place a character
-                           (chr-new (player) x y 'neutral '((race . 1) (icon . 18))) ;create the character
+                        (run-util-script
+                         "find-crew-slot"
+                         "<c:goblin:18> gahh! <B:0> You are out of ssspace! <B:0> NIce hoomansses will not leave us! I'll build an ledarr!"
+                         'ladder
+                         "Place block (1x2):"
+                         (lambda (x y _)
+                           (chr-new (player) x y 'neutral '((race . 1) (icon . 18)))
                            (adventure-log-add 51 '()) ; write an entry into the adventure log
                            (dialog "One of the goblins joined your crew!") ; some dialog
-                           (run-util-script "hostile-pickup-cart" ; run another utility script that gives us a data cart
+                           (run-util-script "hostile-pickup-cart"
                                             8
                                             "While scanning the goblin fortress' computers, you find some fascinating images of the surface world. You record them on a cartridge...")
                
-                          (exit 2)))))  ; when dialog is finished, exit the level and show the victory screen    
+                          (exit 2)))))
   (let ((cnt 0) 
           (tot (/ (length (rooms (opponent))) 5)))
       (setq cnt tot)
