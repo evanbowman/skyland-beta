@@ -350,8 +350,17 @@ private:
 struct Function
 {
     ValueHeader hdr_;
-    u8 required_args_;
-    u16 unused_;
+    struct Signature {
+        u8 required_args_ : 4;
+        u8 arg0_type_ : 4;
+        u8 arg1_type_ : 4;
+        u8 arg2_type_ : 4;
+        u8 arg3_type_ : 4;
+        u8 ret_type_ : 4;
+
+        void reset();
+
+    } sig_;
 
     static ValueHeader::Type type()
     {

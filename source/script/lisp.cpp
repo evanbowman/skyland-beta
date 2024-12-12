@@ -110,6 +110,17 @@ struct StringInternTable
 const char* intern(const char* string);
 
 
+void Function::Signature::reset()
+{
+    required_args_ = 0;
+    arg0_type_ = ValueHeader::Type::nil;
+    arg1_type_ = ValueHeader::Type::nil;
+    arg2_type_ = ValueHeader::Type::nil;
+    arg3_type_ = ValueHeader::Type::nil;
+    ret_type_ = ValueHeader::Type::nil;
+}
+
+
 std::pair<ValuePoolUsed, ValuePoolFree> value_pool_info()
 {
     int values_remaining = 0;
@@ -885,7 +896,7 @@ Value* make_function(Function::CPP_Impl impl)
     auto val = alloc_value();
     val->hdr_.type_ = Value::Type::function;
     val->function().cpp_impl_ = impl;
-    val->function().required_args_ = 0;
+    val->function().sig_.reset();
     val->hdr_.mode_bits_ = Function::ModeBits::cpp_function;
     return val;
 }
@@ -896,10 +907,9 @@ static Value* make_lisp_function(Value* impl)
     auto val = alloc_value();
     val->hdr_.type_ = Value::Type::function;
     val->function().lisp_impl_.code_ = compr(impl);
-    val->function().required_args_ = 0;
+    val->function().sig_.reset();
     val->function().lisp_impl_.lexical_bindings_ =
         compr(bound_context->lexical_bindings_);
-
     val->hdr_.mode_bits_ = Function::ModeBits::lisp_function;
     return val;
 }
@@ -923,19 +933,32 @@ static int examine_argument_list(Value* function_impl)
     l_foreach(arg_lat, [&](Value* val) {
         ++argc;
 
-        if (val->type() not_eq lisp::Value::Type::symbol) {
-            PLATFORM.fatal(
-                ::format("value \'%\' in argument list \'%\' is non-symbol!",
-                         val_to_string<64>(val).c_str(),
-                         val_to_string<128>(arg_lat).c_str()));
+        Value* sym = L_NIL;
+
+        if (val->type() not_eq Value::Type::symbol) {
+            if (val->type() == Value::Type::cons) {
+                if (not (val->cons().car()->type() == Value::Type::symbol and
+                         val->cons().cdr()->type() == Value::Type::symbol)) {
+                    PLATFORM.fatal(::format("invalid type declaration: %",
+                                            val_to_string<96>(val).c_str()));
+                } else {
+                    sym = val->cons().car();
+                }
+            } else {
+                PLATFORM.fatal(::format("value \'%\' in argument list \'%\' is non-symbol!",
+                                        val_to_string<64>(val).c_str(),
+                                        val_to_string<128>(arg_lat).c_str()));
+            }
+        } else {
+            sym = val;
         }
 
         if (not bound_context->external_symtab_contents_ and
-            val->hdr_.mode_bits_ not_eq (u8) Symbol::ModeBits::small) {
+            sym->hdr_.mode_bits_ not_eq (u8) Symbol::ModeBits::small) {
             PLATFORM.fatal(::format(
                 "symbol name \'%\' in argument list \'%\' is too long! "
                 "(4 char limit)",
-                val->symbol().name(),
+                sym->symbol().name(),
                 val_to_string<128>(arg_lat).c_str()));
         }
     });
@@ -950,6 +973,7 @@ struct ArgBinding
                   // the input source code list, so it's a proper gc root...
 
     u8 replacement_;
+    u8 type_;
 };
 
 
@@ -967,7 +991,38 @@ ArgBindings make_arg_bindings(Value* arg_lat, ArgBindings* parent)
 
     int arg = 0;
     l_foreach(arg_lat, [&](Value* val) {
-        if (not b.bindings_.push_back(ArgBinding{&val->symbol(), (u8)arg++})) {
+        Value* sym;
+        u8 type = ValueHeader::Type::nil;
+        if (val->type() == Value::Type::cons) {
+            sym = val->cons().car();
+            auto& type_symbol = val->cons().cdr()->symbol();
+            if (str_eq(type_symbol.name(), "int")) {
+                type = ValueHeader::Type::integer;
+            } else if (str_eq(type_symbol.name(), "string")) {
+                type = ValueHeader::Type::string;
+            } else if (str_eq(type_symbol.name(), "pair")) {
+                type = ValueHeader::Type::cons;
+            } else if (str_eq(type_symbol.name(), "symbol")) {
+                type = ValueHeader::Type::symbol;
+            } else if (str_eq(type_symbol.name(), "float")) {
+                type = ValueHeader::Type::fp;
+            } else if (str_eq(type_symbol.name(), "error")) {
+                type = ValueHeader::Type::error;
+            } else if (str_eq(type_symbol.name(), "userdata")) {
+                type = ValueHeader::Type::user_data;
+            } else if (str_eq(type_symbol.name(), "databuffer")) {
+                type = ValueHeader::Type::databuffer;
+            } else if (str_eq(type_symbol.name(), "nil")) {
+                type = ValueHeader::Type::nil;
+            } else if (str_eq(type_symbol.name(), "lambda")) {
+                type = ValueHeader::Type::function;
+            } else {
+                PLATFORM.fatal(::format("invalid type symbol %", type_symbol.name()));
+            }
+        } else {
+            sym = val;
+        }
+        if (not b.bindings_.push_back(ArgBinding{&sym->symbol(), (u8)arg++, type})) {
             PLATFORM.fatal("too many named arguments for function! Max 5");
         }
     });
@@ -1092,7 +1147,7 @@ static void arg_substitution_impl(Value* impl, ArgBindings& bindings)
 }
 
 
-void perform_argument_substitution(Value* impl)
+ArgBindings perform_argument_substitution(Value* impl)
 {
     Protected gc_root(impl);
 
@@ -1104,6 +1159,8 @@ void perform_argument_substitution(Value* impl)
     if (arguments.bindings_.size() > 0) { // Don't bother with no-arg functions
         arg_substitution_impl(fn_impl, arguments);
     }
+
+    return arguments;
 }
 
 
@@ -1134,13 +1191,27 @@ static Value* make_lisp_argumented_function(Value* impl)
     // new_impl = clone(impl); TODO... can anything bad happen if we mutate
     // a list representing source code? I'm not certain.
 
-    perform_argument_substitution(new_impl);
+    auto bind = perform_argument_substitution(new_impl);
 
     val->hdr_.type_ = Value::Type::function;
     val->function().lisp_impl_.code_ = compr(new_impl->cons().cdr());
-    val->function().required_args_ = argc;
+    val->function().sig_.reset();
+    val->function().sig_.required_args_ = argc;
     val->function().lisp_impl_.lexical_bindings_ =
         compr(bound_context->lexical_bindings_);
+
+    if (bind.bindings_.size() > 0) {
+        val->function().sig_.arg0_type_ = bind.bindings_[0].type_;
+    }
+    if (bind.bindings_.size() > 1) {
+        val->function().sig_.arg1_type_ = bind.bindings_[1].type_;
+    }
+    if (bind.bindings_.size() > 2) {
+        val->function().sig_.arg2_type_ = bind.bindings_[2].type_;
+    }
+    if (bind.bindings_.size() > 3) {
+        val->function().sig_.arg3_type_ = bind.bindings_[3].type_;
+    }
 
     val->hdr_.mode_bits_ = Function::ModeBits::lisp_function;
 
@@ -1154,7 +1225,7 @@ Value* make_bytecode_function(Value* bytecode)
     val->hdr_.type_ = Value::Type::function;
     val->function().bytecode_impl_.lexical_bindings_ =
         compr(bound_context->lexical_bindings_);
-    val->function().required_args_ = 0;
+    val->function().sig_.reset();
 
     val->function().bytecode_impl_.bytecode_ = compr(bytecode);
     val->hdr_.mode_bits_ = Function::ModeBits::lisp_bytecode_function;
@@ -1517,6 +1588,43 @@ void lexical_frame_store(Value* kvp)
 void vm_execute(Value* code, int start_offset);
 
 
+const char* type_to_string(ValueHeader::Type tp)
+{
+    switch (tp) {
+    case Value::Type::count:
+    case Value::Type::__reserved_3:
+    case Value::Type::__reserved_2:
+    case Value::Type::__reserved_1:
+    case Value::Type::__reserved_0:
+    case Value::Type::nil:
+        return "nil";
+    case Value::Type::heap_node:
+        return "?";
+    case Value::Type::integer:
+        return "int";
+    case Value::Type::cons:
+        return "pair";
+    case Value::Type::function:
+        return "lambda";
+    case Value::Type::error:
+        return "error";
+    case Value::Type::symbol:
+        return "symbol";
+    case Value::Type::user_data:
+        return "userdata";
+    case Value::Type::databuffer:
+        return "databuffer";
+    case Value::Type::string:
+        return "string";
+    case Value::Type::fp:
+        return "float";
+    case Value::Type::wrapped:
+        return "wrapped";
+    }
+    return "?";
+}
+
+
 // The function arguments should be sitting at the top of the operand stack
 // prior to calling funcall. The arguments will be consumed, and replaced with
 // the result of the function call.
@@ -1540,11 +1648,44 @@ void funcall(Value* obj, u8 argc)
 
     switch (obj->type()) {
     case Value::Type::function: {
-        if (obj->function().required_args_ > argc) {
+        if (obj->function().sig_.required_args_ > argc) {
             pop_args();
             push_op(make_error(Error::Code::invalid_argc, obj));
             break;
         }
+
+        auto arg_error = [&](auto exp_type, auto got_type) {
+            return ::format("invalid arg type for %! expected %, got %",
+                            val_to_string<64>(obj).c_str(),
+                            type_to_string((ValueHeader::Type)exp_type),
+                            type_to_string((ValueHeader::Type)got_type));
+        };
+
+#define CHECK_ARG_TYPE(ARG, FIELD)                                      \
+        if (obj->function().sig_.FIELD not_eq ValueHeader::Type::nil and \
+            get_arg(ARG)->hdr_.type_ not_eq obj->function().sig_.FIELD) { \
+            pop_args();                                                 \
+            push_op(make_error(arg_error(obj->function().sig_.FIELD,    \
+                                         get_arg(ARG)->hdr_.type_).c_str())); \
+            break;                                                      \
+        }
+
+#define CHECK_ARG_TYPES()                       \
+        if (argc > 3) {                         \
+            CHECK_ARG_TYPE(0, arg0_type_);      \
+            CHECK_ARG_TYPE(1, arg1_type_);      \
+            CHECK_ARG_TYPE(2, arg2_type_);      \
+            CHECK_ARG_TYPE(3, arg3_type_);      \
+        } else if (argc > 2) {                  \
+            CHECK_ARG_TYPE(0, arg0_type_);      \
+            CHECK_ARG_TYPE(1, arg1_type_);      \
+            CHECK_ARG_TYPE(2, arg2_type_);      \
+        } else if (argc > 1) {                  \
+            CHECK_ARG_TYPE(0, arg0_type_);      \
+            CHECK_ARG_TYPE(1, arg1_type_);      \
+    } else if (argc > 0) {                      \
+        CHECK_ARG_TYPE(0, arg0_type_);          \
+    }
 
         switch (obj->hdr_.mode_bits_) {
         case Function::ModeBits::cpp_function: {
@@ -1561,6 +1702,8 @@ void funcall(Value* obj, u8 argc)
             ctx.lexical_bindings_ =
                 dcompr(obj->function().lisp_impl_.lexical_bindings_);
             const auto break_loc = ctx.operand_stack_->size() - 1;
+            ctx.arguments_break_loc_ = break_loc;
+            CHECK_ARG_TYPES();
             auto expression_list = dcompr(obj->function().lisp_impl_.code_);
             auto result = get_nil();
             push_op(result);
@@ -1591,6 +1734,8 @@ void funcall(Value* obj, u8 argc)
             const auto break_loc = ctx.operand_stack_->size() - 1;
             ctx.arguments_break_loc_ = break_loc;
             ctx.current_fn_argc_ = argc;
+            CHECK_ARG_TYPES();
+
 
             ctx.lexical_bindings_ =
                 dcompr(obj->function().lisp_impl_.lexical_bindings_);
@@ -1793,12 +1938,17 @@ void lint(Value* expr, Value* variable_list)
                     }
                     while (args not_eq L_NIL) {
                         auto arg_name = args->cons().car();
-                        if (arg_name->type() not_eq Value::Type::symbol) {
+                        auto arg_sym = arg_name;
+                        if (arg_name->type() == Value::Type::cons) {
+                            arg_sym = arg_name->cons().car();
+                            // TODO: arg type is in cdr...
+                        }
+                        if (arg_sym->type() not_eq Value::Type::symbol) {
                             push_op(
                                 make_error("invalid value in lambda arglist!"));
                             return;
                         }
-                        variable_list = L_CONS(arg_name, variable_list);
+                        variable_list = L_CONS(arg_sym, variable_list);
                         args = args->cons().cdr();
                     }
                     is_special_form = true;
@@ -1813,13 +1963,62 @@ void lint(Value* expr, Value* variable_list)
 
                 auto fn = get_var(fn_sym);
                 if (fn->type() == Value::Type::function) {
-                    int reqd_args = fn->function().required_args_;
+                    int reqd_args = fn->function().sig_.required_args_;
                     if (length(expr) - 1 < reqd_args) {
                         push_op(
                             make_error(::format("insufficient args for %!",
                                                 val_to_string<64>(fn).c_str())
                                            .c_str()));
                         return;
+                    }
+                    auto& fn_var = fn->function();
+
+                    auto type_check = [&](auto expected_type, int slot)
+                    {
+                        auto arg = get_list(expr, slot + 1);
+                        return is_list(arg) or arg->hdr_.type() == expected_type;
+                    };
+
+                    auto arg_error = [&](int arg, u8 expected) {
+                        auto tp = (ValueHeader::Type)expected;
+                        return ::format("invalid arg % type for %! "
+                                        "expected %, got %",
+                                        arg,
+                                        val_to_string<64>(fn).c_str(),
+                                        type_to_string(tp),
+                                        val_to_string<64>(get_list(expr, arg + 1)).c_str());
+                    };
+
+                    auto push_arg_error = [&](int arg, u8 exp) {
+                        push_op(make_error(arg_error(arg, exp).c_str()));
+                    };
+
+                    if (fn_var.sig_.arg0_type_ not_eq ValueHeader::Type::nil) {
+                        if (not type_check(fn_var.sig_.arg0_type_, 0)) {
+                            push_arg_error(0, fn_var.sig_.arg0_type_);
+                            return;
+                        }
+                    }
+                    if (fn_var.sig_.arg1_type_ not_eq ValueHeader::Type::nil) {
+                        if (not type_check(fn_var.sig_.arg1_type_, 1)) {
+                            push_arg_error(1, fn_var.sig_.arg1_type_);
+                            return;
+                        }
+                    }
+                    if (fn_var.sig_.arg2_type_ not_eq ValueHeader::Type::nil) {
+                        if (not type_check(fn_var.sig_.arg2_type_, 2)) {
+                            push_arg_error(2, fn_var.sig_.arg2_type_);
+                            return;
+                        }
+                    }
+                    if (fn_var.sig_.arg3_type_ not_eq ValueHeader::Type::nil) {
+                        if (not type_check(fn_var.sig_.arg3_type_, 3)) {
+                            push_arg_error(3, fn_var.sig_.arg3_type_);
+                            return;
+                        }
+                    }
+                    if (fn_var.sig_.ret_type_ not_eq ValueHeader::Type::nil) {
+                        // TODO...
                     }
                 }
             }
@@ -1927,6 +2126,7 @@ int error_find_linenum(CharSequence& code, int byte_offset)
         ++current_line;
     }
     return current_line;
+
 }
 
 
@@ -2179,9 +2379,9 @@ void format_impl(Value* value, Printer& p, int depth, bool skip_quotes = false)
             p.put_str("<lambda");
         }
 
-        if (value->function().required_args_) {
+        if (value->function().sig_.required_args_) {
             p.put_str(":");
-            p.put_str(stringify(value->function().required_args_).c_str());
+            p.put_str(stringify(value->function().sig_.required_args_).c_str());
         }
         p.put_str(">");
         break;
@@ -3781,8 +3981,56 @@ Value* l_comp_less_than(int argc)
     const auto builtin_table = std::unordered_map<std::string, Builtin>
 #endif
 
+#define SIG0(RET) (Function::Signature {            \
+            .required_args_ = ARGC,                 \
+            .arg0_type_ = ValueHeader::Type::nil,   \
+            .arg1_type_ = ValueHeader::Type::nil,   \
+            .arg2_type_ = ValueHeader::Type::nil,   \
+            .arg3_type_ = ValueHeader::Type::nil,   \
+            .ret_type_ = ValueHeader::Type::RET,    \
+        })
+
+#define SIG1(RET, TP0) (Function::Signature {        \
+            .required_args_ = 1,                     \
+            .arg0_type_ = ValueHeader::Type::TP0,    \
+            .arg1_type_ = ValueHeader::Type::nil,    \
+            .arg2_type_ = ValueHeader::Type::nil,    \
+            .arg3_type_ = ValueHeader::Type::nil,    \
+            .ret_type_ = ValueHeader::Type::RET,     \
+        })
+
+#define SIG2(RET, TP0, TP1) (Function::Signature {   \
+            .required_args_ = 2,                     \
+            .arg0_type_ = ValueHeader::Type::TP0,    \
+            .arg1_type_ = ValueHeader::Type::TP1,    \
+            .arg2_type_ = ValueHeader::Type::nil,    \
+            .arg3_type_ = ValueHeader::Type::nil,    \
+            .ret_type_ = ValueHeader::Type::nil,     \
+        })
+
+#define SIG3(RET, TP0, TP1, TP2) (Function::Signature { \
+            .required_args_ = 3,                        \
+            .arg0_type_ = ValueHeader::Type::TP0,       \
+            .arg1_type_ = ValueHeader::Type::TP1,       \
+            .arg2_type_ = ValueHeader::Type::TP2,       \
+            .arg3_type_ = ValueHeader::Type::nil,       \
+            .ret_type_ = ValueHeader::Type::RET,        \
+        })
+
+#define SIG4(RET, TP0, TP1, TP2, TP3) (Function::Signature {    \
+            .required_args_ = 4,                                \
+            .arg0_type_ = ValueHeader::Type::TP0,               \
+            .arg1_type_ = ValueHeader::Type::TP1,               \
+            .arg2_type_ = ValueHeader::Type::TP2,               \
+            .arg3_type_ = ValueHeader::Type::TP3,               \
+            .ret_type_ = ValueHeader::Type::RET,                \
+        })
+
+
+
+
 using RequiredArgc = int;
-using Builtin = std::pair<RequiredArgc, lisp::Value* (*)(int)>;
+using Builtin = std::pair<int, lisp::Value* (*)(int)>;
 // clang-format off
 BUILTIN_TABLE(
     // clang-format on
@@ -3824,6 +4072,15 @@ BUILTIN_TABLE(
            bound_context->strict_ = L_LOAD_INT(0);
            return L_NIL;
        }}},
+     {"signature",
+      {1,
+       [](int argc) {
+           L_EXPECT_OP(0, function);
+           auto sig = get_op0()->function().sig_;
+           ListBuilder list;
+           list.push_back(L_INT(sig.arg0_type_));
+           return list.result();
+       }}},
      {"require-args",
       {2,
        [](int argc) {
@@ -3833,7 +4090,7 @@ BUILTIN_TABLE(
            lisp::Protected result(L_NIL);
            result = alloc_value();
            result->function() = get_op1()->function();
-           result->function().required_args_ = L_LOAD_INT(0);
+           result->function().sig_.required_args_ = L_LOAD_INT(0);
 
            return (Value*)result;
        }}},
@@ -4045,38 +4302,10 @@ BUILTIN_TABLE(
      {"type",
       {1,
        [](int argc) {
-           switch (get_op0()->type()) {
-           case Value::Type::count:
-           case Value::Type::__reserved_3:
-           case Value::Type::__reserved_2:
-           case Value::Type::__reserved_1:
-           case Value::Type::__reserved_0:
-           case Value::Type::nil:
-               return make_symbol("nil");
-           case Value::Type::heap_node:
-               return make_symbol("?");
-           case Value::Type::integer:
-               return make_symbol("int");
-           case Value::Type::cons:
-               return make_symbol("pair");
-           case Value::Type::function:
-               return make_symbol("lambda");
-           case Value::Type::error:
-               return make_symbol("error");
-           case Value::Type::symbol:
-               return make_symbol("symbol");
-           case Value::Type::user_data:
-               return make_symbol("userdata");
-           case Value::Type::databuffer:
-               return make_symbol("databuffer");
-           case Value::Type::string:
-               return make_symbol("string");
-           case Value::Type::fp:
-               return make_symbol("float");
-           case Value::Type::wrapped:
+           if (get_op0()->type() == Value::Type::wrapped) {
                return dcompr(get_op0()->wrapped().type_sym_);
            }
-           return make_symbol("?");
+           return make_symbol(type_to_string(get_op0()->type()));
        }}},
      {"userdata?",
       {1,
@@ -5255,8 +5484,7 @@ BUILTIN_TABLE(
                compile(dcompr(get_op0()->function().lisp_impl_.code_));
                auto ret = get_op0();
                if (ret->type() == Value::Type::function) {
-                   ret->function().required_args_ =
-                       input->function().required_args_;
+                   ret->function().sig_ = input->function().sig_;
                }
                pop_op();
                return ret;
@@ -5973,7 +6201,7 @@ Value* get_var(Value* symbol)
     auto builtin = __load_builtin(symbol_name);
     if (builtin.second) {
         auto fn = lisp::make_function(builtin.second);
-        fn->function().required_args_ = builtin.first;
+        fn->function().sig_.required_args_ = builtin.first;
         return fn;
     }
 

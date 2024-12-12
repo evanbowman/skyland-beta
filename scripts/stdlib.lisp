@@ -55,7 +55,7 @@
 (global 'setfn)
 (setq setfn
       (compile
-       (lambda (sym fn)
+       (lambda ((sym . symbol) fn)
          (global sym)
          (set sym fn))))
 

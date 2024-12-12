@@ -82,7 +82,7 @@
 (defn/c dialog-await-y/n ()
   (dialog-await-binary-q "yes" "no"))
 
-(defn/c dialog-await-binary-q (txt1 txt2)
+(defn/c dialog-await-binary-q ((txt1 . string) (txt2 . string))
   (dialog-opts-reset)
   (dialog-opts-push txt1 (lambda () (if on-dialog-accepted (on-dialog-accepted))))
   (dialog-opts-push txt2 (lambda () (if on-dialog-declined (on-dialog-declined)))))
@@ -93,7 +93,7 @@
 ;; be a bunch of worldbuilding questions. If you select a middle option, the
 ;; game will show the text, and then re-display the query box of options, with
 ;; the previously selected one removed.
-(defn/c dialog-await-binary-q-w/lore (txty txtn lore)
+(defn/c dialog-await-binary-q-w/lore ((txty . string) (txtn . string) lore)
   (dialog-opts-reset)
   (dialog-opts-push txty (lambda () (if on-dialog-accepted (on-dialog-accepted))))
 
@@ -120,12 +120,12 @@
 
 ;; Shortcut for making sure enough space on a player's island exists to place a
 ;; new block.
-(defn/c alloc-space (sym)
+(defn/c alloc-space ((sym . symbol))
   (let ((size (rinfo 'size sym)))
     (while (not (construction-sites (player) size))
       (terrain-set (player) (+ (terrain (player)) 1)))))
 
-(defn/c run-util-script (file)
+(defn/c run-util-script ((file . string))
   (let ((varg (cdr $V)))
     (apply (eval-file (string "/scripts/util/" file ".lisp"))
            varg)))
@@ -144,6 +144,6 @@
 
 ;; This function simply sets current-level, which is used for crash reporting,
 ;; before evaluating the desired script.
-(defn/c setup-level (path)
+(defn/c setup-level ((path . string))
   (setq current-level path)
   (eval-file path))
