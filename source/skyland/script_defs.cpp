@@ -1605,7 +1605,7 @@ BINDING_TABLE({
           return L_NIL;
       }}},
     {"chr-new",
-     {EMPTY_SIG(5),
+     {SIG4(integer, wrapped, integer, integer, symbol),
       [](int argc) {
           L_EXPECT_OP(1, symbol);
           L_EXPECT_OP(2, integer); // y

@@ -95,7 +95,7 @@
   ;; with unquote-splicing is quite compact.
   `(,@lat1 ,@lat2))
 
-(defn/c push (sym val)
+(defn/c push ((sym . symbol) val)
   (set sym (cons val (eval sym))))
 
 

@@ -993,30 +993,32 @@ ArgBindings make_arg_bindings(Value* arg_lat, ArgBindings* parent)
     int arg = 0;
     l_foreach(arg_lat, [&](Value* val) {
         Value* sym;
-        u8 type = ValueHeader::Type::nil;
+        u8 type = Value::Type::nil;
         if (val->type() == Value::Type::cons) {
             sym = val->cons().car();
             auto& type_symbol = val->cons().cdr()->symbol();
             if (str_eq(type_symbol.name(), "int")) {
-                type = ValueHeader::Type::integer;
+                type = Value::Type::integer;
             } else if (str_eq(type_symbol.name(), "string")) {
-                type = ValueHeader::Type::string;
+                type = Value::Type::string;
             } else if (str_eq(type_symbol.name(), "pair")) {
-                type = ValueHeader::Type::cons;
+                type = Value::Type::cons;
             } else if (str_eq(type_symbol.name(), "symbol")) {
-                type = ValueHeader::Type::symbol;
+                type = Value::Type::symbol;
             } else if (str_eq(type_symbol.name(), "float")) {
-                type = ValueHeader::Type::fp;
+                type = Value::Type::fp;
             } else if (str_eq(type_symbol.name(), "error")) {
-                type = ValueHeader::Type::error;
+                type = Value::Type::error;
             } else if (str_eq(type_symbol.name(), "userdata")) {
-                type = ValueHeader::Type::user_data;
+                type = Value::Type::user_data;
             } else if (str_eq(type_symbol.name(), "databuffer")) {
-                type = ValueHeader::Type::databuffer;
+                type = Value::Type::databuffer;
             } else if (str_eq(type_symbol.name(), "nil")) {
-                type = ValueHeader::Type::nil;
+                type = Value::Type::nil;
             } else if (str_eq(type_symbol.name(), "lambda")) {
-                type = ValueHeader::Type::function;
+                type = Value::Type::function;
+            } else if (str_eq(type_symbol.name(), "wrapped")) {
+                type = Value::Type::wrapped;
             } else {
                 PLATFORM.fatal(
                     ::format("invalid type symbol %", type_symbol.name()));
@@ -4045,6 +4047,18 @@ Value* l_comp_less_than(int argc)
 }
 
 
+Value* repr_signature(Function::Signature sig)
+{
+    ListBuilder list;
+    list.push_back(L_SYM(type_to_string((Value::Type)sig.ret_type_)));
+    list.push_back(L_SYM(type_to_string((Value::Type)sig.arg0_type_)));
+    list.push_back(L_SYM(type_to_string((Value::Type)sig.arg1_type_)));
+    list.push_back(L_SYM(type_to_string((Value::Type)sig.arg2_type_)));
+    list.push_back(L_SYM(type_to_string((Value::Type)sig.arg3_type_)));
+    return list.result();
+}
+
+
 #if defined(__GBA__) or defined(__APPLE__)
 #define BUILTIN_TABLE                                                          \
     MAPBOX_ETERNAL_CONSTEXPR const auto builtin_table =                        \
@@ -4104,13 +4118,7 @@ BUILTIN_TABLE(
        [](int argc) {
            L_EXPECT_OP(0, function);
            auto sig = get_op0()->function().sig_;
-           ListBuilder list;
-           list.push_back(L_SYM(type_to_string((Value::Type)sig.ret_type_)));
-           list.push_back(L_SYM(type_to_string((Value::Type)sig.arg0_type_)));
-           list.push_back(L_SYM(type_to_string((Value::Type)sig.arg1_type_)));
-           list.push_back(L_SYM(type_to_string((Value::Type)sig.arg2_type_)));
-           list.push_back(L_SYM(type_to_string((Value::Type)sig.arg3_type_)));
-           return list.result();
+           return repr_signature(sig);
        }}},
      {"require-args",
       {SIG2(function, function, integer),
@@ -5324,7 +5332,7 @@ BUILTIN_TABLE(
            return result.result();
        }}},
      {"find",
-      {EMPTY_SIG(2),
+      {SIG2(nil, nil, cons),
        [](int argc) {
            L_EXPECT_OP(0, cons);
 
@@ -5390,7 +5398,7 @@ BUILTIN_TABLE(
        }}},
      {"gc", {EMPTY_SIG(0), [](int argc) { return make_integer(run_gc()); }}},
      {"get",
-      {EMPTY_SIG(2),
+      {SIG2(nil, cons, integer),
        [](int argc) {
            if (get_op0()->type() == lisp::Value::Type::nil) {
                return L_NIL;

@@ -24,7 +24,7 @@
 ;; Let's define some useful
 ;; builtin functions:
 
-(defn/c cargo-bays (isle)
+(defn/c cargo-bays ((isle . wrapped))
   (let ((rooms-list (rooms isle)))
     (map (lambda (room)
            (cons (cadr room)
@@ -50,7 +50,7 @@
   (car (wg-pos)))
 
 ;; Choose a random element of a list.
-(defn/c sample (lat)
+(defn/c sample ((lat . pair))
   (get lat (choice (length lat))))
 
 (defn/c secret ((x . int) (y . int) (text . string))
