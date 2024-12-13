@@ -120,7 +120,7 @@
               v))
          lat)))
 
-(defn/c curry (fn)
+(defn/c curry ((fn . lambda))
   (let ((func fn)
         (args (cdr $V)))
     (lambda ()

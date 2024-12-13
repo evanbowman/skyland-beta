@@ -152,7 +152,7 @@ TOP:
                     LoadBuiltin lb;
                     lb.header_.op_ = LoadBuiltin::op();
                     lb.addr_.set((const char*)builtin.second);
-                    lb.argc_ = builtin.first;
+                    lb.argc_ = builtin.first.required_args_;
                     memcpy(code.data_ + pc, &lb, sizeof lb);
                     pc += sizeof(LoadVar);
                 } else {
@@ -207,7 +207,7 @@ TOP:
                     LoadBuiltin lb;
                     lb.header_.op_ = LoadBuiltin::op();
                     lb.addr_.set((const char*)builtin.second);
-                    lb.argc_ = builtin.first;
+                    lb.argc_ = builtin.first.required_args_;
                     memcpy(code.data_ + pc, &lb, sizeof lb);
                     pc += sizeof(LoadVarSmall);
                 } else {

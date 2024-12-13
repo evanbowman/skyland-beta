@@ -25,11 +25,11 @@
 ;; builtin functions:
 
 (defn/c cargo-bays (isle)
-  (let ((rooms (rooms isle)))
+  (let ((rooms-list (rooms isle)))
     (map (lambda (room)
            (cons (cadr room)
                  (cadr (cdr room))))
-         (filter (car-equalto? 'cargo-bay) rooms))))
+         (filter (car-equalto? 'cargo-bay) rooms-list))))
 
 (defn/c clamp (v low high)
   (cond
@@ -53,12 +53,12 @@
 (defn/c sample (lat)
   (get lat (choice (length lat))))
 
-(defn/c secret (x y text)
+(defn/c secret ((x . int) (y . int) (text . string))
   (room-mut (opponent) x y 'code)
   (qr-set (opponent) x y text))
 
 ;; NOTE: see adventure_log.txt for message text...
-(defn/c adventure-log-add (id args)
+(defn/c adventure-log-add ((id . int) (args . pair))
   ;; args: event-code parameters
   (setq adventure-log (cons (cons id args) adventure-log)))
 
@@ -69,7 +69,7 @@
   (setq dialog-opts nil))
 
 
-(defn/c dialog-opts-push (name cb)
+(defn/c dialog-opts-push ((name . string) (cb . lambda))
   (setq dialog-opts (cons (cons name cb) dialog-opts)))
 
 ;; For backwards compatibility. The old dialog api had a function for setting up
