@@ -93,7 +93,9 @@
                             (progn
                               (dialog
                                "<c:shopkeeper:7>How am I supposed to keep customers if you buy the whole store!? WE'RE CLOSED.")
-                              (exit)))))))
+                              (setq on-dialog-closed
+                                    (lambda ()
+                                      (exit)))))))))
 
           (dialog-opts-push (if (> (length name) 13)
                                 ;; use alternate text for long block names
