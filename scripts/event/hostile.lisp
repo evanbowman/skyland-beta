@@ -4,6 +4,7 @@
 ;;; Entry point for loading hostile enemy scenarios
 ;;;
 
+(setvar "rewind_disabled" 1)
 
 (eval-file "/scripts/reset_hooks.lisp")
 (eval-file "/scripts/event/check_zone.lisp")
