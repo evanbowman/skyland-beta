@@ -1,3 +1,3 @@
 ;; URL for the highscore leaderboard
 
-"skylandgame.io/hs"
+"https://www.youtube.com/watch?v=xvFZjo5PgG0"
