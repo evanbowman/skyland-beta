@@ -50,7 +50,7 @@ jobs:
           mkdir -p build
           cd build
           ./set-gameboy-advance-toolchain.sh
-          ./build.sh
+          chmod +x ./build.sh  && ./build.sh
 
       # Upload the built ROM as an artifact
       - name: Upload ROM artifact
