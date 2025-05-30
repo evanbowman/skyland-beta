@@ -49,8 +49,8 @@ jobs:
         run: |
           mkdir -p build
           cd build
-          ../set-gameboy-advance-toolchain.sh
-          make
+          ./set-gameboy-advance-toolchain.sh
+          ./build.sh
 
       # Upload the built ROM as an artifact
       - name: Upload ROM artifact
