@@ -1,0 +1,60 @@
+name: Build Skyland
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Check out the repository code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Set up devkitPro toolchain
+      - name: Install devkitPro
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget
+          wget https://apt.devkitpro.org/install-devkitpro-pacman
+          chmod +x install-devkitpro-pacman
+          sudo ./install-devkitpro-pacman
+          sudo dkp-pacman -Syu --noconfirm
+          sudo dkp-pacman -S --noconfirm gba-dev
+
+      # Set up environment variables for devkitPro
+      - name: Set up devkitPro environment
+        run: |
+          echo "DEVKITPRO=/opt/devkitpro" >> $GITHUB_ENV
+          echo "DEVKITARM=/opt/devkitpro/devkitARM" >> $GITHUB_ENV
+          echo "/opt/devkitpro/devkitARM/bin" >> $GITHUB_PATH
+
+      # Install Python and PIL
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install PIL
+        run: pip install Pillow
+
+      # Build the project
+      - name: Build Skyland
+        run: |
+          mkdir -p build
+          cd build
+          ../set-gameboy-advance-toolchain.sh
+          make
+
+      # Upload the built ROM as an artifact
+      - name: Upload ROM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: skyland-rom
+          path: build/Skyland.gba
