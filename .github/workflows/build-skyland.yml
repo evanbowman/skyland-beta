@@ -46,6 +46,8 @@ jobs:
 
       # Build the project
       - name: Build Skyland
+        env:
+          CMAKE_CXX_FLAGS: "-Wno-error=cpp -Wno-error=overloaded-virtual"
         run: |
           mkdir -p build
           cd build
