@@ -10,7 +10,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-leatest
+    runs-on: ubuntu-latest
 
     steps:
       # Check out the repository code
