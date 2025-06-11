@@ -4,6 +4,7 @@
 #include "skyland/scene/boxedDialogScene.hpp"
 #include "skyland/scene/textviewScene.hpp"
 #include "skyland/scene/titleScreenScene.hpp"
+#include "skyland/scene/desktopOS.hpp"
 #include "skyland/skyland.hpp"
 
 
@@ -350,6 +351,7 @@ ScenePtr DataCartModule::update(Time delta)
     case State::wait:
         timer_ += delta;
         if (timer_ > wait_time_) {
+            timer_ = 0;
             if (auto cart = carts_->load(cart_index_)) {
                 auto str = format("booting %...", cart->name().c_str());
                 auto tp = cart->expect_content_string("type");
@@ -363,7 +365,6 @@ ScenePtr DataCartModule::update(Time delta)
                 auto margin = centered_text_margins(utf8::len(str.c_str()));
                 Text::print(str.c_str(), {(u8)margin, 9});
             }
-            timer_ = 0;
             state_ = State::booting;
         }
         break;
@@ -489,6 +490,8 @@ ScenePtr DataCartModule::boot_cart(int cart_index)
     } else if (*type == "image") {
         PLATFORM.speaker().play_sound("tw_bell", 2);
         return make_scene<CartPhotoViewScene>(cart_index);
+    } else if (*type == "OS-X") {
+        return make_scene<DesktopBoot>();
     } else if (*type == "files") {
         PLATFORM.speaker().play_sound("tw_bell", 2);
         UserContext ctx;

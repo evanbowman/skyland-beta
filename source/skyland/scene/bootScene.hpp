@@ -24,7 +24,6 @@
 #include "skyland/scene_pool.hpp"
 #include "skyland/skyland.hpp"
 #include "version.hpp"
-#include "skyland/scene/desktopOS.hpp"
 
 
 
@@ -128,8 +127,7 @@ public:
                 return make_scene<MacrocosmFreebuildModule>();
             }
 
-            return make_scene<DesktopOS>();
-            //return make_scene<IntroCreditsScene>();
+            return make_scene<IntroCreditsScene>();
         }
 
         return null_scene();
