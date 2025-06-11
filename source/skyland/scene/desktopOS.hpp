@@ -12,6 +12,7 @@
 #pragma once
 
 #include "skyland/scene.hpp"
+#include "skyland/scene/modules/textEditorModule.hpp"
 
 
 
@@ -549,6 +550,29 @@ public:
 
 
 
+    class TextEditWindow : public Window
+    {
+    public:
+
+        using Window::Window;
+
+
+        void repaint() override
+        {
+            Window::repaint();
+
+            for (int x = 0; x < 30; ++x) {
+                for (int y = 4; y < 17; ++y) {
+                    PLATFORM.set_tile(Layer::overlay, x, y, 97);
+                }
+            }
+        }
+
+        Optional<TextEditorModule> impl_;
+    };
+
+
+
     class mGBAWindow : public Window
     {
     public:
@@ -744,7 +768,7 @@ public:
         if (not has_hover) {
             if (hint_label_) {
                 hint_label_.reset();
-                repaint_windows();
+                // repaint_windows();
             }
         }
 
@@ -880,6 +904,10 @@ public:
             mem_->windows_.push_back(allocate_dynamic<mGBAWindow>("os-window",
                                                                   this,
                                                                   application));
+        } else if (str_eq(application->name(), "TextEdit")) {
+            mem_->windows_.push_back(allocate_dynamic<TextEditWindow>("os-window",
+                                                                      this,
+                                                                      application));
         } else {
             mem_->windows_.push_back(allocate_dynamic<Window>("os-window",
                                                               this,
