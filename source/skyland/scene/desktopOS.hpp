@@ -112,6 +112,12 @@ public:
         }
 
 
+        bool shows_pointer()
+        {
+            return show_pointer_;
+        }
+
+
     private:
         HitBox hitbox_;
         Vec2<Fixnum> position_;
@@ -120,6 +126,7 @@ public:
         DesktopOS* os_;
 
         bool enabled_ = true;
+        bool show_pointer_ = false;
     };
 
 
@@ -213,14 +220,21 @@ public:
         void on_hover() override
         {
             if (state_ == State::opening) {
+                bool had_hint = (bool)os_->hint_label_;
                 os_->hint_label_.reset();
-                os_->repaint_windows();
+                if (had_hint) {
+                    os_->repaint_windows();
+                }
                 return;
             }
             u8 x = pos().x.as_integer() / 8;
             int offset = strlen(name_) / 2;
             x -= (offset - 2);
-            os_->hint_label_.emplace(name_, OverlayCoord{x, 17});
+            OverlayCoord dest {x, 17};
+            if (os_->hint_label_ and os_->hint_label_->coord() == dest) {
+                return;
+            }
+            os_->hint_label_.emplace(name_, dest);
         }
 
 
@@ -363,6 +377,7 @@ public:
             PLATFORM.set_tile(Layer::overlay, 0, 3, 92);
             PLATFORM.set_tile(Layer::overlay, 1, 2, 94);
             PLATFORM.set_tile(Layer::overlay, 2, 2, 95);
+            PLATFORM.set_tile(Layer::overlay, 2, 3, 96);
             PLATFORM.set_tile(Layer::overlay, 29, 2, 88);
         }
 
@@ -403,7 +418,8 @@ public:
                     music_opts_.emplace_back(temp.c_str(),
                                              os,
                                              HitBox::Dimension{20 * 8, 8, 0, 0},
-                                             pos);
+                                             pos,
+                                             this);
                     music_names_.push_back(temp.c_str());
                     ++i;
                 }
@@ -443,10 +459,17 @@ public:
                 while (nm.length() < 30) {
                     nm.push_back(' ');
                 }
+                u8 y = u8(5 + i);
                 if (alternate) {
-                    Text::print(nm.c_str(), {0, u8(5 + i)});
+                    Text::print(nm.c_str(), {0, y});
+                    if (selected_track_ == i) {
+                        PLATFORM.set_tile(Layer::overlay, 0, y, 98);
+                    }
                 } else {
-                    Text::print(nm.c_str(), {0, u8(5 + i)}, alt_colors);
+                    Text::print(nm.c_str(), {0, y}, alt_colors);
+                    if (selected_track_ == i) {
+                        PLATFORM.set_tile(Layer::overlay, 0, y, 99);
+                    }
                 }
                 alternate = not alternate;
             }
@@ -467,9 +490,11 @@ public:
             MusicTrack(const char* name,
                        DesktopOS* os,
                        const HitBox::Dimension& dimension,
-                       const Vec2<Fixnum>& pos) :
+                       const Vec2<Fixnum>& pos,
+                       SkyTunesWindow* window) :
                 Clickable(os, dimension),
-                name_(name)
+                name_(name),
+                window_(window)
             {
                 this->pos() = pos;
             }
@@ -479,16 +504,30 @@ public:
                 auto str = name_;
                 str += ".raw";
                 PLATFORM.speaker().stream_music(str.c_str(), 0);
+                window_->select(name_.c_str());
+                os_->repaint_windows();
             }
 
         private:
             StringBuffer<48> name_;
+            SkyTunesWindow* window_;
         };
+
+        void select(const char* name)
+        {
+            for (u32 i = 0; i < music_names_.size(); ++i) {
+                if (music_names_[i] == name) {
+                    selected_track_ = i;
+                    break;
+                }
+            }
+        }
 
         Buffer<MusicTrack, 10> music_opts_;
         Buffer<StringBuffer<48>, 10> music_names_;
-    };
 
+        u8 selected_track_ = 255;
+    };
 
 
     class ExplorerWindow : public Window
@@ -546,11 +585,12 @@ public:
             {
                 this->pos().x = 168.0_fixed;
                 this->pos().y = 49.0_fixed;
+                show_pointer_ = true;
             }
 
             void on_click() override
             {
-                PLATFORM_EXTENSION(restart);
+                os_->boot_rom();
             }
 
 
@@ -561,6 +601,14 @@ public:
     private:
         LaunchButton launch_btn_;
     };
+
+
+
+    void boot_rom()
+    {
+
+        PLATFORM_EXTENSION(restart);
+    }
 
 
 
@@ -683,8 +731,12 @@ public:
         cursor_hb.position_ = &cursor_;
 
         bool has_hover = false;
+        pointer_ = false;
         for (auto& cl : mem_->clickables_) {
             if (cl->enabled() and cl->hitbox().overlapping(cursor_hb)) {
+                if (cl->shows_pointer()) {
+                    pointer_ = true;
+                }
                 cl->on_hover();
                 has_hover = true;
             }
@@ -732,7 +784,12 @@ public:
         Sprite spr;
         spr.set_size(Sprite::Size::w16_h32);
         spr.set_texture_index(12);
-        spr.set_position(cursor_);
+        auto pos = cursor_;
+        if (pointer_) {
+            spr.set_texture_index(30);
+            pos.x -= 4.0_fixed;
+        }
+        spr.set_position(pos);
         spr.set_priority(0);
         PLATFORM.screen().draw(spr);
 
@@ -811,7 +868,7 @@ public:
 
     void make_window(DockIcon* application)
     {
-        if (str_eq(application->name(), "Explorer")) {
+        if (str_eq(application->name(), "Compass")) {
             mem_->windows_.push_back(allocate_dynamic<ExplorerWindow>("os-window",
                                                                       this,
                                                                       application));
@@ -881,8 +938,8 @@ private:
         }
     };
 
-    u8 hover_test_idx_ = 0;
     DynamicMemory<Mem> mem_;
+    bool pointer_ = false;
 };
 
 
