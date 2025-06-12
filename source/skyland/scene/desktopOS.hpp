@@ -219,7 +219,10 @@ public:
         }
 
 
-        void on_click()
+        void on_hover() override;
+
+
+        void on_click() override
         {
             open_ = not open_;
             g_os_->repaint_windows();
@@ -268,6 +271,12 @@ public:
         u8 y_;
         bool open_ = false;
     };
+
+
+    Buffer<DropdownMenu, 4>& dropdown_menus()
+    {
+        return mem_->menu_bar_opts_;
+    }
 
 
     class DockIcon : public Clickable
@@ -464,8 +473,8 @@ public:
 
 
         Window(DockIcon* application) : pkg_(application),
-                                        close_btn_(this),
-                                        minimize_btn_(this)
+                                        close_btn_(this)
+                                        // minimize_btn_(this)
         {
         }
 
@@ -524,7 +533,7 @@ public:
         virtual void set_focus(bool focused)
         {
             close_btn_.set_enabled(focused);
-            minimize_btn_.set_enabled(focused);
+            // minimize_btn_.set_enabled(focused);
 
             if (focused) {
                 g_os_->clear_dropdown_menus();
@@ -542,7 +551,7 @@ public:
     private:
         DockIcon* pkg_;
         CloseButton close_btn_;
-        MinimizeButton minimize_btn_;
+        // MinimizeButton minimize_btn_;
     };
 
 
@@ -550,6 +559,30 @@ public:
     class SeekerWindow : public Window
     {
     public:
+
+        using Window::Window;
+
+
+        void build_menu_bar_opts() override
+        {
+            if (auto file_menu = g_os_->insert_dropdown_menu("File")) {
+                file_menu->add_option("new folder", [] {
+                    // ...
+                });
+
+                file_menu->add_option("close", [] {
+                    if (auto win = g_os_->get_window("Seeker")) {
+                        win->close();
+                    }
+                });
+            }
+
+            if (auto go_menu = g_os_->insert_dropdown_menu("Go")) {
+                go_menu->add_option("back", [] {
+                    // ...
+                });
+            }
+        }
 
     };
 
@@ -600,6 +633,9 @@ public:
             if (auto ctrl_menu = g_os_->insert_dropdown_menu("Control")) {
                 ctrl_menu->add_option("stop music", [] {
                     PLATFORM.speaker().stop_music();
+                    if (auto win = g_os_->get_window("SkyTunes")) {
+                        ((SkyTunesWindow*)win)->selected_track_ = 255;
+                    }
                 });
             }
         }
@@ -701,6 +737,7 @@ public:
         Buffer<MusicTrack, 10> music_opts_;
         Buffer<StringBuffer<48>, 10> music_names_;
 
+    public:
         u8 selected_track_ = 255;
     };
 
@@ -711,6 +748,18 @@ public:
 
 
         using Window::Window;
+
+
+        void build_menu_bar_opts() override
+        {
+            if (auto file_menu = g_os_->insert_dropdown_menu("File")) {
+                file_menu->add_option("close", [] {
+                    if (auto win = g_os_->get_window("Compass")) {
+                        win->close();
+                    }
+                });
+            }
+        }
 
 
         void repaint() override
@@ -728,6 +777,18 @@ public:
     public:
 
         using Window::Window;
+
+
+        void build_menu_bar_opts() override
+        {
+            if (auto file_menu = g_os_->insert_dropdown_menu("File")) {
+                file_menu->add_option("close", [] {
+                    if (auto win = g_os_->get_window("TextEdit")) {
+                        win->close();
+                    }
+                });
+            }
+        }
 
 
         void repaint() override
@@ -870,6 +931,18 @@ public:
             Window(application),
             launch_btn_(this)
         {
+        }
+
+
+        void build_menu_bar_opts() override
+        {
+            if (auto file_menu = g_os_->insert_dropdown_menu("File")) {
+                file_menu->add_option("close", [] {
+                    if (auto win = g_os_->get_window("mGBA")) {
+                        win->close();
+                    }
+                });
+            }
         }
 
 
@@ -1094,13 +1167,13 @@ public:
 
         bool dropdown_open = false;
         for (auto& opt : mem_->menu_bar_opts_) {
-            if (opt.is_open()) {
+            if (opt.is_open() and not cursor_hb.overlapping(opt.hitbox())) {
                 opt.close();
                 dropdown_open = true;
             }
         }
 
-        for (auto& clickable : mem_->clickables_) {
+        for (auto& clickable : reversed(mem_->clickables_)) {
             if (clickable->enabled() and clickable->hitbox().overlapping(cursor_hb)) {
                 clickable->on_click();
                 break;
@@ -1227,6 +1300,9 @@ public:
         } else if (str_eq(application->name(), "TextEdit")) {
             mem_->windows_.push_back(allocate_dynamic<TextEditWindow>("os-window",
                                                                       application));
+        } else if (str_eq(application->name(), "Seeker")) {
+            mem_->windows_.push_back(allocate_dynamic<SeekerWindow>("os-window",
+                                                                    application));
         } else if (str_eq(application->name(), "Lisp")) {
             mem_->windows_.push_back(allocate_dynamic<LispWindow>("os-window",
                                                                   application));
@@ -1347,6 +1423,23 @@ private:
     Time timer_;
     Time intro_sleep_;
 };
+
+
+
+void DesktopOS::DropdownMenu::on_hover()
+{
+    bool menu_open = false;
+    for (auto& menu : g_os_->dropdown_menus()) {
+        if (&menu not_eq this and menu.is_open()) {
+            menu_open = true;
+            menu.close();
+        }
+    }
+
+    if (menu_open) {
+        on_click();
+    }
+}
 
 
 
