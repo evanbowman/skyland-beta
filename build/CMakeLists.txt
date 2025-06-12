@@ -152,6 +152,7 @@ set(SOURCES
   ${SOURCE_DIR}/skyland/entity/macro/macrocosmEntity.cpp
   ${SOURCE_DIR}/skyland/entity/misc/smokePuff.cpp
   ${SOURCE_DIR}/skyland/scene/module.cpp
+  ${SOURCE_DIR}/skyland/scene/desktopOS.cpp
   ${SOURCE_DIR}/skyland/scene/hintScene.cpp
   ${SOURCE_DIR}/skyland/scene/worldScene.cpp
   ${SOURCE_DIR}/skyland/scene/readyScene.cpp

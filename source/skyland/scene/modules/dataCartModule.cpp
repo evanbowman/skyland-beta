@@ -4,7 +4,6 @@
 #include "skyland/scene/boxedDialogScene.hpp"
 #include "skyland/scene/textviewScene.hpp"
 #include "skyland/scene/titleScreenScene.hpp"
-#include "skyland/scene/desktopOS.hpp"
 #include "skyland/skyland.hpp"
 
 
@@ -490,8 +489,6 @@ ScenePtr DataCartModule::boot_cart(int cart_index)
     } else if (*type == "image") {
         PLATFORM.speaker().play_sound("tw_bell", 2);
         return make_scene<CartPhotoViewScene>(cart_index);
-    } else if (*type == "OS-X") {
-        return make_scene<DesktopBoot>();
     } else if (*type == "files") {
         PLATFORM.speaker().play_sound("tw_bell", 2);
         UserContext ctx;

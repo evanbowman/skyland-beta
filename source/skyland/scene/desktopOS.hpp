@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Copyright (c) 2024 Evan Bowman
+// Copyright (c) 2025 Evan Bowman
 //
 // This Source Code Form is subject to the terms of the Mozilla Public License,
 // v. 2.0. If a copy of the MPL was not distributed with this file, You can
@@ -17,6 +17,7 @@
 
 
 
+
 namespace skyland
 {
 
@@ -30,6 +31,12 @@ void __draw_image(TileDesc start_tile,
                   Layer layer);
 
 
+class DesktopOS;
+
+
+DesktopOS* g_os_;
+
+
 
 class DesktopOS : public Scene
 {
@@ -37,6 +44,9 @@ public:
 
 
     class Clickable;
+
+
+    using OptionCallback = void(*)();
 
 
     void register_clickable(Clickable* clk)
@@ -61,13 +71,12 @@ public:
     class Clickable
     {
     public:
-        Clickable(DesktopOS* os, const HitBox::Dimension& dimension) :
-            os_(os)
+        Clickable(const HitBox::Dimension& dimension)
         {
             hitbox_.position_ = &position_;
             hitbox_.dimension_ = dimension;
 
-            os->register_clickable(this);
+            g_os_->register_clickable(this);
         }
 
 
@@ -82,7 +91,7 @@ public:
 
         ~Clickable()
         {
-            os_->unregister_clickable(this);
+            g_os_->unregister_clickable(this);
         }
 
 
@@ -125,21 +134,149 @@ public:
         Vec2<Fixnum> position_;
 
     protected:
-        DesktopOS* os_;
 
         bool enabled_ = true;
         bool show_pointer_ = false;
     };
 
 
+    class DropdownMenu : public Clickable
+    {
+    public:
+        DropdownMenu(const char* name, u8 x, u8 y) :
+            Clickable({u8(strlen(name) * 8), 8, 0, 0}),
+            name_(name),
+            x_(x),
+            y_(y)
+        {
+            pos().x = Fixnum::from_integer(x * 8);
+            pos().y = Fixnum::from_integer(y * 8) - 7.0_fixed;
+        }
+
+
+        bool is_open() const
+        {
+            return open_;
+        }
+
+
+        void close()
+        {
+            open_ = false;
+        }
+
+
+        u8 name_len() const
+        {
+            return strlen(name_);
+        }
+
+
+        u8 x() const
+        {
+            return x_;
+        }
+
+
+        void repaint()
+        {
+            static constexpr const Text::OptColors sel_colors{
+                {custom_color(0xffffff),
+                 custom_color(0x1276c5)}};
+
+            Text::print(name_, {x_, y_}, open_ ? sel_colors : nullopt());
+
+            if (open_) {
+
+                u32 longest_opt = 0;
+                for (auto& opt : options_) {
+                    auto len = strlen(opt.name());
+                    if (len > longest_opt) {
+                        longest_opt = len;
+                    }
+                }
+
+                u8 y = y_ + 1;
+                for (auto& opt : options_) {
+                    opt.set_enabled(true);
+                    StringBuffer<32> tmp;
+                    for (u32 x = 0; x < longest_opt; ++x) {
+                        tmp.push_back('-');
+                    }
+                    Text::print(tmp.c_str(), {x_, y});
+                    tmp = opt.name();
+                    while (tmp.length() not_eq longest_opt) {
+                        tmp += " ";
+                    }
+                    Text::print(tmp.c_str(), {x_, u8(y + 1)});
+                    y += 2;
+                }
+            } else {
+                for (auto& opt : options_) {
+                    opt.set_enabled(false);
+                }
+            }
+        }
+
+
+        void on_click()
+        {
+            open_ = not open_;
+            g_os_->repaint_windows();
+        }
+
+
+        class Option : public Clickable
+        {
+        public:
+            Option(const char* name, OptionCallback cb, u8 x, u8 y) :
+                Clickable({u8(strlen(name) * 8), 8, 0, 0}),
+                name_(name),
+                cb_(cb)
+            {
+                pos().x = Fixnum::from_integer(x * 8);
+                pos().y = Fixnum::from_integer(y * 8);
+                show_pointer_ = true;
+            }
+
+            void on_click() override
+            {
+                cb_();
+            }
+
+            const char* name() const
+            {
+                return name_;
+            }
+
+        private:
+            const char* name_;
+            OptionCallback cb_;
+        };
+
+
+        void add_option(const char* name, OptionCallback cb)
+        {
+            options_.emplace_back(name, cb, x_, u8(y_ + 1 + options_.size() * 2));
+        }
+
+
+    private:
+        const char* name_;
+        Buffer<Option, 5> options_;
+        u8 x_;
+        u8 y_;
+        bool open_ = false;
+    };
+
+
     class DockIcon : public Clickable
     {
     public:
-        DockIcon(DesktopOS* os,
-                 const char* name,
+        DockIcon(const char* name,
                  u8 icon_gfx,
                  Vec2<Fixnum> pos) :
-            Clickable(os, {16, 16, 0, 0}),
+            Clickable({16, 16, 0, 0}),
             name_(name),
             icon_gfx_(icon_gfx)
         {
@@ -150,8 +287,8 @@ public:
 
         void set_minimized()
         {
-            os_->minimize_window(name());
-            os_->repaint_windows();
+            g_os_->minimize_window(name());
+            g_os_->repaint_windows();
         }
 
 
@@ -161,7 +298,7 @@ public:
             if (icon_gfx_ < 21) {
                 icon_gfx_ += 8;
             }
-            os_->make_window(this);
+            g_os_->make_window(this);
         }
 
 
@@ -171,7 +308,7 @@ public:
             if (icon_gfx_ >= 21) {
                 icon_gfx_ -= 8;
             }
-            os_->close_window(name_);
+            g_os_->close_window(name_);
         }
 
 
@@ -213,7 +350,7 @@ public:
                 break;
 
             case State::open:
-                os_->focus_window(name());
+                g_os_->focus_window(name());
                 break;
             }
         }
@@ -222,10 +359,10 @@ public:
         void on_hover() override
         {
             if (state_ == State::opening) {
-                bool had_hint = (bool)os_->hint_label_;
-                os_->hint_label_.reset();
+                bool had_hint = (bool)g_os_->hint_label_;
+                g_os_->hint_label_.reset();
                 if (had_hint) {
-                    os_->repaint_windows();
+                    g_os_->repaint_windows();
                 }
                 return;
             }
@@ -233,10 +370,10 @@ public:
             int offset = strlen(name_) / 2;
             x -= (offset - 2);
             OverlayCoord dest {x, 17};
-            if (os_->hint_label_ and os_->hint_label_->coord() == dest) {
+            if (g_os_->hint_label_ and g_os_->hint_label_->coord() == dest) {
                 return;
             }
-            os_->hint_label_.emplace(name_, dest);
+            g_os_->hint_label_.emplace(name_, dest);
         }
 
 
@@ -286,8 +423,8 @@ public:
         class CloseButton : public Clickable
         {
         public:
-            CloseButton(DesktopOS* os, Window* window) :
-                Clickable(os, {7, 7, -1, -1}),
+            CloseButton(Window* window) :
+                Clickable({7, 7, -1, -1}),
                 window_(window)
             {
                 this->pos().x = 3.0_fixed;
@@ -308,8 +445,8 @@ public:
         class MinimizeButton : public Clickable
         {
         public:
-            MinimizeButton(DesktopOS* os, Window* window) :
-                Clickable(os, {7, 7, -1, -1}),
+            MinimizeButton(Window* window) :
+                Clickable({7, 7, -1, -1}),
                 window_(window)
             {
                 this->pos().x = 14.0_fixed;
@@ -326,10 +463,9 @@ public:
         };
 
 
-        Window(DesktopOS* os, DockIcon* application) : pkg_(application),
-                                                       close_btn_(os, this),
-                                                       minimize_btn_(os, this),
-                                                       os_(os)
+        Window(DockIcon* application) : pkg_(application),
+                                        close_btn_(this),
+                                        minimize_btn_(this)
         {
         }
 
@@ -389,12 +525,17 @@ public:
         {
             close_btn_.set_enabled(focused);
             minimize_btn_.set_enabled(focused);
+
+            if (focused) {
+                g_os_->clear_dropdown_menus();
+                build_menu_bar_opts();
+            }
         }
 
 
-        DesktopOS* os()
+        virtual void build_menu_bar_opts()
         {
-            return os_;
+
         }
 
 
@@ -402,7 +543,14 @@ public:
         DockIcon* pkg_;
         CloseButton close_btn_;
         MinimizeButton minimize_btn_;
-        DesktopOS* os_;
+    };
+
+
+
+    class SeekerWindow : public Window
+    {
+    public:
+
     };
 
 
@@ -411,11 +559,11 @@ public:
     {
     public:
 
-        SkyTunesWindow(DesktopOS* os, DockIcon* application) :
-            Window(os, application)
+        SkyTunesWindow(DockIcon* application) :
+            Window(application)
         {
             u8 i = 0;
-            PLATFORM.walk_filesystem([this, os, &i](const char* path) {
+            PLATFORM.walk_filesystem([this, &i](const char* path) {
                 if (auto rest = starts_with("/scripts/data/music/", StringBuffer<96>(path))) {
                     StringBuffer<48> temp;
                     while (*rest not_eq '.') {
@@ -426,7 +574,6 @@ public:
                     pos.x = Fixnum::from_integer(16);
                     pos.y = Fixnum::from_integer(33 + i * 8);
                     music_opts_.emplace_back(temp.c_str(),
-                                             os,
                                              HitBox::Dimension{20 * 8, 7, 0, 0},
                                              pos,
                                              this);
@@ -438,6 +585,24 @@ public:
 
 
         SkyTunesWindow(const SkyTunesWindow&) = delete;
+
+
+        void build_menu_bar_opts() override
+        {
+            if (auto file_menu = g_os_->insert_dropdown_menu("File")) {
+                file_menu->add_option("close", [] {
+                    if (auto win = g_os_->get_window("SkyTunes")) {
+                        win->close();
+                    }
+                });
+            }
+
+            if (auto ctrl_menu = g_os_->insert_dropdown_menu("Control")) {
+                ctrl_menu->add_option("stop music", [] {
+                    PLATFORM.speaker().stop_music();
+                });
+            }
+        }
 
 
         void destroy() override
@@ -498,11 +663,10 @@ public:
         {
         public:
             MusicTrack(const char* name,
-                       DesktopOS* os,
                        const HitBox::Dimension& dimension,
                        const Vec2<Fixnum>& pos,
                        SkyTunesWindow* window) :
-                Clickable(os, dimension),
+                Clickable(dimension),
                 name_(name),
                 window_(window)
             {
@@ -516,7 +680,7 @@ public:
                 str += ".raw";
                 PLATFORM.speaker().stream_music(str.c_str(), 0);
                 window_->select(name_.c_str());
-                os_->repaint_windows();
+                g_os_->repaint_windows();
             }
 
         private:
@@ -589,8 +753,8 @@ public:
         class WindowFocusCapture : public Clickable
         {
         public:
-            WindowFocusCapture(DesktopOS* os, LispWindow* window) :
-                Clickable(os, {240, 104, 0, 0}),
+            WindowFocusCapture(LispWindow* window) :
+                Clickable({240, 104, 0, 0}),
                 window_(window)
             {
                 this->pos().x = 0.0_fixed;
@@ -600,22 +764,38 @@ public:
 
             void on_click() override
             {
-                os_->capture_focus(true);
+                g_os_->capture_focus(true);
                 window_->interactive_ = true;
                 window_->ignore_click();
-                os_->repaint_windows();
+                g_os_->repaint_windows();
             }
 
         private:
             LispWindow* window_;
         };
 
-        LispWindow(DesktopOS* os, DockIcon* application) :
-            Window(os, application),
-            capture_(os, this)
+        LispWindow(DockIcon* application) :
+            Window(application),
+            capture_(this)
         {
             impl_.emplace();
             impl_->gui_mode_ = true;
+        }
+
+
+        void build_menu_bar_opts() override
+        {
+            if (auto file_menu = g_os_->insert_dropdown_menu("File")) {
+                file_menu->add_option("close", [] {
+                    if (auto win = g_os_->get_window("Lisp")) {
+                        win->close();
+                    }
+                });
+            }
+
+            if (auto help_menu = g_os_->insert_dropdown_menu("Help")) {
+                (void)help_menu;
+            }
         }
 
 
@@ -631,8 +811,8 @@ public:
             if (APP.player().key_down(Key::action_2)) {
                 if (interactive_ and impl_->entry_empty()) {
                     interactive_ = false;
-                    os()->capture_focus(false);
-                    os()->repaint_windows();
+                    g_os_->capture_focus(false);
+                    g_os_->repaint_windows();
                 }
             }
 
@@ -645,7 +825,7 @@ public:
 
                 if (impl_->clobbered_tiles_) {
                     impl_->clobbered_tiles_ = false;
-                    os()->repaint_windows();
+                    g_os_->repaint_windows();
                 }
             }
         }
@@ -686,9 +866,9 @@ public:
     {
     public:
 
-        mGBAWindow(DesktopOS* os, DockIcon* application) :
-            Window(os, application),
-            launch_btn_(os, this)
+        mGBAWindow(DockIcon* application) :
+            Window(application),
+            launch_btn_(this)
         {
         }
 
@@ -712,8 +892,8 @@ public:
         class LaunchButton : public Clickable
         {
         public:
-            LaunchButton(DesktopOS* os, Window* window) :
-                Clickable(os, {8 * 6, 8, 0, 0}),
+            LaunchButton(Window* window) :
+                Clickable({8 * 6, 8, 0, 0}),
                 window_(window)
             {
                 this->pos().x = 168.0_fixed;
@@ -723,7 +903,7 @@ public:
 
             void on_click() override
             {
-                os_->boot_rom();
+                g_os_->boot_rom();
             }
 
 
@@ -739,7 +919,6 @@ public:
 
     void boot_rom()
     {
-
         PLATFORM_EXTENSION(restart);
     }
 
@@ -753,11 +932,7 @@ public:
         }
         PLATFORM.set_overlay_origin(0, 7);
 
-        Text::print("File", {2, 1});
-        Text::print("Edit", {8, 1});
-
-        PLATFORM.set_tile(Layer::overlay, 0, 1, 84);
-
+        // TODO: menu bar opts...
     }
 
 
@@ -774,8 +949,9 @@ public:
 
 
     DesktopOS() :
-        mem_(allocate_dynamic<Mem>("desktop-gui", this))
+        mem_(allocate_dynamic<Mem>("desktop-gui"))
     {
+        g_os_ = this;
     }
 
 
@@ -810,26 +986,37 @@ public:
         Vec2<Fixnum> icon_pos;
         icon_pos.x = 30.0_fixed;
         icon_pos.y = 139.0_fixed;
-        mem_->dock_icons_.emplace_back(this, "Seeker", 13, icon_pos);
+        mem_->dock_icons_.emplace_back("Seeker", 13, icon_pos);
         icon_pos.x += spacing;
-        mem_->dock_icons_.emplace_back(this, "Compass", 16, icon_pos);
+        mem_->dock_icons_.emplace_back("Compass", 16, icon_pos);
         icon_pos.x += spacing + 1.0_fixed;
-        mem_->dock_icons_.emplace_back(this, "SkyTunes", 15, icon_pos);
+        mem_->dock_icons_.emplace_back("SkyTunes", 15, icon_pos);
         icon_pos.x += spacing;
-        mem_->dock_icons_.emplace_back(this, "TextEdit", 18, icon_pos);
+        mem_->dock_icons_.emplace_back("TextEdit", 18, icon_pos);
         icon_pos.x += spacing + 1.0_fixed;
-        mem_->dock_icons_.emplace_back(this, "Lisp", 17, icon_pos);
+        mem_->dock_icons_.emplace_back("Lisp", 17, icon_pos);
         icon_pos.x += spacing;
-        mem_->dock_icons_.emplace_back(this, "Activity Monitor", 14, icon_pos);
+        mem_->dock_icons_.emplace_back("Activity Monitor", 14, icon_pos);
         icon_pos.x += spacing;
-        mem_->dock_icons_.emplace_back(this, "mGBA", 19, icon_pos);
+        mem_->dock_icons_.emplace_back("mGBA", 19, icon_pos);
         icon_pos.x += spacing;
-        mem_->dock_icons_.emplace_back(this, "Calculator", 14, icon_pos);
+        mem_->dock_icons_.emplace_back("Calculator", 14, icon_pos);
     }
 
 
     void exit(Scene&) override
     {
+    }
+
+
+    Window* get_window(const char* name)
+    {
+        for (auto& window : mem_->windows_) {
+            if (str_eq(name, window->name())) {
+                return &*window;
+            }
+        }
+        return nullptr;
     }
 
 
@@ -866,7 +1053,7 @@ public:
 
             bool has_hover = false;
             pointer_ = false;
-            for (auto& cl : mem_->clickables_) {
+            for (auto& cl : reversed(mem_->clickables_)) {
                 if (cl->enabled() and cl->hitbox().overlapping(cursor_hb)) {
                     if (cl->shows_pointer()) {
                         pointer_ = true;
@@ -905,11 +1092,23 @@ public:
         cursor_hb.dimension_ = {1, 1, 0, 0};
         cursor_hb.position_ = &cursor_;
 
+        bool dropdown_open = false;
+        for (auto& opt : mem_->menu_bar_opts_) {
+            if (opt.is_open()) {
+                opt.close();
+                dropdown_open = true;
+            }
+        }
+
         for (auto& clickable : mem_->clickables_) {
             if (clickable->enabled() and clickable->hitbox().overlapping(cursor_hb)) {
                 clickable->on_click();
                 break;
             }
+        }
+
+        if (dropdown_open) {
+            repaint_windows();
         }
     }
 
@@ -946,6 +1145,8 @@ public:
         if (mem_->windows_.empty()) {
             return;
         }
+        mem_->menu_bar_opts_.clear();
+        draw_menu_bar();
         if (str_eq(mem_->windows_.back()->name(), name)) {
             mem_->windows_.back()->minimized_ = false;
             update_focus();
@@ -1004,7 +1205,10 @@ public:
                 }
                 --i;
             }
+        }
 
+        for (auto& opt : mem_->menu_bar_opts_) {
+            opt.repaint();
         }
     }
 
@@ -1013,27 +1217,21 @@ public:
     {
         if (str_eq(application->name(), "Compass")) {
             mem_->windows_.push_back(allocate_dynamic<ExplorerWindow>("os-window",
-                                                                      this,
                                                                       application));
         } else if (str_eq(application->name(), "SkyTunes")) {
             mem_->windows_.push_back(allocate_dynamic<SkyTunesWindow>("os-window",
-                                                                      this,
                                                                       application));
         } else if (str_eq(application->name(), "mGBA")) {
             mem_->windows_.push_back(allocate_dynamic<mGBAWindow>("os-window",
-                                                                  this,
                                                                   application));
         } else if (str_eq(application->name(), "TextEdit")) {
             mem_->windows_.push_back(allocate_dynamic<TextEditWindow>("os-window",
-                                                                      this,
                                                                       application));
         } else if (str_eq(application->name(), "Lisp")) {
             mem_->windows_.push_back(allocate_dynamic<LispWindow>("os-window",
-                                                                  this,
                                                                   application));
         } else {
             mem_->windows_.push_back(allocate_dynamic<Window>("os-window",
-                                                              this,
                                                               application));
         }
         update_focus();
@@ -1050,6 +1248,8 @@ public:
                 ++it;
             }
         }
+        mem_->menu_bar_opts_.clear();
+        draw_menu_bar();
         update_focus();
         repaint_windows();
     }
@@ -1057,6 +1257,8 @@ public:
 
     void update_focus()
     {
+        mem_->menu_bar_opts_.clear();
+        draw_menu_bar();
         if (mem_->windows_.empty()) {
             return;
         }
@@ -1067,24 +1269,39 @@ public:
     }
 
 
+    DropdownMenu* insert_dropdown_menu(const char* name)
+    {
+        if (not mem_->menu_bar_opts_.full()) {
+            u8 x = 1;
+            if (not mem_->menu_bar_opts_.empty()) {
+                auto& last = mem_->menu_bar_opts_.back();
+                x += last.x() + last.name_len() + 1;
+            }
+            mem_->menu_bar_opts_.emplace_back(name, x, 1);
+            mem_->menu_bar_opts_.back().repaint();
+            return &mem_->menu_bar_opts_.back();
+        }
+        return nullptr;
+    }
+
+
+    void clear_dropdown_menus()
+    {
+        mem_->menu_bar_opts_.clear();
+        draw_menu_bar();
+    }
+
+
 private:
     Vec2<Fixnum> cursor_;
-
-    class AppleMenu : public Clickable
-    {
-    public:
-        AppleMenu(DesktopOS* os) : Clickable(os, {8, 8, 0, 0})
-        {
-        }
-    };
 
     struct Mem {
         Buffer<DockIcon, 8> dock_icons_;
         Buffer<DynamicMemory<Window>, 8> windows_;
-        Buffer<Clickable*, 50> clickables_;
-        AppleMenu apple_menu_;
+        Buffer<Clickable*, 40> clickables_;
+        Buffer<DropdownMenu, 4> menu_bar_opts_;
 
-        Mem(DesktopOS* os) : apple_menu_(os)
+        Mem()
         {
         }
     };
