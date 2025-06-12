@@ -13,6 +13,7 @@
 
 #include "skyland/scene.hpp"
 #include "skyland/scene/modules/textEditorModule.hpp"
+#include "skyland/scene/lispReplScene.hpp"
 
 
 
@@ -705,11 +706,11 @@ public:
         icon_pos.x += spacing;
         mem_->dock_icons_.emplace_back(this, "Compass", 16, icon_pos);
         icon_pos.x += spacing + 1.0_fixed;
-        mem_->dock_icons_.emplace_back(this, "Calculator", 17, icon_pos);
-        icon_pos.x += spacing;
         mem_->dock_icons_.emplace_back(this, "SkyTunes", 15, icon_pos);
-        icon_pos.x += spacing + 1.0_fixed;
+        icon_pos.x += spacing;
         mem_->dock_icons_.emplace_back(this, "TextEdit", 18, icon_pos);
+        icon_pos.x += spacing + 1.0_fixed;
+        mem_->dock_icons_.emplace_back(this, "Lisp", 17, icon_pos);
         icon_pos.x += spacing;
         mem_->dock_icons_.emplace_back(this, "Activity Monitor", 14, icon_pos);
         icon_pos.x += spacing;
@@ -849,6 +850,12 @@ public:
                 return;
             }
         }
+    }
+
+
+    void capture_cursor(bool captured)
+    {
+        // TODO...
     }
 
 
