@@ -34,6 +34,14 @@ public:
 
     using Command = StringBuffer<256>;
 
+    bool gui_mode_ = false;
+
+    void repaint(bool focused);
+
+    bool entry_empty() const;
+
+    bool clobbered_tiles_ = false;
+
 private:
     enum class DisplayMode {
         entry,

@@ -328,7 +328,8 @@ public:
 
         Window(DesktopOS* os, DockIcon* application) : pkg_(application),
                                                        close_btn_(os, this),
-                                                       minimize_btn_(os, this)
+                                                       minimize_btn_(os, this),
+                                                       os_(os)
         {
         }
 
@@ -336,7 +337,7 @@ public:
         virtual void destroy() {}
 
 
-        void update()
+        virtual void update()
         {
         }
 
@@ -391,10 +392,17 @@ public:
         }
 
 
+        DesktopOS* os()
+        {
+            return os_;
+        }
+
+
     private:
         DockIcon* pkg_;
         CloseButton close_btn_;
         MinimizeButton minimize_btn_;
+        DesktopOS* os_;
     };
 
 
@@ -419,7 +427,7 @@ public:
                     pos.y = Fixnum::from_integer(33 + i * 8);
                     music_opts_.emplace_back(temp.c_str(),
                                              os,
-                                             HitBox::Dimension{20 * 8, 8, 0, 0},
+                                             HitBox::Dimension{20 * 8, 7, 0, 0},
                                              pos,
                                              this);
                     music_names_.push_back(temp.c_str());
@@ -499,6 +507,7 @@ public:
                 window_(window)
             {
                 this->pos() = pos;
+                show_pointer_ = true;
             }
 
             void on_click() override
@@ -550,7 +559,6 @@ public:
     };
 
 
-
     class TextEditWindow : public Window
     {
     public:
@@ -570,6 +578,106 @@ public:
         }
 
         Optional<TextEditorModule> impl_;
+    };
+
+
+
+    class LispWindow : public Window
+    {
+    public:
+
+        class WindowFocusCapture : public Clickable
+        {
+        public:
+            WindowFocusCapture(DesktopOS* os, LispWindow* window) :
+                Clickable(os, {240, 104, 0, 0}),
+                window_(window)
+            {
+                this->pos().x = 0.0_fixed;
+                this->pos().y = 25.0_fixed;
+                show_pointer_ = true;
+            }
+
+            void on_click() override
+            {
+                os_->capture_focus(true);
+                window_->interactive_ = true;
+                window_->ignore_click();
+                os_->repaint_windows();
+            }
+
+        private:
+            LispWindow* window_;
+        };
+
+        LispWindow(DesktopOS* os, DockIcon* application) :
+            Window(os, application),
+            capture_(os, this)
+        {
+            impl_.emplace();
+            impl_->gui_mode_ = true;
+        }
+
+
+        void set_focus(bool focused) override
+        {
+            Window::set_focus(focused);
+            capture_.set_enabled(focused);
+        }
+
+
+        void update() override
+        {
+            if (APP.player().key_down(Key::action_2)) {
+                if (interactive_ and impl_->entry_empty()) {
+                    interactive_ = false;
+                    os()->capture_focus(false);
+                    os()->repaint_windows();
+                }
+            }
+
+            if (interactive_) {
+                if (ignore_click_ and APP.player().key_down(Key::action_1)) {
+                    ignore_click_--;
+                } else {
+                    impl_->update(milliseconds(16));
+                }
+
+                if (impl_->clobbered_tiles_) {
+                    impl_->clobbered_tiles_ = false;
+                    os()->repaint_windows();
+                }
+            }
+        }
+
+
+        void ignore_click()
+        {
+            ignore_click_++;
+        }
+
+
+        void repaint() override
+        {
+            Window::repaint();
+
+            for (int x = 0; x < 30; ++x) {
+                for (int y = 4; y < 17; ++y) {
+                    PLATFORM.set_tile(Layer::overlay, x, y, 97);
+                }
+            }
+            if (not has_init_) {
+                impl_->enter(*impl_);
+                has_init_ = true;
+            }
+            impl_->repaint(interactive_);
+        }
+
+        Optional<LispReplScene> impl_;
+        WindowFocusCapture capture_;
+        int ignore_click_ = 0;
+        bool has_init_ = false;
+        bool interactive_ = false;
     };
 
 
@@ -729,52 +837,54 @@ public:
     {
         player().update(delta);
 
-        if (player().key_pressed(Key::down)) {
-            if (cursor_.y < 159.0_fixed) {
-                cursor_.y += 1.3_fixed;
-            }
-        }
-        if (player().key_pressed(Key::up)) {
-            if (cursor_.y > 0.0_fixed) {
-                cursor_.y -= 1.3_fixed;
-            }
-        }
-
-        if (player().key_pressed(Key::right)) {
-            if (cursor_.x < 239.0_fixed) {
-                cursor_.x += 1.3_fixed;
-            }
-        }
-        if (player().key_pressed(Key::left)) {
-            if (cursor_.x > 0.0_fixed) {
-                cursor_.x -= 1.3_fixed;
-            }
-        }
-
-        HitBox cursor_hb;
-        cursor_hb.dimension_ = {1, 1, 0, 0};
-        cursor_hb.position_ = &cursor_;
-
-        bool has_hover = false;
-        pointer_ = false;
-        for (auto& cl : mem_->clickables_) {
-            if (cl->enabled() and cl->hitbox().overlapping(cursor_hb)) {
-                if (cl->shows_pointer()) {
-                    pointer_ = true;
+        if (not cursor_captured_) {
+            if (player().key_pressed(Key::down)) {
+                if (cursor_.y < 159.0_fixed) {
+                    cursor_.y += 1.3_fixed;
                 }
-                cl->on_hover();
-                has_hover = true;
             }
-        }
-        if (not has_hover) {
-            if (hint_label_) {
-                hint_label_.reset();
-                // repaint_windows();
+            if (player().key_pressed(Key::up)) {
+                if (cursor_.y > 0.0_fixed) {
+                    cursor_.y -= 1.3_fixed;
+                }
             }
-        }
 
-        if (player().key_down(Key::action_1)) {
-            click();
+            if (player().key_pressed(Key::right)) {
+                if (cursor_.x < 239.0_fixed) {
+                    cursor_.x += 1.3_fixed;
+                }
+            }
+            if (player().key_pressed(Key::left)) {
+                if (cursor_.x > 0.0_fixed) {
+                    cursor_.x -= 1.3_fixed;
+                }
+            }
+
+            HitBox cursor_hb;
+            cursor_hb.dimension_ = {1, 1, 0, 0};
+            cursor_hb.position_ = &cursor_;
+
+            bool has_hover = false;
+            pointer_ = false;
+            for (auto& cl : mem_->clickables_) {
+                if (cl->enabled() and cl->hitbox().overlapping(cursor_hb)) {
+                    if (cl->shows_pointer()) {
+                        pointer_ = true;
+                    }
+                    cl->on_hover();
+                    has_hover = true;
+                }
+            }
+            if (not has_hover) {
+                if (hint_label_) {
+                    hint_label_.reset();
+                    // repaint_windows();
+                }
+            }
+
+            if (player().key_down(Key::action_1)) {
+                click();
+            }
         }
 
         for (auto& ico : mem_->dock_icons_) {
@@ -816,7 +926,9 @@ public:
         }
         spr.set_position(pos);
         spr.set_priority(0);
-        PLATFORM.screen().draw(spr);
+        if (not cursor_captured_) {
+            PLATFORM.screen().draw(spr);
+        }
 
         for (auto& ico : mem_->dock_icons_) {
             spr.set_texture_index(ico.icon_gfx());
@@ -853,9 +965,9 @@ public:
     }
 
 
-    void capture_cursor(bool captured)
+    void capture_focus(bool captured)
     {
-        // TODO...
+        cursor_captured_ = captured;
     }
 
 
@@ -915,6 +1027,10 @@ public:
             mem_->windows_.push_back(allocate_dynamic<TextEditWindow>("os-window",
                                                                       this,
                                                                       application));
+        } else if (str_eq(application->name(), "Lisp")) {
+            mem_->windows_.push_back(allocate_dynamic<LispWindow>("os-window",
+                                                                  this,
+                                                                  application));
         } else {
             mem_->windows_.push_back(allocate_dynamic<Window>("os-window",
                                                               this,
@@ -975,6 +1091,7 @@ private:
 
     DynamicMemory<Mem> mem_;
     bool pointer_ = false;
+    bool cursor_captured_ = false;
 };
 
 
