@@ -39,6 +39,10 @@ public:
     ScenePtr save();
 
 
+    void copy_selected(Vector<char>& output);
+    void paste(Vector<char>& contents);
+
+
     enum class SyntaxMode : u8 {
         lisp,
         plain_text,
@@ -46,6 +50,14 @@ public:
         python,
     };
 
+
+    StringBuffer<32> filename();
+
+
+    void deselect();
+
+
+    void shade_cursor();
 
 
     TextEditorModule(UserContext&& context,

@@ -434,6 +434,11 @@ public:
 
     void open_application(const char* app_name, OnOpenCallback cb)
     {
+        if (auto win = get_window(app_name)) {
+            g_os_->focus_window(app_name);
+            cb(win);
+            return;
+        }
         for (auto& ico : mem_->dock_icons_) {
             if (str_eq(ico.name(), app_name)) {
                 ico.set_closed();
@@ -449,6 +454,12 @@ public:
     public:
 
         bool minimized_ = false;
+
+
+        virtual StringBuffer<30> heading()
+        {
+            return name();
+        }
 
 
         void minimize()
@@ -531,7 +542,8 @@ public:
 
         virtual void repaint()
         {
-            auto name_len = strlen(name());
+            auto head = heading();
+            auto name_len = head.length();
             u8 mg = centered_text_margins(name_len);
             for (int x = 0; x < 30; ++x) {
                 for (int y = 2; y < 17; ++y) {
@@ -550,7 +562,7 @@ public:
                 {custom_color(0x717199),
                  custom_color(0xeaeef3)}};
 
-            Text::print(name(), {mg, 3}, heading_colors);
+            Text::print(head.c_str(), {mg, 3}, heading_colors);
             PLATFORM.set_tile(Layer::overlay, 0, 2, 87);
             PLATFORM.set_tile(Layer::overlay, 0, 3, 92);
             PLATFORM.set_tile(Layer::overlay, 1, 2, 94);
@@ -831,6 +843,15 @@ public:
         };
 
 
+        StringBuffer<30> heading() override
+        {
+            auto base = Window::heading();
+            base += ": ";
+            base += impl_->filename();
+            return base;
+        }
+
+
         void show_syslog()
         {
             UserContext ctx;
@@ -867,14 +888,22 @@ public:
                 });
             }
 
-            // if (auto file_menu = g_os_->insert_dropdown_menu("Edit")) {
-            //     file_menu->add_option("copy", [] {
-            //         // TODO...
-            //     });
-            //     file_menu->add_option("paste", [] {
-            //         // TODO...
-            //     });
-            // }
+            if (auto file_menu = g_os_->insert_dropdown_menu("Edit")) {
+                file_menu->add_option("copy", [] {
+                    g_os_->clipboard_.emplace("clipboard");
+                    if (auto win = g_os_->get_window("TextEdit")) {
+                        ((TextEditWindow*)win)->impl_->copy_selected(*g_os_->clipboard_);
+                    }
+                });
+                file_menu->add_option("paste", [] {
+                    if (not g_os_->clipboard_) {
+                        return;
+                    }
+                    if (auto win = g_os_->get_window("TextEdit")) {
+                        ((TextEditWindow*)win)->impl_->paste(*g_os_->clipboard_);
+                    }
+                });
+            }
         }
 
 
@@ -888,7 +917,8 @@ public:
         void update() override
         {
             if (APP.player().key_down(Key::action_2)) {
-                if (interactive_ and impl_->mode_ == TextEditorModule::Mode::nav) {
+                if (interactive_ and impl_->mode_ == TextEditorModule::Mode::nav and
+                    not APP.player().key_pressed(Key::alt_1)) {
                     interactive_ = false;
                     g_os_->capture_focus(false);
                     g_os_->repaint_windows();
@@ -935,6 +965,9 @@ public:
         bool interactive_ = false;
         bool syslog_mode_ = false;
     };
+
+
+    Optional<Vector<char>> clipboard_;
 
 
     class LispWindow : public Window

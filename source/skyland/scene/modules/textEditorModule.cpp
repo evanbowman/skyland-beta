@@ -65,12 +65,6 @@ void TextEditorModule::show_status()
     }
 
     auto colors = status_colors;
-    // if (gui_mode_) {
-    //     static constexpr const FontColors heading_colors{
-    //         custom_color(0x717199),
-    //         custom_color(0xeaeef3)};
-    //     colors = heading_colors;
-    // }
 
     if (mode_ == Mode::edit) {
         status_->assign("edit: (size ", colors);
@@ -757,6 +751,51 @@ ScenePtr TextEditorModule::save()
 
 
 
+void TextEditorModule::copy_selected(Vector<char>& output)
+{
+    output.clear();
+    if (state_->sel_begin_) {
+        save_selection(output);
+        deselect();
+    }
+}
+
+
+
+void TextEditorModule::paste(Vector<char>& contents)
+{
+    paste_selection(contents);
+    render(start_line_);
+}
+
+
+
+void TextEditorModule::deselect()
+{
+    state_->sel_begin_.reset();
+    state_->sel_end_.reset();
+    state_->sel_center_.reset();
+    render(start_line_);
+    shade_cursor();
+}
+
+
+
+void TextEditorModule::shade_cursor()
+{
+    cursor_shaded_ = true;
+
+    const auto x = cursor_.x - column_offset_;
+    const auto y = (cursor_.y - start_line_) + cursor_y_offset();
+
+    stashed_palette_ = PLATFORM.get_palette(Layer::overlay, x, y);
+
+    const auto t = PLATFORM.get_tile(Layer::overlay, x, y);
+    PLATFORM.set_tile(x, y, t, highlight_colors);
+}
+
+
+
 // NOTE: while the text editor code in general isn't too bad, this function in
 // particular is a cluttered mess of copy-pasted code, mainly due to related but
 // slightly differing behavior in all of the different keyboard shortcuts and
@@ -777,17 +816,6 @@ ScenePtr TextEditorModule::update(Time delta)
         PLATFORM.set_palette(Layer::overlay, x, y, stashed_palette_);
     };
 
-    auto shade_cursor = [&] {
-        cursor_shaded_ = true;
-
-        const auto x = cursor_.x - column_offset_;
-        const auto y = (cursor_.y - start_line_) + cursor_y_offset();
-
-        stashed_palette_ = PLATFORM.get_palette(Layer::overlay, x, y);
-
-        const auto t = PLATFORM.get_tile(Layer::overlay, x, y);
-        PLATFORM.set_tile(x, y, t, highlight_colors);
-    };
 
     auto selected = [&]() -> bool {
         return static_cast<bool>(state_->sel_begin_);
@@ -835,14 +863,6 @@ ScenePtr TextEditorModule::update(Time delta)
         } else {
             column_offset_ = 0;
         }
-        render(start_line_);
-        shade_cursor();
-    };
-
-    auto deselect = [&] {
-        state_->sel_begin_.reset();
-        state_->sel_end_.reset();
-        state_->sel_center_.reset();
         render(start_line_);
         shade_cursor();
     };
@@ -943,7 +963,7 @@ ScenePtr TextEditorModule::update(Time delta)
                 }
 
                 if (cursor_.y > start_line_ + (y_max() - yo)) {
-                    start_line_ = std::max(0, cursor_.y - ((y_max() - 2) / 2));
+                    start_line_ = std::max(0, cursor_.y - ((y_max() - yo) / 2));
                     do_render = true;
                 }
 
@@ -1010,13 +1030,11 @@ ScenePtr TextEditorModule::update(Time delta)
                 user_context_.yank_buffer_.reset();
                 if (state_->sel_begin_) {
                     user_context_.yank_buffer_.emplace();
-                    save_selection(*user_context_.yank_buffer_);
-                    deselect();
+                    copy_selected(*user_context_.yank_buffer_);
                 }
             } else if (APP.player().key_down(Key::action_2)) {
                 if (user_context_.yank_buffer_) {
-                    paste_selection(*user_context_.yank_buffer_);
-                    render(start_line_);
+                    paste(*user_context_.yank_buffer_);
                 }
             }
         } else if (APP.player().key_pressed(Key::alt_1)) {
@@ -1098,8 +1116,12 @@ ScenePtr TextEditorModule::update(Time delta)
                 cursor_.x = 0;
                 cursor_.y = line_count_;
                 column_offset_ = 0;
+                u8 yo = 3;
+                if (gui_mode_) {
+                    yo = 5;
+                }
                 start_line_ =
-                    std::max(0, line_count_ - (calc_screen_tiles().y - 3));
+                    std::max(0, line_count_ - (calc_screen_tiles().y - yo));
                 bool dummy;
                 sel_forward(dummy);
                 render(start_line_);
@@ -1530,6 +1552,33 @@ ScenePtr TextEditorModule::update(Time delta)
     }
 
     return null_scene();
+}
+
+
+
+StringBuffer<32> TextEditorModule::filename()
+{
+    const char* p = state_->file_path_.c_str();
+    int dir_count = 0;
+    while (*p not_eq '\0') {
+        if (*p == '/') {
+            ++dir_count;
+        }
+        ++p;
+    }
+    if (dir_count > 0) {
+        while (*p not_eq '/') {
+            --p;
+        }
+        ++p;
+    }
+    StringBuffer<32> result;
+    if (*p == '\0') {
+        result = "SYSLOG";
+    } else {
+        result = p;
+    }
+    return result;
 }
 
 

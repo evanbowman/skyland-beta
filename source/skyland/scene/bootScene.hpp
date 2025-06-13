@@ -289,6 +289,12 @@ public:
         auto fc = FontColors{amber_color, back_color};
 
         if (state_bit_load(StateBit::verbose_boot)) {
+
+            for (int x = 0; x < 30; ++x) {
+                // Clean boot select hint
+                PLATFORM.set_tile(Layer::overlay, x, 8, 0);
+            }
+
             Text::print(format("Mem: [%/%]",
                                scratch_buffers_in_use() * 2,
                                scratch_buffer_count * 2)
