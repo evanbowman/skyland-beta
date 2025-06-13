@@ -137,7 +137,8 @@ void LispReplScene::repaint_entry(bool show_cursor)
                        Text::OptColors{{ColorConstant::aerospace_orange,
                                         ColorConstant::rich_black}});
     } else {
-        entry_->append(command_->c_str() + scroll, colors);
+        StringBuffer<30> truncate = command_->c_str() + scroll;
+        entry_->append(truncate.c_str(), colors);
     }
 
     keyboard_.clear();

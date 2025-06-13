@@ -264,6 +264,12 @@ public:
         }
 
 
+        Buffer<Option, 5>& opts()
+        {
+            return options_;
+        }
+
+
     private:
         const char* name_;
         Buffer<Option, 5> options_;
@@ -277,6 +283,10 @@ public:
     {
         return mem_->menu_bar_opts_;
     }
+
+
+    class Window;
+    using OnOpenCallback = void (*)(Window* win);
 
 
     class DockIcon : public Clickable
@@ -308,6 +318,15 @@ public:
                 icon_gfx_ += 8;
             }
             g_os_->make_window(this);
+        }
+
+
+        OnOpenCallback on_open_callback_ = [](Window*) {};
+
+
+        void set_on_open(OnOpenCallback cb)
+        {
+            on_open_callback_ = cb;
         }
 
 
@@ -412,6 +431,17 @@ public:
         } state_ = State::closed;
     };
 
+
+    void open_application(const char* app_name, OnOpenCallback cb)
+    {
+        for (auto& ico : mem_->dock_icons_) {
+            if (str_eq(ico.name(), app_name)) {
+                ico.set_closed();
+                ico.on_click();
+                ico.on_open_callback_ = cb;
+            }
+        }
+    }
 
 
     class Window
@@ -776,18 +806,108 @@ public:
     {
     public:
 
-        using Window::Window;
+        class WindowFocusCapture : public Clickable
+        {
+        public:
+            WindowFocusCapture(TextEditWindow* window) :
+                Clickable({240, 104, 0, 0}),
+                window_(window)
+            {
+                this->pos().x = 0.0_fixed;
+                this->pos().y = 25.0_fixed;
+                show_pointer_ = true;
+            }
+
+            void on_click() override
+            {
+                g_os_->capture_focus(true);
+                window_->interactive_ = true;
+                window_->ignore_click();
+                g_os_->repaint_windows();
+            }
+
+        private:
+            TextEditWindow* window_;
+        };
+
+
+        void show_syslog()
+        {
+            UserContext ctx;
+            impl_.emplace(std::move(ctx));
+            impl_->gui_mode_ = true;
+            syslog_mode_ = true;
+        }
+
+
+        TextEditWindow(DockIcon* application) :
+            Window(application),
+            capture_(this)
+        {
+            UserContext ctx;
+            const char* file_path = "/scratch.txt";
+            auto syntax = TextEditorModule::SyntaxMode::plain_text;
+            impl_.emplace(std::move(ctx), file_path, syntax);
+            impl_->gui_mode_ = true;
+        }
 
 
         void build_menu_bar_opts() override
         {
             if (auto file_menu = g_os_->insert_dropdown_menu("File")) {
+                file_menu->add_option("save", [] {
+                    if (auto win = (TextEditWindow*)g_os_->get_window("TextEdit")) {
+                        win->impl_->save();
+                    }
+                });
                 file_menu->add_option("close", [] {
                     if (auto win = g_os_->get_window("TextEdit")) {
                         win->close();
                     }
                 });
             }
+
+            // if (auto file_menu = g_os_->insert_dropdown_menu("Edit")) {
+            //     file_menu->add_option("copy", [] {
+            //         // TODO...
+            //     });
+            //     file_menu->add_option("paste", [] {
+            //         // TODO...
+            //     });
+            // }
+        }
+
+
+        void set_focus(bool focused) override
+        {
+            Window::set_focus(focused);
+            capture_.set_enabled(focused);
+        }
+
+
+        void update() override
+        {
+            if (APP.player().key_down(Key::action_2)) {
+                if (interactive_ and impl_->mode_ == TextEditorModule::Mode::nav) {
+                    interactive_ = false;
+                    g_os_->capture_focus(false);
+                    g_os_->repaint_windows();
+                }
+            }
+
+            if (interactive_) {
+                if (ignore_click_ and APP.player().key_down(Key::action_1)) {
+                    ignore_click_--;
+                } else {
+                    impl_->update(milliseconds(16));
+                }
+            }
+        }
+
+
+        void ignore_click()
+        {
+            ignore_click_++;
         }
 
 
@@ -800,11 +920,21 @@ public:
                     PLATFORM.set_tile(Layer::overlay, x, y, 97);
                 }
             }
+            if (not has_init_) {
+                impl_->enter(*impl_);
+                has_init_ = true;
+            }
+            impl_->repaint(// interactive_
+                           );
         }
 
         Optional<TextEditorModule> impl_;
+        WindowFocusCapture capture_;
+        int ignore_click_ = 0;
+        bool has_init_ = false;
+        bool interactive_ = false;
+        bool syslog_mode_ = false;
     };
-
 
 
     class LispWindow : public Window
@@ -855,7 +985,11 @@ public:
             }
 
             if (auto help_menu = g_os_->insert_dropdown_menu("Help")) {
-                (void)help_menu;
+                help_menu->add_option("view syslog", [] {
+                    g_os_->open_application("TextEdit", [](Window* window) {
+                        ((TextEditWindow*)window)->show_syslog();
+                    });
+                });
             }
         }
 
@@ -1124,21 +1258,44 @@ public:
             cursor_hb.dimension_ = {1, 1, 0, 0};
             cursor_hb.position_ = &cursor_;
 
-            bool has_hover = false;
-            pointer_ = false;
-            for (auto& cl : reversed(mem_->clickables_)) {
-                if (cl->enabled() and cl->hitbox().overlapping(cursor_hb)) {
-                    if (cl->shows_pointer()) {
-                        pointer_ = true;
-                    }
-                    cl->on_hover();
-                    has_hover = true;
+            DropdownMenu* dropdown_open = nullptr;
+            for (auto& opt : mem_->menu_bar_opts_) {
+                if (opt.is_open()) {
+                    dropdown_open = &opt;
                 }
             }
+
+            bool has_hover = false;
+            pointer_ = false;
+
+            auto update_hover = [&](auto& clickables) {
+                for (auto& cl : reversed(clickables)) {
+                    if (cl->enabled() and cl->hitbox().overlapping(cursor_hb)) {
+                        if (cl->shows_pointer()) {
+                            pointer_ = true;
+                        }
+                        cl->on_hover();
+                        has_hover = true;
+                    }
+                }
+            };
+
+            if (dropdown_open) {
+                Buffer<Clickable*, 10> opts;
+                for (auto& dropdown : mem_->menu_bar_opts_) {
+                    opts.push_back(&dropdown);
+                    for (auto& opt : dropdown.opts()) {
+                        opts.push_back(&opt);
+                    }
+                }
+                update_hover(opts);
+            } else {
+                update_hover(mem_->clickables_);
+            }
+
             if (not has_hover) {
                 if (hint_label_) {
                     hint_label_.reset();
-                    // repaint_windows();
                 }
             }
 
@@ -1165,20 +1322,30 @@ public:
         cursor_hb.dimension_ = {1, 1, 0, 0};
         cursor_hb.position_ = &cursor_;
 
-        bool dropdown_open = false;
+        DropdownMenu* dropdown_open = nullptr;
         for (auto& opt : mem_->menu_bar_opts_) {
             if (opt.is_open() and not cursor_hb.overlapping(opt.hitbox())) {
                 opt.close();
-                dropdown_open = true;
+                dropdown_open = &opt;
             }
         }
 
-        for (auto& clickable : reversed(mem_->clickables_)) {
-            if (clickable->enabled() and clickable->hitbox().overlapping(cursor_hb)) {
-                clickable->on_click();
-                break;
+        if (dropdown_open) {
+            for (auto& clickable : dropdown_open->opts()) {
+                if (clickable.hitbox().overlapping(cursor_hb)) {
+                    clickable.on_click();
+                    break;
+                }
+            }
+        } else {
+            for (auto& clickable : reversed(mem_->clickables_)) {
+                if (clickable->enabled() and clickable->hitbox().overlapping(cursor_hb)) {
+                    clickable->on_click();
+                    break;
+                }
             }
         }
+
 
         if (dropdown_open) {
             repaint_windows();
@@ -1311,6 +1478,8 @@ public:
                                                               application));
         }
         update_focus();
+        application->on_open_callback_(&*mem_->windows_.back());
+        application->on_open_callback_ = [](Window*) {};
         repaint_windows();
     }
 

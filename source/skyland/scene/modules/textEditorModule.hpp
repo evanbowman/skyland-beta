@@ -36,6 +36,8 @@ public:
     enum class FileSystem : u8 { sram, rom, device };
 
 
+    ScenePtr save();
+
 
     enum class SyntaxMode : u8 {
         lisp,
@@ -97,12 +99,24 @@ public:
     void handle_char(Vector<char>::Iterator data, char c, ParserState& ps);
 
 
-private:
+    void repaint();
+
+
+    u8 cursor_y_offset() const;
+
+
+    int y_max() const;
+
+
+    bool gui_mode_ = false;
+
     enum class Mode {
         nav,
         edit,
         autocomplete,
     } mode_ = Mode::nav;
+
+private:
 
 
     void render(int start_line);

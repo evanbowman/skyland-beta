@@ -27,9 +27,13 @@ namespace skyland
 
 
 
-static int y_max()
+int TextEditorModule::y_max() const
 {
-    return calc_screen_tiles().y - 1;
+    if (gui_mode_) {
+        return calc_screen_tiles().y - 4;
+    } else {
+        return calc_screen_tiles().y - 1;
+    }
 }
 
 
@@ -43,31 +47,50 @@ static const auto highlight_colors =
 
 
 
+u8 TextEditorModule::cursor_y_offset() const
+{
+    if (gui_mode_) {
+        return 4;
+    } else {
+        return 1;
+    }
+}
+
+
+
 void TextEditorModule::show_status()
 {
     if (mode_ == Mode::autocomplete) {
         return;
     }
 
+    auto colors = status_colors;
+    // if (gui_mode_) {
+    //     static constexpr const FontColors heading_colors{
+    //         custom_color(0x717199),
+    //         custom_color(0xeaeef3)};
+    //     colors = heading_colors;
+    // }
+
     if (mode_ == Mode::edit) {
-        status_->assign("edit: (size ", status_colors);
-        status_->append(text_buffer_.size(), status_colors);
-        status_->append(")", status_colors);
+        status_->assign("edit: (size ", colors);
+        status_->append(text_buffer_.size(), colors);
+        status_->append(")", colors);
     } else {
-        status_->assign("nav: line ", status_colors);
-        status_->append(cursor_.y + 1, status_colors);
-        status_->append("/", status_colors);
-        status_->append(line_count_ + 1, status_colors);
-        status_->append(" col ", status_colors);
-        status_->append(cursor_.x + 1, status_colors);
+        status_->assign("nav: line ", colors);
+        status_->append(cursor_.y + 1, colors);
+        status_->append("/", colors);
+        status_->append(line_count_ + 1, colors);
+        status_->append(" col ", colors);
+        status_->append(cursor_.x + 1, colors);
 
         if (state_->sel_begin_) {
-            status_->append(" (sel)", status_colors);
+            status_->append(" (sel)", colors);
         }
     }
 
     while (status_->len() not_eq calc_screen_tiles().x) {
-        status_->append(" ", status_colors);
+        status_->append(" ", colors);
     }
 }
 
@@ -97,8 +120,13 @@ void TextEditorModule::render_keyboard()
                     FontColors{custom_color(0xffffff), custom_color(0x007cbf)};
             }
 
+            u8 yo = 6;
+            if (gui_mode_) {
+                yo = 9;
+            }
+
             PLATFORM.set_tile((calc_screen_tiles().x - 8) + x,
-                              (u8((calc_screen_tiles().y - 1)) - 6) + y,
+                              (u8((calc_screen_tiles().y - 1)) - yo) + y,
                               t,
                               colors);
         }
@@ -291,6 +319,9 @@ void TextEditorModule::render(int start_line)
 {
     int x = 0;
     int y = 1;
+    if (gui_mode_) {
+        y = 4;
+    }
 
     auto data = text_buffer_.begin();
 
@@ -633,36 +664,45 @@ void TextEditorModule::tabs_to_spaces()
 
 void TextEditorModule::enter(Scene& prev)
 {
-    PLATFORM.load_overlay_texture("overlay_editor");
+    if (not gui_mode_) {
+        PLATFORM.load_overlay_texture("overlay_editor");
+    }
+
 
     header_.emplace(OverlayCoord{});
-    StringBuffer<32> temp("  text editor  ");
-    switch (syntax_mode_) {
-    case SyntaxMode::lisp:
-        temp += "(lisp mode)";
-        break;
+    if (not gui_mode_) {
+        StringBuffer<32> temp("  text editor  ");
+        switch (syntax_mode_) {
+        case SyntaxMode::lisp:
+            temp += "(lisp mode)";
+            break;
 
-    case SyntaxMode::plain_text:
-        if (user_context_.readonly_) {
-            temp += "(readonly) ";
-        } else {
-            temp += "(text mode)";
+        case SyntaxMode::plain_text:
+            if (user_context_.readonly_) {
+                temp += "(readonly) ";
+            } else {
+                temp += "(text mode)";
+            }
+            break;
+
+        case SyntaxMode::python:
+            temp += "(python)   ";
+            break;
+
+        case SyntaxMode::ini:
+            temp += "(ini mode) ";
+            break;
         }
-        break;
-
-    case SyntaxMode::python:
-        temp += "(python)   ";
-        break;
-
-    case SyntaxMode::ini:
-        temp += "(ini mode) ";
-        break;
+        temp += "    ";
+        header_->assign(temp.c_str(), status_colors);
     }
-    temp += "    ";
-    header_->assign(temp.c_str(), status_colors);
 
 
-    status_.emplace(OverlayCoord{0, u8((calc_screen_tiles().y - 1))});
+    u8 yo = 1;
+    if (gui_mode_) {
+        yo = 4;
+    }
+    status_.emplace(OverlayCoord{0, u8((calc_screen_tiles().y - yo))});
 
 
     for (char c : text_buffer_) {
@@ -672,6 +712,13 @@ void TextEditorModule::enter(Scene& prev)
     }
 
     render(0);
+}
+
+
+
+void TextEditorModule::repaint()
+{
+    render(start_line_);
 }
 
 
@@ -691,6 +738,25 @@ void TextEditorModule::exit(Scene& next)
 
 
 
+ScenePtr TextEditorModule::save()
+{
+    if (file_mode_ == FileMode::readonly) {
+        // Do not save the file
+    } else if (filesystem_ == FileSystem::sram) {
+        flash_filesystem::StorageOptions opts{
+            .use_compression_ = true};
+        flash_filesystem::store_file_data_text(state_->file_path_.c_str(), text_buffer_, opts);
+    } else {
+        return make_scene<SramFileWritebackScene>(state_->file_path_.c_str(),
+                                                  std::move(text_buffer_),
+                                                  std::move(user_context_));
+    }
+
+    return null_scene();
+}
+
+
+
 // NOTE: while the text editor code in general isn't too bad, this function in
 // particular is a cluttered mess of copy-pasted code, mainly due to related but
 // slightly differing behavior in all of the different keyboard shortcuts and
@@ -703,7 +769,7 @@ ScenePtr TextEditorModule::update(Time delta)
         cursor_shaded_ = false;
 
         const auto x = cursor_.x - column_offset_;
-        const auto y = (cursor_.y - start_line_) + 1;
+        const auto y = (cursor_.y - start_line_) + cursor_y_offset();
 
         const auto t = PLATFORM.get_tile(Layer::overlay, x, y);
         PLATFORM.set_tile(Layer::overlay, x, y, t);
@@ -715,7 +781,7 @@ ScenePtr TextEditorModule::update(Time delta)
         cursor_shaded_ = true;
 
         const auto x = cursor_.x - column_offset_;
-        const auto y = (cursor_.y - start_line_) + 1;
+        const auto y = (cursor_.y - start_line_) + cursor_y_offset();
 
         stashed_palette_ = PLATFORM.get_palette(Layer::overlay, x, y);
 
@@ -757,7 +823,13 @@ ScenePtr TextEditorModule::update(Time delta)
     };
 
     auto center_view = [&] {
-        start_line_ = std::max(0, cursor_.y - ((y_max() - 2) / 2));
+
+        u8 yo = 2;
+        if (gui_mode_) {
+            yo = 5;
+        }
+
+        start_line_ = std::max(0, cursor_.y - ((y_max() - yo) / 2));
         if (cursor_.x > 15) {
             column_offset_ = cursor_.x - 15;
         } else {
@@ -865,7 +937,12 @@ ScenePtr TextEditorModule::update(Time delta)
 
                 bool do_render = false;
 
-                if (cursor_.y > start_line_ + (calc_screen_tiles().y - 3)) {
+                u8 yo = 2;
+                if (gui_mode_) {
+                    yo = 5;
+                }
+
+                if (cursor_.y > start_line_ + (y_max() - yo)) {
                     start_line_ = std::max(0, cursor_.y - ((y_max() - 2) / 2));
                     do_render = true;
                 }
@@ -1087,7 +1164,12 @@ ScenePtr TextEditorModule::update(Time delta)
 
             APP.player().key_held_reset(Key::down, milliseconds(60));
 
-            if (cursor_.y > start_line_ + (calc_screen_tiles().y - 3)) {
+            u8 yo = 2;
+            if (gui_mode_) {
+                yo = 5;
+            }
+
+            if (cursor_.y > start_line_ + (y_max() - yo)) {
                 start_line_ = std::max(0, cursor_.y - ((y_max() - 2) / 2));
                 do_render = true;
             }
@@ -1243,19 +1325,8 @@ ScenePtr TextEditorModule::update(Time delta)
                 deselect();
             } else {
                 if (state_->modified_) {
-                    if (file_mode_ == FileMode::readonly) {
-                        // Do not save the file
-                    } else if (filesystem_ == FileSystem::sram) {
-                        flash_filesystem::StorageOptions opts{
-                            .use_compression_ = true};
-                        flash_filesystem::store_file_data_text(
-
-                            state_->file_path_.c_str(), text_buffer_, opts);
-                    } else {
-                        return make_scene<SramFileWritebackScene>(
-                            state_->file_path_.c_str(),
-                            std::move(text_buffer_),
-                            std::move(user_context_));
+                    if (auto ret = save()) {
+                        return ret;
                     }
                 }
                 if (filesystem_ == FileSystem::device) {
@@ -1267,7 +1338,8 @@ ScenePtr TextEditorModule::update(Time delta)
                                                          FileSystem::rom);
             }
         } else if (APP.player().key_down(Key::action_1) and
-                   not user_context_.readonly_) {
+                   not user_context_.readonly_ and
+                   file_mode_ not_eq FileMode::readonly) {
             start_line_ = std::max(0, cursor_.y - ((y_max() - 2) / 2));
             show_keyboard_ = true;
             mode_ = Mode::edit;
