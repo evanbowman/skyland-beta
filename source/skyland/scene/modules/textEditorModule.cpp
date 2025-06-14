@@ -142,6 +142,11 @@ void TextEditorModule::render_completions()
             colors = FontColors{custom_color(0xffffff), custom_color(0x007cbf)};
         }
 
+        u8 y = line;
+        if (gui_mode_) {
+            y -= 3;
+        }
+
         u32 x;
         for (x = 0; x < calc_screen_tiles().x and x < cpl.length(); ++x) {
             char c = cpl[x];
@@ -155,11 +160,11 @@ void TextEditorModule::render_completions()
                 prefix_colors.foreground_ = custom_color(0xffffff);
             }
 
-            PLATFORM.set_tile(x, line, t, prefix_colors);
+            PLATFORM.set_tile(x, y, t, prefix_colors);
         }
 
         for (; x < calc_screen_tiles().x; ++x) {
-            PLATFORM.set_tile(x, line, space, colors);
+            PLATFORM.set_tile(x, y, space, colors);
         }
 
         ++line;
@@ -167,7 +172,11 @@ void TextEditorModule::render_completions()
 
     for (; line < calc_screen_tiles().y; ++line) {
         for (int x = 0; x < calc_screen_tiles().x; ++x) {
-            PLATFORM.set_tile(x, line, space, status_colors);
+            u8 y = line;
+            if (gui_mode_) {
+                y -= 3;
+            }
+            PLATFORM.set_tile(x, y, space, status_colors);
         }
     }
 }
