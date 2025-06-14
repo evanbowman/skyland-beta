@@ -15,7 +15,7 @@
 #include "skyland/scene/modules/textEditorModule.hpp"
 #include "skyland/scene/lispReplScene.hpp"
 #include "skyland/scene/modules/fileBrowserModule.hpp"
-
+#include "platform/flash_filesystem.hpp"
 
 
 
@@ -974,7 +974,7 @@ public:
                     }
                 });
                 file_menu->add_option("lisp eval",
-                                      run_current_textedit_script_in_lisp_window);
+                                      eval_current_textedit_script);
 
                 file_menu->add_option("close", [] {
                     if (auto win = g_os_->get_window("TextEdit")) {
@@ -1198,19 +1198,31 @@ public:
     };
 
 
-    static void run_current_textedit_script_in_lisp_window()
+    static void eval_current_textedit_script()
     {
         if (auto win = (TextEditWindow*)g_os_->get_window("TextEdit")) {
             win->impl_->save();
-            g_os_->open_application("Lisp", [](Window* lisp_window) {
-                if (auto win = (TextEditWindow*)g_os_->get_window("TextEdit")) {
-                    StringBuffer<96> eval_str;
-                    eval_str = "(eval-file \"";
-                    eval_str += win->impl_->file_path();
-                    eval_str += "\")";
-                    ((LispWindow*)lisp_window)->impl_->inject_command(eval_str.c_str());
-                }
-            });
+            auto path = win->impl_->file_path();
+
+            bool stored = false;
+            auto store_result = [&stored](lisp::Value& val) {
+                lisp::_Printer<Vector<char>> p;
+                lisp::format(&val, p);
+
+                flash_filesystem::store_file_data("/eval_output.txt",
+                                                  p.data_,
+                                                  {
+                                                      .use_compression_ = true
+                                                  });
+                stored = true;
+            };
+
+            auto lv = APP.invoke_script(path.c_str(), false, store_result);
+            if (not stored) {
+                store_result(*lv);
+            }
+
+            win->open_file("/eval_output.txt", false);
         }
     }
 
