@@ -14,6 +14,7 @@
 #include "skyland/scene.hpp"
 #include "skyland/scene/modules/textEditorModule.hpp"
 #include "skyland/scene/lispReplScene.hpp"
+#include "skyland/scene/modules/fileBrowserModule.hpp"
 
 
 
@@ -602,7 +603,35 @@ public:
     {
     public:
 
-        using Window::Window;
+        SeekerWindow(DockIcon* application) :
+            Window(application)
+        {
+            impl_.emplace();
+            impl_->gui_mode_ = true;
+            impl_->enter(*impl_);
+        }
+
+
+        void set_focus(bool focused) override
+        {
+            Window::set_focus(focused);
+            active_ = focused;
+        }
+
+
+        void update() override
+        {
+            if (active_) {
+                impl_->update(milliseconds(16));
+            }
+        }
+
+
+        void repaint() override
+        {
+            Window::repaint();
+            impl_->repaint();
+        }
 
 
         void build_menu_bar_opts() override
@@ -626,6 +655,9 @@ public:
             }
         }
 
+
+        Optional<FileBrowserModule> impl_;
+        bool active_ = true;
     };
 
 
@@ -1330,9 +1362,9 @@ public:
         icon_pos.x += spacing + 1.0_fixed;
         mem_->dock_icons_.emplace_back("Lisp", 17, icon_pos);
         icon_pos.x += spacing;
-        mem_->dock_icons_.emplace_back("Activity Monitor", 14, icon_pos);
-        icon_pos.x += spacing;
         mem_->dock_icons_.emplace_back("mGBA", 19, icon_pos);
+        icon_pos.x += spacing;
+        mem_->dock_icons_.emplace_back("Activity Monitor", 14, icon_pos);
         icon_pos.x += spacing;
         mem_->dock_icons_.emplace_back("Calculator", 14, icon_pos);
     }

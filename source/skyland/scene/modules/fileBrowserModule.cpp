@@ -64,7 +64,9 @@ FileBrowserModule::FileBrowserModule(UserContext&& user_context,
 
 void FileBrowserModule::enter(Scene& prev)
 {
-    PLATFORM.load_overlay_texture("overlay_editor");
+    if (not gui_mode_) {
+        PLATFORM.load_overlay_texture("overlay_editor");
+    }
 
     cwd_names_ = allocate_dynamic<CwdNames>("fs-cwd-names");
 
@@ -73,11 +75,12 @@ void FileBrowserModule::enter(Scene& prev)
         (*path_)->push_back("/");
     }
 
-    PLATFORM.screen().schedule_fade(0.95f, custom_color(0x007cbf));
-    PLATFORM.screen().clear();
-    PLATFORM.screen().display();
-
-    PLATFORM.fill_overlay(0);
+    if (not gui_mode_) {
+        PLATFORM.screen().schedule_fade(0.95f, custom_color(0x007cbf));
+        PLATFORM.screen().clear();
+        PLATFORM.screen().display();
+        PLATFORM.fill_overlay(0);
+    }
 
     repaint();
 }
@@ -116,9 +119,22 @@ StringBuffer<200> FileBrowserModule::cwd() const
 
 void FileBrowserModule::repaint()
 {
-    // Cover text with black during transition
-    PLATFORM.screen().fade(1.f, custom_color(0x007cbf), {}, true, true);
-    faded_ = true;
+    if (not gui_mode_) {
+        PLATFORM.screen().fade(1.f, custom_color(0x007cbf), {}, true, true);
+        // Cover text with black during transition
+        faded_ = true;
+    }
+
+    u8 y_offset = 3;
+
+    if (gui_mode_) {
+        y_offset = 4;
+        for (int x = 0; x < 30; ++x) {
+            for (int y = 4; y < 17; ++y) {
+                PLATFORM.set_tile(Layer::overlay, x, y, 82);
+            }
+        }
+    }
 
     // If we clear all the lines, the engine will deallocate all of the tile
     // glyphs from vram, and they'll need to be reloaded, which may result in
@@ -129,7 +145,7 @@ void FileBrowserModule::repaint()
         if (lines_.size() > line_count) {
             lines_[line_count++].assign(text);
         } else {
-            lines_.emplace_back(text, OverlayCoord{2, (u8)(lines_.size() + 3)});
+            lines_.emplace_back(text, OverlayCoord{2, (u8)(lines_.size() + y_offset)});
             ++line_count;
         }
     };
@@ -139,8 +155,10 @@ void FileBrowserModule::repaint()
 
     (*cwd_names_)->clear();
 
-    for (int y = 1; y < 20; ++y) {
-        PLATFORM.set_tile(Layer::overlay, 1, y, 0);
+    if (not gui_mode_) {
+        for (int y = 1; y < 20; ++y) {
+            PLATFORM.set_tile(Layer::overlay, 1, y, 0);
+        }
     }
 
 
@@ -241,7 +259,11 @@ void FileBrowserModule::repaint()
         flash_filesystem::walk(walk_fs);
 
         auto stats = flash_filesystem::statistics();
-        info_.emplace(OverlayCoord{0, 19});
+        u8 y = 19;
+        if (gui_mode_) {
+            y = 16;
+        }
+        info_.emplace(OverlayCoord{0, y});
         info_->append("used: ");
         info_->append(stats.bytes_used_);
         info_->append("/");
@@ -261,24 +283,26 @@ void FileBrowserModule::repaint()
     }
 
 
-    while (path.length() < 28) {
-        path.push_back(' ');
+    if (not gui_mode_) {
+        while (path.length() < 28) {
+            path.push_back(' ');
+        }
+
+        int path_scroll = (path.length() > 28) ? path.length() - 28 : 0;
+        auto str = path.c_str() + path_scroll;
+
+        for (u32 i = 0; *str not_eq '\0'; ++i, ++str) {
+            auto mapping_info = locale_texture_map()(*str);
+            const u16 t = PLATFORM.map_glyph(*str, *mapping_info);
+
+            PLATFORM.set_tile(i + 1, 0, t, highlight_colors);
+        }
+
+        PLATFORM.set_tile(Layer::overlay, 1, 3 + scroll_index_, 113);
+
+        PLATFORM.set_tile(Layer::overlay, 0, 0, 114);
+        PLATFORM.set_tile(Layer::overlay, 29, 0, 115);
     }
-
-    int path_scroll = (path.length() > 28) ? path.length() - 28 : 0;
-    auto str = path.c_str() + path_scroll;
-
-    for (u32 i = 0; *str not_eq '\0'; ++i, ++str) {
-        auto mapping_info = locale_texture_map()(*str);
-        const u16 t = PLATFORM.map_glyph(*str, *mapping_info);
-
-        PLATFORM.set_tile(i + 1, 0, t, highlight_colors);
-    }
-
-    PLATFORM.set_tile(Layer::overlay, 1, 3 + scroll_index_, 113);
-
-    PLATFORM.set_tile(Layer::overlay, 0, 0, 114);
-    PLATFORM.set_tile(Layer::overlay, 29, 0, 115);
 
     while (line_count < lines_.size()) {
         lines_.pop_back();
@@ -386,13 +410,18 @@ ScenePtr FileBrowserModule::update(Time delta)
     auto scroll_down = [&] {
         if (scroll_index_ == 14 and
             scroll_index_ + line_offset_ < (int)(*cwd_names_)->size() - 1) {
-            PLATFORM.set_tile(Layer::overlay, 1, 3 + scroll_index_, 0);
+            if (not gui_mode_) {
+                PLATFORM.set_tile(Layer::overlay, 1, 3 + scroll_index_, 0);
+            }
             ++line_offset_;
             repaint();
             PLATFORM.speaker().play_sound("click_wooden", 2);
         } else if (scroll_index_ + line_offset_ <
                    (int)(*cwd_names_)->size() - 1) {
-            PLATFORM.set_tile(Layer::overlay, 1, 3 + scroll_index_, 0);
+            if (not gui_mode_) {
+                PLATFORM.set_tile(Layer::overlay, 1, 3 + scroll_index_, 0);
+            }
+
             if (lines_.size() > (u32)scroll_index_) {
                 lines_[scroll_index_].assign(
                     (**cwd_names_)[scroll_index_ + line_offset_].c_str());
@@ -403,19 +432,25 @@ ScenePtr FileBrowserModule::update(Time delta)
                     (**cwd_names_)[scroll_index_ + line_offset_].c_str(),
                     highlight_colors);
             }
-            PLATFORM.set_tile(Layer::overlay, 1, 3 + scroll_index_, 113);
+            if (not gui_mode_) {
+                PLATFORM.set_tile(Layer::overlay, 1, 3 + scroll_index_, 113);
+            }
             PLATFORM.speaker().play_sound("click_wooden", 2);
         }
     };
 
     auto scroll_up = [&] {
         if (scroll_index_ == 0 and line_offset_ > 0) {
-            PLATFORM.set_tile(Layer::overlay, 1, 3 + scroll_index_, 0);
+            if (not gui_mode_) {
+                PLATFORM.set_tile(Layer::overlay, 1, 3 + scroll_index_, 0);
+            }
             --line_offset_;
             repaint();
             PLATFORM.speaker().play_sound("click_wooden", 2);
         } else if (scroll_index_ > 0) {
-            PLATFORM.set_tile(Layer::overlay, 1, 3 + scroll_index_, 0);
+            if (not gui_mode_) {
+                PLATFORM.set_tile(Layer::overlay, 1, 3 + scroll_index_, 0);
+            }
             if (lines_.size() > (u32)scroll_index_) {
                 lines_[scroll_index_].assign(
                     (**cwd_names_)[scroll_index_ + line_offset_].c_str());
@@ -426,7 +461,9 @@ ScenePtr FileBrowserModule::update(Time delta)
                     (**cwd_names_)[scroll_index_ + line_offset_].c_str(),
                     highlight_colors);
             }
-            PLATFORM.set_tile(Layer::overlay, 1, 3 + scroll_index_, 113);
+            if (not gui_mode_) {
+                PLATFORM.set_tile(Layer::overlay, 1, 3 + scroll_index_, 113);
+            }
             PLATFORM.speaker().play_sound("click_wooden", 2);
         }
     };
@@ -473,11 +510,11 @@ ScenePtr FileBrowserModule::update(Time delta)
 
     switch (selected_filesystem_) {
     case SelectedFilesystem::none:
-        if (APP.player().key_down(Key::up)) {
+        if (not gui_mode_ and APP.player().key_down(Key::up)) {
             scroll_up();
-        } else if (APP.player().key_down(Key::down) and scroll_index_ < 2) {
+        } else if (not gui_mode_ and APP.player().key_down(Key::down) and scroll_index_ < 2) {
             scroll_down();
-        } else if (APP.player().key_down(Key::action_1)) {
+        } else if (not gui_mode_ and APP.player().key_down(Key::action_1)) {
             switch (scroll_index_) {
             case 0:
                 on_dir_changed();
@@ -496,7 +533,7 @@ ScenePtr FileBrowserModule::update(Time delta)
             case 2:
                 return make_scene<TextEditorModule>(std::move(user_context_));
             }
-        } else if (APP.player().key_down(Key::action_2)) {
+        } else if (not gui_mode_ and APP.player().key_down(Key::action_2)) {
             if (user_context_.browser_exit_scene_) {
                 return (*user_context_.browser_exit_scene_)();
             }
@@ -505,7 +542,7 @@ ScenePtr FileBrowserModule::update(Time delta)
         break;
 
     case SelectedFilesystem::sram:
-        if (APP.player().key_down(Key::action_2)) {
+        if (not gui_mode_ and APP.player().key_down(Key::action_2)) {
             on_dir_changed();
             if ((*path_)->size() == 1) {
                 selected_filesystem_ = SelectedFilesystem::none;
@@ -514,12 +551,12 @@ ScenePtr FileBrowserModule::update(Time delta)
                 (*path_)->pop_back();
                 repaint();
             }
-        } else if (APP.player().key_down(Key::up)) {
+        } else if (not gui_mode_ and APP.player().key_down(Key::up)) {
             scroll_up();
-        } else if (APP.player().key_down(Key::down) and
+        } else if (not gui_mode_ and APP.player().key_down(Key::down) and
                    scroll_index_ < (int)(*cwd_names_)->size() - 1) {
             scroll_down();
-        } else if (APP.player().key_down(Key::action_1)) {
+        } else if (not gui_mode_ and APP.player().key_down(Key::action_1)) {
             if ((**cwd_names_).size() not_eq 0) {
                 PLATFORM.speaker().play_sound("button_wooden", 3);
                 auto selected = (**cwd_names_)[scroll_index_];
@@ -552,8 +589,9 @@ ScenePtr FileBrowserModule::update(Time delta)
                     }
                 }
             }
-        } else if (APP.player().key_down(Key::start) or
-                   APP.player().key_down(Key::select)) {
+        } else if (not gui_mode_ and
+                   (APP.player().key_down(Key::start) or
+                    APP.player().key_down(Key::select))) {
             mode_ = Mode::options;
             opt_index_ = 0;
             show_opts();
@@ -561,7 +599,7 @@ ScenePtr FileBrowserModule::update(Time delta)
         break;
 
     case SelectedFilesystem::rom:
-        if (APP.player().key_down(Key::action_2)) {
+        if (not gui_mode_ and APP.player().key_down(Key::action_2)) {
             if (not user_context_.allow_backtrack_) {
                 if (user_context_.browser_exit_scene_) {
                     return (*user_context_.browser_exit_scene_)();
@@ -576,12 +614,12 @@ ScenePtr FileBrowserModule::update(Time delta)
                     repaint();
                 }
             }
-        } else if (APP.player().key_down(Key::up)) {
+        } else if (not gui_mode_ and APP.player().key_down(Key::up)) {
             scroll_up();
-        } else if (APP.player().key_down(Key::down) and
+        } else if (not gui_mode_ and APP.player().key_down(Key::down) and
                    scroll_index_ < (int)(*cwd_names_)->size() - 1) {
             scroll_down();
-        } else if (APP.player().key_down(Key::action_1)) {
+        } else if (not gui_mode_ and APP.player().key_down(Key::action_1)) {
             if ((**cwd_names_).size() not_eq 0) {
                 int entry = scroll_index_ + line_offset_;
                 auto selected = (**cwd_names_)[entry];

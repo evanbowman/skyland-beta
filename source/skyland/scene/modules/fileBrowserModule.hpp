@@ -83,6 +83,11 @@ public:
 
     Optional<Function<8, void(const char*)>> on_select_;
 
+    bool gui_mode_ = false;
+
+    void repaint();
+
+
 private:
     Buffer<Text, 15> lines_;
     Optional<Text> info_;
@@ -110,8 +115,6 @@ private:
         browse,
         options,
     } mode_ = Mode::browse;
-
-    void repaint();
 
     int scroll_index_ = 0;
 
