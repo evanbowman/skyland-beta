@@ -625,4 +625,18 @@ ScenePtr LispReplScene::update(Time delta)
 
 
 
+void LispReplScene::inject_command(const char* str)
+{
+    command_->clear();
+    display_mode_ = DisplayMode::entry;
+    while (*str not_eq '\0') {
+        command_->push_back(*(str++));
+        reset_history_index();
+    }
+    repaint_entry();
+    PLATFORM.speaker().play_sound("typewriter", 2);
+}
+
+
+
 } // namespace skyland

@@ -53,6 +53,8 @@ public:
 
     StringBuffer<32> filename();
 
+    StringBuffer<64> file_path();
+
 
     void deselect();
 

@@ -434,11 +434,6 @@ public:
 
     void open_application(const char* app_name, OnOpenCallback cb)
     {
-        if (auto win = get_window(app_name)) {
-            g_os_->focus_window(app_name);
-            cb(win);
-            return;
-        }
         for (auto& ico : mem_->dock_icons_) {
             if (str_eq(ico.name(), app_name)) {
                 ico.set_closed();
@@ -861,15 +856,23 @@ public:
         }
 
 
+        void open_file(const char* path, bool rom)
+        {
+            UserContext ctx;
+            auto syntax = TextEditorModule::SyntaxMode::plain_text;
+            impl_.emplace(std::move(ctx), path, syntax,
+                          TextEditorModule::FileMode::update,
+                          rom ? TextEditorModule::FileSystem::rom :
+                                TextEditorModule::FileSystem::sram);
+            impl_->gui_mode_ = true;
+        }
+
+
         TextEditWindow(DockIcon* application) :
             Window(application),
             capture_(this)
         {
-            UserContext ctx;
-            const char* file_path = "/scratch.txt";
-            auto syntax = TextEditorModule::SyntaxMode::plain_text;
-            impl_.emplace(std::move(ctx), file_path, syntax);
-            impl_->gui_mode_ = true;
+            open_file("/scratch.txt", false);
         }
 
 
@@ -903,6 +906,11 @@ public:
                         ((TextEditWindow*)win)->impl_->paste(*g_os_->clipboard_);
                     }
                 });
+            }
+
+            if (auto do_menu = g_os_->insert_dropdown_menu("do")) {
+                do_menu->add_option("lisp eval file",
+                                    run_current_textedit_script_in_lisp_window);
             }
         }
 
@@ -1023,6 +1031,24 @@ public:
                         ((TextEditWindow*)window)->show_syslog();
                     });
                 });
+
+                help_menu->add_option("api docs", [] {
+                    g_os_->open_application("TextEdit", [](Window* window) {
+                        ((TextEditWindow*)window)->open_file("/help/api.txt", true);
+                    });
+                });
+
+                help_menu->add_option("builtin docs", [] {
+                    g_os_->open_application("TextEdit", [](Window* window) {
+                        ((TextEditWindow*)window)->open_file("/help/lisp_builtins.txt", true);
+                    });
+                });
+
+                help_menu->add_option("skyland lisp?", [] {
+                    g_os_->open_application("TextEdit", [](Window* window) {
+                        ((TextEditWindow*)window)->open_file("/help/skyland_lisp.txt", true);
+                    });
+                });
             }
         }
 
@@ -1087,6 +1113,23 @@ public:
         bool has_init_ = false;
         bool interactive_ = false;
     };
+
+
+    static void run_current_textedit_script_in_lisp_window()
+    {
+        if (auto win = (TextEditWindow*)g_os_->get_window("TextEdit")) {
+            win->impl_->save();
+            g_os_->open_application("Lisp", [](Window* lisp_window) {
+                if (auto win = (TextEditWindow*)g_os_->get_window("TextEdit")) {
+                    StringBuffer<96> eval_str;
+                    eval_str = "(eval-file \"";
+                    eval_str += win->impl_->file_path();
+                    eval_str += "\")";
+                    ((LispWindow*)lisp_window)->impl_->inject_command(eval_str.c_str());
+                }
+            });
+        }
+    }
 
 
 

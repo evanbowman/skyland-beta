@@ -42,6 +42,10 @@ public:
 
     bool clobbered_tiles_ = false;
 
+
+    void inject_command(const char* str);
+
+
 private:
     enum class DisplayMode {
         entry,

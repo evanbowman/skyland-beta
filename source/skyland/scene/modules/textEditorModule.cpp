@@ -770,6 +770,13 @@ void TextEditorModule::paste(Vector<char>& contents)
 
 
 
+StringBuffer<64> TextEditorModule::file_path()
+{
+    return state_->file_path_;
+}
+
+
+
 void TextEditorModule::deselect()
 {
     state_->sel_begin_.reset();
