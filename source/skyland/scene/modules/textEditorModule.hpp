@@ -130,6 +130,10 @@ public:
         autocomplete,
     } mode_ = Mode::nav;
 
+
+    FileSystem which_fs() const;
+
+
 private:
 
 

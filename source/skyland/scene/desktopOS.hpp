@@ -843,7 +843,7 @@ public:
         };
 
 
-        void push_recent(bool rom_fs)
+        void push_recent()
         {
             if (impl_) {
                 if (recents_.full()) {
@@ -857,6 +857,7 @@ public:
                         return;
                     }
                 }
+                auto rom_fs = impl_->which_fs() == TextEditorModule::FileSystem::rom;
                 recents_.push_back({new_entry.c_str(), rom_fs});
                 g_os_->clear_dropdown_menus();
                 build_menu_bar_opts();
@@ -885,7 +886,10 @@ public:
 
         void open_file(const char* path, bool rom)
         {
-            push_recent(rom);
+            push_recent();
+            if (impl_) {
+                impl_->save();
+            }
             UserContext ctx;
             auto syntax = TextEditorModule::SyntaxMode::plain_text;
             impl_.emplace(std::move(ctx), path, syntax,
@@ -911,7 +915,6 @@ public:
         {
             if (auto win = (TextEditWindow*)g_os_->get_window("TextEdit")) {
                 auto rec = win->recents_[f];
-                info(rec.first.c_str());
                 win->open_file(rec.first.c_str(), rec.second);
             }
         }

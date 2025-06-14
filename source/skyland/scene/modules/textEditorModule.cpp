@@ -734,6 +734,10 @@ void TextEditorModule::exit(Scene& next)
 
 ScenePtr TextEditorModule::save()
 {
+    if (not state_->modified_) {
+        return null_scene();
+    }
+
     if (file_mode_ == FileMode::readonly) {
         // Do not save the file
     } else if (filesystem_ == FileSystem::sram) {
@@ -1559,6 +1563,13 @@ ScenePtr TextEditorModule::update(Time delta)
     }
 
     return null_scene();
+}
+
+
+
+TextEditorModule::FileSystem TextEditorModule::which_fs() const
+{
+    return filesystem_;
 }
 
 
