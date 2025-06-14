@@ -434,6 +434,11 @@ public:
 
     void open_application(const char* app_name, OnOpenCallback cb)
     {
+        if (auto win = get_window(app_name)) {
+            cb(win);
+            g_os_->focus_window(app_name);
+            return;
+        }
         for (auto& ico : mem_->dock_icons_) {
             if (str_eq(ico.name(), app_name)) {
                 ico.set_closed();
@@ -451,7 +456,7 @@ public:
         bool minimized_ = false;
 
 
-        virtual StringBuffer<30> heading()
+        virtual StringBuffer<26> heading()
         {
             return name();
         }
@@ -561,8 +566,8 @@ public:
             PLATFORM.set_tile(Layer::overlay, 0, 2, 87);
             PLATFORM.set_tile(Layer::overlay, 0, 3, 92);
             PLATFORM.set_tile(Layer::overlay, 1, 2, 94);
-            PLATFORM.set_tile(Layer::overlay, 2, 2, 95);
-            PLATFORM.set_tile(Layer::overlay, 2, 3, 96);
+            // PLATFORM.set_tile(Layer::overlay, 2, 2, 95);
+            // PLATFORM.set_tile(Layer::overlay, 2, 3, 96);
             PLATFORM.set_tile(Layer::overlay, 29, 2, 88);
         }
 
@@ -838,11 +843,32 @@ public:
         };
 
 
-        StringBuffer<30> heading() override
+        void push_recent(bool rom_fs)
+        {
+            if (impl_) {
+                if (recents_.full()) {
+                    recents_.erase(recents_.begin());
+                }
+                auto new_entry = impl_->file_path();
+                for (auto& r : recents_) {
+                    if (r.first == new_entry.c_str()) {
+                        // Already exists, move to end
+                        std::swap(recents_.back(), r);
+                        return;
+                    }
+                }
+                recents_.push_back({new_entry.c_str(), rom_fs});
+                g_os_->clear_dropdown_menus();
+                build_menu_bar_opts();
+            }
+        }
+
+
+        StringBuffer<26> heading() override
         {
             auto base = Window::heading();
             base += ": ";
-            base += impl_->filename();
+            base += impl_->extract_filename(impl_->file_path().c_str());
             return base;
         }
 
@@ -852,12 +878,14 @@ public:
             UserContext ctx;
             impl_.emplace(std::move(ctx));
             impl_->gui_mode_ = true;
+            impl_->enter(*impl_);
             syslog_mode_ = true;
         }
 
 
         void open_file(const char* path, bool rom)
         {
+            push_recent(rom);
             UserContext ctx;
             auto syntax = TextEditorModule::SyntaxMode::plain_text;
             impl_.emplace(std::move(ctx), path, syntax,
@@ -865,6 +893,9 @@ public:
                           rom ? TextEditorModule::FileSystem::rom :
                                 TextEditorModule::FileSystem::sram);
             impl_->gui_mode_ = true;
+            impl_->enter(*impl_);
+            g_os_->clear_dropdown_menus();
+            build_menu_bar_opts();
         }
 
 
@@ -876,14 +907,40 @@ public:
         }
 
 
+        static void load_recent_file(int f)
+        {
+            if (auto win = (TextEditWindow*)g_os_->get_window("TextEdit")) {
+                auto rec = win->recents_[f];
+                info(rec.first.c_str());
+                win->open_file(rec.first.c_str(), rec.second);
+            }
+        }
+
+
         void build_menu_bar_opts() override
         {
+            if (auto recent_menu = g_os_->insert_dropdown_menu("Recents")) {
+                OptionCallback cbs[] = {
+                    []() { load_recent_file(0); },
+                    []() { load_recent_file(1); },
+                    []() { load_recent_file(2); },
+                    []() { load_recent_file(3); },
+                    []() { load_recent_file(4); },
+                };
+                for (int i = recents_.size() - 1; i > -1; --i) {
+                    recent_menu->add_option(recents_[i].first.c_str(), cbs[i]);
+                }
+            }
+
             if (auto file_menu = g_os_->insert_dropdown_menu("File")) {
                 file_menu->add_option("save", [] {
                     if (auto win = (TextEditWindow*)g_os_->get_window("TextEdit")) {
                         win->impl_->save();
                     }
                 });
+                file_menu->add_option("lisp eval",
+                                      run_current_textedit_script_in_lisp_window);
+
                 file_menu->add_option("close", [] {
                     if (auto win = g_os_->get_window("TextEdit")) {
                         win->close();
@@ -906,11 +963,6 @@ public:
                         ((TextEditWindow*)win)->impl_->paste(*g_os_->clipboard_);
                     }
                 });
-            }
-
-            if (auto do_menu = g_os_->insert_dropdown_menu("do")) {
-                do_menu->add_option("lisp eval file",
-                                    run_current_textedit_script_in_lisp_window);
             }
         }
 
@@ -958,12 +1010,7 @@ public:
                     PLATFORM.set_tile(Layer::overlay, x, y, 97);
                 }
             }
-            if (not has_init_) {
-                impl_->enter(*impl_);
-                has_init_ = true;
-            }
-            impl_->repaint(// interactive_
-                           );
+            impl_->repaint();
         }
 
         Optional<TextEditorModule> impl_;
@@ -972,6 +1019,7 @@ public:
         bool has_init_ = false;
         bool interactive_ = false;
         bool syslog_mode_ = false;
+        Buffer<std::pair<StringBuffer<64>, bool>, 5> recents_;
     };
 
 
@@ -1553,8 +1601,8 @@ public:
             mem_->windows_.push_back(allocate_dynamic<Window>("os-window",
                                                               application));
         }
-        update_focus();
         application->on_open_callback_(&*mem_->windows_.back());
+        update_focus();
         application->on_open_callback_ = [](Window*) {};
         repaint_windows();
     }

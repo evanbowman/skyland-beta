@@ -1563,9 +1563,9 @@ ScenePtr TextEditorModule::update(Time delta)
 
 
 
-StringBuffer<32> TextEditorModule::filename()
+StringBuffer<32> TextEditorModule::extract_filename(const char* path)
 {
-    const char* p = state_->file_path_.c_str();
+    const char* p = path;
     int dir_count = 0;
     while (*p not_eq '\0') {
         if (*p == '/') {

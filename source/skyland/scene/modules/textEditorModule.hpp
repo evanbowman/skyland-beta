@@ -51,7 +51,7 @@ public:
     };
 
 
-    StringBuffer<32> filename();
+    static StringBuffer<32> extract_filename(const char* path);
 
     StringBuffer<64> file_path();
 
