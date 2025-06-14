@@ -87,6 +87,13 @@ public:
 
     void repaint();
 
+    using CwdNames = Vector<StringBuffer<30>>;
+    CwdNames& get_cwd_names()
+    {
+        return **cwd_names_;
+    }
+
+    StringBuffer<200> cwd() const;
 
 private:
     Buffer<Text, 15> lines_;
@@ -99,10 +106,6 @@ private:
 
     UserContext user_context_;
 
-
-    StringBuffer<200> cwd() const;
-
-    using CwdNames = Vector<StringBuffer<30>>;
     Optional<DynamicMemory<CwdNames>> cwd_names_;
 
     enum SelectedFilesystem {

@@ -245,9 +245,11 @@ void FileBrowserModule::repaint()
 
     switch (selected_filesystem_) {
     case SelectedFilesystem::none:
-        enq_line("flash/");
-        enq_line("rom/");
-        enq_line("*syslog*");
+        if (not gui_mode_) {
+            enq_line("flash/");
+            enq_line("rom/");
+            enq_line("*syslog*");
+        }
         (*cwd_names_)->push_back("flash/");
         (*cwd_names_)->push_back("rom/");
         (*cwd_names_)->push_back("*syslog*");
@@ -282,6 +284,9 @@ void FileBrowserModule::repaint()
         break;
     }
 
+    if (gui_mode_) {
+        return;
+    }
 
     if (not gui_mode_) {
         while (path.length() < 28) {

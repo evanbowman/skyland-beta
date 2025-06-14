@@ -627,10 +627,52 @@ public:
         }
 
 
+        StringBuffer<26> heading() override
+        {
+            auto base = Window::heading();
+            base += ": ";
+            base += impl_->cwd().c_str();
+            return base;
+        }
+
+
         void repaint() override
         {
             Window::repaint();
             impl_->repaint();
+
+            bool alternate = true;
+
+            static constexpr const Text::OptColors alt_colors{
+                {custom_color(0x212194),
+                 custom_color(0xeaeef3)}};
+
+            auto& names = impl_->get_cwd_names();
+            u32 i = 0;
+            for (; i < names.size(); ++i) {
+                StringBuffer<64> nm = "  ";
+                nm += names[i].c_str();
+                while (nm.length() < 30) {
+                    nm.push_back(' ');
+                }
+                u8 y = u8(4 + i);
+                if (alternate) {
+                    Text::print(nm.c_str(), {0, y});
+                } else {
+                    Text::print(nm.c_str(), {0, y}, alt_colors);
+                }
+                alternate = not alternate;
+            }
+            for (; i < 12; ++i) {
+                StringBuffer<31> nm(' ', 31);
+                u8 y = u8(4 + i);
+                if (alternate) {
+                    Text::print(nm.c_str(), {0, y});
+                } else {
+                    Text::print(nm.c_str(), {0, y}, alt_colors);
+                }
+                alternate = not alternate;
+            }
         }
 
 
@@ -679,7 +721,7 @@ public:
                     }
                     Vec2<Fixnum> pos;
                     pos.x = Fixnum::from_integer(16);
-                    pos.y = Fixnum::from_integer(33 + i * 8);
+                    pos.y = Fixnum::from_integer((33 - 8) + i * 8);
                     music_opts_.emplace_back(temp.c_str(),
                                              HitBox::Dimension{20 * 8, 7, 0, 0},
                                              pos,
@@ -731,20 +773,20 @@ public:
         {
             Window::repaint();
 
-            bool alternate = false;
+            bool alternate = true;
 
             static constexpr const Text::OptColors alt_colors{
                 {custom_color(0x212194),
                  custom_color(0xeaeef3)}};
 
-
-            for (u32 i = 0; i < music_names_.size(); ++i) {
+            u32 i = 0;
+            for (; i < music_names_.size(); ++i) {
                 StringBuffer<48> nm = "  ";
                 nm += music_names_[i].c_str();
                 while (nm.length() < 30) {
                     nm.push_back(' ');
                 }
-                u8 y = u8(5 + i);
+                u8 y = u8(4 + i);
                 if (alternate) {
                     Text::print(nm.c_str(), {0, y});
                     if (selected_track_ == i) {
@@ -755,6 +797,16 @@ public:
                     if (selected_track_ == i) {
                         PLATFORM.set_tile(Layer::overlay, 0, y, 99);
                     }
+                }
+                alternate = not alternate;
+            }
+            for (; i < 12; ++i) {
+                StringBuffer<31> nm(' ', 31);
+                u8 y = u8(4 + i);
+                if (alternate) {
+                    Text::print(nm.c_str(), {0, y});
+                } else {
+                    Text::print(nm.c_str(), {0, y}, alt_colors);
                 }
                 alternate = not alternate;
             }
@@ -882,6 +934,9 @@ public:
                     recents_.erase(recents_.begin());
                 }
                 auto new_entry = impl_->file_path();
+                if (new_entry == "/") {
+                    new_entry = "*syslog*";
+                }
                 for (auto& r : recents_) {
                     if (r.first == new_entry.c_str()) {
                         // Already exists, move to end
@@ -906,13 +961,24 @@ public:
         }
 
 
-        void show_syslog()
+        void load_file(const char* path, bool rom)
         {
-            UserContext ctx;
-            impl_.emplace(std::move(ctx));
+            if (str_eq(path, "*syslog*")) {
+                UserContext ctx;
+                impl_.emplace(std::move(ctx));
+            } else {
+                UserContext ctx;
+                auto syntax = TextEditorModule::SyntaxMode::plain_text;
+                impl_.emplace(std::move(ctx), path, syntax,
+                              TextEditorModule::FileMode::update,
+                              rom ? TextEditorModule::FileSystem::rom :
+                              TextEditorModule::FileSystem::sram);
+            }
+
             impl_->gui_mode_ = true;
             impl_->enter(*impl_);
-            syslog_mode_ = true;
+            g_os_->clear_dropdown_menus();
+            build_menu_bar_opts();
         }
 
 
@@ -922,16 +988,7 @@ public:
             if (impl_) {
                 impl_->save();
             }
-            UserContext ctx;
-            auto syntax = TextEditorModule::SyntaxMode::plain_text;
-            impl_.emplace(std::move(ctx), path, syntax,
-                          TextEditorModule::FileMode::update,
-                          rom ? TextEditorModule::FileSystem::rom :
-                                TextEditorModule::FileSystem::sram);
-            impl_->gui_mode_ = true;
-            impl_->enter(*impl_);
-            g_os_->clear_dropdown_menus();
-            build_menu_bar_opts();
+            load_file(path, rom);
         }
 
 
@@ -1111,7 +1168,7 @@ public:
             if (auto help_menu = g_os_->insert_dropdown_menu("Help")) {
                 help_menu->add_option("view syslog", [] {
                     g_os_->open_application("TextEdit", [](Window* window) {
-                        ((TextEditWindow*)window)->show_syslog();
+                        ((TextEditWindow*)window)->open_file("*syslog*", true);
                     });
                 });
 
