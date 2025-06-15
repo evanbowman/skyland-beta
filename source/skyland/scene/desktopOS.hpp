@@ -287,7 +287,7 @@ public:
 
 
     class Window;
-    using OnOpenCallback = void (*)(Window* win);
+    using OnOpenCallback = void (*)(Window* win, int param);
 
 
     class DockIcon : public Clickable
@@ -322,12 +322,14 @@ public:
         }
 
 
-        OnOpenCallback on_open_callback_ = [](Window*) {};
+        OnOpenCallback on_open_callback_ = [](Window*, int) {};
+        int on_open_param_;
 
 
-        void set_on_open(OnOpenCallback cb)
+        void set_on_open(OnOpenCallback cb, int param)
         {
             on_open_callback_ = cb;
+            on_open_param_ = param;
         }
 
 
@@ -433,10 +435,10 @@ public:
     };
 
 
-    void open_application(const char* app_name, OnOpenCallback cb)
+    void open_application(const char* app_name, OnOpenCallback cb, int param)
     {
         if (auto win = get_window(app_name)) {
-            cb(win);
+            cb(win, param);
             g_os_->focus_window(app_name);
             return;
         }
@@ -444,7 +446,7 @@ public:
             if (str_eq(ico.name(), app_name)) {
                 ico.set_closed();
                 ico.on_click();
-                ico.on_open_callback_ = cb;
+                ico.set_on_open(cb, param);
             }
         }
     }
@@ -616,6 +618,10 @@ public:
         {
             Window::set_focus(focused);
             active_ = focused;
+
+            for (auto& cl : clickables_) {
+                cl.set_enabled(focused);
+            }
         }
 
 
@@ -647,15 +653,18 @@ public:
                 {custom_color(0x212194),
                  custom_color(0xeaeef3)}};
 
+            clickables_.clear();
+
             auto& names = impl_->get_cwd_names();
             u32 i = 0;
             for (; i < names.size(); ++i) {
+                u8 y = u8(4 + i);
+                clickables_.emplace_back(i);
                 StringBuffer<64> nm = "  ";
                 nm += names[i].c_str();
                 while (nm.length() < 30) {
                     nm.push_back(' ');
                 }
-                u8 y = u8(4 + i);
                 if (alternate) {
                     Text::print(nm.c_str(), {0, y});
                 } else {
@@ -679,9 +688,9 @@ public:
         void build_menu_bar_opts() override
         {
             if (auto file_menu = g_os_->insert_dropdown_menu("File")) {
-                file_menu->add_option("new folder", [] {
-                    // ...
-                });
+                // file_menu->add_option("new folder", [] {
+                //     // ...
+                // });
 
                 file_menu->add_option("close", [] {
                     if (auto win = g_os_->get_window("Seeker")) {
@@ -691,14 +700,62 @@ public:
             }
 
             if (auto go_menu = g_os_->insert_dropdown_menu("Go")) {
-                go_menu->add_option("back", [] {
-                    // ...
-                });
+                (void)go_menu;
+                // go_menu->add_option("back", [] {
+                //     // ...
+                // });
             }
         }
 
 
+        void select_option(u8 index)
+        {
+            auto ent = impl_->select_entry(index);
+            g_os_->repaint_windows();
+            if (not ent.empty()) {
+                g_os_->open_application("TextEdit", [](Window* w, int index) {
+                    if (auto sw = (SeekerWindow*)g_os_->get_window("Seeker")) {
+                        auto ent = sw->impl_->select_entry(index);
+                        info(format("% ent", ent.c_str()));
+                        bool is_rom = sw->impl_->selected_filesystem_ ==
+                            FileBrowserModule::rom;
+                        ((TextEditWindow*)w)->open_file(ent.c_str(), is_rom);
+                        info("here...");
+                    }
+
+                }, index);
+            }
+            info(format("% selected", ent.c_str()));
+        }
+
+
+        class FileExplorerOption : public Clickable
+        {
+        public:
+            FileExplorerOption(int index) :
+                Clickable({u8(8 * 28), 7}),
+                index_(index)
+            {
+                Vec2<Fixnum> pos {16.0_fixed, 25.0_fixed};
+                pos.y += Fixnum::from_integer(8 * index);
+                this->pos() = pos;
+                show_pointer_ = true;
+            }
+
+
+            void on_click() override
+            {
+                if (auto sw = (SeekerWindow*)g_os_->get_window("Seeker")) {
+                    sw->select_option(index_);
+                }
+            }
+
+            u8 index_ = 0;
+        };
+
+
         Optional<FileBrowserModule> impl_;
+        Buffer<FileExplorerOption, 13> clickables_;
         bool active_ = true;
     };
 
@@ -930,6 +987,7 @@ public:
         void push_recent()
         {
             if (impl_) {
+                info("push recent...");
                 if (recents_.full()) {
                     recents_.erase(recents_.begin());
                 }
@@ -956,7 +1014,9 @@ public:
         {
             auto base = Window::heading();
             base += ": ";
-            base += impl_->extract_filename(impl_->file_path().c_str());
+            if (impl_) {
+                base += impl_->extract_filename(impl_->file_path().c_str());
+            }
             return base;
         }
 
@@ -1069,7 +1129,8 @@ public:
         void update() override
         {
             if (APP.player().key_down(Key::action_2)) {
-                if (interactive_ and impl_->mode_ == TextEditorModule::Mode::nav and
+                if (interactive_ and
+                    impl_ and impl_->mode_ == TextEditorModule::Mode::nav and
                     not APP.player().key_pressed(Key::alt_1)) {
                     interactive_ = false;
                     g_os_->capture_focus(false);
@@ -1081,7 +1142,9 @@ public:
                 if (ignore_click_ and APP.player().key_down(Key::action_1)) {
                     ignore_click_--;
                 } else {
-                    impl_->update(milliseconds(16));
+                    if (impl_) {
+                        impl_->update(milliseconds(16));
+                    }
                 }
             }
         }
@@ -1102,7 +1165,9 @@ public:
                     PLATFORM.set_tile(Layer::overlay, x, y, 97);
                 }
             }
-            impl_->repaint();
+            if (impl_) {
+                impl_->repaint();
+            }
         }
 
         Optional<TextEditorModule> impl_;
@@ -1167,27 +1232,27 @@ public:
 
             if (auto help_menu = g_os_->insert_dropdown_menu("Help")) {
                 help_menu->add_option("view syslog", [] {
-                    g_os_->open_application("TextEdit", [](Window* window) {
+                    g_os_->open_application("TextEdit", [](Window* window, int param) {
                         ((TextEditWindow*)window)->open_file("*syslog*", true);
-                    });
+                    }, 0);
                 });
 
                 help_menu->add_option("api docs", [] {
-                    g_os_->open_application("TextEdit", [](Window* window) {
+                    g_os_->open_application("TextEdit", [](Window* window, int param) {
                         ((TextEditWindow*)window)->open_file("/help/api.txt", true);
-                    });
+                    }, 0);
                 });
 
                 help_menu->add_option("builtin docs", [] {
-                    g_os_->open_application("TextEdit", [](Window* window) {
+                    g_os_->open_application("TextEdit", [](Window* window, int param) {
                         ((TextEditWindow*)window)->open_file("/help/lisp_builtins.txt", true);
-                    });
+                    }, 0);
                 });
 
                 help_menu->add_option("skyland lisp?", [] {
-                    g_os_->open_application("TextEdit", [](Window* window) {
+                    g_os_->open_application("TextEdit", [](Window* window, int param) {
                         ((TextEditWindow*)window)->open_file("/help/skyland_lisp.txt", true);
-                    });
+                    }, 0);
                 });
             }
         }
@@ -1705,9 +1770,10 @@ public:
             mem_->windows_.push_back(allocate_dynamic<Window>("os-window",
                                                               application));
         }
-        application->on_open_callback_(&*mem_->windows_.back());
+        application->on_open_callback_(&*mem_->windows_.back(),
+                                       application->on_open_param_);
         update_focus();
-        application->on_open_callback_ = [](Window*) {};
+        application->on_open_callback_ = [](Window*, int) {};
         repaint_windows();
     }
 

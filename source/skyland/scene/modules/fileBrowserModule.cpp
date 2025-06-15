@@ -667,6 +667,77 @@ ScenePtr FileBrowserModule::update(Time delta)
 
 
 
+StringBuffer<200> FileBrowserModule::select_entry(int opt)
+{
+    auto on_dir_changed = [&] {
+        scroll_index_ = 0;
+        line_offset_ = 0;
+    };
+
+    switch (selected_filesystem_) {
+    case SelectedFilesystem::none: {
+        switch (opt) {
+        case 0:
+            on_dir_changed();
+            selected_filesystem_ = SelectedFilesystem::sram;
+            repaint();
+            PLATFORM.speaker().play_sound("button_wooden", 3);
+            return "";
+
+        case 1:
+            on_dir_changed();
+            selected_filesystem_ = SelectedFilesystem::rom;
+            repaint();
+            PLATFORM.speaker().play_sound("button_wooden", 3);
+            return "";
+
+        case 2:
+            return "*syslog*";
+        }
+        break;
+    }
+
+    case SelectedFilesystem::sram:
+        if ((**cwd_names_).size() not_eq 0) {
+            PLATFORM.speaker().play_sound("button_wooden", 3);
+            auto selected = (**cwd_names_)[opt];
+            if (selected[selected.length() - 1] == '/') {
+                on_dir_changed();
+                (*path_)->emplace_back(selected);
+                repaint();
+                return "";
+            } else {
+                auto path = this->cwd();
+                path += selected;
+                return path;
+            }
+        }
+        break;
+
+    case SelectedFilesystem::rom:
+        if ((**cwd_names_).size() not_eq 0) {
+            int entry = opt + line_offset_;
+            auto selected = (**cwd_names_)[entry];
+            if (selected[selected.length() - 1] == '/') {
+                on_dir_changed();
+                (*path_)->emplace_back(selected);
+                repaint();
+                return "";
+            } else {
+                auto path = this->cwd();
+                path += selected;
+                return path;
+            }
+        }
+        break;
+    }
+
+
+    return "";
+}
+
+
+
 void FileBrowserModule::display()
 {
 }

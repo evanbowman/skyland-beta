@@ -714,9 +714,9 @@ void TextEditorModule::enter(Scene& prev)
         }
     }
 
-    render(0);
+    // render(0);
 }
-
+// /scripts/event/quest/human/0.lisp
 
 
 void TextEditorModule::repaint()
