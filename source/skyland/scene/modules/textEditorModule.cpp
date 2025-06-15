@@ -634,7 +634,7 @@ TextEditorModule::TextEditorModule(UserContext&& user_context,
     StringBuffer<8> lisp_ext(".lisp");
 
     if (str_eq(get_extension(file_path), lisp_ext)) {
-        tabs_to_spaces();
+        // tabs_to_spaces();
     }
 }
 
