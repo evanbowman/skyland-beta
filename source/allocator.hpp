@@ -57,13 +57,12 @@ template <typename T> struct DynamicMemory
     DynamicMemory(const DynamicMemory& other) = delete;
 
 
-    template <typename U>
-    DynamicMemory& operator=(DynamicMemory<U>&& rebind)
+    template <typename U> DynamicMemory& operator=(DynamicMemory<U>&& rebind)
     {
         memory_ = rebind.memory_;
         // Preserve the original deleter instead of creating a new one
         obj_ = {static_cast<T*>(rebind.obj_.release()),
-                reinterpret_cast<void(*)(T*)>(rebind.obj_.get_deleter())};
+                reinterpret_cast<void (*)(T*)>(rebind.obj_.get_deleter())};
         return *this;
     }
 
@@ -71,7 +70,7 @@ template <typename T> struct DynamicMemory
     DynamicMemory(DynamicMemory<U>&& rebind)
         : memory_(rebind.memory_),
           obj_(static_cast<T*>(rebind.obj_.release()),
-               reinterpret_cast<void(*)(T*)>(rebind.obj_.get_deleter()))
+               reinterpret_cast<void (*)(T*)>(rebind.obj_.get_deleter()))
     {
     }
 

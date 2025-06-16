@@ -22,6 +22,7 @@
 #include "skyland/scene/introCreditsScene.hpp"
 #include "skyland/scene/modules/skylandForever.hpp"
 #include "skyland/scene_pool.hpp"
+#include "skyland/scene/desktopOS.hpp"
 #include "skyland/skyland.hpp"
 #include "version.hpp"
 
@@ -33,7 +34,6 @@ namespace skyland
 
 
 static constexpr const char* lang_file = "/lang.txt";
-ScenePtr boot_desktop_os();
 
 
 void init_clouds();
@@ -247,9 +247,9 @@ public:
             " Cartridge Operating System ",
         };
 
-        Text::print("(hold select for boot menu)", {1, 8},
-                    FontColors{custom_color(0xd9b059),
-                    back_color});
+        Text::print("(hold select for boot menu)",
+                    {1, 8},
+                    FontColors{custom_color(0xd9b059), back_color});
 
         int i = 0;
         for (auto& l : lines) {
@@ -392,8 +392,10 @@ public:
             Text::print(" .__________________________.", {0, 17}, fc);
 
             auto redraw = [&] {
-                Text::print("- Enter Skyland  ", {3, 10}, opt == 0 ? fc_inv : fc);
-                Text::print("- Nimbus GUI     ", {3, 12}, opt == 1 ? fc_inv : fc);
+                Text::print(
+                    "- Enter Skyland  ", {3, 10}, opt == 0 ? fc_inv : fc);
+                Text::print(
+                    "- Nimbus GUI     ", {3, 12}, opt == 1 ? fc_inv : fc);
             };
 
             redraw();
@@ -415,8 +417,11 @@ public:
 
                 if (not any_button_pressed) {
                     autoboot_timer -= PLATFORM.delta_clock().reset();
-                    Text::print(format("autoboot in % seconds...", autoboot_timer / seconds(1)).c_str(),
-                                {2, 16}, fc);
+                    Text::print(format("autoboot in % seconds...",
+                                       autoboot_timer / seconds(1))
+                                    .c_str(),
+                                {2, 16},
+                                fc);
                 } else {
                     for (int x = 0; x < 30; ++x) {
                         PLATFORM.set_tile(Layer::overlay, x, 16, 0);

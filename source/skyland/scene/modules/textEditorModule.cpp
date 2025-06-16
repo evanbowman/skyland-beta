@@ -640,6 +640,13 @@ TextEditorModule::TextEditorModule(UserContext&& user_context,
 
 
 
+bool TextEditorModule::has_text()
+{
+    return not text_buffer_.size() not_eq 0 and text_buffer_[0] not_eq '\0';
+}
+
+
+
 void TextEditorModule::tabs_to_spaces()
 {
     Vector<char> temp_buffer;
@@ -743,16 +750,17 @@ void TextEditorModule::exit(Scene& next)
 
 ScenePtr TextEditorModule::save()
 {
-    if (not state_->modified_) {
+    if (not state_->modified_ and
+        not flash_filesystem::file_exists(state_->file_path_.c_str())) {
         return null_scene();
     }
 
     if (file_mode_ == FileMode::readonly) {
         // Do not save the file
     } else if (filesystem_ == FileSystem::sram) {
-        flash_filesystem::StorageOptions opts{
-            .use_compression_ = true};
-        flash_filesystem::store_file_data_text(state_->file_path_.c_str(), text_buffer_, opts);
+        flash_filesystem::StorageOptions opts{.use_compression_ = true};
+        flash_filesystem::store_file_data_text(
+            state_->file_path_.c_str(), text_buffer_, opts);
     } else {
         return make_scene<SramFileWritebackScene>(state_->file_path_.c_str(),
                                                   std::move(text_buffer_),
@@ -871,7 +879,6 @@ ScenePtr TextEditorModule::update(Time delta)
     };
 
     auto center_view = [&] {
-
         u8 yo = 2;
         if (gui_mode_) {
             yo = 5;

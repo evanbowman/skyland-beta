@@ -748,9 +748,10 @@ const char* seek_filename(const char* path)
 
 
 
-lisp::Value* App::invoke_script(const char* path,
-                                bool rom_fs_only,
-                                Optional<Function<16, void(lisp::Value& err)>> err_handler)
+lisp::Value*
+App::invoke_script(const char* path,
+                   bool rom_fs_only,
+                   Optional<Function<16, void(lisp::Value& err)>> err_handler)
 {
     auto on_err = [path](lisp::Value& err) {
         lisp::DefaultPrinter p;

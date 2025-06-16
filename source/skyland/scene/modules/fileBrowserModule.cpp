@@ -145,7 +145,8 @@ void FileBrowserModule::repaint()
         if (lines_.size() > line_count) {
             lines_[line_count++].assign(text);
         } else {
-            lines_.emplace_back(text, OverlayCoord{2, (u8)(lines_.size() + y_offset)});
+            lines_.emplace_back(
+                text, OverlayCoord{2, (u8)(lines_.size() + y_offset)});
             ++line_count;
         }
     };
@@ -524,7 +525,8 @@ ScenePtr FileBrowserModule::update(Time delta)
     case SelectedFilesystem::none:
         if (not gui_mode_ and APP.player().key_down(Key::up)) {
             scroll_up();
-        } else if (not gui_mode_ and APP.player().key_down(Key::down) and scroll_index_ < 2) {
+        } else if (not gui_mode_ and APP.player().key_down(Key::down) and
+                   scroll_index_ < 2) {
             scroll_down();
         } else if (not gui_mode_ and APP.player().key_down(Key::action_1)) {
             switch (scroll_index_) {
@@ -601,9 +603,8 @@ ScenePtr FileBrowserModule::update(Time delta)
                     }
                 }
             }
-        } else if (not gui_mode_ and
-                   (APP.player().key_down(Key::start) or
-                    APP.player().key_down(Key::select))) {
+        } else if (not gui_mode_ and (APP.player().key_down(Key::start) or
+                                      APP.player().key_down(Key::select))) {
             mode_ = Mode::options;
             opt_index_ = 0;
             show_opts();

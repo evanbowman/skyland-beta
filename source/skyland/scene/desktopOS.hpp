@@ -20,7 +20,7 @@ namespace skyland
 
 
 
-ScenePtr boot_desktop_os();
+ScenePtr boot_desktop_os(Optional<DeferredScene> resume = nullopt());
 
 
 

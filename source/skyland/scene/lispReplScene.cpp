@@ -31,7 +31,6 @@ LispReplScene::LispReplScene()
     : command_(allocate_dynamic<Command>("lisp-repl-command-buffer")),
       cpl_(allocate_dynamic<Completions>("lisp-repl-completion-buffer"))
 {
-    *command_ = "try: (help)";
 }
 
 
@@ -181,7 +180,11 @@ void LispReplScene::repaint_entry(bool show_cursor)
                                      ColorConstant::aerospace_orange}};
                 keyboard_.back().append(kb[i][j], colors);
             } else {
-                keyboard_.back().append(kb[i][j], darker_clr);
+                if (gui_mode_) {
+                    keyboard_.back().append(kb[i][j], darker_clr);
+                } else {
+                    keyboard_.back().append(kb[i][j]);
+                }
             }
         }
         if (not gui_mode_) {
@@ -193,6 +196,10 @@ void LispReplScene::repaint_entry(bool show_cursor)
 
 void LispReplScene::enter(Scene& prev)
 {
+    if (not gui_mode_) {
+        *command_ = "try: (help)";
+    }
+
     enable_text_icon_glyphs(false);
 
     if (not gui_mode_) {
@@ -285,8 +292,7 @@ void LispReplScene::repaint_completions()
     }
 
     for (u32 i = 0; i < cpl_->completion_strs_.size() and
-                    i < cpl_->completions_.capacity() and
-                    i < throttle;
+                    i < cpl_->completions_.capacity() and i < throttle;
          ++i) {
         Text::OptColors opts;
         if (i == cpl_->completion_cursor_) {
@@ -318,10 +324,7 @@ void LispReplScene::repaint_completions()
 
 
             cpl_->completions_.back().append(
-                tempstr,
-                i == cpl_->completion_cursor_
-                    ? opts
-                    : shade_opts);
+                tempstr, i == cpl_->completion_cursor_ ? opts : shade_opts);
         }
 
         const int len = strlen(str);
@@ -357,7 +360,7 @@ bool LispReplScene::entry_empty() const
 
 ScenePtr LispReplScene::update(Time delta)
 {
- TOP:
+TOP:
     if (not gui_mode_) {
         constexpr auto fade_duration = milliseconds(500);
         if (timer_ < fade_duration) {

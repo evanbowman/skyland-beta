@@ -12,11 +12,11 @@
 
 
 
+#include "platform/flash_filesystem.hpp"
 #include "skyland/scene.hpp"
-#include "skyland/scene/modules/textEditorModule.hpp"
 #include "skyland/scene/lispReplScene.hpp"
 #include "skyland/scene/modules/fileBrowserModule.hpp"
-#include "platform/flash_filesystem.hpp"
+#include "skyland/scene/modules/textEditorModule.hpp"
 
 
 
@@ -43,12 +43,10 @@ DesktopOS* g_os_;
 class DesktopOS : public Scene
 {
 public:
-
-
     class Clickable;
 
 
-    using OptionCallback = void(*)();
+    using OptionCallback = void (*)();
 
 
     void register_clickable(Clickable* clk)
@@ -136,7 +134,6 @@ public:
         Vec2<Fixnum> position_;
 
     protected:
-
         bool enabled_ = true;
         bool show_pointer_ = false;
     };
@@ -145,11 +142,9 @@ public:
     class DropdownMenu : public Clickable
     {
     public:
-        DropdownMenu(const char* name, u8 x, u8 y) :
-            Clickable({u8(strlen(name) * 8), 8, 0, 0}),
-            name_(name),
-            x_(x),
-            y_(y)
+        DropdownMenu(const char* name, u8 x, u8 y)
+            : Clickable({u8(strlen(name) * 8), 8, 0, 0}), name_(name), x_(x),
+              y_(y)
         {
             pos().x = Fixnum::from_integer(x * 8);
             pos().y = Fixnum::from_integer(y * 8) - 7.0_fixed;
@@ -183,8 +178,7 @@ public:
         void repaint()
         {
             static constexpr const Text::OptColors sel_colors{
-                {custom_color(0xffffff),
-                 custom_color(0x1276c5)}};
+                {custom_color(0xffffff), custom_color(0x1276c5)}};
 
             Text::print(name_, {x_, y_}, open_ ? sel_colors : nullopt());
 
@@ -234,10 +228,9 @@ public:
         class Option : public Clickable
         {
         public:
-            Option(const char* name, OptionCallback cb, u8 x, u8 y) :
-                Clickable({u8(strlen(name) * 8), 8, 0, 0}),
-                name_(name),
-                cb_(cb)
+            Option(const char* name, OptionCallback cb, u8 x, u8 y)
+                : Clickable({u8(strlen(name) * 8), 8, 0, 0}), name_(name),
+                  cb_(cb)
             {
                 pos().x = Fixnum::from_integer(x * 8);
                 pos().y = Fixnum::from_integer(y * 8);
@@ -262,7 +255,8 @@ public:
 
         void add_option(const char* name, OptionCallback cb)
         {
-            options_.emplace_back(name, cb, x_, u8(y_ + 1 + options_.size() * 2));
+            options_.emplace_back(
+                name, cb, x_, u8(y_ + 1 + options_.size() * 2));
         }
 
 
@@ -294,12 +288,8 @@ public:
     class DockIcon : public Clickable
     {
     public:
-        DockIcon(const char* name,
-                 u8 icon_gfx,
-                 Vec2<Fixnum> pos) :
-            Clickable({16, 16, 0, 0}),
-            name_(name),
-            icon_gfx_(icon_gfx)
+        DockIcon(const char* name, u8 icon_gfx, Vec2<Fixnum> pos)
+            : Clickable({16, 16, 0, 0}), name_(name), icon_gfx_(icon_gfx)
         {
             this->pos() = pos;
             y_pos_ = this->pos().y.as_integer();
@@ -347,16 +337,17 @@ public:
         void update()
         {
             const uint8_t dock_animation[32] = {
-                0, 32, 60, 84, 104, 120, 133, 144, 153, 160, 166, 171, 175, 178, 180, 182,
-                183, 182, 180, 177, 173, 168, 162, 155, 147, 138, 128, 117, 105, 92, 78, 63
-            };
+                0,   32,  60,  84,  104, 120, 133, 144, 153, 160, 166,
+                171, 175, 178, 180, 182, 183, 182, 180, 177, 173, 168,
+                162, 155, 147, 138, 128, 117, 105, 92,  78,  63};
 
             switch (state_) {
             case State::closed:
                 break;
 
             case State::opening:
-                pos().y = Fixnum::from_integer(y_pos_ - dock_animation[anim_cyc_ % 32] / 24);
+                pos().y = Fixnum::from_integer(
+                    y_pos_ - dock_animation[anim_cyc_ % 32] / 24);
                 anim_cyc_ += 1;
                 if (anim_cyc_ == 128 - 32) {
                     anim_cyc_ = 0;
@@ -401,7 +392,7 @@ public:
             u8 x = pos().x.as_integer() / 8;
             int offset = strlen(name_) / 2;
             x -= (offset - 2);
-            OverlayCoord dest {x, 17};
+            OverlayCoord dest{x, 17};
             if (g_os_->hint_label_ and g_os_->hint_label_->coord() == dest) {
                 return;
             }
@@ -427,8 +418,7 @@ public:
         u8 anim_cyc_ = 0;
         u8 y_pos_ = 0;
 
-        enum class State : u8
-        {
+        enum class State : u8 {
             closed,
             opening,
             open,
@@ -456,7 +446,6 @@ public:
     class Window
     {
     public:
-
         bool minimized_ = false;
 
 
@@ -477,9 +466,8 @@ public:
         class CloseButton : public Clickable
         {
         public:
-            CloseButton(Window* window) :
-                Clickable({7, 7, -1, -1}),
-                window_(window)
+            CloseButton(Window* window)
+                : Clickable({7, 7, -1, -1}), window_(window)
             {
                 this->pos().x = 3.0_fixed;
                 this->pos().y = 12.0_fixed;
@@ -499,9 +487,8 @@ public:
         class MinimizeButton : public Clickable
         {
         public:
-            MinimizeButton(Window* window) :
-                Clickable({7, 7, -1, -1}),
-                window_(window)
+            MinimizeButton(Window* window)
+                : Clickable({7, 7, -1, -1}), window_(window)
             {
                 this->pos().x = 14.0_fixed;
                 this->pos().y = 12.0_fixed;
@@ -517,14 +504,15 @@ public:
         };
 
 
-        Window(DockIcon* application) : pkg_(application),
-                                        close_btn_(this)
-                                        // minimize_btn_(this)
+        Window(DockIcon* application) : pkg_(application), close_btn_(this)
+        // minimize_btn_(this)
         {
         }
 
 
-        virtual void destroy() {}
+        virtual void destroy()
+        {
+        }
 
 
         virtual void update()
@@ -558,13 +546,11 @@ public:
                     } else {
                         PLATFORM.set_tile(Layer::overlay, x, y, 82);
                     }
-
                 }
             }
 
             static constexpr const Text::OptColors heading_colors{
-                {custom_color(0x717199),
-                 custom_color(0xeaeef3)}};
+                {custom_color(0x717199), custom_color(0xeaeef3)}};
 
             Text::print(head.c_str(), {mg, 3}, heading_colors);
             PLATFORM.set_tile(Layer::overlay, 0, 2, 87);
@@ -590,7 +576,6 @@ public:
 
         virtual void build_menu_bar_opts()
         {
-
         }
 
 
@@ -605,9 +590,7 @@ public:
     class SeekerWindow : public Window
     {
     public:
-
-        SeekerWindow(DockIcon* application) :
-            Window(application)
+        SeekerWindow(DockIcon* application) : Window(application)
         {
             impl_.emplace();
             impl_->gui_mode_ = true;
@@ -644,7 +627,8 @@ public:
         {
             auto base = Window::heading();
             base += ": ";
-            if (impl_->selected_filesystem_ == FileBrowserModule::SelectedFilesystem::none) {
+            if (impl_->selected_filesystem_ ==
+                FileBrowserModule::SelectedFilesystem::none) {
                 base += "mount disk";
             } else {
                 base += impl_->cwd().c_str();
@@ -661,8 +645,7 @@ public:
             bool alternate = true;
 
             static constexpr const Text::OptColors alt_colors{
-                {custom_color(0x212194),
-                 custom_color(0xeaeef3)}};
+                {custom_color(0x212194), custom_color(0xeaeef3)}};
 
             clickables_.clear();
 
@@ -682,8 +665,7 @@ public:
                 }
                 if ((s8)i == selected_file_) {
                     static constexpr const Text::OptColors sel_colors{
-                        {custom_color(0xffffff),
-                         custom_color(0x1276c5)}};
+                        {custom_color(0xffffff), custom_color(0x1276c5)}};
                     Text::print(nm.c_str(), {0, y}, sel_colors);
                 } else if (alternate) {
                     Text::print(nm.c_str(), {0, y});
@@ -712,9 +694,11 @@ public:
                     auto ent = impl_->select_entry(selected_file_, false);
                     if (ent[ent.length() - 1] not_eq '/') {
                         file_menu->add_option("delete", [] {
-                            if (auto win = (SeekerWindow*)g_os_->get_window("Seeker")) {
+                            if (auto win = (SeekerWindow*)g_os_->get_window(
+                                    "Seeker")) {
                                 auto index = win->selected_file_;
-                                auto ent = win->impl_->select_entry(index, false);
+                                auto ent =
+                                    win->impl_->select_entry(index, false);
                                 flash_filesystem::unlink_file(ent.c_str());
                             }
                         });
@@ -754,14 +738,21 @@ public:
                         ends_with(ent, MatchStr(".raw"))) {
                         // Don't open with TextEdit
                     } else {
-                        g_os_->open_application("TextEdit", [](Window* w, int index) {
-                            if (auto sw = (SeekerWindow*)g_os_->get_window("Seeker")) {
-                                auto ent = sw->impl_->select_entry(index, false);
-                                bool is_rom = sw->impl_->selected_filesystem_ ==
-                                    FileBrowserModule::rom;
-                                ((TextEditWindow*)w)->open_file(ent.c_str(), is_rom);
-                            }
-                        }, index);
+                        g_os_->open_application(
+                            "TextEdit",
+                            [](Window* w, int index) {
+                                if (auto sw = (SeekerWindow*)g_os_->get_window(
+                                        "Seeker")) {
+                                    auto ent =
+                                        sw->impl_->select_entry(index, false);
+                                    bool is_rom =
+                                        sw->impl_->selected_filesystem_ ==
+                                        FileBrowserModule::rom;
+                                    ((TextEditWindow*)w)
+                                        ->open_file(ent.c_str(), is_rom);
+                                }
+                            },
+                            index);
                         opened_app = true;
                     }
                 }
@@ -788,11 +779,10 @@ public:
         class FileExplorerOption : public Clickable
         {
         public:
-            FileExplorerOption(int index) :
-                Clickable({u8(8 * 28), 7}),
-                index_(index)
+            FileExplorerOption(int index)
+                : Clickable({u8(8 * 28), 7}), index_(index)
             {
-                Vec2<Fixnum> pos {16.0_fixed, 25.0_fixed};
+                Vec2<Fixnum> pos{16.0_fixed, 25.0_fixed};
                 pos.y += Fixnum::from_integer(8 * index);
                 this->pos() = pos;
                 show_pointer_ = true;
@@ -823,13 +813,12 @@ public:
     class SkyTunesWindow : public Window
     {
     public:
-
-        SkyTunesWindow(DockIcon* application) :
-            Window(application)
+        SkyTunesWindow(DockIcon* application) : Window(application)
         {
             u8 i = 0;
             PLATFORM.walk_filesystem([this, &i](const char* path) {
-                if (auto rest = starts_with("/scripts/data/music/", StringBuffer<96>(path))) {
+                if (auto rest = starts_with("/scripts/data/music/",
+                                            StringBuffer<96>(path))) {
                     StringBuffer<48> temp;
                     while (*rest not_eq '.') {
                         temp.push_back(*rest);
@@ -892,8 +881,7 @@ public:
             bool alternate = true;
 
             static constexpr const Text::OptColors alt_colors{
-                {custom_color(0x212194),
-                 custom_color(0xeaeef3)}};
+                {custom_color(0x212194), custom_color(0xeaeef3)}};
 
             u32 i = 0;
             for (; i < music_names_.size(); ++i) {
@@ -943,10 +931,8 @@ public:
             MusicTrack(const char* name,
                        const HitBox::Dimension& dimension,
                        const Vec2<Fixnum>& pos,
-                       SkyTunesWindow* window) :
-                Clickable(dimension),
-                name_(name),
-                window_(window)
+                       SkyTunesWindow* window)
+                : Clickable(dimension), name_(name), window_(window)
             {
                 this->pos() = pos;
                 show_pointer_ = true;
@@ -987,8 +973,6 @@ public:
     class ExplorerWindow : public Window
     {
     public:
-
-
         using Window::Window;
 
 
@@ -1017,13 +1001,11 @@ public:
     class TextEditWindow : public Window
     {
     public:
-
         class WindowFocusCapture : public Clickable
         {
         public:
-            WindowFocusCapture(TextEditWindow* window) :
-                Clickable({240, 104, 0, 0}),
-                window_(window)
+            WindowFocusCapture(TextEditWindow* window)
+                : Clickable({240, 104, 0, 0}), window_(window)
             {
                 this->pos().x = 0.0_fixed;
                 this->pos().y = 25.0_fixed;
@@ -1060,7 +1042,8 @@ public:
                         return;
                     }
                 }
-                auto rom_fs = impl_->which_fs() == TextEditorModule::FileSystem::rom;
+                auto rom_fs =
+                    impl_->which_fs() == TextEditorModule::FileSystem::rom;
                 recents_.push_back({new_entry.c_str(), rom_fs});
                 g_os_->clear_dropdown_menus();
                 build_menu_bar_opts();
@@ -1087,10 +1070,12 @@ public:
             } else {
                 UserContext ctx;
                 auto syntax = TextEditorModule::SyntaxMode::plain_text;
-                impl_.emplace(std::move(ctx), path, syntax,
+                impl_.emplace(std::move(ctx),
+                              path,
+                              syntax,
                               TextEditorModule::FileMode::update,
-                              rom ? TextEditorModule::FileSystem::rom :
-                              TextEditorModule::FileSystem::sram);
+                              rom ? TextEditorModule::FileSystem::rom
+                                  : TextEditorModule::FileSystem::sram);
             }
 
             impl_->gui_mode_ = true;
@@ -1110,11 +1095,11 @@ public:
         }
 
 
-        TextEditWindow(DockIcon* application) :
-            Window(application),
-            capture_(this)
+        TextEditWindow(DockIcon* application)
+            : Window(application), capture_(this)
         {
             open_file("/scratch.txt", false);
+
         }
 
 
@@ -1144,7 +1129,8 @@ public:
 
             if (auto file_menu = g_os_->insert_dropdown_menu("File")) {
                 file_menu->add_option("save", [] {
-                    if (auto win = (TextEditWindow*)g_os_->get_window("TextEdit")) {
+                    if (auto win =
+                            (TextEditWindow*)g_os_->get_window("TextEdit")) {
                         win->impl_->save();
                     }
                 });
@@ -1162,7 +1148,8 @@ public:
                 file_menu->add_option("copy", [] {
                     g_os_->clipboard_.emplace("clipboard");
                     if (auto win = g_os_->get_window("TextEdit")) {
-                        ((TextEditWindow*)win)->impl_->copy_selected(*g_os_->clipboard_);
+                        ((TextEditWindow*)win)
+                            ->impl_->copy_selected(*g_os_->clipboard_);
                     }
                 });
                 file_menu->add_option("paste", [] {
@@ -1170,7 +1157,8 @@ public:
                         return;
                     }
                     if (auto win = g_os_->get_window("TextEdit")) {
-                        ((TextEditWindow*)win)->impl_->paste(*g_os_->clipboard_);
+                        ((TextEditWindow*)win)
+                            ->impl_->paste(*g_os_->clipboard_);
                     }
                 });
             }
@@ -1187,8 +1175,8 @@ public:
         void update() override
         {
             if (APP.player().key_down(Key::action_2)) {
-                if (interactive_ and
-                    impl_ and impl_->mode_ == TextEditorModule::Mode::nav and
+                if (interactive_ and impl_ and
+                    impl_->mode_ == TextEditorModule::Mode::nav and
                     not APP.player().key_pressed(Key::alt_1)) {
                     interactive_ = false;
                     g_os_->capture_focus(false);
@@ -1244,13 +1232,11 @@ public:
     class LispWindow : public Window
     {
     public:
-
         class WindowFocusCapture : public Clickable
         {
         public:
-            WindowFocusCapture(LispWindow* window) :
-                Clickable({240, 104, 0, 0}),
-                window_(window)
+            WindowFocusCapture(LispWindow* window)
+                : Clickable({240, 104, 0, 0}), window_(window)
             {
                 this->pos().x = 0.0_fixed;
                 this->pos().y = 25.0_fixed;
@@ -1269,9 +1255,7 @@ public:
             LispWindow* window_;
         };
 
-        LispWindow(DockIcon* application) :
-            Window(application),
-            capture_(this)
+        LispWindow(DockIcon* application) : Window(application), capture_(this)
         {
             impl_.emplace();
             impl_->gui_mode_ = true;
@@ -1290,27 +1274,43 @@ public:
 
             if (auto help_menu = g_os_->insert_dropdown_menu("Help")) {
                 help_menu->add_option("view syslog", [] {
-                    g_os_->open_application("TextEdit", [](Window* window, int param) {
-                        ((TextEditWindow*)window)->open_file("*syslog*", true);
-                    }, 0);
+                    g_os_->open_application(
+                        "TextEdit",
+                        [](Window* window, int param) {
+                            ((TextEditWindow*)window)
+                                ->open_file("*syslog*", true);
+                        },
+                        0);
                 });
 
                 help_menu->add_option("api docs", [] {
-                    g_os_->open_application("TextEdit", [](Window* window, int param) {
-                        ((TextEditWindow*)window)->open_file("/help/api.txt", true);
-                    }, 0);
+                    g_os_->open_application(
+                        "TextEdit",
+                        [](Window* window, int param) {
+                            ((TextEditWindow*)window)
+                                ->open_file("/help/api.txt", true);
+                        },
+                        0);
                 });
 
                 help_menu->add_option("builtin docs", [] {
-                    g_os_->open_application("TextEdit", [](Window* window, int param) {
-                        ((TextEditWindow*)window)->open_file("/help/lisp_builtins.txt", true);
-                    }, 0);
+                    g_os_->open_application(
+                        "TextEdit",
+                        [](Window* window, int param) {
+                            ((TextEditWindow*)window)
+                                ->open_file("/help/lisp_builtins.txt", true);
+                        },
+                        0);
                 });
 
                 help_menu->add_option("skyland lisp?", [] {
-                    g_os_->open_application("TextEdit", [](Window* window, int param) {
-                        ((TextEditWindow*)window)->open_file("/help/skyland_lisp.txt", true);
-                    }, 0);
+                    g_os_->open_application(
+                        "TextEdit",
+                        [](Window* window, int param) {
+                            ((TextEditWindow*)window)
+                                ->open_file("/help/skyland_lisp.txt", true);
+                        },
+                        0);
                 });
             }
         }
@@ -1389,11 +1389,8 @@ public:
                 lisp::_Printer<Vector<char>> p;
                 lisp::format(&val, p);
 
-                flash_filesystem::store_file_data("/eval_output.txt",
-                                                  p.data_,
-                                                  {
-                                                      .use_compression_ = true
-                                                  });
+                flash_filesystem::store_file_data(
+                    "/eval_output.txt", p.data_, {.use_compression_ = true});
                 stored = true;
             };
 
@@ -1411,10 +1408,8 @@ public:
     class mGBAWindow : public Window
     {
     public:
-
-        mGBAWindow(DockIcon* application) :
-            Window(application),
-            launch_btn_(this)
+        mGBAWindow(DockIcon* application)
+            : Window(application), launch_btn_(this)
         {
         }
 
@@ -1440,8 +1435,7 @@ public:
             Text::print("- Skyland.gba", {3, 7});
 
             static constexpr const Text::OptColors btn_colors{
-                {custom_color(0xeaeef3),
-                 custom_color(0x2d9773)}};
+                {custom_color(0xeaeef3), custom_color(0x2d9773)}};
 
             Text::print("launch", {21, 7}, btn_colors);
         }
@@ -1450,9 +1444,8 @@ public:
         class LaunchButton : public Clickable
         {
         public:
-            LaunchButton(Window* window) :
-                Clickable({8 * 6, 8, 0, 0}),
-                window_(window)
+            LaunchButton(Window* window)
+                : Clickable({8 * 6, 8, 0, 0}), window_(window)
             {
                 this->pos().x = 168.0_fixed;
                 this->pos().y = 49.0_fixed;
@@ -1477,7 +1470,11 @@ public:
 
     void boot_rom()
     {
-        PLATFORM_EXTENSION(restart);
+        if (mem_->resume_) {
+            mem_->resume_flag_ = true;
+        } else {
+            PLATFORM_EXTENSION(restart);
+        }
     }
 
 
@@ -1506,9 +1503,9 @@ public:
     }
 
 
-    DesktopOS() :
-        mem_(allocate_dynamic<Mem>("desktop-gui"))
+    DesktopOS(Optional<DeferredScene> resume) : mem_(allocate_dynamic<Mem>("desktop-gui"))
     {
+        mem_->resume_ = resume;
         g_os_ = this;
     }
 
@@ -1519,9 +1516,17 @@ public:
 
         PLATFORM.speaker().stop_music();
         PLATFORM.load_tile0_texture("wallpaper_flattened");
+        for (int x = 0; x < 32; ++x) {
+            for (int y = 0; y < 32; ++y) {
+                PLATFORM.set_raw_tile(Layer::map_0, x, y, 0);
+                PLATFORM.set_raw_tile(Layer::map_1, x, y, 0);
+            }
+        }
+
         for (int x = 0; x < 30; ++x) {
             for (int y = 0; y < 20; ++y) {
                 PLATFORM.set_raw_tile(Layer::map_0, x, y, 32);
+                PLATFORM.set_raw_tile(Layer::map_1, x, y, 32);
             }
         }
         __draw_image(1, 0, 1, 30, 16, Layer::map_0);
@@ -1532,6 +1537,8 @@ public:
 
         draw_menu_bar();
         draw_dock();
+
+        PLATFORM.set_scroll(Layer::map_0_ext, 0, 0);
 
         PLATFORM.screen().set_view({});
         PLATFORM.screen().schedule_fade(0.5f);
@@ -1581,6 +1588,10 @@ public:
     ScenePtr update(Time delta) override
     {
         player().update(delta);
+
+        if (mem_->resume_flag_ and mem_->resume_) {
+            return (*mem_->resume_)();
+        }
 
         if (not cursor_captured_) {
             if (player().key_pressed(Key::down)) {
@@ -1690,7 +1701,8 @@ public:
             }
         } else {
             for (auto& clickable : reversed(mem_->clickables_)) {
-                if (clickable->enabled() and clickable->hitbox().overlapping(cursor_hb)) {
+                if (clickable->enabled() and
+                    clickable->hitbox().overlapping(cursor_hb)) {
                     clickable->on_click();
                     break;
                 }
@@ -1807,26 +1819,26 @@ public:
     void make_window(DockIcon* application)
     {
         if (str_eq(application->name(), "Compass")) {
-            mem_->windows_.push_back(allocate_dynamic<ExplorerWindow>("os-window",
-                                                                      application));
+            mem_->windows_.push_back(
+                allocate_dynamic<ExplorerWindow>("os-window", application));
         } else if (str_eq(application->name(), "SkyTunes")) {
-            mem_->windows_.push_back(allocate_dynamic<SkyTunesWindow>("os-window",
-                                                                      application));
+            mem_->windows_.push_back(
+                allocate_dynamic<SkyTunesWindow>("os-window", application));
         } else if (str_eq(application->name(), "mGBA")) {
-            mem_->windows_.push_back(allocate_dynamic<mGBAWindow>("os-window",
-                                                                  application));
+            mem_->windows_.push_back(
+                allocate_dynamic<mGBAWindow>("os-window", application));
         } else if (str_eq(application->name(), "TextEdit")) {
-            mem_->windows_.push_back(allocate_dynamic<TextEditWindow>("os-window",
-                                                                      application));
+            mem_->windows_.push_back(
+                allocate_dynamic<TextEditWindow>("os-window", application));
         } else if (str_eq(application->name(), "Seeker")) {
-            mem_->windows_.push_back(allocate_dynamic<SeekerWindow>("os-window",
-                                                                    application));
+            mem_->windows_.push_back(
+                allocate_dynamic<SeekerWindow>("os-window", application));
         } else if (str_eq(application->name(), "Lisp")) {
-            mem_->windows_.push_back(allocate_dynamic<LispWindow>("os-window",
-                                                                  application));
+            mem_->windows_.push_back(
+                allocate_dynamic<LispWindow>("os-window", application));
         } else {
-            mem_->windows_.push_back(allocate_dynamic<Window>("os-window",
-                                                              application));
+            mem_->windows_.push_back(
+                allocate_dynamic<Window>("os-window", application));
         }
         application->on_open_callback_(&*mem_->windows_.back(),
                                        application->on_open_param_);
@@ -1838,7 +1850,8 @@ public:
 
     void close_window(const char* name)
     {
-        for (auto it = mem_->windows_.begin(); it not_eq mem_->windows_.end();) {
+        for (auto it = mem_->windows_.begin();
+             it not_eq mem_->windows_.end();) {
             if (str_eq(name, (*it)->name())) {
                 it = mem_->windows_.erase(it);
             } else {
@@ -1892,11 +1905,14 @@ public:
 private:
     Vec2<Fixnum> cursor_;
 
-    struct Mem {
+    struct Mem
+    {
         Buffer<DockIcon, 8> dock_icons_;
         Buffer<DynamicMemory<Window>, 8> windows_;
         Buffer<Clickable*, 40> clickables_;
         Buffer<DropdownMenu, 4> menu_bar_opts_;
+        Optional<DeferredScene> resume_;
+        bool resume_flag_ = false;
 
         Mem()
         {
@@ -1906,43 +1922,6 @@ private:
     DynamicMemory<Mem> mem_;
     bool pointer_ = false;
     bool cursor_captured_ = false;
-};
-
-
-
-class DesktopBoot : public Scene
-{
-public:
-
-    void enter(Scene& prev) override
-    {
-        PLATFORM.screen().schedule_fade(1);
-        PLATFORM.speaker().stop_music();
-    }
-
-
-    ScenePtr update(Time delta)
-    {
-        if (intro_sleep_ < seconds(1)) {
-            intro_sleep_ += delta;
-            if (intro_sleep_ >= seconds(1)) {
-
-            }
-            return null_scene();
-        }
-
-        timer_ += delta;
-
-        if (timer_ > seconds(1)) {
-            return make_scene<DesktopOS>();
-        }
-        return null_scene();
-    }
-
-
-private:
-    Time timer_;
-    Time intro_sleep_;
 };
 
 
@@ -1964,11 +1943,11 @@ void DesktopOS::DropdownMenu::on_hover()
 
 
 
-ScenePtr boot_desktop_os()
+ScenePtr boot_desktop_os(Optional<DeferredScene> resume)
 {
-    return make_scene<DesktopOS>();
+    return make_scene<DesktopOS>(resume);
 }
 
 
 
-}
+} // namespace skyland

@@ -134,9 +134,10 @@ public:
     FileSystem which_fs() const;
 
 
+    bool has_text();
+
+
 private:
-
-
     void render(int start_line);
     void render_keyboard();
     void render_completions();
