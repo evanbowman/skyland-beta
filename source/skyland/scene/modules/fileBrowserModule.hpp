@@ -97,7 +97,13 @@ public:
     StringBuffer<200> cwd() const;
 
 
-    StringBuffer<200> select_entry(int opt);
+    StringBuffer<200> select_entry(int opt, bool visit);
+
+
+    void backout();
+
+
+    void on_dir_changed();
 
 
     enum SelectedFilesystem {

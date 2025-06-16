@@ -227,7 +227,9 @@ void FileBrowserModule::repaint()
                 if (skip > 0) {
                     --skip;
                 } else {
-                    enq_line(subfolder.c_str());
+                    if (not gui_mode_) {
+                        enq_line(subfolder.c_str());
+                    }
                 }
                 return;
             }
@@ -238,7 +240,9 @@ void FileBrowserModule::repaint()
         if (skip > 0) {
             --skip;
         } else {
-            enq_line(path + i);
+            if (not gui_mode_) {
+                enq_line(path + i);
+            }
         }
     };
 
@@ -395,6 +399,14 @@ void FileBrowserModule::show_opts()
 
 
 
+void FileBrowserModule::on_dir_changed()
+{
+    scroll_index_ = 0;
+    line_offset_ = 0;
+}
+
+
+
 ScenePtr FileBrowserModule::update(Time delta)
 {
     if (faded_) {
@@ -406,11 +418,6 @@ ScenePtr FileBrowserModule::update(Time delta)
         // Black background behind the text.
         PLATFORM.screen().fade(1.f, custom_color(0x007cbf));
     }
-
-    auto on_dir_changed = [&] {
-        scroll_index_ = 0;
-        line_offset_ = 0;
-    };
 
     auto scroll_down = [&] {
         if (scroll_index_ == 14 and
@@ -667,8 +674,44 @@ ScenePtr FileBrowserModule::update(Time delta)
 
 
 
-StringBuffer<200> FileBrowserModule::select_entry(int opt)
+void FileBrowserModule::backout()
 {
+    if (not gui_mode_) {
+        PLATFORM.fatal("gui mode only!");
+    }
+
+    switch (selected_filesystem_) {
+    case SelectedFilesystem::none:
+        break;
+
+    case SelectedFilesystem::sram:
+        on_dir_changed();
+        if ((*path_)->size() == 1) {
+            selected_filesystem_ = SelectedFilesystem::none;
+        } else {
+            (*path_)->pop_back();
+        }
+        break;
+
+    case SelectedFilesystem::rom:
+        on_dir_changed();
+        if ((*path_)->size() == 1) {
+            selected_filesystem_ = SelectedFilesystem::none;
+        } else {
+            (*path_)->pop_back();
+        }
+        break;
+    }
+}
+
+
+
+StringBuffer<200> FileBrowserModule::select_entry(int opt, bool visit)
+{
+    if (not gui_mode_) {
+        PLATFORM.fatal("gui mode only!");
+    }
+
     auto on_dir_changed = [&] {
         scroll_index_ = 0;
         line_offset_ = 0;
@@ -678,17 +721,17 @@ StringBuffer<200> FileBrowserModule::select_entry(int opt)
     case SelectedFilesystem::none: {
         switch (opt) {
         case 0:
-            on_dir_changed();
-            selected_filesystem_ = SelectedFilesystem::sram;
-            repaint();
-            PLATFORM.speaker().play_sound("button_wooden", 3);
+            if (visit) {
+                on_dir_changed();
+                selected_filesystem_ = SelectedFilesystem::sram;
+            }
             return "";
 
         case 1:
-            on_dir_changed();
-            selected_filesystem_ = SelectedFilesystem::rom;
-            repaint();
-            PLATFORM.speaker().play_sound("button_wooden", 3);
+            if (visit) {
+                on_dir_changed();
+                selected_filesystem_ = SelectedFilesystem::rom;
+            }
             return "";
 
         case 2:
@@ -699,12 +742,12 @@ StringBuffer<200> FileBrowserModule::select_entry(int opt)
 
     case SelectedFilesystem::sram:
         if ((**cwd_names_).size() not_eq 0) {
-            PLATFORM.speaker().play_sound("button_wooden", 3);
             auto selected = (**cwd_names_)[opt];
             if (selected[selected.length() - 1] == '/') {
-                on_dir_changed();
-                (*path_)->emplace_back(selected);
-                repaint();
+                if (visit) {
+                    on_dir_changed();
+                    (*path_)->emplace_back(selected);
+                }
                 return "";
             } else {
                 auto path = this->cwd();
@@ -719,9 +762,10 @@ StringBuffer<200> FileBrowserModule::select_entry(int opt)
             int entry = opt + line_offset_;
             auto selected = (**cwd_names_)[entry];
             if (selected[selected.length() - 1] == '/') {
-                on_dir_changed();
-                (*path_)->emplace_back(selected);
-                repaint();
+                if (visit) {
+                    on_dir_changed();
+                    (*path_)->emplace_back(selected);
+                }
                 return "";
             } else {
                 auto path = this->cwd();
