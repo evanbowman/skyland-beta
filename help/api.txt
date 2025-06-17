@@ -903,6 +903,14 @@ o----------------------------o
 
 o----------------------------o
 
+ (mem-log-diagnostics)
+
+ Write memory diagnostics to
+ the system-log.
+
+
+o----------------------------o
+
  (mem-sbr-free)
 
  Return the number of memory
@@ -931,6 +939,14 @@ o----------------------------o
  (mem-pool-info pool-num)
 
  Info about a memory pool.
+
+
+o----------------------------o
+
+ (nimbus)
+
+ Load SKYLAND OS's nimbus gui
+ layer.
 
 
 o----------------------------o

@@ -1,33 +1,10 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Copyright (C) 2023  Evan Bowman. Some rights reserved.
+// Copyright (c) 2023 Evan Bowman
 //
-// This program is source-available; the source code is provided for educational
-// purposes. All copies of the software must be distributed along with this
-// license document.
-//
-// 1. DEFINITION OF SOFTWARE: The term "Software" refers to SKYLAND,
-// including any updates, modifications, or associated documentation provided by
-// Licensor.
-//
-// 2. DERIVATIVE WORKS: Licensee is permitted to modify the source code.
-//
-// 3. COMMERCIAL USE: Commercial use is not allowed.
-//
-// 4. ATTRIBUTION: Licensee is required to provide attribution to Licensor.
-//
-// 5. INTELLECTUAL PROPERTY RIGHTS: All intellectual property rights in the
-// Software shall remain the property of Licensor. The Licensee does not acquire
-// any rights to the Software except for the limited use rights specified in
-// this Agreement.
-//
-// 6. WARRANTY AND LIABILITY: The Software is provided "as is" without warranty
-// of any kind. Licensor shall not be liable for any damages arising out of or
-// related to the use or inability to use the Software.
-//
-// 7. TERMINATION: This Agreement shall terminate automatically if Licensee
-// breaches any of its terms and conditions. Upon termination, Licensee must
-// cease all use of the Software and destroy all copies.
+// This Source Code Form is subject to the terms of the Mozilla Public License,
+// v. 2.0. If a copy of the MPL was not distributed with this file, You can
+// obtain one at http://mozilla.org/MPL/2.0/. */
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -201,6 +178,13 @@ Character::Character(Island* parent,
 
 
 
+void Character::set_spr_flip(bool flipped)
+{
+    sprite_.set_flip({flipped, false});
+}
+
+
+
 void Character::unpin()
 {
     ai_automated_ = true;
@@ -303,9 +287,10 @@ void Character::rewind(Time delta)
                                        3); // floor is two pixels thick
 
         if (dest_grid_pos.x < grid_position_.x) {
+            set_spr_flip(false);
             sprite_.set_flip({false, false});
         } else if (dest_grid_pos.x > grid_position_.x) {
-            sprite_.set_flip({true, false});
+            set_spr_flip(true);
         }
 
         timer_ -= delta;
@@ -436,7 +421,7 @@ void Character::record_stats()
     }
     time_stream::event::CharacterStatsChanged e;
     e.id_.set(id());
-    e.prev_stats_ = stats_;
+    e.prev_stats_ = stats_->info_;
     APP.time_stream().push(APP.level_timer(), e);
 }
 
@@ -564,6 +549,12 @@ void Character::update(Time delta, Room* room)
             sprite_.set_position(o);
             if (delta > 0) {
                 ++idle_count_;
+
+                if (idle_count_ % 16 == 0) {
+                    if (room) {
+                        update_favorite_room_stat(room);
+                    }
+                }
             }
 
             if (race_ == 3) {
@@ -776,7 +767,7 @@ void Character::update(Time delta, Room* room)
             if (room) {
                 if (room->parent()->fire_present(grid_position_)) {
                     record_stats();
-                    CharacterStats::inc(stats_.fires_extinguished_);
+                    CharacterStats::inc(stats_->info_.fires_extinguished_);
                 }
                 room->parent()->fire_extinguish(grid_position_);
                 if (has_opponent(room)) {
@@ -822,10 +813,18 @@ void Character::update(Time delta, Room* room)
             timer_ = 0;
             if (room) {
                 if (room->health() not_eq room->max_health()) {
+                    auto prev = room->health();
                     room->heal(repair_strength(get_race()));
-                    if (room->health() == room->max_health()) {
-                        record_stats();
-                        CharacterStats::inc(stats_.blocks_repaired_);
+                    auto healed_hp = room->health() - prev;
+                    if (healed_hp) {
+                        repair_wb_ = (repair_wb_ + 1) % 4;
+                        if (repair_wb_ == 3) {
+                            // Don't waste too much history mem on this...
+                            record_stats();
+                        }
+                        for (int i = 0; i < healed_hp; ++i) {
+                            CharacterStats::inc(stats_->info_.damage_repaired_);
+                        }
                     }
                 } else {
                     this->set_idle();
@@ -1013,19 +1012,19 @@ lisp::Value* Character::serialize()
     if (auto icon = get_icon()) {
         chr_info.push_back(L_CONS(make_symbol("icon"), make_integer(icon)));
     }
-    if (auto e = stats().enemies_vanquished_) {
+    if (auto e = stats().info_.enemies_vanquished_) {
         chr_info.push_back(L_CONS(L_SYM("kc"), L_INT(e)));
     }
-    if (auto b = stats().battles_fought_) {
+    if (auto b = stats().info_.battles_fought_) {
         chr_info.push_back(L_CONS(L_SYM("bt"), L_INT(b)));
     }
-    if (auto b = stats().blocks_repaired_.get()) {
-        chr_info.push_back(L_CONS(L_SYM("br"), L_INT(b)));
+    if (auto b = stats().info_.damage_repaired_.get()) {
+        chr_info.push_back(L_CONS(L_SYM("dr"), L_INT(b)));
     }
-    if (auto s = stats().steps_taken_.get()) {
+    if (auto s = stats().info_.steps_taken_.get()) {
         chr_info.push_back(L_CONS(L_SYM("sc"), L_INT(s)));
     }
-    if (auto s = stats().fires_extinguished_) {
+    if (auto s = stats().info_.fires_extinguished_) {
         chr_info.push_back(L_CONS(L_SYM("fe"), L_INT(s)));
     }
     chr_info.push_back(L_CONS(make_symbol("id"), make_integer(id())));
@@ -1066,7 +1065,7 @@ void Character::update_attack(Time delta)
             }
             if (chr->health() <= 0) {
                 record_stats();
-                CharacterStats::inc(stats_.enemies_vanquished_);
+                CharacterStats::inc(stats_->info_.enemies_vanquished_);
             }
         } else {
             sprite_.set_texture_index(base_frame(this) + 5);
@@ -1094,9 +1093,9 @@ void Character::update_attack(Time delta)
 
 
 
-CharacterStats& Character::stats()
+CompleteCharacterStats& Character::stats()
 {
-    return stats_;
+    return *stats_;
 }
 
 
@@ -1227,9 +1226,9 @@ void Character::movement_step(Time delta, Room* current_room)
             }
 
             (*movement_path_)->pop_back();
-            CharacterStats::inc(stats_.steps_taken_);
-            CharacterStats::inc(stats_.steps_taken_);
-            CharacterStats::inc(stats_.steps_taken_);
+            CharacterStats::inc(stats_->info_.steps_taken_);
+            CharacterStats::inc(stats_->info_.steps_taken_);
+            CharacterStats::inc(stats_->info_.steps_taken_);
 
             if (warped) {
                 state_ = State::after_transport;
@@ -1270,9 +1269,9 @@ void Character::rewind_movement_step(const RoomCoord& new_pos)
     }
 
     (*movement_path_)->push_back(grid_position_);
-    CharacterStats::dec(stats_.steps_taken_);
-    CharacterStats::dec(stats_.steps_taken_);
-    CharacterStats::dec(stats_.steps_taken_);
+    CharacterStats::dec(stats_->info_.steps_taken_);
+    CharacterStats::dec(stats_->info_.steps_taken_);
+    CharacterStats::dec(stats_->info_.steps_taken_);
 
     if (new_pos.x < grid_position_.x) {
         sprite_.set_flip({false, false});
@@ -1463,5 +1462,60 @@ void Character::set_wants_to_chat(bool status)
 }
 
 
+
+void Character::update_favorite_room_stat(Room* room)
+{
+    auto current_mt = room->metaclass_index();
+    if (stats_->highest_room_[0].metaclass_index_ == current_mt) {
+        if (stats_->info_.favorite_room_ not_eq current_mt) {
+            record_stats();
+            stats_->info_.favorite_room_ = current_mt;
+        }
+    }
+    if (stats_->current_room_.metaclass_index_ != current_mt) {
+        stats_->current_room_.metaclass_index_ = current_mt;
+        stats_->current_room_.counter_.set(0);
+        for (auto& info : stats_->highest_room_) {
+            if (info.metaclass_index_ == current_mt) {
+                stats_->current_room_.counter_.set(info.counter_.get());
+                break;
+            }
+        }
+    }
+
+    // Increment current room counter
+    stats_->current_room_.counter_.set(stats_->current_room_.counter_.get() +
+                                       1);
+
+    auto current_count = stats_->current_room_.counter_.get();
+
+    // Check if current room should be promoted to highest_room_ array
+    for (int i = 0; i < 3; ++i) {
+        if (stats_->highest_room_[i].metaclass_index_ == current_mt) {
+            // Update existing entry
+            stats_->highest_room_[i].counter_.set(current_count);
+            // Bubble up if needed
+            while (i > 0 && stats_->highest_room_[i].counter_.get() >
+                                stats_->highest_room_[i - 1].counter_.get()) {
+                std::swap(stats_->highest_room_[i],
+                          stats_->highest_room_[i - 1]);
+                --i;
+            }
+            return;
+        }
+    }
+
+    // Room not in highest_room_ array, check if it should be inserted
+    if (current_count > stats_->highest_room_[2].counter_.get()) {
+        stats_->highest_room_[2] = stats_->current_room_;
+        // Bubble up
+        for (int i = 2;
+             i > 0 && stats_->highest_room_[i].counter_.get() >
+                          stats_->highest_room_[i - 1].counter_.get();
+             --i) {
+            std::swap(stats_->highest_room_[i], stats_->highest_room_[i - 1]);
+        }
+    }
+}
 
 } // namespace skyland

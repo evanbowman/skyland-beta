@@ -1,33 +1,10 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Copyright (C) 2023  Evan Bowman. Some rights reserved.
+// Copyright (c) 2023 Evan Bowman
 //
-// This program is source-available; the source code is provided for educational
-// purposes. All copies of the software must be distributed along with this
-// license document.
-//
-// 1. DEFINITION OF SOFTWARE: The term "Software" refers to SKYLAND,
-// including any updates, modifications, or associated documentation provided by
-// Licensor.
-//
-// 2. DERIVATIVE WORKS: Licensee is permitted to modify the source code.
-//
-// 3. COMMERCIAL USE: Commercial use is not allowed.
-//
-// 4. ATTRIBUTION: Licensee is required to provide attribution to Licensor.
-//
-// 5. INTELLECTUAL PROPERTY RIGHTS: All intellectual property rights in the
-// Software shall remain the property of Licensor. The Licensee does not acquire
-// any rights to the Software except for the limited use rights specified in
-// this Agreement.
-//
-// 6. WARRANTY AND LIABILITY: The Software is provided "as is" without warranty
-// of any kind. Licensor shall not be liable for any damages arising out of or
-// related to the use or inability to use the Software.
-//
-// 7. TERMINATION: This Agreement shall terminate automatically if Licensee
-// breaches any of its terms and conditions. Upon termination, Licensee must
-// cease all use of the Software and destroy all copies.
+// This Source Code Form is subject to the terms of the Mozilla Public License,
+// v. 2.0. If a copy of the MPL was not distributed with this file, You can
+// obtain one at http://mozilla.org/MPL/2.0/. */
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -46,7 +23,9 @@
 #include "readyScene.hpp"
 #include "salvageRoomScene.hpp"
 #include "setGamespeedScene.hpp"
+#include "skyland/network.hpp"
 #include "skyland/player/player.hpp"
+#include "skyland/rooms/bell.hpp"
 #include "skyland/scene/adjustPowerScene.hpp"
 #include "skyland/scene/upgradePromptScene.hpp"
 #include "skyland/scene_pool.hpp"
@@ -474,6 +453,72 @@ void SelectMenuScene::enter(Scene& scene)
                                  });
                     }
                 }
+            } else if (is_player_island(isle) and room and room->cast<Bell>()) {
+                add_line(
+                    SystemString::sel_menu_eight_bells,
+                    "",
+                    true,
+                    [this, c = cursor]() {
+                        auto room = island()->get_room(c);
+                        if (not room) {
+                            return null_scene();
+                        }
+
+                        auto b = room->cast<Bell>();
+                        if (not b) {
+                            return null_scene();
+                        }
+
+                        const auto rx = room->position().x;
+
+                        for (auto& r : island()->rooms()) {
+                            for (auto& c : r->characters()) {
+                                c->set_spr_flip(c->grid_position().x < rx);
+                                c->drop_movement_path();
+                            }
+                        }
+                        auto interval = milliseconds(1300);
+                        b->schedule_chimes(interval, 4, 1, milliseconds(500));
+                        auto delay = interval * 4;
+                        APP.player().delay_crew_automation(delay);
+
+
+                        APP.on_timeout(delay, [isle = island()] {
+                            Buffer<RoomCoord, 20> positions;
+                            for (auto& r : isle->rooms()) {
+                                for (auto& c : r->characters()) {
+                                    positions.push_back(c->grid_position());
+                                }
+                            }
+
+                            rng::shuffle(positions, rng::utility_state);
+                            for (auto& r : isle->rooms()) {
+                                for (auto& c : r->characters()) {
+                                    auto p1 = c->grid_position();
+                                    auto p2 = positions.back();
+                                    positions.pop_back();
+
+                                    auto path =
+                                        find_path(isle, c.get(), p1, p2);
+                                    if (path and *path) {
+                                        c->set_movement_path(std::move(*path));
+                                        c->pin();
+
+                                        network::packet::ChrSetTargetV2 packet;
+                                        packet.target_x_ = p2.x;
+                                        packet.target_y_ = p2.y;
+                                        packet.chr_id_.set(c->id());
+                                        packet.near_island_ =
+                                            isle not_eq &APP.player_island();
+                                        network::transmit(packet);
+                                    }
+                                }
+                            }
+                        });
+
+                        return null_scene();
+                    });
+
             } else if (drone) {
                 if (not PLATFORM.network_peer().is_connected()) {
 

@@ -1,39 +1,17 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Copyright (C) 2024  Evan Bowman. Some rights reserved.
+// Copyright (c) 2024 Evan Bowman
 //
-// This program is source-available; the source code is provided for educational
-// purposes. All copies of the software must be distributed along with this
-// license document.
-//
-// 1. DEFINITION OF SOFTWARE: The term "Software" refers to SKYLAND,
-// including any updates, modifications, or associated documentation provided by
-// Licensor.
-//
-// 2. DERIVATIVE WORKS: Licensee is permitted to modify the source code.
-//
-// 3. COMMERCIAL USE: Commercial use is not allowed.
-//
-// 4. ATTRIBUTION: Licensee is required to provide attribution to Licensor.
-//
-// 5. INTELLECTUAL PROPERTY RIGHTS: All intellectual property rights in the
-// Software shall remain the property of Licensor. The Licensee does not acquire
-// any rights to the Software except for the limited use rights specified in
-// this Agreement.
-//
-// 6. WARRANTY AND LIABILITY: The Software is provided "as is" without warranty
-// of any kind. Licensor shall not be liable for any damages arising out of or
-// related to the use or inability to use the Software.
-//
-// 7. TERMINATION: This Agreement shall terminate automatically if Licensee
-// breaches any of its terms and conditions. Upon termination, Licensee must
-// cease all use of the Software and destroy all copies.
+// This Source Code Form is subject to the terms of the Mozilla Public License,
+// v. 2.0. If a copy of the MPL was not distributed with this file, You can
+// obtain one at http://mozilla.org/MPL/2.0/. */
 //
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "crewStatsScene.hpp"
 #include "inspectP2Scene.hpp"
 #include "readyScene.hpp"
+#include "skyland/room_metatable.hpp"
 #include "skyland/skyland.hpp"
 
 
@@ -87,7 +65,7 @@ void CrewStatsScene::show_page()
     }
 
     for (int x = 2; x < 28; ++x) {
-        for (int y = 1; y < 19; ++y) {
+        for (int y = 1; y < 20; ++y) {
             PLATFORM.set_tile(Layer::overlay, x, y, 90);
         }
     }
@@ -122,19 +100,19 @@ void CrewStatsScene::show_page()
     Text::print(health_text.c_str(), {9, 3});
 
     for (int x = 3; x < 27; ++x) {
-        for (int y = 7; y < 18; ++y) {
+        for (int y = 7; y < 19; ++y) {
             PLATFORM.set_tile(Layer::overlay, x, y, 138);
         }
     }
 
-    for (int y = 7; y < 17; ++y) {
+    for (int y = 7; y < 18; ++y) {
         PLATFORM.set_tile(Layer::overlay, 2, y, 151);
         PLATFORM.set_tile(Layer::overlay, 27, y, 152);
     }
 
     for (int x = 3; x < 27; ++x) {
         PLATFORM.set_tile(Layer::overlay, x, 6, 149);
-        PLATFORM.set_tile(Layer::overlay, x, 17, 150);
+        PLATFORM.set_tile(Layer::overlay, x, 18, 150);
     }
 
     const auto stat_colors =
@@ -154,17 +132,19 @@ void CrewStatsScene::show_page()
 
     StringBuffer<96> temp;
 
-    auto append_stat = [&](int val) {
-        auto tl = integer_text_length(val);
+    auto append_str = [&](const char* val) {
+        auto tl = utf8::len(val);
         while (utf8::len(temp.c_str()) + tl < 20) {
             temp.push_back(' ');
         }
-        temp += stringify(val);
+        temp += val;
     };
+
+    auto append_stat = [&](int val) { append_str(stringify(val).c_str()); };
 
     PLATFORM.set_tile(Layer::overlay, 25, 7, 139);
     temp = SYS_CSTR(crewmember_stats_battles);
-    append_stat(st.battles_fought_);
+    append_stat(st.info_.battles_fought_);
     Text::print(temp.c_str(), {4, 7}, stat_colors);
 
     separator(8);
@@ -173,7 +153,7 @@ void CrewStatsScene::show_page()
     PLATFORM.set_tile(Layer::overlay, 25, 9, 143);
     PLATFORM.set_tile(Layer::overlay, 25, 10, 145);
     temp = SYS_CSTR(crewmember_stats_vanquished);
-    append_stat(st.enemies_vanquished_);
+    append_stat(st.info_.enemies_vanquished_);
     Text::print(temp.c_str(), {4, 9}, stat_colors);
 
     separator(10);
@@ -181,30 +161,47 @@ void CrewStatsScene::show_page()
     PLATFORM.set_tile(Layer::overlay, 25, 11, 147);
     PLATFORM.set_tile(Layer::overlay, 26, 11, 148);
     temp = SYS_CSTR(crewmember_stats_repaired);
-    append_stat(st.blocks_repaired_.get());
+    append_stat(st.info_.damage_repaired_.get());
     Text::print(temp.c_str(), {4, 11}, stat_colors);
 
     separator(12);
 
     PLATFORM.set_tile(Layer::overlay, 25, 13, 154);
     temp = SYS_CSTR(crewmember_stats_fires);
-    append_stat(st.fires_extinguished_);
+    append_stat(st.info_.fires_extinguished_);
     Text::print(temp.c_str(), {4, 13}, stat_colors);
 
     separator(14);
 
     PLATFORM.set_tile(Layer::overlay, 25, 15, 153);
     temp = SYS_CSTR(crewmember_stats_steps);
-    append_stat(st.steps_taken_.get());
+    append_stat(st.info_.steps_taken_.get());
     Text::print(temp.c_str(), {4, 15}, stat_colors);
 
     separator(16);
 
+    auto append_fav = [&](const char* val) {
+        if (utf8::len(val) < 16) {
+            temp = SYS_CSTR(crewmember_stats_fav);
+        } else {
+            temp = SYS_CSTR(crewmember_stats_fave_abbrev);
+        }
+
+        auto tl = utf8::len(val);
+        while (utf8::len(temp.c_str()) + tl < 22) {
+            temp.push_back(' ');
+        }
+        temp += val;
+    };
+
+    append_fav((*load_metaclass(st.info_.favorite_room_))->ui_name()->c_str());
+    Text::print(temp.c_str(), {4, 17}, stat_colors);
+
     temp = "id:";
     temp += stringify(info.first->id());
-    Text::print(temp.c_str(), {(u8)(28 - temp.length()), 18});
+    Text::print(temp.c_str(), {(u8)(28 - temp.length()), 19});
 
-    PLATFORM.set_tile(Layer::overlay, 2, 18, 155);
+    PLATFORM.set_tile(Layer::overlay, 2, 19, 155);
 
     draw_image(156, 20, 2, 5, 4, Layer::overlay);
 
@@ -232,6 +229,7 @@ void CrewStatsScene::enter(Scene& prev)
     PLATFORM.load_overlay_texture("overlay_adventurelog");
     show_page();
     PLATFORM.screen().schedule_fade(bkg_fade_amount_);
+    PLATFORM.set_overlay_origin(0, 4);
 }
 
 
@@ -240,6 +238,7 @@ void CrewStatsScene::exit(Scene& next)
 {
     PLATFORM.load_overlay_texture("overlay");
     PLATFORM.screen().schedule_fade(exit_fade_);
+    PLATFORM.set_overlay_origin(0, 0);
 }
 
 

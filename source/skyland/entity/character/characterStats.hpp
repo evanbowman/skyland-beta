@@ -1,33 +1,10 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Copyright (C) 2024  Evan Bowman. Some rights reserved.
+// Copyright (c) 2024 Evan Bowman
 //
-// This program is source-available; the source code is provided for educational
-// purposes. All copies of the software must be distributed along with this
-// license document.
-//
-// 1. DEFINITION OF SOFTWARE: The term "Software" refers to SKYLAND,
-// including any updates, modifications, or associated documentation provided by
-// Licensor.
-//
-// 2. DERIVATIVE WORKS: Licensee is permitted to modify the source code.
-//
-// 3. COMMERCIAL USE: Commercial use is not allowed.
-//
-// 4. ATTRIBUTION: Licensee is required to provide attribution to Licensor.
-//
-// 5. INTELLECTUAL PROPERTY RIGHTS: All intellectual property rights in the
-// Software shall remain the property of Licensor. The Licensee does not acquire
-// any rights to the Software except for the limited use rights specified in
-// this Agreement.
-//
-// 6. WARRANTY AND LIABILITY: The Software is provided "as is" without warranty
-// of any kind. Licensor shall not be liable for any damages arising out of or
-// related to the use or inability to use the Software.
-//
-// 7. TERMINATION: This Agreement shall terminate automatically if Licensee
-// breaches any of its terms and conditions. Upon termination, Licensee must
-// cease all use of the Software and destroy all copies.
+// This Source Code Form is subject to the terms of the Mozilla Public License,
+// v. 2.0. If a copy of the MPL was not distributed with this file, You can
+// obtain one at http://mozilla.org/MPL/2.0/. */
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -44,19 +21,22 @@ namespace skyland
 
 struct CharacterStats
 {
-    using BlockRepairCount = u16;
+    using DamageRepairCount = u16;
     using EnemiesVanquished = u8;
     using FiresExtinguished = u8;
     using BattlesFought = u8;
     using StepCount = u16;
+    using FavoriteRoom = u8;
 
     EnemiesVanquished enemies_vanquished_;
     BattlesFought battles_fought_;
 
-    HostInteger<BlockRepairCount> blocks_repaired_;
+    HostInteger<DamageRepairCount> damage_repaired_;
     HostInteger<StepCount> steps_taken_;
 
     FiresExtinguished fires_extinguished_;
+
+    FavoriteRoom favorite_room_;
 
 
     template <typename T> static void inc(T& val)
@@ -85,4 +65,20 @@ struct CharacterStats
 
 
 
-} // namespace skyland
+struct CompleteCharacterStats
+{
+    CharacterStats info_;
+
+    struct FavoriteRoomInfo
+    {
+        u8 metaclass_index_;
+        HostInteger<u16> counter_;
+    };
+
+    FavoriteRoomInfo current_room_;
+    FavoriteRoomInfo highest_room_[3];
+};
+
+
+
+} // Namespace skyland

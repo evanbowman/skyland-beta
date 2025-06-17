@@ -82,6 +82,7 @@ set(SOURCES
   ${SOURCE_DIR}/localization.cpp
   ${SOURCE_DIR}/localization_extended.cpp
   ${SOURCE_DIR}/memory/malloc.cpp
+  ${SOURCE_DIR}/memory/extension.cpp
   ${SOURCE_DIR}/compression.cpp
   ${SOURCE_DIR}/memory/pool.cpp
   ${SOURCE_DIR}/collision.cpp
@@ -150,6 +151,7 @@ set(SOURCES
   ${SOURCE_DIR}/skyland/entity/macro/macrocosmEntity.cpp
   ${SOURCE_DIR}/skyland/entity/misc/smokePuff.cpp
   ${SOURCE_DIR}/skyland/scene/module.cpp
+  ${SOURCE_DIR}/skyland/scene/desktopOS.cpp
   ${SOURCE_DIR}/skyland/scene/hintScene.cpp
   ${SOURCE_DIR}/skyland/scene/worldScene.cpp
   ${SOURCE_DIR}/skyland/scene/readyScene.cpp
@@ -400,6 +402,8 @@ if(NINTENDO_DS OR GAMEBOY_ADVANCE)
     ${DATA_DIR}/overlay_gamespeed.s
     ${DATA_DIR}/overlay_editor.s
     ${DATA_DIR}/overlay_skyland_title.s
+    ${DATA_DIR}/overlay_os.s
+    ${DATA_DIR}/wallpaper_flattened.s
     ${DATA_DIR}/hint_infirmary.s
     ${DATA_DIR}/hint_goblin.s
     ${DATA_DIR}/hint_plunder.s
@@ -455,6 +459,7 @@ if(NINTENDO_DS OR GAMEBOY_ADVANCE)
     ${DATA_DIR}/spritesheet_intro.s
     ${DATA_DIR}/spritesheet_macro.s
     ${DATA_DIR}/spritesheet_macroverse.s
+    ${DATA_DIR}/spritesheet_os.s
     ${DATA_DIR}/music_unaccompanied_wind.s
     ${DATA_DIR}/music_struttin.s
     ${DATA_DIR}/sound_archivist.s
@@ -763,6 +768,7 @@ if(GAMEBOY_ADVANCE OR NINTENDO_DS)
     add_spritesheet(spritesheet_intro 2 4 NO)
     add_spritesheet(spritesheet_macro 2 4 NO)
     add_spritesheet(spritesheet_macroverse 2 4 NO)
+    add_spritesheet(spritesheet_os 2 4 NO)
     add_tilesheet(tilesheet 2 2 NO NO)
     add_tilesheet(tilesheet_enemy_0 2 2 NO NO)
     add_tilesheet(tilesheet_enemy_0_interior 2 2 NO NO)
@@ -775,6 +781,7 @@ if(GAMEBOY_ADVANCE OR NINTENDO_DS)
     add_tilesheet(skyland_title_2 0 0 YES YES)
     add_tilesheet(skyland_title_1 0 0 YES YES)
     add_tilesheet(skyland_title_0 0 0 YES YES)
+    add_tilesheet(wallpaper 0 0 YES YES)
     add_tilesheet(boot_img 0 0 YES YES)
     add_tilesheet(savegame 0 0 YES YES)
     add_tilesheet(goblin_savegame 0 0 YES YES)
@@ -813,6 +820,7 @@ if(GAMEBOY_ADVANCE OR NINTENDO_DS)
     add_overlay(overlay_textview 0 0 NO YES)
     add_overlay(stack_overflow 0 0 YES YES)
     add_overlay(overlay 0 0 NO NO)
+    add_overlay(overlay_os 0 0 NO NO)
     add_overlay(overlay_qr 0 0 NO YES)
     add_overlay(overlay_gamespeed 0 0 NO YES)
     add_overlay(overlay_editor 0 0 NO YES)

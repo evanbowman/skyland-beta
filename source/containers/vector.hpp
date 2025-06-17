@@ -1,33 +1,10 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Copyright (C) 2023  Evan Bowman. Some rights reserved.
+// Copyright (c) 2023 Evan Bowman
 //
-// This program is source-available; the source code is provided for educational
-// purposes. All copies of the software must be distributed along with this
-// license document.
-//
-// 1. DEFINITION OF SOFTWARE: The term "Software" refers to SKYLAND,
-// including any updates, modifications, or associated documentation provided by
-// Licensor.
-//
-// 2. DERIVATIVE WORKS: Licensee is permitted to modify the source code.
-//
-// 3. COMMERCIAL USE: Commercial use is not allowed.
-//
-// 4. ATTRIBUTION: Licensee is required to provide attribution to Licensor.
-//
-// 5. INTELLECTUAL PROPERTY RIGHTS: All intellectual property rights in the
-// Software shall remain the property of Licensor. The Licensee does not acquire
-// any rights to the Software except for the limited use rights specified in
-// this Agreement.
-//
-// 6. WARRANTY AND LIABILITY: The Software is provided "as is" without warranty
-// of any kind. Licensor shall not be liable for any damages arising out of or
-// related to the use or inability to use the Software.
-//
-// 7. TERMINATION: This Agreement shall terminate automatically if Licensee
-// breaches any of its terms and conditions. Upon termination, Licensee must
-// cease all use of the Software and destroy all copies.
+// This Source Code Form is subject to the terms of the Mozilla Public License,
+// v. 2.0. If a copy of the MPL was not distributed with this file, You can
+// obtain one at http://mozilla.org/MPL/2.0/. */
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -382,7 +359,7 @@ public:
         }
 
         if (size == (int)Chunk::elems() and not current->header_.next_) {
-            auto sbr = make_zeroed_sbr("vector-segment");
+            auto sbr = make_zeroed_sbr(data_->tag_);
             Chunk::initialize(sbr, current);
             current->header_.next_ = sbr;
             current = (Chunk*)(*current->header_.next_)->data_;
@@ -410,6 +387,46 @@ public:
 
         --size_;
         (current->array() + (size - 1))->~T();
+    }
+
+
+    void shrink_to_fit()
+    {
+        if (size_ == 0) {
+            Chunk* first = (Chunk*)data_->data_;
+            if (first->header_.next_) {
+                ((Chunk*)(*first->header_.next_)->data_)->~Chunk();
+                first->header_.next_.reset();
+            }
+            end_cache_ = nullptr;
+            return;
+        }
+
+        // Find the last chunk that actually contains data
+        int elements_in_last_chunk = size_ % Chunk::elems();
+        if (elements_in_last_chunk == 0) {
+            elements_in_last_chunk = Chunk::elems();
+        }
+
+        int chunks_needed = (size_ + Chunk::elems() - 1) / Chunk::elems();
+
+        // Walk to the last chunk we need
+        Chunk* current = (Chunk*)data_->data_;
+        for (int i = 1; i < chunks_needed; ++i) {
+            if (current->header_.next_) {
+                current = (Chunk*)(*current->header_.next_)->data_;
+            } else {
+                end_cache_ = nullptr;
+                return;
+            }
+        }
+
+        if (current->header_.next_) {
+            ((Chunk*)(*current->header_.next_)->data_)->~Chunk();
+            current->header_.next_.reset();
+        }
+
+        end_cache_ = nullptr;
     }
 
 

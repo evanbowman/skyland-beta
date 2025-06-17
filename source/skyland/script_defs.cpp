@@ -1,33 +1,10 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Copyright (C) 2023  Evan Bowman. Some rights reserved.
+// Copyright (c) 2023 Evan Bowman
 //
-// This program is source-available; the source code is provided for educational
-// purposes. All copies of the software must be distributed along with this
-// license document.
-//
-// 1. DEFINITION OF SOFTWARE: The term "Software" refers to SKYLAND,
-// including any updates, modifications, or associated documentation provided by
-// Licensor.
-//
-// 2. DERIVATIVE WORKS: Licensee is permitted to modify the source code.
-//
-// 3. COMMERCIAL USE: Commercial use is not allowed.
-//
-// 4. ATTRIBUTION: Licensee is required to provide attribution to Licensor.
-//
-// 5. INTELLECTUAL PROPERTY RIGHTS: All intellectual property rights in the
-// Software shall remain the property of Licensor. The Licensee does not acquire
-// any rights to the Software except for the limited use rights specified in
-// this Agreement.
-//
-// 6. WARRANTY AND LIABILITY: The Software is provided "as is" without warranty
-// of any kind. Licensor shall not be liable for any damages arising out of or
-// related to the use or inability to use the Software.
-//
-// 7. TERMINATION: This Agreement shall terminate automatically if Licensee
-// breaches any of its terms and conditions. Upon termination, Licensee must
-// cease all use of the Software and destroy all copies.
+// This Source Code Form is subject to the terms of the Mozilla Public License,
+// v. 2.0. If a copy of the MPL was not distributed with this file, You can
+// obtain one at http://mozilla.org/MPL/2.0/. */
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -66,6 +43,7 @@
 #include "skyland/entity/explosion/explosion.hpp"
 #include "skyland/entity/misc/lightningStrike.hpp"
 #include "skyland/rooms/weapon.hpp"
+#include "skyland/scene/desktopOS.hpp"
 #include "skyland/scene/itemShopScene.hpp"
 #include "skyland/scene/lispReplScene.hpp"
 #include "skyland/scene/modules/glossaryViewerModule.hpp"
@@ -142,6 +120,10 @@ DynamicMemory<FileLine> get_line_from_file(const char* file_name, int line)
 
     return result;
 }
+
+
+
+void restore_overworld_textures();
 
 
 
@@ -424,6 +406,28 @@ BINDING_TABLE({
 
           s.set_block({x, y, z}, type);
 
+          return L_NIL;
+      }}},
+    {"nimbus",
+     {SIG0(nil),
+      [](int argc) {
+          push_menu_queue.emplace_back([] {
+              return boot_desktop_os([] {
+                  restore_overworld_textures();
+                  if (APP.opponent_island()) {
+                      show_island(APP.opponent_island());
+                  }
+                  PLATFORM_EXTENSION(force_vsync);
+                  PLATFORM.screen().fade(
+                      1, ColorConstant::rich_black, {}, true, true);
+                  PLATFORM.load_sprite_texture("spritesheet");
+                  PLATFORM.load_overlay_texture("overlay");
+                  PLATFORM.set_overlay_origin(0, 0);
+                  PLATFORM.speaker().stream_music(
+                      APP.environment().music()->c_str(), 0);
+                  return make_scene<LispReplScene>();
+              });
+          });
           return L_NIL;
       }}},
     {"help",
@@ -1683,7 +1687,7 @@ BINDING_TABLE({
                           if (auto b = find_param("bt")) {
                               battles = b;
                           }
-                          if (auto b = find_param("br")) {
+                          if (auto b = find_param("dr")) {
                               repaired = b;
                           }
                           if (auto b = find_param("sc")) {
@@ -1737,16 +1741,63 @@ BINDING_TABLE({
                   chr->set_icon(icon);
 
                   id = chr->id();
-                  chr->stats().enemies_vanquished_ = kills;
-                  chr->stats().battles_fought_ = battles;
-                  chr->stats().blocks_repaired_.set(repaired);
-                  chr->stats().steps_taken_.set(step_count);
-                  chr->stats().fires_extinguished_ = fires;
+                  chr->stats().info_.enemies_vanquished_ = kills;
+                  chr->stats().info_.battles_fought_ = battles;
+                  chr->stats().info_.damage_repaired_.set(repaired);
+                  chr->stats().info_.steps_taken_.set(step_count);
+                  chr->stats().info_.fires_extinguished_ = fires;
                   island->add_character(std::move(chr));
               }
           }
 
           return lisp::make_integer(id);
+      }}},
+    {"mem-log-diagnostics",
+     {SIG0(nil),
+      [](int argc) {
+          info("__MEMORY_DIAGNOSTICS______");
+          scratch_buffer_memory_diagnostics();
+          info(format("extension mem: used %", extension_stats().used));
+
+          info("pool diagnostics:");
+          info("        name        |   size  |  total  |  used");
+          info("--------------------|---------|---------|--------");
+          auto pool = GenericPool::instances();
+          while (pool) {
+              StringBuffer<96> output;
+              output = pool->name();
+              auto name_len = strlen(pool->name());
+              if (name_len < 20) {
+                  output += StringBuffer<20>(' ', 20 - name_len);
+              }
+              output += "| ";
+              auto size_str = stringify(pool->pooled_element_size());
+              if (size_str.length() < 7) {
+                  output += StringBuffer<7>(' ', 7 - size_str.length());
+              }
+              output += size_str;
+              output += " | ";
+
+              auto elem_count_str = stringify(pool->pooled_element_count());
+              if (elem_count_str.length() < 7) {
+                  output += StringBuffer<7>(' ', 7 - elem_count_str.length());
+              }
+              output += elem_count_str;
+              output += " | ";
+
+              auto remaining_str = stringify(pool->pooled_element_count() -
+                                             pool->pooled_element_remaining());
+              if (remaining_str.length() < 7) {
+                  output += StringBuffer<7>(' ', 7 - remaining_str.length());
+              }
+              output += remaining_str;
+
+              info(output);
+
+
+              pool = pool->next();
+          }
+          return L_NIL;
       }}},
     {"click",
      {SIG3(nil, wrapped, integer, integer),
