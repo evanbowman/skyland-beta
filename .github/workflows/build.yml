@@ -43,4 +43,4 @@ jobs:
           export DEVKITARM=/opt/devkitpro/devkitARM
           export DEVKITPPC=/opt/devkitpro/devkitPPC
           cd build && ./set-gameboy-advance-toolchain.sh
-          ./build.sh
+          chmod +x ./build.sh && ./build.sh
