@@ -45,4 +45,4 @@ jobs:
           cd build && ./set-gameboy-advance-toolchain.sh
 
       - name: Build project
-        run: ./build.sh
+        run: cd build && ./build.sh
