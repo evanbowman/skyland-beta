@@ -14,19 +14,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Install devkitPro (libgba & gba compilers)
+      - name: Install prerequisites
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget gnupg python3 python3-pip cmake
-          wget https://apt.devkitpro.org/devkitpro-keyring.gpg -O- | sudo tee /usr/share/keyrings/devkitpro-keyring.gpg > /dev/null
-          echo "deb [signed-by=/usr/share/keyrings/devkitpro-keyring.gpg] https://apt.devkitpro.org unstable main" | sudo tee /etc/apt/sources.list.d/devkitpro.list
-          sudo apt-get update
-          sudo apt-get install -y devkitpro-pacman
-          sudo dkp-pacman -Syu --noconfirm
+          sudo apt-get install -y git wget tar bzip2 python3 python3-pip
+      
+      - name: Install devkitPro pacman
+        run: |
+          wget https://github.com/devkitPro/pacman/releases/latest/download/devkitpro-pacman.amd64.deb
+          sudo dpkg -i devkitpro-pacman.amd64.deb
+          sudo dkp-pacman -Sy
+      
+      - name: Install devkitARM (for GBA)
+        run: |
           sudo dkp-pacman -S --noconfirm gba-dev
-
-      - name: Install Python Pillow library
-        run: pip3 install Pillow
 
       - name: Set up Gameboy Advance toolchain
         run: cd build && ./set-gameboy-advance-toolchain.sh
