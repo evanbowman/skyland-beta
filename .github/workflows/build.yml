@@ -37,12 +37,10 @@ jobs:
           export DEVKITPPC=/opt/devkitpro/devkitPPC
           sudo dkp-pacman -S --noconfirm gba-dev
 
-      - name: Set up Gameboy Advance toolchain
+      - name: Set up Gameboy Advance toolchain and build project
         run: |
           export DEVKITPRO=/opt/devkitpro
           export DEVKITARM=/opt/devkitpro/devkitARM
           export DEVKITPPC=/opt/devkitpro/devkitPPC
           cd build && ./set-gameboy-advance-toolchain.sh
-
-      - name: Build project
-        run: cd build && ./build.sh
+          ./build.sh
