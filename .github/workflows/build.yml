@@ -25,7 +25,7 @@ jobs:
           wget https://apt.devkitpro.org/install-devkitpro-pacman
           chmod +x ./install-devkitpro-pacman
           sudo ./install-devkitpro-pacman
-          sudo (dkp-)pacman -Sy
+          sudo dkp-pacman -Sy
           export DEVKITPRO=/opt/devkitpro
           export DEVKITARM=/opt/devkitpro/devkitARM
           export DEVKITPPC=/opt/devkitpro/devkitPPC
