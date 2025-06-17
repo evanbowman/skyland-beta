@@ -19,12 +19,17 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y git wget tar bzip2 python3 python3-pip cmake
       
-      - name: Install devkitPro pacman
+      - name: Install devkitPro pacman and setup devkitpro
         run: |
+         
           wget https://apt.devkitpro.org/install-devkitpro-pacman
           chmod +x ./install-devkitpro-pacman
           sudo ./install-devkitpro-pacman
-      
+          sudo (dkp-)pacman -Sy
+          export DEVKITPRO=/opt/devkitpro
+          export DEVKITARM=/opt/devkitpro/devkitARM
+          export DEVKITPPC=/opt/devkitpro/devkitPPC
+
       - name: Install devkitARM (for GBA)
         run: |
           sudo dkp-pacman -S --noconfirm gba-dev
