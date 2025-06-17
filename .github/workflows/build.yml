@@ -26,15 +26,9 @@ jobs:
           chmod +x ./install-devkitpro-pacman
           sudo ./install-devkitpro-pacman
           sudo dkp-pacman -Sy
-          export DEVKITPRO=/opt/devkitpro
-          export DEVKITARM=/opt/devkitpro/devkitARM
-          export DEVKITPPC=/opt/devkitpro/devkitPPC
 
       - name: Install devkitARM (for GBA)
         run: |
-          export DEVKITPRO=/opt/devkitpro
-          export DEVKITARM=/opt/devkitpro/devkitARM
-          export DEVKITPPC=/opt/devkitpro/devkitPPC
           sudo dkp-pacman -S --noconfirm gba-dev
 
       - name: Set up Gameboy Advance toolchain and build project
@@ -49,5 +43,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: skyland.gba
-          path: ${{ github.workspace }}/build/
+          path: ${{ github.workspace }}/build/skyland.gba
 
