@@ -1,0 +1,53 @@
+name: Build
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git wget tar bzip2 python3 python3-pip cmake
+      
+      - name: Install devkitPro pacman and setup devkitpro
+        run: |
+          set -e
+          wget --retry-connrefused --waitretry=5 --timeout=30 --tries=10 --retry-on-http-error=403 https://apt.devkitpro.org/install-devkitpro-pacman
+          chmod +x ./install-devkitpro-pacman
+          n=0
+          until [ "$n" -ge 5 ]
+          do
+            sudo ./install-devkitpro-pacman && sudo dkp-pacman -Sy && break
+            n=$((n+1))
+            echo "Retry $n/5: Sleeping 10 seconds before retry..."
+            sleep 10
+          done
+
+      - name: Install devkitARM (for GBA)
+        run: |
+          sudo dkp-pacman -S --noconfirm gba-dev
+
+      - name: Set up Gameboy Advance toolchain and build project
+        run: |
+          export DEVKITPRO=/opt/devkitpro
+          export DEVKITARM=/opt/devkitpro/devkitARM
+          export DEVKITPPC=/opt/devkitpro/devkitPPC
+          cd build && ./set-gameboy-advance-toolchain.sh
+          chmod +x ./build.sh && ./build.sh
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Skyland.gba
+          path: ${{ github.workspace }}/build/Skyland.gba
+
