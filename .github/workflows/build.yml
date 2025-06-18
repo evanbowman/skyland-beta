@@ -22,7 +22,7 @@ jobs:
       - name: Install devkitPro pacman and setup devkitpro
         run: |
          
-          wget https://apt.devkitpro.org/install-devkitpro-pacman
+          wget --retry-connrefused --waitretry=5 --timeout=30 --tries=10 --retry-on-http-error=403 https://apt.devkitpro.org/install-devkitpro-pacman
           chmod +x ./install-devkitpro-pacman
           sudo ./install-devkitpro-pacman
           sudo dkp-pacman -Sy
