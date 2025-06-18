@@ -21,11 +21,17 @@ jobs:
       
       - name: Install devkitPro pacman and setup devkitpro
         run: |
-         
+          set -e
           wget --retry-connrefused --waitretry=5 --timeout=30 --tries=10 --retry-on-http-error=403 https://apt.devkitpro.org/install-devkitpro-pacman
           chmod +x ./install-devkitpro-pacman
-          sudo ./install-devkitpro-pacman
-          sudo dkp-pacman -Sy
+          n=0
+          until [ "$n" -ge 5 ]
+          do
+            sudo ./install-devkitpro-pacman && sudo dkp-pacman -Sy && break
+            n=$((n+1))
+            echo "Retry $n/5: Sleeping 10 seconds before retry..."
+            sleep 10
+          done
 
       - name: Install devkitARM (for GBA)
         run: |
