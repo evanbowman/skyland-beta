@@ -4,7 +4,7 @@ on:
   push:
     branches: [ master ]
   workflow_dispatch: # Manual trigger
-  pull_request:
+  pull_request: # Commented out; uncomment if you want PR triggers
     branches: [ master ]
 
 jobs:
@@ -18,16 +18,14 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
-          cache: 'pip'
-          cache-dependency-path: 'requirements.txt'
+          python-version: '3.10' # Specified for consistency
+          cache: 'pip' # Cache pip dependencies
 
       - name: Install prerequisites
         run: |
           sudo apt-get update
           sudo apt-get install -y git wget tar bzip2 python3 python3-pip cmake
-          echo "pillow" > requirements.txt
-          pip install -r requirements.txt
+          pip install pillow
 
       - name: Cache devkitPro installation
         id: cache-devkitpro
