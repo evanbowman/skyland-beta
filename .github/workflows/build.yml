@@ -3,27 +3,40 @@ name: Build
 on:
   push:
     branches: [ master ]
-  workflow_dispatch:
   pull_request:
     branches: [ master ]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-22.04
-
     container:
       image: devkitpro/devkitarm:latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Fix git safe directory
+        run: git config --global --add safe.directory ${{ github.workspace }}
 
       - name: Install prerequisites
         run: |
           sudo apt-get update
           sudo apt-get install -y git wget tar bzip2 python3 python3-pip cmake
           pip3 install pillow
+          
+      - name: Cache build artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            build/CMakeCache.txt
+            build/CMakeFiles
+          key: build-${{ runner.os }}-${{ hashFiles('source/**', 'scripts/**', 'build/CMakeLists.txt', 'build/*.sh') }}
+          restore-keys: |
+            build-${{ runner.os }}-
 
-      - name: Build
+      - name: Build project
         run: |
           cd build
           if [ ! -f CMakeCache.txt ]; then
@@ -31,9 +44,8 @@ jobs:
           fi
           chmod +x build.sh && ./build.sh
 
-      - name: Upload Artifacts
+      - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: Skyland-gba
           path: build/Skyland.gba
-
