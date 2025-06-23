@@ -65,7 +65,6 @@
 #include "skyland/rooms/nemesis.hpp"
 #include "skyland/rooms/palm.hpp"
 #include "skyland/rooms/phaseShifter.hpp"
-#include "skyland/rooms/piston.hpp"
 #include "skyland/rooms/plunderedRoom.hpp"
 #include "skyland/rooms/portal.hpp"
 #include "skyland/rooms/poweredHull.hpp"
@@ -158,7 +157,7 @@ template <typename T> struct InfoImpl : public RoomMeta::Info
         return T::unsel_icon();
     }
 
-    Vec2<u8> size() const override
+    Vec2<u8> constructed_size() const override
     {
         return T::size();
     }
@@ -336,14 +335,16 @@ using RoomMetatableType = RoomMetatable<11,
                                         ChaosCore,
                                         Windmill,
                                         Balloon,
-                                        // misc
+                                        // passages
                                         Stairwell,
                                         Ladder,
                                         LadderPlus,
                                         StairwellPlus,
                                         StairwellPlusPlus,
+                                        Bridge,
                                         Portal,
                                         Bulkhead,
+                                        // misc
                                         Infirmary,
                                         CargoBay,
                                         Crane,
@@ -368,7 +369,6 @@ using RoomMetatableType = RoomMetatable<11,
                                         Synth,
                                         Statue,
                                         LadyLiberty,
-                                        Bridge,
                                         Fountain,
                                         Torch,
                                         Palm,

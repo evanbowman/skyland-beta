@@ -206,6 +206,8 @@ enum class SystemString {
     red,
     black,
 
+    resize_bridge,
+
     bird_label,
 
     character_label_human,
@@ -269,6 +271,7 @@ enum class SystemString {
     category_weapon,
     category_factory,
     category_power,
+    category_passage,
     category_misc,
     category_decoration,
 
@@ -427,6 +430,7 @@ enum class SystemString {
     description_phase_shifter,
     description_ballista,
     description_bell,
+    description_bridge,
 
     gs_paused,
     gs_slow,
@@ -788,6 +792,7 @@ enum class SystemString {
     sel_menu_crewmember_stats,
     sel_menu_drone_stats,
     sel_menu_eight_bells,
+    sel_menu_resize_bridge,
 
     drone_info_heading,
     drone_info_notes,

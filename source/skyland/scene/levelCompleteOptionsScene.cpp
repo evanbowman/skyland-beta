@@ -10,11 +10,11 @@
 
 
 #include "levelCompleteOptionsScene.hpp"
+#include "debriefScene.hpp"
 #include "levelExitScene.hpp"
 #include "readyScene.hpp"
 #include "skyland/skyland.hpp"
 #include "skyland/systemString.hpp"
-#include "zoneImageScene.hpp"
 
 
 
@@ -116,7 +116,7 @@ ScenePtr LevelCompleteOptionsScene::update(Time delta)
         if (timer_ > fade_duration) {
             PLATFORM.load_overlay_texture("overlay");
             hide_translucence();
-            return make_scene<LevelExitScene<ZoneImageScene>>();
+            return make_scene<LevelExitScene<DebriefScene>>();
         } else {
             const auto amount =
                 partial_fade_amt + (1.f - partial_fade_amt) *

@@ -680,8 +680,9 @@ ScenePtr RewindScene::update(Time)
             // plundered-room structures that comprise the room. Cache them in
             // buffer chrs.
             auto meta = load_metaclass(e->type_);
-            for (u8 x = e->x_; x < e->x_ + (*meta)->size().x; ++x) {
-                for (u8 y = e->y_; y < e->y_ + (*meta)->size().y; ++y) {
+            auto sz = (*meta)->constructed_size();
+            for (u8 x = e->x_; x < e->x_ + sz.x; ++x) {
+                for (u8 y = e->y_; y < e->y_ + sz.y; ++y) {
                     // NOTE: scan rooms manually, because both the
                     // plundered-room structures and the original room currently
                     // exist.
@@ -699,8 +700,8 @@ ScenePtr RewindScene::update(Time)
 
             // Destroy plundered-room structures in the location where we want
             // to re-create the original room.
-            for (u8 x = e->x_; x < e->x_ + (*meta)->size().x; ++x) {
-                for (u8 y = e->y_; y < e->y_ + (*meta)->size().y; ++y) {
+            for (u8 x = e->x_; x < e->x_ + sz.x; ++x) {
+                for (u8 y = e->y_; y < e->y_ + sz.y; ++y) {
                     if (island->get_room({x, y})) {
                         island->destroy_room({x, y});
                     }
@@ -1943,6 +1944,24 @@ ScenePtr RewindScene::update(Time)
                     if (auto ps = room->cast<PhaseShifter>()) {
                         ps->rewind_state(e->prev_mode_);
                     }
+                }
+            }
+
+            APP.time_stream().pop(sizeof *e);
+            break;
+        }
+
+
+        case time_stream::event::room_width_adjusted: {
+            auto e = (time_stream::event::RoomWidthAdjusted*)end;
+
+            Island* isle =
+                e->near_ ? &APP.player_island() : APP.opponent_island();
+
+            if (isle) {
+                if (auto room = isle->get_room({e->room_x_, e->room_y_})) {
+                    room->adjust_width(e->prev_width_ - room->size().x);
+                    isle->schedule_repaint();
                 }
             }
 

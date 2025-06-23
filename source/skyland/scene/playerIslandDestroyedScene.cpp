@@ -15,6 +15,7 @@
 #include "boxedDialogScene.hpp"
 #include "coOpSyncScene.hpp"
 #include "crewStatsScene.hpp"
+#include "debriefScene.hpp"
 #include "highscoresScene.hpp"
 #include "levelCompleteOptionsScene.hpp"
 #include "levelExitScene.hpp"
@@ -35,7 +36,6 @@
 #include "skyland/serial.hpp"
 #include "skyland/skyland.hpp"
 #include "titleScreenScene.hpp"
-#include "zoneImageScene.hpp"
 
 
 
@@ -841,7 +841,7 @@ ScenePtr PlayerIslandDestroyedScene::update(Time delta)
 
                         return next;
                     } else {
-                        return make_scene<LevelExitScene<ZoneImageScene>>();
+                        return make_scene<LevelExitScene<DebriefScene>>();
                     }
                 }
 

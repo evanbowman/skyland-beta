@@ -168,6 +168,7 @@ public:
         weapon,
         factory,
         power,
+        passage,
         misc,
         decoration,
         count
@@ -274,6 +275,9 @@ public:
     {
         return {size_x_, size_y_};
     }
+
+
+    bool adjust_width(int size_diff);
 
 
     // A special method intended mainly for the rewind implementation. Invoked
@@ -797,6 +801,9 @@ protected:
     virtual void on_powerchange()
     {
     }
+
+
+    void constrain_chrs();
 
 
 private:

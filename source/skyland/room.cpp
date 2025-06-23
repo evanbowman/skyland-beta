@@ -70,7 +70,7 @@ Room::Room(Island* parent, const char* name, const RoomCoord& position)
         if (str_eq(name, current->name())) {
             metaclass_index_ = i;
 
-            auto mt_size = current->size();
+            auto mt_size = current->constructed_size();
             if (mt_size.x > 15 or mt_size.y > 15) {
                 Platform::fatal("Room size too large!");
             }
@@ -882,7 +882,25 @@ void Room::__unsafe__transmute(MetaclassIndex m)
     auto new_room = (Room*)address;
     chr_list.move_contents(new_room->characters_);
 
-    const int size_diff_y = mt->size().y - sz.y;
+    for (auto& chr : new_room->characters()) {
+        auto r_extent = new_room->position();
+        r_extent.x += new_room->size().x;
+        r_extent.y += new_room->size().y;
+        if (chr->grid_position().x >= r_extent.x or
+            chr->grid_position().y >= r_extent.y) {
+            time_stream::event::CharacterPositionJump e;
+            e.id_.set(chr->id());
+            auto chr_pos = chr->grid_position();
+            e.previous_x_ = chr_pos.x;
+            e.previous_y_ = chr_pos.y;
+            APP.time_stream().push(APP.level_timer(), e);
+            chr->set_grid_position(
+                {clamp(chr_pos.x, new_room->position().x, u8(r_extent.x - 1)),
+                 clamp(chr_pos.y, new_room->position().y, u8(r_extent.y - 1))});
+        }
+    }
+
+    const int size_diff_y = mt->constructed_size().y - sz.y;
 
     island->schedule_repaint();
     if (size_diff_y) {
@@ -910,6 +928,67 @@ void Room::__unsafe__transmute(MetaclassIndex m)
 
                 chr->set_grid_position({pos.x, u8(pos.y + size_diff_y)});
             }
+        }
+    }
+}
+
+
+
+bool Room::adjust_width(int size_diff)
+{
+    auto current = size().x;
+    auto new_sz = current + size_diff;
+    if (new_sz <= 0 or new_sz >= 15 or
+        position().x + new_sz > (int)parent()->terrain().size()) {
+        return false;
+    }
+
+    for (int x = 0; x < new_sz; ++x) {
+        if (auto room =
+                parent()->get_room({u8(x_position_ + x), y_position_})) {
+            if (room not_eq this) {
+                return false; // collision with other existing block.
+            }
+        }
+    }
+
+    time_stream::event::RoomWidthAdjusted e;
+    e.room_x_ = position().x;
+    e.room_y_ = position().y;
+    e.prev_width_ = current;
+    e.near_ = parent() == &APP.player_island();
+    APP.time_stream().push(APP.level_timer(), e);
+
+    size_x_ = current + size_diff;
+    parent()->rooms().reindex(true);
+    auto change_pt = position();
+    change_pt.x += new_sz;
+    parent()->on_layout_changed(change_pt);
+
+    constrain_chrs();
+
+    return true;
+}
+
+
+
+void Room::constrain_chrs()
+{
+    for (auto& chr : characters()) {
+        auto r_extent = position();
+        r_extent.x += size().x;
+        r_extent.y += size().y;
+        if (chr->grid_position().x >= r_extent.x or
+            chr->grid_position().y >= r_extent.y) {
+            time_stream::event::CharacterPositionJump e;
+            e.id_.set(chr->id());
+            auto chr_pos = chr->grid_position();
+            e.previous_x_ = chr_pos.x;
+            e.previous_y_ = chr_pos.y;
+            APP.time_stream().push(APP.level_timer(), e);
+            chr->set_grid_position(
+                {clamp(chr_pos.x, position().x, u8(r_extent.x - 1)),
+                 clamp(chr_pos.y, position().y, u8(r_extent.y - 1))});
         }
     }
 }
@@ -1033,14 +1112,14 @@ void Room::convert_to_plundered()
         return;
     }
 
-    for (int x = 0; x < size().x; x += (*plunder_metac)->size().x) {
+    for (int x = 0; x < size().x; x += (*plunder_metac)->constructed_size().x) {
         int y = 0;
         if (size().y % 2 not_eq 0) {
             // NOTE: plundered-room occupies two tiles vertically. For an
             // odd-sized room height, start at 1.
             y = 1;
         }
-        for (; y < size().y; y += (*plunder_metac)->size().y) {
+        for (; y < size().y; y += (*plunder_metac)->constructed_size().y) {
             const RoomCoord pos = {
                 u8(((u8)x_position_) + x),
                 u8(((u8)y_position_) + y),
