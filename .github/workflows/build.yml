@@ -18,7 +18,9 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Fix git safe directory
-        run: git config --global --add safe.directory ${{ github.workspace }}
+        run: |
+          git config --global --add safe.directory ${{ github.workspace }}
+          git config --global --add safe.directory /__w/skyland-beta/skyland-beta
 
       - name: Install prerequisites
         run: |
