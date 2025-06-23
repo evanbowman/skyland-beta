@@ -11,63 +11,20 @@ jobs:
   build:
     runs-on: ubuntu-22.04
 
+    container:
+      image: devkitpro/devkitarm:latest
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
       - name: Install prerequisites
         run: |
           sudo apt-get update
           sudo apt-get install -y git wget tar bzip2 python3 python3-pip cmake
-          pip install pillow
+          pip3 install pillow
 
-      - name: Cache devkitPro installation
-        id: cache-devkitpro
-        uses: actions/cache@v4
-        with:
-          path: /opt/devkitpro
-          key: devkitpro-${{ runner.os }}-20250623
-          restore-keys: |
-            devkitpro-${{ runner.os }}-
-
-      - name: Install devkitPro pacman and setup devkitpro
-        if: steps.cache-devkitpro.outputs.cache-hit != 'true'
+      - name: Build
         run: |
-          set -e
-          wget --retry-connrefused --waitretry=5 --timeout=30 --tries=10 --retry-on-http-error=403 https://apt.devkitpro.org/install-devkitpro-pacman
-          chmod +x ./install-devkitpro-pacman
-          n=0
-          until [ "$n" -ge 5 ]
-          do
-            sudo ./install-devkitpro-pacman && sudo dkp-pacman -Sy && break
-            n=$((n+1))
-            echo "Retry $n/5: Sleeping 10 seconds before retry..."
-            sleep 10
-          done
-
-      - name: Install devkitARM (for GBA)
-        if: steps.cache-devkitpro.outputs.cache-hit != 'true'
-        run: |
-          sudo dkp-pacman -S --noconfirm gba-dev
-
-      - name: Cache build artifacts
-        id: cache-build
-        uses: actions/cache@v4
-        with:
-          path: |
-            build/*.o
-            build/*.d
-            build/CMakeCache.txt
-            build/CMakeFiles
-          key: build-${{ runner.os }}-${{ hashFiles('source/**', 'scripts/**', 'build/CMakeLists.txt', 'build/*.sh') }}
-          restore-keys: |
-            build-${{ runner.os }}-
-
-      - name: Set up Gameboy Advance toolchain and build project
-        run: |
-          export DEVKITPRO=/opt/devkitpro
-          export DEVKITARM=/opt/devkitpro/devkitARM
-          export DEVKITPPC=/dev/null
           cd build
           if [ ! -f CMakeCache.txt ]; then
             ./set-gameboy-advance-toolchain.sh
@@ -78,4 +35,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Skyland-gba
-          path: ${{ github.workspace }}/build/Skyland.gba
+          path: build/Skyland.gba
+
