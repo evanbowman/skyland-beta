@@ -28,22 +28,10 @@ jobs:
           sudo apt-get install -y git wget tar bzip2 python3 python3-pip cmake
           pip3 install pillow
           
-      - name: Cache build artifacts
-        uses: actions/cache@v4
-        with:
-          path: |
-            build/CMakeCache.txt
-            build/CMakeFiles
-          key: build-${{ runner.os }}-${{ hashFiles('source/**', 'scripts/**', 'build/CMakeLists.txt', 'build/*.sh') }}
-          restore-keys: |
-            build-${{ runner.os }}-
-
       - name: Build project
         run: |
           cd build
-          if [ ! -f CMakeCache.txt ]; then
-            ./set-gameboy-advance-toolchain.sh
-          fi
+          ./set-gameboy-advance-toolchain.sh
           chmod +x build.sh && ./build.sh
 
       - name: Upload build artifact
