@@ -60,7 +60,6 @@ configure_file(dirlocals.in ${SOURCE_DIR}/.dir-locals.el)
 set(G_COMPILE_FLAGS
   -g3
   -Wall
-  -Werror
   -pedantic
   -ffast-math
   -fno-math-errno
