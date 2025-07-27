@@ -2,6 +2,7 @@
 ;;; neutral/0/5_human.lisp
 ;;;
 
+
 (dialog
  "A distress call sounds over your radio! <B:0> "
  "<b:/scripts/data/img/destroyed_town.img.bin>"
@@ -44,8 +45,8 @@
         (setq on-dialog-closed
               (lambda ()
                 (dialog "She seems harmless, invite her aboard?")
-                (dialog-await-binary-q-w/lore "sure!" "no"
-                                              '(("why let her aboard?" .
+                (dialog-await-binary-q-w/lore "Sure!" "No."
+                                              '(("Why let her aboard?" .
                                                  "<c:girl:14>Hmm.. well let's see. I'm good at cooking, I can clean your ship, I'm pretty decent at crochet and... I don't know if this is even relevant, but I'm a blackbelt in karate! <B:0> Can I come along?")))
                 (setq on-dialog-closed '())))
 
