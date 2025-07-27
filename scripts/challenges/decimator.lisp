@@ -1,5 +1,5 @@
 ;;;
-;;; decimator.lisp
+;;; challenges/decimator.lisp
 ;;;
 
 (defn challenge-hint ()
