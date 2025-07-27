@@ -1,3 +1,6 @@
+;;;
+;;; quest_marker/goblin_pickup_0.lisp
+;;;
 
 
 (dialog "You reach the source of the smoke signals...")
