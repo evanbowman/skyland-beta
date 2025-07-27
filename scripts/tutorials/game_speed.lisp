@@ -142,6 +142,5 @@
    (3306 Left)
    (1306 Left)
    (500 L-np)
-
    (1000 nil)
    (100 "<c:Milo:5>Alright, I think I've showed you all the different game speeds: slow, regular, fast, paused, and rewind!")))
