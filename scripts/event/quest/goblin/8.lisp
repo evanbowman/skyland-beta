@@ -1,3 +1,7 @@
+;;;
+;;; quest/goblin/8.lisp
+;;;
+
 
 (dialog
  "A proximity alarm wakes your crew in the night! <B:0>"
