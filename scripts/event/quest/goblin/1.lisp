@@ -1,3 +1,7 @@
+;;;
+;;; quest/goblin/1.lisp
+;;;
+
 
 (dialog
  "<b:/scripts/data/img/banana_cover.img.bin>"
