@@ -1,7 +1,3 @@
-;;;
-;;; neutral/2/6_1.lisp
-;;;
-
 
 (dialog
  "A proximity alarm wakes your crew in the night! <B:0>"
@@ -22,7 +18,7 @@
   (dialog
    "<c:ashwalker elder:42>The ssstorm brings change... Our seers have had visionsss of an ancient weapon, buried in the ruins of our ancestorsss. <B:0> A relic from before the Great Change that made us what we are... <B:0> It must not remain below when the ssstorm arrives. <B:0> Will you help retrieve it?")
 
-   (dialog-await-binary-q "okay..." "sorry, but no")
+   (dialog-await-binary-q "Okay..." "Sssorry, but no.")
 
    (defn on-dialog-accepted ()
      (let ((m (eval-file "/scripts/event/quest/make_quest_marker.lisp")))
@@ -40,7 +36,7 @@
                  (setq on-dialog-closed nil)
                  (run-util-script
                   "find-crew-slot"
-                  "<c:ashwalker apprentice:41> Hmm... you seem to be out of sspace... <B:0> Let me fix that!"
+                  "<c:ashwalker apprentice:41> Hmm... you ssseem to be out of ssspace... <B:0> Let me fix that!"
                   'ladder
                   "Place block (1x2):"
                   (lambda (x y _)
@@ -48,7 +44,7 @@
                     (dialog "The apprentice joined your crew!")
                     (setq on-dialog-closed exit))))))
            (progn
-             (dialog "<c:ashwalker elder:42> The visionsss were unclear... The ssstorm moves too quickly, the path is already blocked...")))))
+             (dialog "<c:ashwalker elder:42>The visionsss were unclear... The ssstorm moves too quickly, the path is already blocked...")))))
 
 
    (setq on-dialog-declined exit))
