@@ -2,6 +2,7 @@
 ;;; challenges/decimator.lisp
 ;;;
 
+
 (defn challenge-hint ()
   (dialog "Are you sure you want a hint?")
   (dialog-await-y/n)
