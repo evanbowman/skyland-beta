@@ -1,3 +1,7 @@
+;;;
+;;; neutral/2/1_alt1.lisp
+;;;
+
 
 (dialog "A damaged fortress floats into view. The residents do not respond to your radio signals.")
 
@@ -78,13 +82,13 @@
              (if (equal (car room) 'hull)
                  (room-mut (opponent) (get room 1) (get room 2) 'mirror-hull)))
            (rooms (opponent)))
-      (dialog "The survivors turned out to be vicious goblins, and their island is not as defensless as it initially appeared...")
+      (dialog "The survivors turned out to be vicious goblins, and their island is not as defenseless as it initially appeared...")
       (defn on-dialog-closed ()
         (dialog "<c:goblin:2>Die "
                 (cond
-                  ((equal (faction) 'goblin) "traitorsss")
-                  ((equal (faction) 'human) "humansss")
-                  ((equal (faction) 'sylph) "sylph sscum"))
+                  ((equal (faction) 'goblin) "Traitorsss")
+                  ((equal (faction) 'human) "Humansss")
+                  ((equal (faction) 'sylph) "Sssylph ssscum"))
                 "!")
         (setq on-dialog-closed nil))
       (opponent-mode 'hostile))
