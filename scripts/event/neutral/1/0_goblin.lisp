@@ -75,7 +75,7 @@
 
         (dialog-await-binary-q
          (format "Recruit? %@" (* 400 (zone)))
-         "no thanks")
+         "No thanks.")
 
         (setq on-converge nil)))
 
@@ -95,7 +95,7 @@
          (chr-new (player) x y 'neutral '((race . 1) (icon . 41)))
          (coins-add (* -400 (zone)))
          (adventure-log-add 66 '())
-         (dialog "<c:warrior monk:41> I live to serve!")
+         (dialog "<c:warrior monk:41>I live to serve!")
          (defn on-dialog-closed ()
            (setq on-dialog-closed nil)
            (dialog "The monk joined your crew!")
