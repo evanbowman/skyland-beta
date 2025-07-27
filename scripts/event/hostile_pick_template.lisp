@@ -1,3 +1,7 @@
+;;;
+;;; hostile_pick_template.lisp
+;;;
+
 
 (let ((lvs (filter
             (lambda (enmy)
