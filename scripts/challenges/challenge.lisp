@@ -1,5 +1,5 @@
 ;;;
-;;; challenge.lisp
+;;; challenges/challenge.lisp
 ;;;
 
 (eval-file "/scripts/reset_hooks.lisp")
