@@ -8,7 +8,7 @@
 (setvar "rewind_disabled" 0)
 
 
-;; NOTE: the list should not exceed 64 tutorials.
+;; NOTE: The list should not exceed 64 tutorials.
 
 
 (append '(("Introduction" "tutorials/overview.lisp" 0)
