@@ -1,3 +1,7 @@
+;;;
+;;; quest/goblin/7.lisp
+;;;
+
 
 (dialog
  "In the distance, you hear the metallic clang of gears and winches... <B:0>"
