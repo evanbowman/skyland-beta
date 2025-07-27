@@ -3,7 +3,6 @@
 ;;;
 
 
-
 (defn on-victory ()
   (challenge-complete 4)
   (achieve 18))
