@@ -1,3 +1,7 @@
+;;;
+;;; quest/human/3.lisp
+;;;
+
 
 (dialog
  "<b:/scripts/data/img/airship.img.bin>"
