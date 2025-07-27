@@ -2,6 +2,7 @@
 ;;; quest/human/4.lisp
 ;;;
 
+
 (dialog
  "<b:/scripts/data/img/ceramics.img.bin>A small village specializing in ceramics offers to sell you a batch of ornate tiles. Your crew insists that you'll be able to resell the tiles at another village for a much higher price...")
 
@@ -75,11 +76,11 @@
     (setq on-converge nil)
     (dialog
      (format
-      "<c:merchant:7>So, whaddya you say? Purchase a batch of ceramics for %@?"
+      "<c:merchant:7>So, whaddya say? Purchase a batch of ceramics for %@?"
       fee
       (* fee 2)))
 
-    (dialog-await-binary-q "ok!" "no thanks")
+    (dialog-await-binary-q "OK!" "No thanks.")
 
     (defn on-dialog-accepted ()
       (let ((m (eval-file "/scripts/event/quest/make_quest_marker.lisp")))
