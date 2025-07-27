@@ -1,3 +1,7 @@
+;;;
+;;; neutral/1/8_1_human.lisp
+;;;
+
 
 (dialog "<b:/scripts/data/img/explorer.img.bin>You come across an explorer's balloon, floating gently in the breeze. You adjust your engines to keep pace with it...")
 
@@ -18,8 +22,8 @@
         (lambda ()
           (dialog "He seems harmless, invite him aboard?")
 
-          (dialog-await-binary-q-w/lore "welcome aboard!" "sorry, but no"
-                                        '(("let's chat…" . "<c:explorer:22> I'm obsessed with finding new islands! When I find one, I mark it with a signal beacon. That's how you can find islands on your sky chart! Neat huh? <B:0> Anyway, can I come aboard?")))
+          (dialog-await-binary-q-w/lore "Welcome aboard!" "Sorry, but no."
+                                        '(("let's chat…" . "<c:explorer:22>I'm obsessed with finding new islands! When I find one, I mark it with a signal beacon. That's how you can find islands on your sky chart! Neat huh? <B:0> Anyway, can I come aboard?")))
 
           (setq on-dialog-closed '())))
   (setq on-converge nil))
@@ -56,7 +60,7 @@
                            (room-new (player) `(ladder ,x ,y))
                            (chr-del (opponent) 1 14)
                            (chr-new (player) x (+ 1 y) 'neutral '((icon . 22) (race . 0)))
-                           (dialog "<c:explorer:22> Thanks! I'll try to help out however I can!")
+                           (dialog "<c:explorer:22>Thanks! I'll try to help out however I can!")
                            (defn on-dialog-closed ()
                              (join "The explorer joined your crew!")
                              (defn on-dialog-closed ()
