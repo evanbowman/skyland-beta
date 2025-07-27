@@ -35,18 +35,18 @@
 (defn on-dialog-accepted ()
   (run-util-script
    "find-crew-slot"
-   "<c:dog:24>BOWOWOWOW"
+   "<c:dog:24>BOWOWOWOW!"
    'ladder
    "Place block (1x2):"
    (lambda (x y _)
      (chr-del (opponent) 0 12)
      (chr-new (player) x y 'neutral '((race . 3) (icon . 24)))
-     (dialog "<c:dog :24> Woof! bowowow!")
+     (dialog "<c:dog:24>Woof! Bowowow!")
      (defn on-dialog-closed ()
        (setq on-dialog-closed nil)
        (dialog "A new friend joins your crew!")
        (defn on-dialog-closed ()
-         (dialog "<c:station master:9> Not much of a mechanic, but quick on his feet and fierce in a fight!")
+         (dialog "<c:station master:9>Not much of a mechanic, but quick on his feet and fierce in a fight!")
          (setq on-dialog-closed exit))))))
 
 
