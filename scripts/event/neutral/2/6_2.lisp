@@ -1,3 +1,7 @@
+;;;
+;;; neutral/2/6_2.lisp
+;;;
+
 
 (dialog
  "A heavily damaged fortress appears through the mist. <B:0> "
