@@ -1,3 +1,6 @@
+;;;
+;;; shop_items.lisp
+;;;
 
 
 (let ((ret '())
