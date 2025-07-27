@@ -54,11 +54,11 @@ invited a ssspotter aboard!
 accepted quest from orphan boy!
 returned lost child to the sssylph...
 dropped below the clouds to avoid bad weather.
-accepted minersss' quest (deliver 7 explosives)
+accepted minersss' quest! (deliver 7 explosives)
 completed minersss' quest! (+%@)
 unable to make payment to imperial missile ssstation!
-made payment to imperial missile ssstation.
-refusssed to pay imperial missile ssstation.
+made payment to imperial missile ssstation!
+refusssed to pay imperial missile ssstation!
 accepted goblin sssurrender, sssalvaged blocksss...
 accepted ancient weapon quest from ashwalkersss!
 retrieved atomic arsssenal!
@@ -71,5 +71,5 @@ refusssed to pay anvil annie.
 ssstole %s from some ssscavengers.
 ssscavengers extorted % in revenge.
 ssscavengers return and attack!
-vandalized imperial missile ssstation.
-goblinsss try to sssteal decimator back.
+vandalized imperial missile ssstation!
+goblinsss try to sssteal decimator back!
