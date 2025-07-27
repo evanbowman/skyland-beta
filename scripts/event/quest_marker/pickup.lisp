@@ -1,3 +1,6 @@
+;;;
+;;; quest_marker/pickup.lisp
+;;;
 
 
 (dialog "At last, the pickup address...")
