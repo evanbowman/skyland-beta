@@ -1,3 +1,7 @@
+;;;
+;;; neutral/1/8_goblin.lisp
+;;;
+
 
 (dialog
  "<b:/scripts/data/img/flares.img.bin>"
