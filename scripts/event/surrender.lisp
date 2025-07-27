@@ -15,7 +15,7 @@
         (dialog
          "<c:goblin pirates:2>You "
          (cond
-           ((equal (faction) 'human) "nassty humannss")
-           ((equal (faction) 'goblin) "traitorsss")
-           ((equal (faction) 'sylph) "arrogant ssylph"))
-         "! We'll never surrender to the likess of you!")))))
+           ((equal (faction) 'human) "Nasssty Humansss")
+           ((equal (faction) 'goblin) "Traitorsss")
+           ((equal (faction) 'sylph) "Arrogant Sssylph"))
+         "! We'll never surrender to the likesss of you!")))))
