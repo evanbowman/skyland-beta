@@ -1,3 +1,7 @@
+;;;
+;;; quest/goblin/4.lisp
+;;;
+
 
 (dialog
  ;"<b:/scripts/data/img/ceramics.img.bin>" TODO: draw image
