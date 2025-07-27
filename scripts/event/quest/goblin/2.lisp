@@ -1,3 +1,7 @@
+;;;
+;;; quest/goblin/2.lisp
+;;;
+
 
 (dialog "<b:/scripts/data/img/farm_colony.img.bin>A nearby farming colony requests assistance...")
 
