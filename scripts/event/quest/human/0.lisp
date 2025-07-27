@@ -1,5 +1,4 @@
 
-
 (dialog
  "<b:/scripts/data/img/market_quest.img.bin>"
  "You arrive at a busy trading port. "
@@ -54,8 +53,8 @@
          "this storm approaching, we don't think we can make the delivery. "
          "Can you help? We'll pay you a bit upfront, and I'm sure that they'll tip "
          "you generously.")
-        (dialog-await-binary-q-w/lore "I accept!" "sorry, but no."
-                                      '(("explain deliveries?" .
+        (dialog-await-binary-q-w/lore "I accept!" "Sorry, but no."
+                                      '(("Explain deliveries?" .
                                          "<c:merchant:7>Usually we have stuff delivered by balloon. Customers place orders, and we send then out by airship. But with this terrible weather coming in, it's too risky to send anything. Can you help us out?")))
 
         (setq on-dialog-accepted
