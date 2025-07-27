@@ -1,3 +1,6 @@
+;;;
+;;; quest/goblin/0.lisp
+;;;
 
 
 (dialog
