@@ -21,11 +21,11 @@
   (setq on-converge
         (lambda ()
           (dialog
-           "<c:goblin king:3>#cackle# You're tresspasssing in my territory! I demand a tribute of "
+           "<c:goblin king:3>#cackle# You're tressspasssing in my territory! I demand a tribute of "
            (string val)
            "@! Pay!")
 
-          (dialog-await-binary-q "I'll pay…" "no way!")
+          (dialog-await-binary-q "I'll pay…" "No way!")
 
           (setq on-converge nil)))
 
@@ -36,7 +36,7 @@
               (progn
                 (opponent-mode 'hostile)
                 (adventure-log-add 32 '())
-                (dialog "<c:globlin king:3>Thatsss not enough! Letss ssee if theress anything we can take!!"))
+                (dialog "<c:goblin king:3>Thatsss not enough! Letsss sssee if theresss anything we can take!!"))
             (progn
               (coins-add (- val))
               (dialog "The goblin king rejoices, having successfully extorted "
