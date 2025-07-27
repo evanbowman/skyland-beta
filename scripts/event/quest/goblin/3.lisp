@@ -1,3 +1,7 @@
+;;;
+;;; quest/goblin/3.lisp
+;;;
+
 
 (dialog
  "<b:/scripts/data/img/flares.img.bin>"
