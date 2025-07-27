@@ -1,3 +1,6 @@
+;;;
+;;; quest_marker/surface_keeper.lisp
+;;;
 
 
 (dialog "You reach the destination that the surface keeper marked on your map! <B:0> Beyond the clouds, pulses of strange energy light up the toxic atmosphere...")
@@ -33,7 +36,7 @@
                            (lambda (isle x y)
                              (sound "build0")
                              (room-new (player) (list sym0 x y))
-                             (dialog "<c:surface keeper:43>The anchient machinesss require my attention...")
+                             (dialog "<c:surface keeper:43>The ancient machinesss require my attention...")
                              (map (lambda (chr)
                                     (if (equal id (lookup 'id (cddr chr)))
                                         (chr-del (player) (car chr) (cadr chr))))
