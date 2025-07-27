@@ -1,3 +1,7 @@
+;;;
+;;; quest/human/0.lisp
+;;;
+
 
 (dialog
  "<b:/scripts/data/img/market_quest.img.bin>"
