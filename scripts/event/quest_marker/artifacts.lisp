@@ -1,3 +1,7 @@
+;;;
+;;; quest_marker/artifacts.lisp
+;;;
+
 
 (dialog "Still got those artifacts? The locals might be interested...")
 
