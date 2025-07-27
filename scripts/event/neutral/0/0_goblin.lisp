@@ -35,7 +35,7 @@
 
           (dialog-await-binary-q-w/lore "Welcome aboard!" "Not today."
                                         '(("what happened?" .
-                                           "<c:castaway:38> We were given ordersss to raid a human ssship. <B:0> Nothing special. For sssome reason I hesssitated, and was thrown overboard. <B:0> I can make amends, I'll show you, I'm still vicious, I ssswear!")))
+                                           "<c:castaway:38> We were given ordersss to raid a human ssship. <B:0> Nothing ssspecial. For sssome reason I hesssitated, and was thrown overboard. <B:0> I can make amendsss, I'll show you, I'm ssstill vicious, I ssswear!")))
 
           (setq on-dialog-closed '())))
 
