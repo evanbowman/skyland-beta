@@ -1,3 +1,7 @@
+;;;
+;;; quest_marker/ceramics.lisp
+;;;
+
 
 (dialog "Still got those ceramics? The locals might be interested...")
 
