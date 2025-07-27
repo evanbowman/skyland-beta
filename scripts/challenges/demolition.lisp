@@ -3,7 +3,6 @@
 ;;;
 
 
-
 (defn on-fadein ()
   (dialog "<c:goblin king:3>This whole island needs to be demolissshed! That'sss right, every sssingle block! Not one block can remain!")
   (defn on-dialog-closed ()
