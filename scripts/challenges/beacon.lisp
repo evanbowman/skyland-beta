@@ -3,7 +3,6 @@
 ;;;
 
 
-
 (setq on-fadein
       (lambda ()
         (dialog "<c:crew:5>Those goblins noticed us and are about to jump away to bring help! Destroy them before they can get away!")))
