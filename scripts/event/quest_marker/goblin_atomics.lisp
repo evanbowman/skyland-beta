@@ -1,3 +1,7 @@
+;;;
+;;; quest_marker/goblin_atomics.lisp
+;;;
+
 
 (dialog "You arrive at the coordinates marked in the ancient texts...")
 
