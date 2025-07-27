@@ -1,3 +1,7 @@
+;;;
+;;; quest/goblin/5.lisp
+;;;
+
 
 (dialog
  "<b:/scripts/data/img/surface_keeper.img.bin>"
