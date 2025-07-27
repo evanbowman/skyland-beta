@@ -1,3 +1,7 @@
+;;;
+;;; quest/goblin/6.lisp
+;;;
+
 
 (dialog "<b:/scripts/data/img/ruins.img.bin>"
         "You discover the ruins of an ancient civilization. "
