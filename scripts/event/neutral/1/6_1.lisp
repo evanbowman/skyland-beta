@@ -5,7 +5,7 @@
 
 (dialog
 "<b:/scripts/data/img/engineer.img.bin>"
- "On a nearby island, an old engineer signals you from his workshop. He says he's designed something new and is excited to share it with someone!")
+ "On a nearby island, an old engineer signals you from his workshop. He says he has designed something new and is excited to share it with someone!")
 
 
 (opponent-init 7 'neutral)
@@ -42,14 +42,14 @@
     (let ((cost (* (length r) 160)))
       (if (length r)
           (progn
-            (dialog "<c:engineer:15>Hello there! I've designed a special type of hull resistant to missiles. I'll replace all of your old hull blocks with stacked-hull, for a price of "
+            (dialog "<c:engineer:15>Hello there! I've designed a special type of hull resistant to missiles. I'll replace all of your old hull blocks with stacked hull, for a price of "
                     (string cost)
                     "@, you interested?")
             (dialog-await-y/n)
             (defn on-dialog-accepted ()
               (if (< (coins) cost)
                   (progn
-                    (dialog "<c:engineer:15>Sorry! you don't have enough resources, and I can't afford to upgrade your castle." (string (coins) " " cost))
+                    (dialog "<c:engineer:15>Sorry! You don't have enough resources, and I can't afford to upgrade your castle." (string (coins) " " cost))
                     (exit))
                 (progn
                   (coins-add (* -1 cost))
@@ -68,5 +68,5 @@
 
 
 (defn on-dialog-declined ()
-  (dialog "<c:engineer:15>That's ok, I understand! Personally, I feel very safe from missiles with all the stacked-hull that I've built up...")
+  (dialog "<c:engineer:15>That's OK, I understand! Personally, I feel very safe from missiles with all the stacked hull that I've built up...")
   (exit))
