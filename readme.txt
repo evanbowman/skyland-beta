@@ -18,8 +18,8 @@
  after editing script files
  simply run repack.sh.
 
- If you have the Skyland rom
- but not the engine rom or the
+ If you have the Skyland ROM
+ but not the engine ROM or the
  scripts, download the
  unpack_rom.py script, place
  it in the same directory as
@@ -27,11 +27,11 @@
  unpack_rom.py.
 
  If you only have the Skyland
- rom and not the unpack_rom.py
+ ROM and not the unpack_rom.py
  script, then you may extract
  the unpack_rom.py file from
- the Skyland.gba rom by
- opening the rom in a text
+ the Skyland.gba ROM by
+ opening the ROM in a text
  editor, searching for the
  filename, and copy-pasting
  it to another file (all tools
@@ -41,7 +41,7 @@
 
  The below info is intended
  for those who want to edit
- scripts on the gba itself,
+ scripts on the GBA itself,
  using the developer mode
  setting:
 
@@ -52,7 +52,7 @@
  You may either:
 
  1) create new scripts in
- the sram filesystem, and
+ the SRAM filesystem, and
  load them in
  mods/init.lisp
 
@@ -60,22 +60,22 @@
  the rom filesystem, and
  the engine will write your
  modified scripts to the
- sram filesystem.
+ SRAM filesystem.
 
- You cannot edit rom
+ You cannot edit ROM
  scripts directly, of
  course, as the files
- live in read-only memory.
+ live in Read-only memory.
 
  But Skyland preferentially
- loads files from sram
+ loads files from SRAM
  before attempting to load
- them from rom, so if you
- create an sram file with an
+ them from ROM, so if you
+ create an SRAM file with an
  identical name and path
- to a file in rom, you can
+ to a file in ROM, you can
  effectively override
- the rom script.
+ the ROM script.
 
  If you're just getting
  started, try playing
@@ -97,8 +97,8 @@
  browser and delete the
  problematic file in sram/
  (by selecting the file,
- pressing start, and then
- choosing the delete
+ pressing START, and then
+ choosing the 'delete'
  option).
 
  One final note: The game
