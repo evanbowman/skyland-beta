@@ -56,7 +56,7 @@ but buys time for replacement
 
 or evacuation. Calling it the
 
-standby core. Sending designs
+standby-core. Sending designs
 
 to other engineers tomorrow.
 
