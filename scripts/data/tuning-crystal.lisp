@@ -15,26 +15,26 @@
    2
    0)
 
-   ("yellow"
-    0xd7fa80
-    0xd7fa80
-    0x007d34
-    "Ah, the bright spectrum! I shift the visual frequency toward what you call 'acidic' tones - purely for appearance..."
-    3
-    0)
+  ("yellow"
+   0xd7fa80
+   0xd7fa80
+   0x007d34
+   "Ah, the bright spectrum! I shift the visual frequency toward what you call 'acidic' tones - purely for appearance..."
+   3
+   0)
 
-   ("rose"
-    0xffc2da
-    0xffc2da
-    0xd10073
-    "Ah, the warm spectrum! I must recalibrate the crystal matrix to emit longer wavelengths. In our archives, we call this <S:1>heartfire<S:0> - roughly 'heart-fire resonance'."
-    4
-    0)
+  ("rose"
+   0xffc2da
+   0xffc2da
+   0xd10073
+   "Ah, the warm spectrum! I must recalibrate the crystal matrix to emit longer wavelengths. In our archives, we call this <S:1>heartfire<S:0> - roughly 'heart-fire resonance'."
+   4
+   0)
 
-   ("white"
-    0xffffff
-    0xffffff
-    0x1f75a3
-    "Pure spectrum emission! Most challenging to achieve - requires perfect crystal alignment. Your matrix will sing in all frequencies simultaneously!"
-    5
-    0))
+  ("white"
+   0xffffff
+   0xffffff
+   0x1f75a3
+   "Pure spectrum emission! Most challenging to achieve - requires perfect crystal alignment. Your matrix will sing in all frequencies simultaneously!"
+   5
+   0))
