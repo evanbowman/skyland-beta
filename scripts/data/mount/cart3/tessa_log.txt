@@ -61,9 +61,9 @@ count of how many villages
 
 I've had to help switch to
 
-standby cores when their old
+standby-cores when their old
 
-core died.  Standby cores are
+core died.  Standby-cores are
 
 a clever solution we worked
 
@@ -80,7 +80,7 @@ watching another island fall
 into the clouds.
 
 
-The war engines though...
+The war-engines though...
 
 those are something else. Only
 
@@ -125,7 +125,7 @@ important thing I've learned:
 
 every island needs a backup
 
-plan. Keep a standby core
+plan. Keep a standby-core
 
 ready. Test it monthly.  Don't
 
