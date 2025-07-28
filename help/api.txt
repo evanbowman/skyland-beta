@@ -419,7 +419,9 @@ o----------------------------o
    3 - Dog 
    ? - Sylph
 
-'icon: Character artwork
+ TODO: Number for Sylph.
+
+ 'icon: Character artwork
 
 o----------------------------o
 
