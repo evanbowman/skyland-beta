@@ -1,6 +1,9 @@
-
+;;
+;; globals.lisp
+;;
 ;; The interpreter does not allow you to set a variable that isn't either a let
 ;; binding or define explicitly as global.
+;;
 
 (global
  'on-fadein
