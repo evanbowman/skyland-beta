@@ -32,12 +32,12 @@ Skyland is jam-packed with stuff, some of the highlights:
 * VS multiplayer and Co-op multiplayer modes
 * Skyland Forever, a procedurally generated endless arcade mode
 * Share macrocosm islands and adventure mode highscores on skylandgame.io by scanning QR codes
-* An integrated lisp interpreter
-* UART serial console, serves a shell or a lisp repl over the link cable port in developer mode
-* Built-in filesystem and text editor, as well as on-screen lisp repl, available in developer mode
+* An integrated LISP interpreter
+* UART serial console, serves a shell or a LISP repl over the link cable port in developer mode
+* Built-in filesystem and text editor, as well as on-screen LISP repl, available in developer mode
 * A checkers AI
 * A robust event-driven game engine with support for fast-forwarding and even rewinding gameplay
-* Scriptable button combos in lisp, similar to Emacs keybindings
+* Scriptable button combos in LISP, similar to Emacs keybindings
 * A built-in Unicode engine, with support for English, Spanish, French, German, Italian, Russian, and over 2000 Chinese words
 * A scriptable tutorial system
 * Support for saving on several types of bootleg flashcarts
@@ -58,7 +58,7 @@ Skyland is jam-packed with stuff, some of the highlights:
 
 # Modding (no C++ toolchain required!)
 
-I designed the Skyland to be moddable, and wrote all level scenarios in a custom scripting language called Skyland LISP. The script in tools/unpack_rom.py extracts the game's filesystem from the Skyland.gba ROM, producing a SkylandEngine.gba ROM and directories full of lisp scripts. After editing the scripts, simply run [repack.sh](https://github.com/evanbowman/skyland-beta/blob/master/repack.sh) from the same directory where you ran unpack_rom.py to zip everything back up into a Skyland.gba file!
+I designed the Skyland to be moddable, and wrote all level scenarios in a custom scripting language called Skyland LISP. The script in tools/unpack_rom.py extracts the game's filesystem from the Skyland.gba ROM, producing a SkylandEngine.gba ROM and directories full of LISP scripts. After editing the scripts, simply run [repack.sh](https://github.com/evanbowman/skyland-beta/blob/master/repack.sh) from the same directory where you ran unpack_rom.py to zip everything back up into a Skyland.gba file!
 
 # License
 
