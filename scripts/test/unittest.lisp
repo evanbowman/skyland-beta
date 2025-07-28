@@ -1,7 +1,7 @@
 ;;;
 ;;; unittest.lisp
 ;;;
-;;; This test case file intends to test the behavior of the lisp interpreter and
+;;; This test case file intends to test the behavior of the LISP interpreter and
 ;;; standard library. For extended functions related to game logic speficially,
 ;;; see apitest.lisp.
 ;;;
