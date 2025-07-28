@@ -59,7 +59,7 @@
         (setq pc (filter (car-equalto? 'overdrive-core) (rooms (player)))))
 
     (when pc
-      (secret 1 14 (string "Notice: surplus " wpn " in stock!")))
+      (secret 1 14 (string "Notice: Surplus " wpn " in stock!")))
 
     (if (or sc (and (not rc) (not pc))) ;; player must have a core and not already have a backup
         (progn
@@ -77,7 +77,7 @@
             (setq rc (filter (car-equalto? 'reactor) (rooms (player))))
 
             (dialog
-             "<c:mayor:10>After a few years of use, our old power supply ran out of atomic fuel, and we're running on this weaker standby core. Can you help our town by trading one of your own power cores for our standby? We'll throw in two weapons and three of our crew members to sweeten the deal!")
+             "<c:mayor:10>After a few years of use, our old power supply ran out of atomic fuel, and we're running on this weaker standby-core. Can you help our town by trading one of your own power-cores for our standby? We'll throw in two weapons and three of our crew members to sweeten the deal!")
             (dialog-await-binary-q "OK, let's trade!" "Sorry, I can't…")
 
             (setq on-dialog-declined exit)
@@ -87,7 +87,7 @@
                 (if pc
                     (setq c (car pc))
                     (progn
-                      ;; The player has no power core, but is instead donating a
+                      ;; The player has no power-core, but is instead donating a
                       ;; reactor. Give a potentially rare weapon!
                       (setq c (car rc))
                       (setq wpn (sample '(ballista
