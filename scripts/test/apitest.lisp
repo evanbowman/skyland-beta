@@ -1,10 +1,10 @@
 ;;;
 ;;; apitest.lisp
 ;;;
-;;; This test case file tests for the correct behavior of the skyland lisp
-;;; sdk. It is in a separate file to allow for running unittest.lisp with the
-;;; command line build of the skyland lisp interpreter--the functions tested in
-;;; this file require the skyland executable.
+;;; This test case file tests for the correct behavior of the SKYLAND LISP
+;;; SDK. It is in a separate file to allow for running unittest.lisp with the
+;;; command line build of the SKYLAND LISP interpreter -- the functions tested
+;;; in this file require the skyland executable.
 ;;;
 
 
