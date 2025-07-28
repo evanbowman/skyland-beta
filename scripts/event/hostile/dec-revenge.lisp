@@ -1,3 +1,7 @@
+;;;
+;;; hostile/dec-revenge.lisp
+;;;
+
 
 (dialog "A goblin war party intercepts your route, their ships bristling with weapons...")
 
