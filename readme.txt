@@ -57,7 +57,7 @@
  mods/init.lisp
 
  2) simply edit scripts in
- the rom filesystem, and
+ the ROM filesystem, and
  the engine will write your
  modified scripts to the
  SRAM filesystem.
