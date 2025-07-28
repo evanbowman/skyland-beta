@@ -15,7 +15,8 @@
  scripts and rebuild the rom
  using the modding toolchain,
  run the following commands
- after editing script files simply run repack.sh.
+ after editing script files
+ simply run repack.sh.
 
  If you have the Skyland rom
  but not the engine rom or the
@@ -34,7 +35,7 @@
  editor, searching for the
  filename, and copy-pasting
  it to another file (all tools
- appended to the skyland
+ appended to the Skyland
  engine are encoded in plain-
  text).
 
@@ -64,9 +65,9 @@
  You cannot edit rom
  scripts directly, of
  course, as the files
- live in read only memory.
+ live in read-only memory.
 
- But SKYLAND preferentially
+ But Skyland preferentially
  loads files from sram
  before attempting to load
  them from rom, so if you
@@ -100,7 +101,7 @@
  choosing the delete
  option).
 
- One final note: the game
+ One final note: The game
  will not run any custom
  code when in multiplayer
  mode. Keeping games sync'd
