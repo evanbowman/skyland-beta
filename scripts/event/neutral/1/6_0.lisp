@@ -67,7 +67,7 @@
             (dialog "<c:mayor:10>Nice to meet ya! We were having trouble earlier, but we worked it out on our own...")
             (exit)))
         (progn
-          (dialog "A small village radios you... sounds like they're having trouble with their power core...")
+          (dialog "A small village radios you... sounds like they're having trouble with their power-core...")
           (defn on-converge ()
 
             (setq on-converge nil)
