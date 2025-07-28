@@ -3,7 +3,7 @@
    0x66fff7
    0x94fff9
    0x006bff
-   "Ah, the natural resonance. Most crystals emit this frequency without modification - quite [sylph muttering] ...harmonious to observe."
+   "Ah, the natural resonance. Most crystals emit this frequency without modification - quite [Sylph muttering] ...harmonious to observe."
    1
    0)
 
@@ -27,7 +27,7 @@
     0xffc2da
     0xffc2da
     0xd10073
-    "Ah, the warm spectrum! I must recalibrate the crystal matrix to emit longer wavelengths. In our archives, we call this <S:1>heartfire<S:0> - roughly 'heart-fire resonance."
+    "Ah, the warm spectrum! I must recalibrate the crystal matrix to emit longer wavelengths. In our archives, we call this <S:1>heartfire<S:0> - roughly 'heart-fire resonance'."
     4
     0)
 
