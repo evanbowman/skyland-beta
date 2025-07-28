@@ -5,9 +5,9 @@
  Welcome to the SKYLAND
  source code!
 
- NOTE: this readme is
+ NOTE: This readme is
  intended to be displayed on
- a gba screen when running
+ a GBA screen when running
  Skyland in developer mode,
  hence the narrow formatting.
 
