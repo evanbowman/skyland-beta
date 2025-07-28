@@ -1,4 +1,6 @@
 ;;
+;; adventure_vars.lisp
+;;
 ;; Some variables used to keep state in adventure mode.
 ;;
 
