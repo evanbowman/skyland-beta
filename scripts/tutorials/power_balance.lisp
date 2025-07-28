@@ -63,7 +63,7 @@
    (6165 L-p)
    (50 L-np)
    (50 nil)
-   (100 "<c:Milo:5>Ack! We lost a power core! That's not good... and did you notice what happened next? Our weapons stopped firing. Looking at the power indicator, I noticed that we are consuming more power than we generate. We need to remove some structures to lower our power usage, unfortunately.")
+   (100 "<c:Milo:5>Ack! We lost a power-core! That's not good... and did you notice what happened next? Our weapons stopped firing. Looking at the power indicator, I noticed that we are consuming more power than we generate. We need to remove some structures to lower our power usage, unfortunately.")
    (966 R)
    (200 B)
    (633 Right)
