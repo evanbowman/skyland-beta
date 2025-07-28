@@ -1,20 +1,22 @@
 
+localization.txt
+
 For anyone who wants to
 translate the game. Skyland
-natively supports unicode,
+natively supports Unicode,
 and ships with all of the
-glyphs required for english,
-spanish, french, italian,
-russian, ukrainian,
-japanese, and a subset of
+glyphs required for English,
+Spanish, French, German,
+Italian, Russian, Ukrainian,
+Japanese, and a subset of
 2500 of the most common
-chinese words.
+Chinese words.
 
 To localize the game, choose
 one of the two following
 methods:
 
-1) Single language rom (easier)
+1) Single language ROM (easier)
 Translate all of the strings
 in the game's scripts
 (the files in the strings/
@@ -22,7 +24,7 @@ directory and the scripts/
 directory). Then follow the
 instructions in readme.txt
 for zipping everything up and
-building a game rom. You
+building a game ROM. You
 should be able to do all of
 this without any help.
 
@@ -34,24 +36,24 @@ this without any help.
  b) Translate the text
     as described above.
 
- c) run repack.sh
+ c) Run repack.sh
     to zip everything back
     up.
 
- d) test the translated
-    rom to make sure that
+ d) Test the translated
+    ROM to make sure that
     it works.
 
  The above steps should just
  require an installation of
- python3
+ python3.
 
 
-2) Multilanguage rom (harder)
+2) Multi-language ROM (harder)
 I need to make some
 organizational changes to
-support multilingual roms
+support multilingual ROMs
 properly. Follow step 1 and
-get a translated rom working,
+get a translated ROM working,
 then contact me for help at
 evan.a.bowman@gmail.com
