@@ -20,7 +20,7 @@
 (setq on-converge
       (lambda ()
         (dialog
-         "<c:raider:39>Sssnatched some valuable cargo from a merchant fleet, but our ship took heavy damage in the fight. With that ssstorm approaching, we won't make it to the black market in time. Help usss deliver the goods? We'll sssplit the profit, and our contact paysss well!")
+         "<c:Raider:39>Sssnatched some valuable cargo from a merchant fleet, but our ship took heavy damage in the fight. With that ssstorm approaching, we won't make it to the black market in time. Help usss deliver the goods? We'll sssplit the profit, and our contact paysss well!")
         (dialog-await-binary-q "I accept!" "Sorry, but no.")
 
         (setq on-dialog-accepted
@@ -39,7 +39,7 @@
                          (setq on-dialog-closed exit)))
                       (progn
                         (dialog
-                         "<c:raider:39>Bah! Jussst got word our contact had to move their "
+                         "<c:Raider:39>Bah! Jussst got word our contact had to move their "
                          "operation - ssstorm's getting too close. Here'sss 400@ for your time, "
                          "at leassst.")
                         (setq on-dialog-closed
@@ -49,5 +49,5 @@
 
         (setq on-dialog-declined
               (lambda ()
-                (dialog "<c:raider:39>Bah, fine... We'll find another sssship to move the loot...")
+                (dialog "<c:Raider:39>Bah, fine... We'll find another sssship to move the loot...")
                 (setq on-dialog-closed exit)))))
