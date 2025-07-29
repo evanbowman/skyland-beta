@@ -13,7 +13,7 @@
    (true
     (if (chance 3)
         (dialog
-         "<c:goblin pirates:2>You "
+         "<c:Goblin Pirates:2>You "
          (cond
            ((equal (faction) 'human) "Nasssty Humansss")
            ((equal (faction) 'goblin) "Traitorsss")
