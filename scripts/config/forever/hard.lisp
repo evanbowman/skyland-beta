@@ -1,5 +1,5 @@
 ;;;
-;;; hard.lisp
+;;; forever/hard.lisp
 ;;;
 ;;; Coin yield percentage settings for SKYLAND Forever
 ;;;
