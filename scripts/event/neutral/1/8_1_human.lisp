@@ -16,14 +16,14 @@
 
 
 (defn on-converge ()
-  (dialog "<c:explorer:22>Hey there! You know, looks like we're going in the same direction! How about we join up?")
+  (dialog "<c:Explorer:22>Hey there! You know, looks like we're going in the same direction! How about we join up?")
 
   (setq on-dialog-closed
         (lambda ()
           (dialog "He seems harmless, invite him aboard?")
 
           (dialog-await-binary-q-w/lore "Welcome aboard!" "Sorry, but no."
-                                        '(("let's chat…" . "<c:explorer:22>I'm obsessed with finding new islands! When I find one, I mark it with a signal beacon. That's how you can find islands on your sky chart! Neat huh? <B:0> Anyway, can I come aboard?")))
+                                        '(("Let's chat…" . "<c:Explorer:22>I'm obsessed with finding new islands! When I find one, I mark it with a signal beacon. That's how you can find islands on your sky chart! Neat huh? <B:0> Anyway, can I come aboard?")))
 
           (setq on-dialog-closed '())))
   (setq on-converge nil))
@@ -50,7 +50,7 @@
         (progn
           (dialog "Sadly, there's no room...")
           (defn on-dialog-closed ()
-            (dialog "<c:explorer:22>No room in your castle? Hold on, I've got some supplies, I'll help out...")
+            (dialog "<c:Explorer:22>No room in your castle? Hold on, I've got some supplies, I'll help out...")
             (defn on-dialog-closed ()
               (alloc-space 'ladder)
               (sel-input 'ladder
