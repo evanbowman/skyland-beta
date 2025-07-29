@@ -1,8 +1,9 @@
-;;
-;; adventure_vars.lisp
-;;
-;; Some variables used to keep state in adventure mode.
-;;
+;;;
+;;; adventure_vars.lisp
+;;;
+;;; Some variables used to keep state in adventure mode.
+;;;
+
 
 (setq adventure-vars
       '(("mercenary-event" . nil)
