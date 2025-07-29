@@ -27,7 +27,7 @@
 
 (defn on-converge ()
   (dialog
-   "<c:castaway:38>Yargh!! About time sssomeone showed up! <B:0> I don't even know how long I've been ssstranded here. I've been kicked out of the goblin horde, how could they do this!?")
+   "<c:Castaway:38>Yargh!! About time sssomeone showed up! <B:0> I don't even know how long I've been ssstranded here. I've been kicked out of the goblin horde, how could they do this!?")
 
   (setq on-dialog-closed
         (lambda ()
@@ -35,7 +35,7 @@
 
           (dialog-await-binary-q-w/lore "Welcome aboard!" "Not today."
                                         '(("what happened?" .
-                                           "<c:castaway:38> We were given ordersss to raid a human ssship. <B:0> Nothing ssspecial. For sssome reason I hesssitated, and was thrown overboard. <B:0> I can make amendsss, I'll show you, I'm ssstill vicious, I ssswear!")))
+                                           "<c:Castaway:38> We were given ordersss to raid a human ssship. <B:0> Nothing ssspecial. For sssome reason I hesssitated, and was thrown overboard. <B:0> I can make amendsss, I'll show you, I'm ssstill vicious, I ssswear!")))
 
           (setq on-dialog-closed '())))
 
@@ -45,14 +45,14 @@
 (defn on-dialog-accepted ()
   (run-util-script
    "find-crew-slot"
-   "<c:castaway:38>Hold on, don't leave me here! I know your cassstle's full, but I can help make some ssspace!"
+   "<c:Castaway:38>Hold on, don't leave me here! I know your cassstle's full, but I can help make some ssspace!"
    'ladder
    "Place block (1x2):"
    (lambda (x y _)
      (adventure-log-add 7 '())
      (chr-del (opponent) 1 14)
      (chr-new (player) x y 'neutral '((race . 1) (icon . 38)))
-     (dialog "<c:castaway:38> Thanks for ressscuing me! I'll try to help out however I can! <B:0> ... <B:0> What? You've been banissshed too? <B:0> Ha! HAHAHA! Sssome sssorry lot of goblins we are!")
+     (dialog "<c:Castaway:38> Thanks for ressscuing me! I'll try to help out however I can! <B:0> ... <B:0> What? You've been banissshed too? <B:0> Ha! HAHAHA! Sssome sssorry lot of goblinsss we are!")
      (defn on-dialog-closed ()
        (setq on-dialog-closed nil)
        (if (or (chance 2) (< (coins) 300))
