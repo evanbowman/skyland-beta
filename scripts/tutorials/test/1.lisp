@@ -1,9 +1,11 @@
 ;;;
 ;;; game_speed.lisp
 ;;;
-
 ;;; NOTE: Ordering of results in the (rooms) function is not deterministic when
 ;;; rewinding game logic. hence the difference function.
+;;;
+
+
 (assert-eq
  nil
  (difference
