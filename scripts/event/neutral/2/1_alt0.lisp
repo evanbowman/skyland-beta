@@ -66,7 +66,7 @@
                       (adventure-log-add 41 '())
                       (setq on-dialog-closed
                             (lambda ()
-                              (dialog "<c:goblin:2>Die "
+                              (dialog "<c:Goblin:2>Die "
                                       (cond
                                         ((equal (faction) 'goblin) "Traitorsss")
                                         ((equal (faction) 'human) "Humansss")
