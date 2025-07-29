@@ -1,7 +1,6 @@
 ;;;
 ;;; easy.lisp
 ;;;
-;;;
 ;;; Coin yield percentage settings for SKYLAND Forever
 ;;;
 
