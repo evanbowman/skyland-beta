@@ -52,7 +52,7 @@
 (setq on-converge
       (lambda ()
         (dialog
-         "<c:banana man:8>Waaa! My precious b'nanas! Stolen by goblins! Why do I need them, you ask!? That's TOP SECRET! Help me teach those goblins a lesson?")
+         "<c:Banana Man:8>Waaa! My precious b'nanas! Stolen by goblins! Why do I need them, you ask!? That's TOP SECRET! Help me teach those goblins a lesson?")
         (dialog-await-binary-q "Of course!" "I'm kind of busy…")
 
         (setq on-dialog-accepted
@@ -64,11 +64,11 @@
                         (adventure-log-add 17 '())
                         (push 'qids 1)
                         (push 'quests (cons "nanas.lisp" m))
-                        (dialog "<c:banana man:8>No time to waste! I know exactly where they've taken my bananas, and I marked the location on your sky chart with an *!"))
+                        (dialog "<c:Banana Man:8>No time to waste! I know exactly where they've taken my bananas, and I marked the location on your sky chart with an *!"))
                     (progn
                       (dialog "Without warning, banana man became distracted by something and cut the transmission. Such a shame, he was interesting!"))))))
 
         (setq on-dialog-declined
               (lambda ()
-                (dialog "<c:banana man:8>You won't help me!? _sigh_ Nobody helps banana man these days...")
+                (dialog "<c:Banana Man:8>You won't help me!? _sigh_ Nobody helps Banana Man these days...")
                 (setq on-dialog-closed exit)))))
