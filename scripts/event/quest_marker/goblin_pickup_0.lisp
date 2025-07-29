@@ -50,5 +50,5 @@
 
 (defn on-converge ()
   (dialog
-   "<c:clan members:2>The ssstorm nearly had us! Together we'll be ssstronger. Here'sss 1500@ from our clan's reserves.")
+   "<c:Clan Members:2>The ssstorm nearly had us! Together we'll be ssstronger. Here'sss 1500@ from our clan's reserves.")
   (coins-add 1500))
