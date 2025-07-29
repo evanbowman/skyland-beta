@@ -42,5 +42,5 @@
                        (sound "build0")
                        (dialog "You retrieved an atomic missile! There were others, but only one was still functioning.")
                        (defn on-dialog-closed ()
-                         (dialog "<c:warrior princess of E. Cay:28>Those goblins will be sorry they crossed us!")
+                         (dialog "<c:Warrior Princess of E. Cay:28>Those goblins will be sorry they crossed us!")
                          (setq on-dialog-closed exit)))))))))
