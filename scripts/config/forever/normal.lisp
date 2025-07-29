@@ -1,6 +1,9 @@
-;;
-;; Coin yeild percentage settings for SKYLAND Forever
-;;
+;;;
+;;; normal.lisp
+;;;
+;;; Coin yield percentage settings for SKYLAND Forever
+;;;
+
 
 (coins-add 3000)
 
