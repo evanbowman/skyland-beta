@@ -6,7 +6,7 @@
 (setq on-fadein
       (lambda ()
         (dialog
-         "<c:goblin king:3>Masssonry! Masssonry! I hate it! Sssooo old fassshioned! "
+         "<c:Goblin King:3>Masssonry! Masssonry! I hate it! Sssooo old fassshioned! "
          "Dessstroy all of it for me? Don't dessstroy anything else!")))
 
 
@@ -21,7 +21,7 @@
         (if (equal isle (opponent))
             (if (not (equal sym 'masonry))
                 (progn
-                  (dialog "<c:goblin king:3>Gaahh, I sssaid only masssonry!")
+                  (dialog "<c:Goblin King:3>Gaahh, I sssaid only masssonry!")
                   (setq on-room-destroyed nil)
                   (setq on-dialog-closed
                         (lambda ()
@@ -30,7 +30,7 @@
               ;; destroyed, it still exists on the island.
               (if (equal 1 (room-count (opponent) 'masonry))
                   (progn
-                    (dialog "<c:goblin king:3>Wowowow! Beautiful! Ssspectacular!")
+                    (dialog "<c:Goblin King:3>Wowowow! Beautiful! Ssspectacular!")
                     (challenge-complete 3)
                     (setq on-dialog-closed
                           (lambda ()
