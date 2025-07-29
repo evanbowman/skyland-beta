@@ -33,7 +33,7 @@
                    "")
 
                   (dialog
-                   "<c:contact:2>Sssneaky work! Was starting to think you'd gotten caught! Good haul of machine partsss here - plenty of buyersss waiting! Here'sss "
+                   "<c:Contact:2>Sssneaky work! Was starting to think you'd gotten caught! Good haul of machine partsss here - plenty of buyersss waiting! Here'sss "
                    (string temp)
                    "@ for your cut!")
 
