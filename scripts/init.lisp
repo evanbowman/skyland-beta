@@ -2,6 +2,7 @@
 ;;; init.lisp
 ;;;
 
+
 (when (is-developer-mode)
   (strict-mode true)
   (lisp-mem-crit-gc-alert true))
