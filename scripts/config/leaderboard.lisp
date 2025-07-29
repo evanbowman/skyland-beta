@@ -1,8 +1,8 @@
-;;
-;; leaderboard.lisp
-;;
-;; URL for the highscore leaderboard.
-;;
+;;;
+;;; leaderboard.lisp
+;;;
+;;; URL for the highscore leaderboard.
+;;;
 
 
 "skylandgame.io/hs"
