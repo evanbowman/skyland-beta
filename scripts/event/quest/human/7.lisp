@@ -102,7 +102,7 @@
                      (alloc-space bloc)
                      (sel-input
                       bloc
-                      (string "place explosive " (+ cnt 1) "/7:")
+                      (string "Place explosive " (+ cnt 1) "/7:")
                       (lambda (isle x y)
                         (room-new (player) (list bloc x y))
                         (sound "build0")
