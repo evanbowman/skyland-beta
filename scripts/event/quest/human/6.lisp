@@ -20,7 +20,7 @@
   (dialog "A small injured boy begins speaking softly in an archaic language...")
 
   (defn on-dialog-closed ()
-    (dialog "<c:injured boy:26> "
+    (dialog "<c:Injured Boy:26> "
             "<S:1>I am the only survivor! Can you help me get back home?")
 
     (defn on-dialog-closed ()
