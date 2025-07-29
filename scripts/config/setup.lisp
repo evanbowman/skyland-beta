@@ -1,6 +1,6 @@
-;;
-;; setup.lisp
-;;
+;;;
+;;; setup.lisp
+;;;
 
 
 (eval-file "/scripts/config/rooms.lisp")
