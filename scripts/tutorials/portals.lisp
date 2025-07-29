@@ -2,6 +2,7 @@
 ;;; portals.lisp
 ;;;
 
+
 (terrain-set (player) 9)
 
 (island-configure
