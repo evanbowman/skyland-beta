@@ -42,7 +42,7 @@
                   "find-crew-slot"
                   "<c:Ashwalker Apprentice:41> Hmm... you ssseem to be out of ssspace... <B:0> Let me fix that!"
                   'ladder
-                  "place block (1x2):"
+                  "Place block (1x2):"
                   (lambda (x y _)
                     (chr-new (player) x y 'neutral '((icon . 41) (race . 1)))
                     (dialog "The apprentice joined your crew!")
