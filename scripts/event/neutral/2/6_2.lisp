@@ -61,7 +61,7 @@
         (index i))
     (alloc-space 'sylph-cannon)
     (sel-input 'sylph-cannon
-               (format "place cannon %/%" index (+ (decr index) remaining))
+               (format "Place cannon %/%" index (+ (decr index) remaining))
                (lambda (isle x y)
                  (room-new (player) (list 'sylph-cannon x y))
                  (sound "build0")
