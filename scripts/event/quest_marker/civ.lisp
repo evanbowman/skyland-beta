@@ -68,13 +68,13 @@
 
   (if boy
       (defn on-converge ()
-        (dialog "<c:sylph:21><S:1>Hello, traveller...")
+        (dialog "<c:Sylph:21><S:1>Hello, traveller...")
 
         (defn on-dialog-closed ()
-          (dialog "<c:orphan boy:26><S:1>Oh!!! I'm home at last!")
+          (dialog "<c:Orphan Boy:26><S:1>Oh!!! I'm home at last!")
 
           (defn on-dialog-closed ()
-            (dialog "<c:sylph:21><S:1>Oh! What have we here?!")
+            (dialog "<c:Sylph:21><S:1>Oh! What have we here?!")
 
             (defn on-dialog-closed ()
               (map (lambda (chr)
@@ -85,7 +85,7 @@
               (adventure-log-add 55 nil)
               (dialog "The orphan boy returned to his home!")
               (defn on-dialog-closed ()
-                (dialog "<c:sylph:21>Hello, traveller...<B:0> I am very grateful to you for bringing him back! ...")
+                (dialog "<c:Sylph:21>Hello, traveller...<B:0> I am very grateful to you for bringing him back! ...")
                 (setq on-dialog-closed (lambda ()
                                          (on-timeout 500 'fut)
                                          (setq on-dialog-closed nil)))
