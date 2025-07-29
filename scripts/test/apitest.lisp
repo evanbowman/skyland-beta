@@ -4,7 +4,7 @@
 ;;; This test case file tests for the correct behavior of the SKYLAND LISP
 ;;; SDK. It is in a separate file to allow for running unittest.lisp with the
 ;;; command line build of the SKYLAND LISP interpreter -- the functions tested
-;;; in this file require the skyland executable.
+;;; in this file require the Skyland executable.
 ;;;
 
 
@@ -235,7 +235,7 @@
 (coins-add 40)
 (assert-eq (coins) 95)
 
-;; This has to be true to get into the regression module
+;; This has to be true to get into the regression module.
 (assert-v (is-developer-mode))
 
 (assert-eq 15 ((eval-file "/scripts/data/test-eval.lisp") 5))
@@ -326,7 +326,7 @@
              (y 5)
              (spl (split path "/")))
          (if (< (length spl) (length last))
-             ;; Clean up lines if the directory depth is less than last printed
+             ;; Clean up lines if the directory depth is less than last printed.
              (foreach (lambda (yy)
                         (regr-print "" 1 (+ y (- yy 1))))
                       (range (length spl) (length last))))
@@ -341,7 +341,7 @@
                (fatal (string "in file " (cdr spl) ": " r)))))))))
 
 
-;; Clear directory listing from screen
+;; Clear directory listing from screen.
 (foreach (lambda (y)
            (regr-print "" 1 y))
          (range 5 10))
