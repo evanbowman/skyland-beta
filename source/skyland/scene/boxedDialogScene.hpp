@@ -87,6 +87,12 @@ public:
     void display() override;
 
 
+    bool img_view() const
+    {
+        return img_view_;
+    }
+
+
 private:
     void process_command();
 
@@ -118,6 +124,7 @@ private:
 
     int choice_sel_ = 0;
     bool img_view_ = false;
+    bool img_view_2_ = false;
     bool cursor_anim_ = false;
 
     struct Data
@@ -166,7 +173,9 @@ public:
     void display() override
     {
         dialog_scene_.display();
-        WorldScene::display();
+        if (not dialog_scene_.img_view()) {
+            WorldScene::display();
+        }
     }
 
 
