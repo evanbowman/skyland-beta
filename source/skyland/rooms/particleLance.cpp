@@ -12,14 +12,14 @@
 #include "particleLance.hpp"
 #include "platform/platform.hpp"
 #include "skyland/alloc_entity.hpp"
+#include "skyland/entity/explosion/exploSpawner.hpp"
+#include "skyland/entity/explosion/exploTrail.hpp"
 #include "skyland/entity/misc/animatedEffect.hpp"
 #include "skyland/room_metatable.hpp"
 #include "skyland/scene_pool.hpp"
 #include "skyland/skyland.hpp"
 #include "skyland/sound.hpp"
 #include "skyland/tile.hpp"
-#include "skyland/entity/explosion/exploSpawner.hpp"
-#include "skyland/entity/explosion/exploTrail.hpp"
 #include "skyland/timeStreamEvent.hpp"
 
 
@@ -75,7 +75,9 @@ void ParticleLance::update(Time delta)
 
     if (parent() == APP.opponent_island()) {
         // Don't allow opponents to build this block.
-        apply_damage(9999);
+        if (not APP.opponent().is_friendly()) {
+            apply_damage(9999);
+        }
     }
 
     if (active_) {
@@ -100,16 +102,26 @@ void ParticleLance::finalize()
 {
     Room::finalize();
 
-    ExploSpawner::create(center());
-    for (int i = 0; i < 3; ++i) {
-        if (auto e = alloc_entity<ExploTrail>(center(),
-                                              rng::choice<360>(rng::utility_state),
-                                              1.25_fixed,
-                                              seconds(2))) {
-            APP.effects().push(std::move(e));
+    if (health() == 0) {
+        ExploSpawner::create(center());
+        for (int i = 0; i < 3; ++i) {
+            if (auto e =
+                alloc_entity<ExploTrail>(center(),
+                                         rng::choice<360>(rng::utility_state),
+                                         1.25_fixed,
+                                         seconds(2))) {
+                APP.effects().push(std::move(e));
+            }
         }
     }
 
+    on_destroy();
+}
+
+
+
+void ParticleLance::on_destroy()
+{
     time_stream::event::ParticleLanceDestroyed e;
     e.active_ = active_;
     e.accum_dmg_.set(dmg_count_);
@@ -121,9 +133,20 @@ void ParticleLance::finalize()
 
 
 
+void ParticleLance::on_salvage()
+{
+    on_destroy();
+}
+
+
+
 ScenePtr ParticleLance::select_impl(const RoomCoord& cursor)
 {
     const auto& mt_prep_seconds = globals().multiplayer_prep_seconds_;
+
+    if (not APP.opponent_island() or APP.opponent().is_friendly()) {
+        return null_scene();
+    }
 
     if (mt_prep_seconds) {
         return null_scene();
@@ -176,10 +199,14 @@ void ParticleLance::display(Platform::Screen& screen)
     }
 
     Fixnum dist;
-    dist += pos.x + Fixnum::from_integer((APP.player_island().terrain().size() - position().x) * 16);
+    dist +=
+        pos.x + Fixnum::from_integer(
+                    (APP.player_island().terrain().size() - position().x) * 16);
     if (APP.opponent_island()) {
-        dist += APP.opponent_island()->get_position().x - APP.player_island().get_position().x;
-        dist += Fixnum::from_integer(APP.opponent_island()->terrain().size() * 16);
+        dist += APP.opponent_island()->get_position().x -
+                APP.player_island().get_position().x;
+        dist +=
+            Fixnum::from_integer(APP.opponent_island()->terrain().size() * 16);
     }
 
     while (dist >= 16.0_fixed) {

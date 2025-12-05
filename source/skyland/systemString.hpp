@@ -627,9 +627,11 @@ enum class SystemString {
     faction_desc_human,
     faction_desc_sylph,
     faction_desc_goblin,
+    faction_desc_random,
     faction_human,
     faction_sylph,
     faction_goblin,
+    faction_random,
 
     exit_tutorial,
 
@@ -846,6 +848,8 @@ enum class SystemString {
 
     flag_designer_presets,
     flag_designer_flood,
+
+    ignite_dynamite_prompt,
 
     the_end,
 
