@@ -296,6 +296,7 @@ void TitleScreenScene::enter(Scene& prev)
 void TitleScreenScene::redraw_margins()
 {
     const auto screen_tiles = calc_screen_tiles();
+
     for (int i = 0; i < screen_tiles.x; ++i) {
 
         PLATFORM.set_tile(Layer::overlay, i, 0, 112);

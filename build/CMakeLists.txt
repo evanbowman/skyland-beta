@@ -1038,6 +1038,15 @@ elseif(GAMEBOY_ADVANCE)
 
 elseif(APPLE)
 
+  target_include_directories(${EXECUTABLE_NAME} PRIVATE
+    /opt/homebrew/include)
+
+  target_link_directories(${EXECUTABLE_NAME} PRIVATE
+    /opt/homebrew/lib)
+
+  find_package(SDL2_image REQUIRED)
+  target_link_libraries(${EXECUTABLE_NAME} PRIVATE SDL2_image::SDL2_image)
+
   target_link_libraries(${EXECUTABLE_NAME} PRIVATE
     "-framework Cocoa -framework SDL2")
 
@@ -1052,6 +1061,9 @@ elseif(APPLE)
 
   add_custom_target(pkg ALL mkdir -p ${EXECUTABLE_NAME}.app/Contents/Resources
     COMMAND mkdir -p ${EXECUTABLE_NAME}.app/Contents/Frameworks
+    COMMAND python3 ../tools/encode_files.py
+    COMMAND cp -r ${ROOT_DIR}/lisp_symtab.dat ${EXECUTABLE_NAME}.app/Contents/
+    COMMAND cp -r ${ROOT_DIR}/lisp_constant_tab.dat ${EXECUTABLE_NAME}.app/Contents/
     COMMAND cp -r ${ROOT_DIR}/images/ ${EXECUTABLE_NAME}.app/Contents/images/
     COMMAND cp -r ${ROOT_DIR}/shaders/ ${EXECUTABLE_NAME}.app/Contents/shaders/
     COMMAND cp -r ${ROOT_DIR}/sounds/ ${EXECUTABLE_NAME}.app/Contents/sounds/
