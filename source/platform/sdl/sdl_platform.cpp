@@ -67,6 +67,10 @@ static Bitvector<static_cast<int>(GlobalFlag::count)> gflags;
 
 
 
+bool console_running = false;
+
+
+
 static void set_gflag(GlobalFlag f, bool val)
 {
     gflags.set(static_cast<int>(f), val);
@@ -185,8 +189,22 @@ void Platform::set_tile(Layer layer,
         break;
 
     case Layer::map_0_ext:
-    case Layer::map_0:
+        set_raw_tile(Layer::map_0, x, y, 0);
+        set_raw_tile(Layer::map_0, x + 1, y, 0);
+        set_raw_tile(Layer::map_0, x, y + 1, 0);
+        set_raw_tile(Layer::map_0, x + 1, y + 1, 0);
+        tile_layers_[layer][{x, y}] = val;
+        break;
+
     case Layer::map_1_ext:
+        set_raw_tile(Layer::map_1, x, y, 0);
+        set_raw_tile(Layer::map_1, x + 1, y, 0);
+        set_raw_tile(Layer::map_1, x, y + 1, 0);
+        set_raw_tile(Layer::map_1, x + 1, y + 1, 0);
+        tile_layers_[layer][{x, y}] = val;
+        break;
+
+    case Layer::map_0:
     case Layer::map_1:
     case Layer::background:
         tile_layers_[layer][{x, y}] = val;
@@ -295,6 +313,13 @@ void Platform::DynamicTexture::remap(u16 spritesheet_offset)
 
 
 
+static ObjectPool<PooledRcControlBlock<Platform::DynamicTexture,
+                                       Platform::dynamic_texture_count>,
+                  Platform::dynamic_texture_count>
+    dynamic_texture_pool("dynamic-texture-pool");
+
+
+
 Optional<Platform::DynamicTexturePtr> Platform::make_dynamic_texture()
 {
     return std::nullopt;
@@ -359,19 +384,6 @@ bool Platform::read_save_data(void* buffer, u32 data_length, u32 offset)
 
 
 
-Vec2<u16> Platform::get_scroll(Layer layer)
-{
-    return {};
-}
-
-
-
-void Platform::set_scroll(Layer layer, u16 x, u16 y)
-{
-}
-
-
-
 Platform::TilePixels Platform::extract_tile(Layer layer, u16 tile)
 {
     return {};
@@ -409,6 +421,7 @@ void Platform::set_palette(Layer layer, u16 x, u16 y, u16 palette)
 
 void Platform::set_raw_tile(Layer layer, u16 x, u16 y, TileDesc val)
 {
+    // set_tile(layer, x, y, val); FIXME: leaves junk tiles everywhere...
 }
 
 
@@ -433,20 +446,6 @@ void Platform::blit_t0_tile_to_texture(u16 from_index, u16 to_index, bool hard)
 
 void Platform::blit_t1_tile_to_texture(u16 from_index, u16 to_index, bool hard)
 {
-}
-
-
-
-TileDesc Platform::map_tile0_chunk(TileDesc src)
-{
-    return 0;
-}
-
-
-
-TileDesc Platform::map_tile1_chunk(TileDesc src)
-{
-    return 0;
 }
 
 
@@ -479,6 +478,8 @@ static int overlay_base_tile_count = 0; // How many tiles in the original textur
 
 
 static std::map<std::string, SDL_Surface*> charset_surfaces;
+static std::map<std::string, SDL_Surface*> overlay_source_cache;
+
 
 
 
@@ -719,6 +720,12 @@ void cleanup_charset_surfaces()
         SDL_FreeSurface(surface);
     }
     charset_surfaces.clear();
+
+    for (auto& [name, surface] : overlay_source_cache) {
+        SDL_FreeSurface(surface);
+    }
+    overlay_source_cache.clear();
+
 }
 
 
@@ -726,41 +733,6 @@ void cleanup_charset_surfaces()
 void Platform::override_priority(Layer layer, int priority)
 {
     // TODO...
-}
-
-
-
-static SDL_Texture* load_png_texture(const char* filename)
-{
-    std::string full_path = resource_path() + "images" + PATH_DELIMITER + filename + ".png";
-
-    SDL_Surface* surface = IMG_Load(full_path.c_str());
-    if (!surface) {
-        error(format("Failed to load image %: %", full_path.c_str(), IMG_GetError()));
-        return nullptr;
-    }
-
-    // Set magenta (0xFF00FF) as the transparent color key
-    // SDL wants RGB in the surface's format, so we need to map the color
-    Uint32 color_key = SDL_MapRGB(surface->format, 0xFF, 0x00, 0xFF);
-    SDL_SetColorKey(surface, SDL_TRUE, color_key);
-
-    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
-    if (!texture) {
-        error(format("Failed to create texture from %: %", full_path.c_str(), SDL_GetError()));
-        SDL_FreeSurface(surface);
-        return nullptr;
-    }
-
-    // Enable alpha blending on the texture
-    SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
-
-    int w, h;
-    SDL_QueryTexture(texture, nullptr, nullptr, &w, &h);
-    info(format("Loaded sprite texture %: %x% pixels", filename, w, h));
-
-    SDL_FreeSurface(surface);
-    return texture;
 }
 
 
@@ -792,28 +764,474 @@ void Platform::overwrite_overlay_tile(u16 index, const EncodedTile& t)
 
 
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
+
+static SDL_Surface* load_png_with_stb(const std::string& path, const char* name)
+{
+    int width, height, channels;
+
+    // Load without forcing channel conversion - get the original format
+    unsigned char* data = stbi_load(path.c_str(), &width, &height, &channels, 0);
+
+    if (!data) {
+        error(format("stb_image failed to load %: %", path.c_str(), stbi_failure_reason()));
+        return nullptr;
+    }
+
+    info(format("Loaded % with stb_image: %x% pixels, % original channels", name, width, height, channels));
+
+    SDL_Surface* surface = nullptr;
+
+    if (channels == 1) {
+        // This is indexed color - but stb_image doesn't give us the palette!
+        // We need to use SDL_image for indexed PNGs
+        stbi_image_free(data);
+
+        // Fall back to SDL_image for indexed color support
+        info(format("Indexed color detected, using IMG_Load for %", name));
+        surface = IMG_Load(path.c_str());
+
+        if (!surface) {
+            error(format("IMG_Load failed: %", IMG_GetError()));
+            return nullptr;
+        }
+
+        // Handle palette
+        if (surface->format->palette) {
+            info(format("Surface has palette with % colors", surface->format->palette->ncolors));
+
+            // Find magenta (0xFF, 0x00, 0xFF) in the palette and set it as color key
+            for (int i = 0; i < surface->format->palette->ncolors; i++) {
+                SDL_Color& c = surface->format->palette->colors[i];
+                if (c.r == 0xFF && c.g == 0x00 && c.b == 0xFF) {
+                    SDL_SetColorKey(surface, SDL_TRUE, i);
+                    info(format("Set transparency to palette index % (magenta)", i));
+                    break;
+                }
+            }
+        }
+
+        return surface;
+
+    } else if (channels == 3 || channels == 4) {
+        // RGB or RGBA
+        int bpp = channels * 8;
+
+        surface = SDL_CreateRGBSurfaceFrom(
+            data, width, height, bpp, width * channels,
+            0x000000FF, 0x0000FF00, 0x00FF0000,
+            channels == 4 ? 0xFF000000 : 0);
+
+        if (!surface) {
+            stbi_image_free(data);
+            error(format("Failed to create surface: %", SDL_GetError()));
+            return nullptr;
+        }
+
+        // Copy so we can free stb data
+        SDL_Surface* copy = SDL_ConvertSurface(surface, surface->format, 0);
+        SDL_FreeSurface(surface);
+        stbi_image_free(data);
+
+        if (copy) {
+            // Set magenta as color key for RGB images
+            Uint32 magenta = SDL_MapRGB(copy->format, 0xFF, 0x00, 0xFF);
+            SDL_SetColorKey(copy, SDL_TRUE, magenta);
+        }
+
+        return copy;
+    }
+
+    stbi_image_free(data);
+    error(format("Unsupported channel count: %", channels));
+    return nullptr;
+}
+
+
+
+StringBuffer<256> last_overlay_texture;
 void Platform::load_overlay_chunk(TileDesc dst,
                                   TileDesc src,
                                   u16 count,
                                   const char* image_file)
 {
+    if (!overlay_surface) {
+        error("load_overlay_chunk: overlay_surface not initialized");
+        return;
+    }
+
+    SDL_Surface* source_surface = nullptr;
+    std::string cache_key;
+
+    if (image_file) {
+        // Load the specified image file
+        cache_key = image_file;
+
+        // Check cache first
+        auto it = overlay_source_cache.find(cache_key);
+        if (it != overlay_source_cache.end()) {
+            source_surface = it->second;
+            info(format("load_overlay_chunk: Using cached texture %", image_file));
+        } else {
+            std::string full_path = resource_path() + "images" + PATH_DELIMITER +
+                                   image_file + ".png";
+
+            source_surface = load_png_with_stb(full_path, image_file);
+            if (!source_surface) {
+                error(format("load_overlay_chunk: Failed to load %", image_file));
+                return;
+            }
+
+            // Cache it
+            overlay_source_cache[cache_key] = source_surface;
+            info(format("load_overlay_chunk: Loaded and cached source texture %",
+                       image_file));
+        }
+    } else {
+        // Use current overlay texture - need to reload the full uncropped version
+        if (last_overlay_texture.empty()) {
+            error("load_overlay_chunk: No current overlay texture");
+            return;
+        }
+
+        cache_key = last_overlay_texture.c_str();
+
+        // Check cache first
+        auto it = overlay_source_cache.find(cache_key);
+        if (it != overlay_source_cache.end()) {
+            source_surface = it->second;
+            info(format("load_overlay_chunk: Using cached current texture %",
+                       cache_key.c_str()));
+        } else {
+            std::string full_path = resource_path() + "images" + PATH_DELIMITER +
+                                   cache_key + ".png";
+
+            source_surface = load_png_with_stb(full_path, cache_key.c_str());
+            if (!source_surface) {
+                error(format("load_overlay_chunk: Failed to reload current texture %",
+                            cache_key.c_str()));
+                return;
+            }
+
+            // Cache it
+            overlay_source_cache[cache_key] = source_surface;
+            info(format("load_overlay_chunk: Reloaded and cached current texture %",
+                       cache_key.c_str()));
+        }
+    }
+
+    const int tile_size = 8;
+    const int tiles_per_row_dst = overlay_surface->w / tile_size;
+
+    // Check if source is taller than 8 pixels - if so, use 32x32 meta-tiling
+    bool use_meta_tiling = source_surface->h > 8;
+
+    if (use_meta_tiling) {
+        // Meta-tile mode: treat source as 32x32 pixel blocks arranged as 16 8x8 tiles
+        // Layout within each 32x32 block:
+        // t0  t1  t2  t3
+        // t4  t5  t6  t7
+        // t8  t9  t10 t11
+        // t12 t13 t14 t15
+
+        const int meta_tile_size = 32; // 32x32 pixel blocks
+        const int tiles_per_meta = 16; // 16 8x8 tiles per 32x32 block
+        const int meta_tiles_per_row = source_surface->w / meta_tile_size;
+
+        info(format("load_overlay_chunk: Using 32x32 meta-tiling for % (%dx%d)",
+                   cache_key.c_str(), source_surface->w, source_surface->h));
+
+        for (u16 i = 0; i < count; ++i) {
+            // Source index refers to which 32x32 block
+            TileDesc src_meta_tile = src + i;
+
+            // Calculate which 32x32 block in the source
+            int src_meta_x = src_meta_tile % meta_tiles_per_row;
+            int src_meta_y = src_meta_tile / meta_tiles_per_row;
+
+            // Base pixel position of this 32x32 block
+            int base_src_x = src_meta_x * meta_tile_size;
+            int base_src_y = src_meta_y * meta_tile_size;
+
+            // Destination starts at dst + (i * 16) because each meta-tile is 16 tiles
+            TileDesc dst_base = dst + (i * tiles_per_meta);
+
+            // Copy all 16 8x8 tiles from this 32x32 block
+            for (int tile_in_meta = 0; tile_in_meta < tiles_per_meta; ++tile_in_meta) {
+                // Position within the 4x4 grid of 8x8 tiles
+                int tile_x = tile_in_meta % 4;
+                int tile_y = tile_in_meta / 4;
+
+                SDL_Rect src_rect;
+                src_rect.x = base_src_x + (tile_x * tile_size);
+                src_rect.y = base_src_y + (tile_y * tile_size);
+                src_rect.w = tile_size;
+                src_rect.h = tile_size;
+
+                // Calculate destination tile position
+                TileDesc dst_tile = dst_base + tile_in_meta;
+                int dst_tile_x = dst_tile % tiles_per_row_dst;
+                int dst_tile_y = dst_tile / tiles_per_row_dst;
+
+                SDL_Rect dst_rect;
+                dst_rect.x = dst_tile_x * tile_size;
+                dst_rect.y = dst_tile_y * tile_size;
+                dst_rect.w = tile_size;
+                dst_rect.h = tile_size;
+
+                if (SDL_BlitSurface(source_surface, &src_rect, overlay_surface, &dst_rect) != 0) {
+                    error(format("load_overlay_chunk: Failed to blit meta-tile %/%: %",
+                                i, tile_in_meta, SDL_GetError()));
+                }
+            }
+        }
+    } else {
+        // Regular 8x8 tile mode
+        const int tiles_per_row_src = source_surface->w / tile_size;
+
+        for (u16 i = 0; i < count; ++i) {
+            TileDesc src_tile = src + i;
+            TileDesc dst_tile = dst + i;
+
+            // Calculate source tile coordinates
+            int src_tile_x = src_tile % tiles_per_row_src;
+            int src_tile_y = src_tile / tiles_per_row_src;
+
+            // Calculate destination tile coordinates
+            int dst_tile_x = dst_tile % tiles_per_row_dst;
+            int dst_tile_y = dst_tile / tiles_per_row_dst;
+
+            SDL_Rect src_rect;
+            src_rect.x = src_tile_x * tile_size;
+            src_rect.y = src_tile_y * tile_size;
+            src_rect.w = tile_size;
+            src_rect.h = tile_size;
+
+            SDL_Rect dst_rect;
+            dst_rect.x = dst_tile_x * tile_size;
+            dst_rect.y = dst_tile_y * tile_size;
+            dst_rect.w = tile_size;
+            dst_rect.h = tile_size;
+
+            // Blit the tile
+            if (SDL_BlitSurface(source_surface, &src_rect, overlay_surface, &dst_rect) != 0) {
+                error(format("load_overlay_chunk: Failed to blit tile %: %",
+                            i, SDL_GetError()));
+            }
+        }
+    }
+
+    // Recreate the texture from the modified surface
+    if (current_overlay_texture) {
+        SDL_DestroyTexture(current_overlay_texture);
+    }
+
+    current_overlay_texture = SDL_CreateTextureFromSurface(renderer, overlay_surface);
+    if (!current_overlay_texture) {
+        error(format("load_overlay_chunk: Failed to recreate texture: %",
+                    SDL_GetError()));
+        return;
+    }
+
+    SDL_SetTextureBlendMode(current_overlay_texture, SDL_BLENDMODE_BLEND);
 }
 
 
 
+// Add these global variables near the top of the file with other texture globals
+
+static SDL_Texture* tile0_texture = nullptr;
+static int tile0_texture_width = 0;
+static int tile0_texture_height = 0;
+
+static SDL_Texture* tile1_texture = nullptr;
+static int tile1_texture_width = 0;
+static int tile1_texture_height = 0;
+
+static Vec2<s32> tile0_scroll;
+static Vec2<s32> tile1_scroll;
+Vec2<Float> overlay_origin;
+
+
+
+void Platform::set_scroll(Layer layer, u16 x, u16 y)
+{
+    s16 xx = x;
+    s16 yy = y;
+    switch (layer) {
+    case Layer::map_0_ext:
+    case Layer::map_0:
+        tile0_scroll = {(s32)xx, (s32)yy};
+        break;
+
+    case Layer::map_1_ext:
+    case Layer::map_1:
+        tile1_scroll = {(s32)xx, (s32)yy};
+        break;
+
+    case Layer::overlay:
+        overlay_origin = {(Float)xx, (Float)yy};
+        break;
+
+    default:
+        break;
+    }
+}
+
+
+
+Vec2<u16> Platform::get_scroll(Layer layer)
+{
+    switch (layer) {
+    case Layer::map_0_ext:
+    case Layer::map_0:
+        return {(u16)tile0_scroll.x, (u16)tile0_scroll.y};
+
+    case Layer::map_1_ext:
+    case Layer::map_1:
+        return {(u16)tile1_scroll.x, (u16)tile1_scroll.y};
+
+    default:
+        return {};
+    }
+}
+
+
+
+static SDL_Rect get_tile_source_rect_16x16(TileDesc tile_index, int texture_width)
+{
+    SDL_Rect src;
+
+    const int tile_size = 16;
+    const int tiles_per_row = texture_width / tile_size;
+
+    int tile_x = tile_index % tiles_per_row;
+    int tile_y = 0;
+
+    src.x = tile_x * tile_size;
+    src.y = tile_y * tile_size;
+    src.w = tile_size;
+    src.h = tile_size;
+
+    return src;
+}
+
+
+
+static SDL_Rect get_tile_source_rect_8x8(TileDesc tile_index, int texture_width)
+{
+    SDL_Rect src;
+
+    const int tile_size = 8;
+    const int tiles_per_row = texture_width / tile_size;
+
+    int tile_x = tile_index % tiles_per_row;
+    int tile_y = tile_index / tiles_per_row;
+
+    src.x = tile_x * tile_size;
+    src.y = tile_y * tile_size;
+    src.w = tile_size;
+    src.h = tile_size;
+
+    return src;
+}
+
+
+
+// Update load_tile0_texture
 void Platform::load_tile0_texture(const char* name)
 {
+    if (tile0_texture) {
+        SDL_DestroyTexture(tile0_texture);
+        tile0_texture = nullptr;
+    }
+
+    std::string full_path = resource_path() + "images" + PATH_DELIMITER + name + ".png";
+
+    SDL_Surface* surface = load_png_with_stb(full_path, name);
+    if (!surface) {
+        return;
+    }
+
+    std::string debug_path = "debug_loaded_" + std::string(name) + ".bmp";
+    if (SDL_SaveBMP(surface, debug_path.c_str()) == 0) {
+        info(format("Saved debug image to %", debug_path.c_str()));
+    } else {
+        error(format("Failed to save debug image: %", SDL_GetError()));
+    }
+
+    tile0_texture = SDL_CreateTextureFromSurface(renderer, surface);
+    if (!tile0_texture) {
+        error(format("Failed to create tile0 texture from %: %", full_path.c_str(), SDL_GetError()));
+        SDL_FreeSurface(surface);
+        return;
+    }
+
+    SDL_SetTextureBlendMode(tile0_texture, SDL_BLENDMODE_BLEND);
+
+    tile0_texture_width = surface->w;
+    tile0_texture_height = surface->h;
+
+    info(format("Loaded tile0 texture %: %x% pixels", name, tile0_texture_width, tile0_texture_height));
+
+    SDL_FreeSurface(surface);
 }
 
 
 
+// Update load_tile1_texture
 void Platform::load_tile1_texture(const char* name)
 {
+    if (tile1_texture) {
+        SDL_DestroyTexture(tile1_texture);
+        tile1_texture = nullptr;
+    }
+
+    std::string full_path = resource_path() + "images" + PATH_DELIMITER + name + ".png";
+
+    SDL_Surface* surface = load_png_with_stb(full_path, name);
+    if (!surface) {
+        return;
+    }
+
+    tile1_texture = SDL_CreateTextureFromSurface(renderer, surface);
+    if (!tile1_texture) {
+        error(format("Failed to create tile1 texture from %: %", full_path.c_str(), SDL_GetError()));
+        SDL_FreeSurface(surface);
+        return;
+    }
+
+    SDL_SetTextureBlendMode(tile1_texture, SDL_BLENDMODE_BLEND);
+
+    tile1_texture_width = surface->w;
+    tile1_texture_height = surface->h;
+
+    info(format("Loaded tile1 texture %: %x% pixels", name, tile1_texture_width, tile1_texture_height));
+
+    SDL_FreeSurface(surface);
 }
 
 
 
-Vec2<Float> overlay_origin;
+TileDesc Platform::map_tile0_chunk(TileDesc src)
+{
+    if (src > 0) {
+        return src + 127;
+    }
+    return 0;
+}
+
+
+
+TileDesc Platform::map_tile1_chunk(TileDesc src)
+{
+    if (src > 0) {
+        return src + 127;
+    }
+    return 0;
+}
 
 
 
@@ -838,13 +1256,53 @@ void Platform::load_sprite_texture(const char* name)
         current_sprite_texture = nullptr;
     }
 
-    current_sprite_texture = load_png_texture(name);
-    if (current_sprite_texture) {
-        SDL_QueryTexture(current_sprite_texture, nullptr, nullptr,
-                        &sprite_texture_width, &sprite_texture_height);
-    }
-}
+    std::string full_path = resource_path() + "images" + PATH_DELIMITER + name + ".png";
 
+    SDL_Surface* surface = IMG_Load(full_path.c_str());
+    if (!surface) {
+        error(format("Failed to load image %: %", full_path.c_str(), IMG_GetError()));
+        return;
+    }
+
+    info(format("Loaded sprite surface: %x% pixels, format: %s",
+                surface->w, surface->h,
+                SDL_GetPixelFormatName(surface->format->format)));
+
+    // Convert indexed color to RGBA32 if needed
+    if (surface->format->palette != nullptr) {
+        info("Converting indexed color sprite surface to RGBA");
+        SDL_Surface* converted = SDL_ConvertSurfaceFormat(surface,
+                                                           SDL_PIXELFORMAT_RGBA32,
+                                                           0);
+        SDL_FreeSurface(surface);
+        if (!converted) {
+            error(format("Failed to convert sprite surface: %", SDL_GetError()));
+            return;
+        }
+        surface = converted;
+    }
+
+    // Set magenta (0xFF00FF) as the transparent color key
+    Uint32 color_key = SDL_MapRGB(surface->format, 0xFF, 0x00, 0xFF);
+    SDL_SetColorKey(surface, SDL_TRUE, color_key);
+
+    current_sprite_texture = SDL_CreateTextureFromSurface(renderer, surface);
+    if (!current_sprite_texture) {
+        error(format("Failed to create texture from %: %", full_path.c_str(), SDL_GetError()));
+        SDL_FreeSurface(surface);
+        return;
+    }
+
+    // Enable alpha blending on the texture
+    SDL_SetTextureBlendMode(current_sprite_texture, SDL_BLENDMODE_BLEND);
+
+    sprite_texture_width = surface->w;
+    sprite_texture_height = surface->h;
+
+    info(format("Loaded sprite texture %: %x% pixels", name, sprite_texture_width, sprite_texture_height));
+
+    SDL_FreeSurface(surface);
+}
 
 
 void Platform::load_background_texture(const char* name)
@@ -872,7 +1330,7 @@ void Platform::fatal(const char* msg)
 }
 
 
-StringBuffer<256> last_overlay_texture;
+
 bool Platform::load_overlay_texture(const char* name)
 {
     if (name == last_overlay_texture) {
@@ -1053,6 +1511,7 @@ Microseconds Platform::DeltaClock::reset()
 
     clk_prev = clk;
 
+    ::last_delta = elapsed.count();
     return elapsed.count();
 }
 
@@ -1214,6 +1673,7 @@ void console_thread_main()
             std::swap(console_rcv_string, text);
         }
     }
+    console_running = false;
 }
 
 
@@ -1221,6 +1681,7 @@ void console_thread_main()
 void Platform::RemoteConsole::start()
 {
     std::thread console_thread(console_thread_main);
+    console_running = true;
     console_thread.detach();
 }
 
@@ -1303,6 +1764,9 @@ void Platform::Logger::log(Severity level, const char* msg)
 
     log_data_->push_back('\n', t);
     std::cout << '\n';
+    if (console_running) {
+        std::cout << "> ";
+    }
 }
 
 
@@ -1356,6 +1820,9 @@ struct SpriteDrawInfo {
     u16 texture_index;
     Vec2<bool> flip;
     s16 rotation;
+    u8 priority;
+    Sprite::Alpha alpha;
+    u8 mix_amount;
 };
 
 
@@ -1398,12 +1865,13 @@ static SDL_Rect get_sprite_source_rect(u16 texture_index, Sprite::Size size)
             // [2][3]
             // [4][5]
             // [6][7]
-            int sub_index = texture_index % 8; // which 8x8 sprite within the meta-tile
-            int sub_x = (sub_index % 2) * 8;
-            int sub_y = (sub_index / 2) * 8;
+            int base_x = (texture_index / 8) * 16;
+            base_x += 8 * texture_index % 2;
 
-            src.x = base_x + sub_x;
-            src.y = base_y + sub_y;
+            int base_y = ((texture_index % 8) / 2) * 8;
+
+            src.x = base_x;
+            src.y = base_y;
             src.w = 8;
             src.h = 8;
             break;
@@ -1411,11 +1879,9 @@ static SDL_Rect get_sprite_source_rect(u16 texture_index, Sprite::Size size)
 
         case Sprite::Size::w16_h16: {
             // 16x16 sprites are packed 2 vertically within a 16x32 meta-tile
-            int sub_index = texture_index % 2;
-            int sub_y = sub_index * 16;
-
+            int base_x = (texture_index / 2) * 16;
             src.x = base_x;
-            src.y = base_y + sub_y;
+            src.y = 16 * (texture_index % 2);
             src.w = 16;
             src.h = 16;
             break;
@@ -1444,6 +1910,20 @@ static SDL_Rect get_sprite_source_rect(u16 texture_index, Sprite::Size size)
 
 
 
+static float wrap_y(float y)
+{
+    if (y > 160) {
+        // FIXME: gba automatically wraps tile layers, and I happened to be
+        // displaying a wrapped region of a tile layer on the gba. I could fix
+        // it, but it's easier just to do this:
+        y -= 508;
+    }
+
+    return y;
+}
+
+
+
 void Platform::Screen::draw(const Sprite& spr)
 {
     if (spr.get_alpha() == Sprite::Alpha::transparent) {
@@ -1454,6 +1934,7 @@ void Platform::Screen::draw(const Sprite& spr)
 
     auto view_center = get_view().int_center().cast<s32>();
     pos = pos - view_center;
+    pos.y = wrap_y(pos.y);
 
     ColorConstant color = ColorConstant::null;
     switch (spr.get_texture_index() % 8) {
@@ -1470,11 +1951,14 @@ void Platform::Screen::draw(const Sprite& spr)
     sprite_draw_list.push_back({
         pos,
         spr.get_size(),
-        color,
+        spr.get_mix().color_,
         true,
         spr.get_texture_index(),
         spr.get_flip(),
-        spr.get_rotation()
+        spr.get_rotation(),
+        spr.get_priority(),
+        spr.get_alpha(),
+        spr.get_mix().amount_
     });
 }
 
@@ -1586,29 +2070,14 @@ void display_fade()
 }
 
 
-void Platform::Screen::display()
+
+void draw_sprite_group(int prio)
 {
-    display_fade();
-
-    if (current_overlay_texture) {
-        auto& overlay_tiles = tile_layers_[Layer::overlay];
-
-        for (auto& [pos, tile_desc] : overlay_tiles) {
-            if (tile_desc == 0) continue; // Skip empty tiles
-
-            SDL_Rect src = get_overlay_tile_source_rect(tile_desc);
-            SDL_Rect dst;
-            dst.x = pos.first * 8 - overlay_origin.x;
-            dst.y = pos.second * 8 - overlay_origin.y;
-            dst.w = 8;
-            dst.h = 8;
-
-            SDL_RenderCopy(renderer, current_overlay_texture, &src, &dst);
-        }
-    }
-
     // Draw all sprites as colored rectangles or textured
-    for (const auto& sprite : sprite_draw_list) {
+    for (const auto& sprite : reversed(sprite_draw_list)) {
+        if (sprite.priority not_eq prio) {
+            continue;
+        }
         if (!sprite.visible) continue;
 
         if (!current_sprite_texture) {
@@ -1655,6 +2124,26 @@ void Platform::Screen::display()
             dst.w = src.w;
             dst.h = src.h;
 
+            // Handle alpha blending
+            if (sprite.alpha == Sprite::Alpha::translucent) {
+                SDL_SetTextureAlphaMod(current_sprite_texture, 127);
+            } else {
+                SDL_SetTextureAlphaMod(current_sprite_texture, 255);
+            }
+
+            // Handle color mixing
+            if (sprite.color != ColorConstant::null && sprite.mix_amount > 0) {
+                auto mix_color = color_to_sdl(sprite.color);
+
+                // Apply color modulation based on mix amount
+                // When mix_amount is 255, we want full color mix
+                // When mix_amount is 0, we want original texture colors
+                SDL_SetTextureColorMod(current_sprite_texture, mix_color.r, mix_color.g, mix_color.b);
+            } else {
+                // Reset to no color modulation
+                SDL_SetTextureColorMod(current_sprite_texture, 255, 255, 255);
+            }
+
             // Handle flipping
             SDL_RendererFlip flip = SDL_FLIP_NONE;
             if (sprite.flip.x && sprite.flip.y) {
@@ -1668,8 +2157,99 @@ void Platform::Screen::display()
             // Render the sprite
             SDL_RenderCopyEx(renderer, current_sprite_texture, &src, &dst,
                            sprite.rotation, nullptr, flip);
+
+            // Reset texture modulation for next sprite
+            SDL_SetTextureAlphaMod(current_sprite_texture, 255);
+            SDL_SetTextureColorMod(current_sprite_texture, 255, 255, 255);
         }
     }
+}
+
+
+
+static void draw_tile_layer(Layer layer, SDL_Texture* texture, int texture_width,
+                            const Vec2<s32>& scroll, const View& view)
+{
+    if (!texture) {
+        return;
+    }
+
+    auto& tiles = tile_layers_[layer];
+    if (tiles.empty()) {
+        return;
+    }
+
+    auto view_center = view.int_center().cast<s32>();
+    bool is_ext_layer = (layer == Layer::map_0_ext || layer == Layer::map_1_ext);
+
+    for (auto& [pos, tile_desc] : tiles) {
+        if (tile_desc == 0) continue;
+
+        s32 tile_x = (s32)pos.first;
+        s32 tile_y = (s32)pos.second;
+
+        SDL_Rect src;
+        SDL_Rect dst;
+
+        if (is_ext_layer) {
+            // 16x16 tiles
+            src = get_tile_source_rect_16x16(tile_desc, texture_width);
+            dst.x = tile_x * 16 - scroll.x - view_center.x;
+            dst.y = wrap_y(tile_y * 16 - scroll.y - view_center.y);
+            dst.w = 16;
+            dst.h = 16;
+        } else {
+            // These are the "raw" 8x8 tiles from set_raw_tile
+            src = get_tile_source_rect_8x8(tile_desc, texture_width);
+            dst.x = tile_x * 8 - scroll.x - view_center.x;
+            dst.y = wrap_y(tile_y * 8 - scroll.y - view_center.y);
+            dst.w = 8;
+            dst.h = 8;
+        }
+
+        SDL_RenderCopy(renderer, texture, &src, &dst);
+    }
+}
+
+
+
+void Platform::Screen::display()
+{
+    draw_sprite_group(3);
+
+    draw_tile_layer(Layer::map_1_ext, tile1_texture, tile1_texture_width,
+                   tile1_scroll, get_view());
+    draw_tile_layer(Layer::map_1, tile1_texture, tile1_texture_width,
+                   tile1_scroll, get_view());
+
+    // Draw tile0 layer
+    draw_tile_layer(Layer::map_0_ext, tile0_texture, tile0_texture_width,
+                   tile0_scroll, get_view());
+    draw_tile_layer(Layer::map_0, tile0_texture, tile0_texture_width,
+                   tile0_scroll, get_view());
+
+    draw_sprite_group(1);
+
+    display_fade();
+
+    if (current_overlay_texture) {
+        auto& overlay_tiles = tile_layers_[Layer::overlay];
+
+        for (auto& [pos, tile_desc] : overlay_tiles) {
+            if (tile_desc == 0) continue; // Skip empty tiles
+
+            SDL_Rect src = get_overlay_tile_source_rect(tile_desc);
+            SDL_Rect dst;
+            dst.x = pos.first * 8 - overlay_origin.x;
+            dst.y = pos.second * 8 - overlay_origin.y;
+            dst.w = 8;
+            dst.h = 8;
+
+            SDL_RenderCopy(renderer, current_overlay_texture, &src, &dst);
+        }
+    }
+
+    draw_sprite_group(0);
 
     SDL_RenderPresent(renderer);
 
