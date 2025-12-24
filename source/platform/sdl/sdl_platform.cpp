@@ -421,7 +421,7 @@ void Platform::set_palette(Layer layer, u16 x, u16 y, u16 palette)
 
 void Platform::set_raw_tile(Layer layer, u16 x, u16 y, TileDesc val)
 {
-    // set_tile(layer, x, y, val); FIXME: leaves junk tiles everywhere...
+    set_tile(layer, x, y, val);// FIXME: leaves junk tiles everywhere...
 }
 
 
@@ -450,10 +450,18 @@ void Platform::blit_t1_tile_to_texture(u16 from_index, u16 to_index, bool hard)
 
 
 
+#include <filesystem>
+
+
 void Platform::walk_filesystem(
     Function<8 * sizeof(void*), void(const char* path)> callback)
 {
-    // TODO...
+    using recursive_directory_iterator = std::filesystem::recursive_directory_iterator;
+    for (const auto& dirent : recursive_directory_iterator(resource_path())) {
+        // TODO: remove resource_path() from front of dirent, and pass to callback.
+        // callback(dirent.path().string().c_str());
+    }
+
 }
 
 
@@ -2019,7 +2027,7 @@ static SDL_Rect get_overlay_tile_source_rect(TileDesc tile_index)
 
 static float last_fade_amt;
 static ColorConstant fade_color;
-
+static bool fade_include_overlay;
 
 
 void Platform::Screen::fade(float amount,
@@ -2030,6 +2038,7 @@ void Platform::Screen::fade(float amount,
 {
     last_fade_amt = amount;
     fade_color = k;
+    fade_include_overlay = include_overlay;
 }
 
 
@@ -2046,6 +2055,7 @@ void Platform::Screen::schedule_fade(Float amount,
 {
     last_fade_amt = amount;
     fade_color = props.color;
+    fade_include_overlay = props.include_overlay;
 }
 
 
@@ -2124,26 +2134,6 @@ void draw_sprite_group(int prio)
             dst.w = src.w;
             dst.h = src.h;
 
-            // Handle alpha blending
-            if (sprite.alpha == Sprite::Alpha::translucent) {
-                SDL_SetTextureAlphaMod(current_sprite_texture, 127);
-            } else {
-                SDL_SetTextureAlphaMod(current_sprite_texture, 255);
-            }
-
-            // Handle color mixing
-            if (sprite.color != ColorConstant::null && sprite.mix_amount > 0) {
-                auto mix_color = color_to_sdl(sprite.color);
-
-                // Apply color modulation based on mix amount
-                // When mix_amount is 255, we want full color mix
-                // When mix_amount is 0, we want original texture colors
-                SDL_SetTextureColorMod(current_sprite_texture, mix_color.r, mix_color.g, mix_color.b);
-            } else {
-                // Reset to no color modulation
-                SDL_SetTextureColorMod(current_sprite_texture, 255, 255, 255);
-            }
-
             // Handle flipping
             SDL_RendererFlip flip = SDL_FLIP_NONE;
             if (sprite.flip.x && sprite.flip.y) {
@@ -2154,13 +2144,40 @@ void draw_sprite_group(int prio)
                 flip = SDL_FLIP_VERTICAL;
             }
 
-            // Render the sprite
-            SDL_RenderCopyEx(renderer, current_sprite_texture, &src, &dst,
-                           sprite.rotation, nullptr, flip);
+            // Calculate base alpha (translucent or opaque)
+            u8 base_alpha = (sprite.alpha == Sprite::Alpha::translucent) ? 127 : 255;
 
-            // Reset texture modulation for next sprite
-            SDL_SetTextureAlphaMod(current_sprite_texture, 255);
-            SDL_SetTextureColorMod(current_sprite_texture, 255, 255, 255);
+            if (sprite.color != ColorConstant::null && sprite.mix_amount > 0) {
+                // Dual-pass color mixing approach
+                float mix_ratio = sprite.mix_amount / 255.0f;
+
+                // First pass: original sprite with reduced alpha
+                SDL_SetTextureColorMod(current_sprite_texture, 255, 255, 255);
+                SDL_SetTextureAlphaMod(current_sprite_texture, base_alpha * (1.0f - mix_ratio));
+                SDL_RenderCopyEx(renderer, current_sprite_texture, &src, &dst,
+                                sprite.rotation, nullptr, flip);
+
+                // Second pass: color-tinted sprite with mix_amount alpha
+                auto mix_color = color_to_sdl(sprite.color);
+                SDL_SetTextureColorMod(current_sprite_texture, mix_color.r, mix_color.g, mix_color.b);
+                SDL_SetTextureAlphaMod(current_sprite_texture, base_alpha * mix_ratio);
+                SDL_RenderCopyEx(renderer, current_sprite_texture, &src, &dst,
+                                sprite.rotation, nullptr, flip);
+
+                // Reset texture modulation
+                SDL_SetTextureColorMod(current_sprite_texture, 255, 255, 255);
+                SDL_SetTextureAlphaMod(current_sprite_texture, 255);
+            } else {
+                // No color mixing - just render normally with appropriate alpha
+                SDL_SetTextureColorMod(current_sprite_texture, 255, 255, 255);
+                SDL_SetTextureAlphaMod(current_sprite_texture, base_alpha);
+
+                SDL_RenderCopyEx(renderer, current_sprite_texture, &src, &dst,
+                                sprite.rotation, nullptr, flip);
+
+                // Reset texture modulation
+                SDL_SetTextureAlphaMod(current_sprite_texture, 255);
+            }
         }
     }
 }
@@ -2228,9 +2245,12 @@ void Platform::Screen::display()
     draw_tile_layer(Layer::map_0, tile0_texture, tile0_texture_width,
                    tile0_scroll, get_view());
 
+    draw_sprite_group(2);
     draw_sprite_group(1);
 
-    display_fade();
+    if (not fade_include_overlay) {
+        display_fade();
+    }
 
     if (current_overlay_texture) {
         auto& overlay_tiles = tile_layers_[Layer::overlay];
@@ -2247,6 +2267,10 @@ void Platform::Screen::display()
 
             SDL_RenderCopy(renderer, current_overlay_texture, &src, &dst);
         }
+    }
+
+    if (fade_include_overlay) {
+        display_fade();
     }
 
     draw_sprite_group(0);
