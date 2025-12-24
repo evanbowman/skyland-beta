@@ -1590,8 +1590,6 @@ void Platform::Screen::display()
 {
     display_fade();
 
-    bool has_printed = false;
-
     if (current_overlay_texture) {
         auto& overlay_tiles = tile_layers_[Layer::overlay];
 
@@ -1602,10 +1600,6 @@ void Platform::Screen::display()
             SDL_Rect dst;
             dst.x = pos.first * 8 - overlay_origin.x;
             dst.y = pos.second * 8 - overlay_origin.y;
-            if (not has_printed and dst.y > 0) {
-                info(stringify(dst.y));
-                has_printed = true;
-            }
             dst.w = 8;
             dst.h = 8;
 
