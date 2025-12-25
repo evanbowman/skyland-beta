@@ -1893,7 +1893,7 @@ struct SpriteDrawInfo {
     bool visible;
     u16 texture_index;
     Vec2<bool> flip;
-    s16 rotation;
+    double rotation;
     u8 priority;
     Sprite::Alpha alpha;
     u8 mix_amount;
@@ -1998,6 +1998,16 @@ static float wrap_y(float y)
 
 
 
+static double sprite_rotation_to_degrees(s16 rotation)
+{
+    // If using 256 units per rotation (8-bit style):
+    // return (rotation * 360.0) / 256.0;
+
+    // If using full 16-bit range (more likely):
+    return (rotation * 360.0) / 65536.0;
+}
+
+
 void Platform::Screen::draw(const Sprite& spr)
 {
     if (spr.get_alpha() == Sprite::Alpha::transparent) {
@@ -2029,7 +2039,7 @@ void Platform::Screen::draw(const Sprite& spr)
         true,
         spr.get_texture_index(),
         spr.get_flip(),
-        spr.get_rotation(),
+        sprite_rotation_to_degrees(-spr.get_rotation()),
         spr.get_priority(),
         spr.get_alpha(),
         spr.get_mix().amount_
@@ -2360,6 +2370,14 @@ void Platform::Screen::display()
                    tile0_scroll, get_view());
     draw_tile_layer(Layer::map_0, tile0_texture, tile0_texture_width,
                    tile0_scroll, get_view());
+    if (tile0_scroll.x > 240 and tile0_scroll.x < 512) {
+        // Hack to account for gba scroll wrapping, in the inteval between where
+        // the x coordinate of a scrolled layer wraps.
+        auto scroll_tmp = tile0_scroll;
+        scroll_tmp.x -= 512;
+        draw_tile_layer(Layer::map_0, tile0_texture, tile0_texture_width,
+                        scroll_tmp, get_view());
+    }
     draw_sprite_group(2);
     draw_sprite_group(1);
 
