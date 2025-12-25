@@ -97,6 +97,8 @@ static SDL_Renderer* renderer = nullptr;
 bool sdl_running = true;
 
 
+static SDL_Texture* tile_recolor_buffer = nullptr;
+
 
 Platform* __platform__ = nullptr;
 
@@ -135,6 +137,11 @@ int main(int argc, char** argv)
     SDL_RenderSetIntegerScale(renderer, SDL_TRUE);
     SDL_RenderSetLogicalSize(renderer, 240, 160);
 
+    tile_recolor_buffer = SDL_CreateTexture(renderer,
+                                            SDL_PIXELFORMAT_RGBA8888,
+                                            SDL_TEXTUREACCESS_TARGET,
+                                            16, 16);
+
     rng::critical_state = time(nullptr);
 
     Platform pf;
@@ -163,13 +170,37 @@ void Platform::restart()
 
 
 
-std::map<Layer, std::map<std::pair<u16, u16>, TileDesc>> tile_layers_;
+struct TileInfo {
+    TileDesc tile_desc;
+    u16 palette;  // Store the palette index
+};
+
+
+
+static std::map<Layer, std::map<std::pair<u16, u16>, TileInfo>> tile_layers_;
+
+
+
+static const std::map<u16, SDL_Color> special_palettes = {
+    {15, {0xef, 0x0d, 0x54, 255}},  // Red (custom_color(0xef0d54))
+    {14, {0x10, 0x31, 0x63, 255}},  // Blue-black (custom_color(0x103163))
+    {13, {0xff, 0xff, 0xff, 255}},  // White (silver_white)
+};
 
 
 
 TileDesc Platform::get_tile(Layer layer, u16 x, u16 y)
 {
-    return tile_layers_[layer][{x, y}];
+    if (layer == Layer::overlay) {
+        x %= 32;
+        y %= 32;
+    }
+
+    auto it = tile_layers_[layer].find({x, y});
+    if (it != tile_layers_[layer].end()) {
+        return it->second.tile_desc;
+    }
+    return 0;
 }
 
 
@@ -181,19 +212,12 @@ void Platform::set_tile(Layer layer,
                         Optional<u16> palette)
 {
     switch (layer) {
-    case Layer::overlay:
-        if (x > 31 or y > 31) {
-            return;
-        }
-        tile_layers_[layer][{x, y}] = val;
-        break;
-
     case Layer::map_0_ext:
         set_raw_tile(Layer::map_0, x, y, 0);
         set_raw_tile(Layer::map_0, x + 1, y, 0);
         set_raw_tile(Layer::map_0, x, y + 1, 0);
         set_raw_tile(Layer::map_0, x + 1, y + 1, 0);
-        tile_layers_[layer][{x, y}] = val;
+        tile_layers_[layer][{x, y}] = {val, palette.value_or(0)};
         break;
 
     case Layer::map_1_ext:
@@ -201,17 +225,24 @@ void Platform::set_tile(Layer layer,
         set_raw_tile(Layer::map_1, x + 1, y, 0);
         set_raw_tile(Layer::map_1, x, y + 1, 0);
         set_raw_tile(Layer::map_1, x + 1, y + 1, 0);
-        tile_layers_[layer][{x, y}] = val;
+        tile_layers_[layer][{x, y}] = {val, palette.value_or(0)};
         break;
 
     case Layer::map_0:
     case Layer::map_1:
     case Layer::background:
-        tile_layers_[layer][{x, y}] = val;
+        tile_layers_[layer][{x, y}] = {val, palette.value_or(0)};
+        break;
+
+    case Layer::overlay:
+        x %= 32;
+        y %= 32;
+        tile_layers_[layer][{x, y}] = {val, palette.value_or(0)};
         break;
     }
-}
 
+    tile_layers_[layer][{x, y}] = {val, 0};
+}
 
 
 
@@ -406,15 +437,23 @@ Platform& Platform::instance()
 
 
 
-u16 Platform::get_palette(Layer layer, u16 x, u16 y)
+void Platform::set_palette(Layer layer, u16 x, u16 y, u16 palette)
 {
-    return 0;
+    auto it = tile_layers_[layer].find({x, y});
+    if (it != tile_layers_[layer].end()) {
+        it->second.palette = palette;
+    }
 }
 
 
 
-void Platform::set_palette(Layer layer, u16 x, u16 y, u16 palette)
+u16 Platform::get_palette(Layer layer, u16 x, u16 y)
 {
+    auto it = tile_layers_[layer].find({x, y});
+    if (it != tile_layers_[layer].end()) {
+        return it->second.palette;
+    }
+    return 0;
 }
 
 
@@ -714,7 +753,7 @@ void Platform::fill_overlay(u16 tile_desc)
     // Fill all 32x32 overlay tiles with the specified tile
     for (u16 y = 0; y < 32; ++y) {
         for (u16 x = 0; x < 32; ++x) {
-            tile_layers_[Layer::overlay][{x, y}] = tile_desc;
+            tile_layers_[Layer::overlay][{x, y}] = {tile_desc, 0};
         }
     }
 }
@@ -1068,6 +1107,7 @@ void Platform::set_scroll(Layer layer, u16 x, u16 y)
 {
     s16 xx = x;
     s16 yy = y;
+    xx %= 512; // To emulate gba scroll wrapping.
     switch (layer) {
     case Layer::map_0_ext:
     case Layer::map_0:
@@ -1976,7 +2016,7 @@ void Platform::Screen::clear()
 {
     sprite_draw_list.clear();
 
-    SDL_SetRenderDrawColor(renderer, 255, 0, 255, 255);
+    SDL_SetRenderDrawColor(renderer, 99, 181, 231, 255);
     SDL_RenderClear(renderer);
 }
 
@@ -2199,8 +2239,8 @@ static void draw_tile_layer(Layer layer, SDL_Texture* texture, int texture_width
     auto view_center = view.int_center().cast<s32>();
     bool is_ext_layer = (layer == Layer::map_0_ext || layer == Layer::map_1_ext);
 
-    for (auto& [pos, tile_desc] : tiles) {
-        if (tile_desc == 0) continue;
+    for (auto& [pos, tile_info] : tiles) {
+        if (tile_info.tile_desc == 0) continue;
 
         s32 tile_x = (s32)pos.first;
         s32 tile_y = (s32)pos.second;
@@ -2209,22 +2249,66 @@ static void draw_tile_layer(Layer layer, SDL_Texture* texture, int texture_width
         SDL_Rect dst;
 
         if (is_ext_layer) {
-            // 16x16 tiles
-            src = get_tile_source_rect_16x16(tile_desc, texture_width);
+            src = get_tile_source_rect_16x16(tile_info.tile_desc, texture_width);
             dst.x = tile_x * 16 - scroll.x - view_center.x;
             dst.y = wrap_y(tile_y * 16 - scroll.y - view_center.y);
             dst.w = 16;
             dst.h = 16;
         } else {
-            // These are the "raw" 8x8 tiles from set_raw_tile
-            src = get_tile_source_rect_8x8(tile_desc, texture_width);
+            src = get_tile_source_rect_8x8(tile_info.tile_desc, texture_width);
             dst.x = tile_x * 8 - scroll.x - view_center.x;
             dst.y = wrap_y(tile_y * 8 - scroll.y - view_center.y);
             dst.w = 8;
             dst.h = 8;
         }
 
-        SDL_RenderCopy(renderer, texture, &src, &dst);
+        // Check if this tile uses a special palette (13, 14, or 15)
+        auto special_it = special_palettes.find(tile_info.palette);
+        if (special_it != special_palettes.end()) {
+            // Render to intermediate buffer
+            SDL_SetRenderTarget(renderer, tile_recolor_buffer);
+
+            // Fill buffer with the solid color
+            SDL_SetRenderDrawColor(renderer,
+                                  special_it->second.r,
+                                  special_it->second.g,
+                                  special_it->second.b,
+                                  0);  // Alpha 0 for now
+            SDL_RenderClear(renderer);
+
+            // Copy ONLY the alpha channel from the tile
+            // Draw the tile but use a custom blend mode that only copies alpha
+            SDL_Rect temp_dst = {0, 0, dst.w, dst.h};
+
+            // Set color mod to black so RGB doesn't affect anything
+            SDL_SetTextureColorMod(texture, 0, 0, 0);
+            SDL_SetTextureAlphaMod(texture, 255);
+
+            // Use a blend mode that copies the source alpha to destination alpha
+            SDL_SetTextureBlendMode(texture, SDL_ComposeCustomBlendMode(
+                SDL_BLENDFACTOR_ZERO,           // srcColorFactor (ignore source RGB)
+                SDL_BLENDFACTOR_ONE,            // dstColorFactor (keep our solid color)
+                SDL_BLENDOPERATION_ADD,         // colorOperation
+                SDL_BLENDFACTOR_ONE,            // srcAlphaFactor (use source alpha)
+                SDL_BLENDFACTOR_ZERO,           // dstAlphaFactor (replace dest alpha)
+                SDL_BLENDOPERATION_ADD          // alphaOperation
+            ));
+
+            SDL_RenderCopy(renderer, texture, &src, &temp_dst);
+
+            // Reset texture settings
+            SDL_SetTextureColorMod(texture, 255, 255, 255);
+            SDL_SetTextureAlphaMod(texture, 255);
+            SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
+
+            // Switch back to main screen
+            SDL_SetRenderTarget(renderer, nullptr);
+
+            // Draw the recolored tile to screen
+            SDL_RenderCopy(renderer, tile_recolor_buffer, &temp_dst, &dst);
+        } else {
+            SDL_RenderCopy(renderer, texture, &src, &dst);
+        }
     }
 }
 
@@ -2255,7 +2339,8 @@ void Platform::Screen::display()
     if (current_overlay_texture) {
         auto& overlay_tiles = tile_layers_[Layer::overlay];
 
-        for (auto& [pos, tile_desc] : overlay_tiles) {
+        for (auto& [pos, tile_info] : overlay_tiles) {
+            auto tile_desc = tile_info.tile_desc;
             if (tile_desc == 0) continue; // Skip empty tiles
 
             SDL_Rect src = get_overlay_tile_source_rect(tile_desc);
@@ -2269,11 +2354,11 @@ void Platform::Screen::display()
         }
     }
 
+    draw_sprite_group(0);
+
     if (fade_include_overlay) {
         display_fade();
     }
-
-    draw_sprite_group(0);
 
     SDL_RenderPresent(renderer);
 
