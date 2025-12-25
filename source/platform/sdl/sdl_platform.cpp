@@ -173,6 +173,8 @@ void Platform::restart()
 struct TileInfo {
     TileDesc tile_desc;
     u16 palette;  // Store the palette index
+    ColorConstant text_fg_color_;
+    ColorConstant text_bg_color_;
 };
 
 
@@ -202,6 +204,17 @@ TileDesc Platform::get_tile(Layer layer, u16 x, u16 y)
     }
     return 0;
 }
+
+
+
+ColorConstant default_fg_color()
+{
+    return custom_color(0xcdc3eb);
+}
+
+
+
+bool is_glyph(TileDesc);
 
 
 
@@ -237,11 +250,13 @@ void Platform::set_tile(Layer layer,
     case Layer::overlay:
         x %= 32;
         y %= 32;
-        tile_layers_[layer][{x, y}] = {val, palette.value_or(0)};
+        ColorConstant fg_color = custom_color(0);
+        if (is_glyph(val)) {
+            fg_color = default_fg_color();
+        }
+        tile_layers_[layer][{x, y}] = {val, palette.value_or(0), fg_color};
         break;
     }
-
-    tile_layers_[layer][{x, y}] = {val, 0};
 }
 
 
@@ -529,6 +544,12 @@ static std::map<std::string, SDL_Surface*> overlay_source_cache;
 
 
 
+bool is_glyph(TileDesc td)
+{
+    return td >= overlay_base_tile_count;
+}
+
+
 
 static SDL_Surface* load_charset_surface(const char* texture_name)
 {
@@ -545,8 +566,8 @@ static SDL_Surface* load_charset_surface(const char* texture_name)
         return nullptr;
     }
 
-    // Set magenta as transparent
-    Uint32 color_key = SDL_MapRGB(surface->format, 0xFF, 0x00, 0xFF);
+    // Set black as transparent
+    Uint32 color_key = SDL_MapRGB(surface->format, 0, 0, 16);
     SDL_SetColorKey(surface, SDL_TRUE, color_key);
 
     charset_surfaces[texture_name] = surface;
@@ -574,6 +595,7 @@ static void copy_tile_to_surface(SDL_Surface* dst, SDL_Surface* src,
     dst_rect.w = 8;
     dst_rect.h = 8;
 
+    SDL_FillRect(dst, &dst_rect, 0x000000);
     SDL_BlitSurface(src, &src_rect, dst, &dst_rect);
 }
 
@@ -725,6 +747,10 @@ void Platform::set_tile(u16 x, u16 y, TileDesc glyph, const FontColors& colors)
     // For SDL, we'll ignore custom colors for now and just use the glyph
     // Custom colors would require creating palette-swapped versions of glyphs
     set_tile(Layer::overlay, x, y, glyph);
+
+    auto& val = tile_layers_[Layer::overlay][{x, y}];
+    val.text_fg_color_ = colors.foreground_;
+    val.text_bg_color_ = colors.background_;
 }
 
 
@@ -2314,21 +2340,26 @@ static void draw_tile_layer(Layer layer, SDL_Texture* texture, int texture_width
 
 
 
+ColorConstant bg_color_default()
+{
+    // ...
+    return ColorConstant::rich_black;
+}
+
+
+
 void Platform::Screen::display()
 {
     draw_sprite_group(3);
-
     draw_tile_layer(Layer::map_1_ext, tile1_texture, tile1_texture_width,
                    tile1_scroll, get_view());
     draw_tile_layer(Layer::map_1, tile1_texture, tile1_texture_width,
                    tile1_scroll, get_view());
-
     // Draw tile0 layer
     draw_tile_layer(Layer::map_0_ext, tile0_texture, tile0_texture_width,
                    tile0_scroll, get_view());
     draw_tile_layer(Layer::map_0, tile0_texture, tile0_texture_width,
                    tile0_scroll, get_view());
-
     draw_sprite_group(2);
     draw_sprite_group(1);
 
@@ -2338,10 +2369,9 @@ void Platform::Screen::display()
 
     if (current_overlay_texture) {
         auto& overlay_tiles = tile_layers_[Layer::overlay];
-
         for (auto& [pos, tile_info] : overlay_tiles) {
             auto tile_desc = tile_info.tile_desc;
-            if (tile_desc == 0) continue; // Skip empty tiles
+            if (tile_desc == 0) continue;
 
             SDL_Rect src = get_overlay_tile_source_rect(tile_desc);
             SDL_Rect dst;
@@ -2350,7 +2380,27 @@ void Platform::Screen::display()
             dst.w = 8;
             dst.h = 8;
 
+            // Draw background color for glyphs
+            if (is_glyph(tile_desc)) {
+                auto bg_color_key = (int)tile_info.text_bg_color_ != 0
+                    ? tile_info.text_bg_color_
+                    : bg_color_default();
+
+                auto color = color_to_sdl(bg_color_key);
+                SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, 255);
+                SDL_RenderFillRect(renderer, &dst);
+            }
+
+            // Apply foreground color if specified, otherwise use default
+            if ((int)tile_info.text_fg_color_ != 0) {
+                auto fg_color = color_to_sdl(tile_info.text_fg_color_);
+                SDL_SetTextureColorMod(current_overlay_texture, fg_color.r, fg_color.g, fg_color.b);
+            }
+
             SDL_RenderCopy(renderer, current_overlay_texture, &src, &dst);
+
+            // Reset color mod
+            SDL_SetTextureColorMod(current_overlay_texture, 255, 255, 255);
         }
     }
 
@@ -2361,7 +2411,6 @@ void Platform::Screen::display()
     }
 
     SDL_RenderPresent(renderer);
-
     sprite_draw_list.clear();
 }
 
