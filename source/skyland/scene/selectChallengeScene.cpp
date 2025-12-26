@@ -172,6 +172,7 @@ void SelectChallengeScene::display()
     Sprite cursor;
     cursor.set_size(Sprite::Size::w16_h32);
     cursor.set_texture_index(59);
+    cursor.set_priority(0);
 
     Vec2<Fixnum> origin;
 

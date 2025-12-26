@@ -876,6 +876,16 @@ ScenePtr reject_if_friendly()
 
 
 
+void App::shutdown()
+{
+    player_island().clear_rooms();
+    with_opponent_island([&](auto& island) {
+        island.clear_rooms();
+    });
+}
+
+
+
 } // namespace skyland
 
 

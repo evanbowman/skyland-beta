@@ -95,9 +95,193 @@ void start(Platform&);
 SDL_Window* window = nullptr;
 static SDL_Renderer* renderer = nullptr;
 bool sdl_running = true;
+static bool is_fullscreen = false;
+static int window_scale = 2;
+static const int logical_width = 240;
+static const int logical_height = 160;
 
+static bool window_size_initialized = false;
+static int last_window_width = 0;
+static int last_window_height = 0;
 
 static SDL_Texture* tile_recolor_buffer = nullptr;
+
+
+
+static int calculate_best_scale(int window_w, int window_h)
+{
+    // Calculate maximum scale that fits in both dimensions
+    int scale_x = window_w / logical_width;
+    int scale_y = window_h / logical_height;
+
+    // Use the smaller scale to ensure it fits
+    int scale = std::min(scale_x, scale_y);
+
+    // Clamp to minimum of 1
+    return std::max(1, scale);
+}
+
+
+
+static void constrain_window_to_scale()
+{
+    if (is_fullscreen) {
+        return;  // Don't constrain in fullscreen
+    }
+
+    int current_w, current_h;
+    SDL_GetWindowSize(window, &current_w, &current_h);
+
+    // Calculate the best integer scale for current size
+    int scale = calculate_best_scale(current_w, current_h);
+
+    // Calculate the exact size for this scale
+    int target_w = logical_width * scale;
+    int target_h = logical_height * scale;
+
+    // Check if we're closer to the next scale up
+    int next_scale = scale + 1;
+    int next_w = logical_width * next_scale;
+    int next_h = logical_height * next_scale;
+
+    // Calculate distance to current scale and next scale
+    int dist_current = abs(current_w - target_w) + abs(current_h - target_h);
+    int dist_next = abs(current_w - next_w) + abs(current_h - next_h);
+
+    // Use whichever is closer
+    if (dist_next < dist_current) {
+        scale = next_scale;
+        target_w = next_w;
+        target_h = next_h;
+    }
+
+    // Only resize if different from current size
+    if (current_w != target_w || current_h != target_h) {
+        SDL_SetWindowSize(window, target_w, target_h);
+        window_scale = scale;
+
+        info(format("Window resized to %x scale (%x%)",
+                   scale, target_w, target_h));
+    }
+}
+
+
+
+static void update_viewport()
+{
+    int window_w, window_h;
+    SDL_GetWindowSize(window, &window_w, &window_h);
+
+    SDL_Rect viewport;
+
+    if (is_fullscreen) {
+        // In fullscreen, use integer scaling with letterboxing
+        int scale = calculate_best_scale(window_w, window_h);
+        int scaled_width = logical_width * scale;
+        int scaled_height = logical_height * scale;
+
+        // Center the viewport
+        viewport.x = (window_w - scaled_width) / 2;
+        viewport.y = (window_h - scaled_height) / 2;
+        viewport.w = scaled_width;
+        viewport.h = scaled_height;
+    } else {
+        // In windowed mode, use exact window size (already constrained)
+        viewport.x = 0;
+        viewport.y = 0;
+        viewport.w = window_w;
+        viewport.h = window_h;
+    }
+
+    SDL_RenderSetViewport(renderer, &viewport);
+    SDL_RenderSetLogicalSize(renderer, logical_width, logical_height);
+
+    // Use nearest neighbor (point) filtering for crisp pixels
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest");
+}
+
+
+
+static void toggle_fullscreen()
+{
+    is_fullscreen = !is_fullscreen;
+
+    if (is_fullscreen) {
+        // Store current windowed size
+        SDL_GetWindowSize(window, &last_window_width, &last_window_height);
+
+        // Get desktop display mode for current display
+        SDL_DisplayMode display_mode;
+        int display_index = SDL_GetWindowDisplayIndex(window);
+        SDL_GetDesktopDisplayMode(display_index, &display_mode);
+
+        // On macOS, use native fullscreen for better behavior
+#ifdef __APPLE__
+        SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+#else
+        SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+#endif
+
+        info(format("Entered fullscreen mode: %x%",
+                   display_mode.w, display_mode.h));
+    } else {
+        // Exit fullscreen
+        SDL_SetWindowFullscreen(window, 0);
+
+        // Restore to previous size if we have it
+        if (last_window_width > 0 && last_window_height > 0) {
+            SDL_SetWindowSize(window, last_window_width, last_window_height);
+        } else {
+            // Default to current scale
+            SDL_SetWindowSize(window,
+                            logical_width * window_scale,
+                            logical_height * window_scale);
+        }
+
+         info("Exited fullscreen mode");
+     }
+
+    update_viewport();
+}
+
+
+
+static void handle_window_resize(int w, int h)
+{
+    // Ignore resize events in fullscreen (macOS sends these during transitions)
+    if (is_fullscreen) {
+        update_viewport();
+        return;
+    }
+
+    // Constrain to integer scale
+    constrain_window_to_scale();
+    update_viewport();
+}
+
+
+
+static void cycle_window_scale(bool increase)
+{
+    if (is_fullscreen) {
+        return;  // Don't change scale in fullscreen
+    }
+
+    if (increase) {
+        window_scale = std::min(window_scale + 1, 8);  // Max 8x
+    } else {
+        window_scale = std::max(window_scale - 1, 1);  // Min 1x
+    }
+
+    int new_w = logical_width * window_scale;
+    int new_h = logical_height * window_scale;
+    SDL_SetWindowSize(window, new_w, new_h);
+
+    update_viewport();
+
+    info(format("Window scale: %x (%x%)", window_scale, new_w, new_h));
+}
+
 
 
 Platform* __platform__ = nullptr;
@@ -111,17 +295,27 @@ int main(int argc, char** argv)
         return 1;
     }
 
+    SDL_SetHint(SDL_HINT_VIDEO_HIGHDPI_DISABLED, "0");
+
+    int initial_width = logical_width * window_scale;
+    int initial_height = logical_height * window_scale;
+
     window = SDL_CreateWindow("Skyland",
                               SDL_WINDOWPOS_UNDEFINED,
                               SDL_WINDOWPOS_UNDEFINED,
-                              480,  // 240 * 2 for scaling
-                              320,  // 160 * 2
-                              SDL_WINDOW_SHOWN);
+                              initial_width,
+                              initial_height,
+                              SDL_WINDOW_SHOWN |
+                              SDL_WINDOW_RESIZABLE |
+                              SDL_WINDOW_ALLOW_HIGHDPI);
 
     if (window == NULL) {
         fprintf(stderr, "SDL window failed to initialise: %s\n", SDL_GetError());
         return 1;
     }
+
+    // Set minimum window size to 1x scale
+    SDL_SetWindowMinimumSize(window, logical_width, logical_height);
 
     // Create renderer instead of getting surface
     renderer = SDL_CreateRenderer(window, -1,
@@ -133,9 +327,9 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    // Enable integer scaling for crisp pixels
+    // // Enable integer scaling for crisp pixels
     SDL_RenderSetIntegerScale(renderer, SDL_TRUE);
-    SDL_RenderSetLogicalSize(renderer, 240, 160);
+    // SDL_RenderSetLogicalSize(renderer, 240, 160);
 
     tile_recolor_buffer = SDL_CreateTexture(renderer,
                                             SDL_PIXELFORMAT_RGBA8888,
@@ -206,10 +400,17 @@ TileDesc Platform::get_tile(Layer layer, u16 x, u16 y)
 }
 
 
+static SDL_Color default_text_fg_color = {0xcd, 0xc3, 0xeb, 255};  // Initial fallback
+static SDL_Color default_text_bg_color = {0x00, 0x00, 0x00, 255};  // Initial fallback
+
+
 
 ColorConstant default_fg_color()
 {
-    return custom_color(0xcdc3eb);
+    u32 hex = (default_text_fg_color.r << 16) |
+              (default_text_fg_color.g << 8) |
+              default_text_fg_color.b;
+    return (ColorConstant)hex;
 }
 
 
@@ -294,7 +495,46 @@ void Platform::Keyboard::poll()
             sdl_running = false;
             break;
 
+         case SDL_WINDOWEVENT:
+            switch (e.window.event) {
+            case SDL_WINDOWEVENT_RESIZED:
+            case SDL_WINDOWEVENT_SIZE_CHANGED:
+                handle_window_resize(e.window.data1, e.window.data2);
+                break;
+            case SDL_WINDOWEVENT_FOCUS_GAINED:
+                // On macOS, re-constrain when window gains focus
+                // This helps with issues after fullscreen transitions
+                if (!window_size_initialized) {
+                    constrain_window_to_scale();
+                    window_size_initialized = true;
+                }
+                break;
+            }
+            break;
+
         case SDL_KEYDOWN: {
+            // F11 or Cmd+F (macOS) or Alt+Enter for fullscreen
+            if (e.key.keysym.sym == SDLK_F11 ||
+                (e.key.keysym.sym == SDLK_f && (e.key.keysym.mod & KMOD_GUI)) ||
+                (e.key.keysym.sym == SDLK_RETURN && (e.key.keysym.mod & KMOD_ALT))) {
+                toggle_fullscreen();
+                break;  // Don't fall through
+            }
+            // Cmd/Ctrl + Plus/Minus to change window scale
+            if ((e.key.keysym.mod & (KMOD_GUI | KMOD_CTRL))) {
+                if (e.key.keysym.sym == SDLK_EQUALS || e.key.keysym.sym == SDLK_PLUS) {
+                    cycle_window_scale(true);
+                    break;
+                } else if (e.key.keysym.sym == SDLK_MINUS) {
+                    cycle_window_scale(false);
+                    break;
+                }
+            }
+            if (e.key.keysym.sym == SDLK_F11 ||
+                (e.key.keysym.sym == SDLK_RETURN && (e.key.keysym.mod & KMOD_ALT))) {
+                toggle_fullscreen();
+            }
+
             auto it = keymap.find(e.key.keysym.sym);
             if (it != keymap.end()) {
                 states_[int(it->second)] = true;
@@ -351,10 +591,37 @@ std::pair<const char*, u32> Platform::load_file(const char* folder,
 
 
 
+struct DynamicTextureMapping
+{
+    bool reserved_ = false;
+    u16 spritesheet_offset_ = 0;  // Where in the spritesheet to get data from
+} dynamic_texture_mappings[Platform::dynamic_texture_count];
+
+
+
+static inline bool is_dynamic_texture_index(u16 texture_index)
+{
+    return texture_index < (Platform::dynamic_texture_count * 2);
+}
+
+
+
+static inline u8 get_dynamic_slot_for_index(u16 texture_index)
+{
+    // Convert texture index to slot number
+    // Indices 0-1 -> slot 0, indices 2-3 -> slot 1, etc.
+    return texture_index / 2;
+}
+
+
+
 void Platform::DynamicTexture::remap(u16 spritesheet_offset)
 {
-    // No need to do anything on the desktop platform. All of our texture fits
-    // in vram, so we do not need to manage any "virtual" tile indices.
+    auto& mapping = dynamic_texture_mappings[mapping_index_];
+    mapping.spritesheet_offset_ = spritesheet_offset;
+
+    info(format("Dynamic texture slot % remapped to spritesheet offset %",
+               mapping_index_, spritesheet_offset));
 }
 
 
@@ -368,7 +635,25 @@ static ObjectPool<PooledRcControlBlock<Platform::DynamicTexture,
 
 Optional<Platform::DynamicTexturePtr> Platform::make_dynamic_texture()
 {
-    return std::nullopt;
+    auto finalizer =
+        [](PooledRcControlBlock<DynamicTexture, dynamic_texture_count>* ctrl) {
+            auto& mapping = dynamic_texture_mappings[ctrl->data_.mapping_index()];
+            mapping.reserved_ = false;
+            dynamic_texture_pool.free(ctrl);
+        };
+
+    for (u8 i = 0; i < dynamic_texture_count; ++i) {
+        if (not dynamic_texture_mappings[i].reserved_) {
+            auto dt = create_pooled_rc<DynamicTexture, dynamic_texture_count>(
+                &dynamic_texture_pool, finalizer, i);
+            if (dt) {
+                dynamic_texture_mappings[i].reserved_ = true;
+                return *dt;
+            }
+        }
+    }
+
+    return {};
 }
 
 
@@ -507,15 +792,29 @@ void Platform::blit_t1_tile_to_texture(u16 from_index, u16 to_index, bool hard)
 #include <filesystem>
 
 
+
 void Platform::walk_filesystem(
     Function<8 * sizeof(void*), void(const char* path)> callback)
 {
+    auto res_path = resource_path();
     using recursive_directory_iterator = std::filesystem::recursive_directory_iterator;
-    for (const auto& dirent : recursive_directory_iterator(resource_path())) {
-        // TODO: remove resource_path() from front of dirent, and pass to callback.
-        // callback(dirent.path().string().c_str());
+    for (const auto& dirent : recursive_directory_iterator(res_path)) {
+        if (dirent.is_regular_file()) {
+            auto full_path = dirent.path().string();
+            // Remove resource_path() prefix to get relative path
+            if (full_path.size() > res_path.size() &&
+                full_path.substr(0, res_path.size()) == res_path) {
+                auto relative_path = full_path.substr(res_path.size());
+                // Remove leading path delimiter if present
+                if (!relative_path.empty() &&
+                    (relative_path[0] == '/' || relative_path[0] == '\\')) {
+                    relative_path = relative_path.substr(1);
+                }
+                relative_path = "/" + relative_path;
+                callback(relative_path.c_str());
+            }
+        }
     }
-
 }
 
 
@@ -924,6 +1223,87 @@ static SDL_Surface* load_png_with_stb(const std::string& path, const char* name)
 
 
 
+void load_metatiled_chunk(SDL_Surface* source_surface,
+                          int meta_tile_size,
+                          int tiles_per_meta,
+                          int tiles_per_strip,
+                          int strips_per_meta,
+                          int copy_count,
+                          TileDesc src,
+                          TileDesc dst)
+{
+    const int tile_size = 8;
+    const int tiles_per_row_src = source_surface->w / tile_size;
+    const int meta_tiles_per_row = source_surface->w / meta_tile_size;
+
+    // Number of meta-tiles to copy
+    int num_meta_tiles = copy_count / tiles_per_meta;
+
+    for (u16 i = 0; i < num_meta_tiles; ++i) {
+        // src refers to the starting TILE index
+        // Each meta-tile we want is tiles_per_meta apart
+        TileDesc src_tile_index = src + (i * tiles_per_meta);
+
+        // Convert tile index to meta-tile index
+        int meta_tile_index = src_tile_index / tiles_per_meta;
+
+        // Find which meta-tile block in the source texture
+        int src_meta_x = meta_tile_index % meta_tiles_per_row;
+        int src_meta_y = meta_tile_index / meta_tiles_per_row;
+
+        // Base pixel position of this meta-tile block
+        int base_src_x = src_meta_x * meta_tile_size;
+        int base_src_y = src_meta_y * meta_tile_size;
+
+        // Destination starts at dst + (i * tiles_per_meta)
+        TileDesc dst_base = dst + (i * tiles_per_meta);
+
+        // Copy horizontal strips
+        for (int strip = 0; strip < strips_per_meta; ++strip) {
+            // Copy tiles in this strip
+            for (int tile_in_strip = 0; tile_in_strip < tiles_per_strip; ++tile_in_strip) {
+                // Source: this 8x8 tile within the meta-tile block
+                SDL_Rect src_rect;
+                src_rect.x = base_src_x + (tile_in_strip * tile_size);
+                src_rect.y = base_src_y + (strip * tile_size);
+                src_rect.w = tile_size;
+                src_rect.h = tile_size;
+
+                // Destination: linear placement (always y=0)
+                int linear_tile_index = strip * tiles_per_strip + tile_in_strip;
+                TileDesc dst_tile = dst_base + linear_tile_index;
+
+                SDL_Rect dst_rect;
+                dst_rect.x = dst_tile * tile_size;
+                dst_rect.y = 0;
+                dst_rect.w = tile_size;
+                dst_rect.h = tile_size;
+
+                if (SDL_BlitSurface(source_surface, &src_rect, overlay_surface, &dst_rect) != 0) {
+                    error(format("load_overlay_chunk: Failed to blit strip %/tile %: %",
+                                 strip, tile_in_strip, SDL_GetError()));
+                }
+            }
+        }
+    }
+}
+
+
+
+static int FIXME_get_metatile_size(const char* texture_name)
+{
+    if (str_eq(texture_name, "character_art") or
+        str_eq(texture_name, "appendix")) {
+        return 4;
+    } else if (str_eq(texture_name, "paint_icons")) {
+        return 2;
+    } else {
+        return 1;
+    }
+}
+
+
+
 StringBuffer<256> last_overlay_texture;
 void Platform::load_overlay_chunk(TileDesc dst,
                                   TileDesc src,
@@ -949,7 +1329,7 @@ void Platform::load_overlay_chunk(TileDesc dst,
             info(format("load_overlay_chunk: Using cached texture %", image_file));
         } else {
             std::string full_path = resource_path() + "images" + PATH_DELIMITER +
-                                   image_file + ".png";
+                image_file + ".png";
 
             source_surface = load_png_with_stb(full_path, image_file);
             if (!source_surface) {
@@ -960,7 +1340,7 @@ void Platform::load_overlay_chunk(TileDesc dst,
             // Cache it
             overlay_source_cache[cache_key] = source_surface;
             info(format("load_overlay_chunk: Loaded and cached source texture %",
-                       image_file));
+                        image_file));
         }
     } else {
         // Use current overlay texture - need to reload the full uncropped version
@@ -976,90 +1356,42 @@ void Platform::load_overlay_chunk(TileDesc dst,
         if (it != overlay_source_cache.end()) {
             source_surface = it->second;
             info(format("load_overlay_chunk: Using cached current texture %",
-                       cache_key.c_str()));
+                        cache_key.c_str()));
         } else {
             std::string full_path = resource_path() + "images" + PATH_DELIMITER +
-                                   cache_key + ".png";
+                cache_key + ".png";
 
             source_surface = load_png_with_stb(full_path, cache_key.c_str());
             if (!source_surface) {
                 error(format("load_overlay_chunk: Failed to reload current texture %",
-                            cache_key.c_str()));
+                             cache_key.c_str()));
                 return;
             }
 
             // Cache it
             overlay_source_cache[cache_key] = source_surface;
             info(format("load_overlay_chunk: Reloaded and cached current texture %",
-                       cache_key.c_str()));
+                        cache_key.c_str()));
         }
     }
 
     const int tile_size = 8;
     const int tiles_per_row_dst = overlay_surface->w / tile_size;
 
-    // Check if source is taller than 8 pixels - if so, use 32x32 meta-tiling
-    bool use_meta_tiling = source_surface->h > 8;
+    auto metatile_size = FIXME_get_metatile_size(image_file ? image_file : "");
 
-    if (use_meta_tiling) {
-        // Meta-tile mode: treat source as 32x32 pixel blocks arranged as 16 8x8 tiles
-        // Layout within each 32x32 block:
-        // t0  t1  t2  t3
-        // t4  t5  t6  t7
-        // t8  t9  t10 t11
-        // t12 t13 t14 t15
-
-        const int meta_tile_size = 32; // 32x32 pixel blocks
-        const int tiles_per_meta = 16; // 16 8x8 tiles per 32x32 block
-        const int meta_tiles_per_row = source_surface->w / meta_tile_size;
-
-        info(format("load_overlay_chunk: Using 32x32 meta-tiling for % (%dx%d)",
-                   cache_key.c_str(), source_surface->w, source_surface->h));
-
-        for (u16 i = 0; i < count; ++i) {
-            // Source index refers to which 32x32 block
-            TileDesc src_meta_tile = src + i;
-
-            // Calculate which 32x32 block in the source
-            int src_meta_x = src_meta_tile % meta_tiles_per_row;
-            int src_meta_y = src_meta_tile / meta_tiles_per_row;
-
-            // Base pixel position of this 32x32 block
-            int base_src_x = src_meta_x * meta_tile_size;
-            int base_src_y = src_meta_y * meta_tile_size;
-
-            // Destination starts at dst + (i * 16) because each meta-tile is 16 tiles
-            TileDesc dst_base = dst + (i * tiles_per_meta);
-
-            // Copy all 16 8x8 tiles from this 32x32 block
-            for (int tile_in_meta = 0; tile_in_meta < tiles_per_meta; ++tile_in_meta) {
-                // Position within the 4x4 grid of 8x8 tiles
-                int tile_x = tile_in_meta % 4;
-                int tile_y = tile_in_meta / 4;
-
-                SDL_Rect src_rect;
-                src_rect.x = base_src_x + (tile_x * tile_size);
-                src_rect.y = base_src_y + (tile_y * tile_size);
-                src_rect.w = tile_size;
-                src_rect.h = tile_size;
-
-                // Calculate destination tile position
-                TileDesc dst_tile = dst_base + tile_in_meta;
-                int dst_tile_x = dst_tile % tiles_per_row_dst;
-                int dst_tile_y = dst_tile / tiles_per_row_dst;
-
-                SDL_Rect dst_rect;
-                dst_rect.x = dst_tile_x * tile_size;
-                dst_rect.y = dst_tile_y * tile_size;
-                dst_rect.w = tile_size;
-                dst_rect.h = tile_size;
-
-                if (SDL_BlitSurface(source_surface, &src_rect, overlay_surface, &dst_rect) != 0) {
-                    error(format("load_overlay_chunk: Failed to blit meta-tile %/%: %",
-                                i, tile_in_meta, SDL_GetError()));
-                }
-            }
-        }
+    if (metatile_size > 1) {
+        // Meta-tile mode: source has 32x32 pixel blocks, each containing 16 8x8 tiles
+        // src is a TILE index (8x8), not a meta-tile index
+        // Each 32x32 meta-tile = 16 8x8 tiles
+        load_metatiled_chunk(source_surface,
+                             metatile_size * 8,
+                             metatile_size * metatile_size,
+                             metatile_size,
+                             metatile_size,
+                             count,
+                             src,
+                             dst);
     } else {
         // Regular 8x8 tile mode
         const int tiles_per_row_src = source_surface->w / tile_size;
@@ -1096,6 +1428,7 @@ void Platform::load_overlay_chunk(TileDesc dst,
         }
     }
 
+
     // Recreate the texture from the modified surface
     if (current_overlay_texture) {
         SDL_DestroyTexture(current_overlay_texture);
@@ -1104,7 +1437,7 @@ void Platform::load_overlay_chunk(TileDesc dst,
     current_overlay_texture = SDL_CreateTextureFromSurface(renderer, overlay_surface);
     if (!current_overlay_texture) {
         error(format("load_overlay_chunk: Failed to recreate texture: %",
-                    SDL_GetError()));
+                     SDL_GetError()));
         return;
     }
 
@@ -1214,9 +1547,34 @@ static SDL_Rect get_tile_source_rect_8x8(TileDesc tile_index, int texture_width)
 
 
 
-// Update load_tile0_texture
-void Platform::load_tile0_texture(const char* name)
+static std::string extract_texture_name(const char* path_or_name)
 {
+    std::string input(path_or_name);
+
+    // Find the last path separator (/ or \)
+    size_t last_slash = input.find_last_of("/\\");
+    std::string filename = (last_slash != std::string::npos)
+        ? input.substr(last_slash + 1)
+        : input;
+
+    // Remove any extension (.img.bin, .pal.bin, .png, etc.)
+    size_t first_dot = filename.find('.');
+    if (first_dot != std::string::npos) {
+        filename = filename.substr(0, first_dot);
+    }
+
+    info(format("extract_texture_name: '%' -> '%'", path_or_name, filename.c_str()));
+
+    return filename;
+}
+
+
+
+void Platform::load_tile0_texture(const char* name_or_path)
+{
+    info(name_or_path);
+    auto name = extract_texture_name(name_or_path);
+
     if (tile0_texture) {
         SDL_DestroyTexture(tile0_texture);
         tile0_texture = nullptr;
@@ -1224,12 +1582,12 @@ void Platform::load_tile0_texture(const char* name)
 
     std::string full_path = resource_path() + "images" + PATH_DELIMITER + name + ".png";
 
-    SDL_Surface* surface = load_png_with_stb(full_path, name);
+    SDL_Surface* surface = load_png_with_stb(full_path, name.c_str());
     if (!surface) {
         return;
     }
 
-    std::string debug_path = "debug_loaded_" + std::string(name) + ".bmp";
+    std::string debug_path = "debug_loaded_" + name + ".bmp";
     if (SDL_SaveBMP(surface, debug_path.c_str()) == 0) {
         info(format("Saved debug image to %", debug_path.c_str()));
     } else {
@@ -1248,16 +1606,18 @@ void Platform::load_tile0_texture(const char* name)
     tile0_texture_width = surface->w;
     tile0_texture_height = surface->h;
 
-    info(format("Loaded tile0 texture %: %x% pixels", name, tile0_texture_width, tile0_texture_height));
+    info(format<512>("Loaded tile0 texture %: %x% pixels", name.c_str(), tile0_texture_width, tile0_texture_height));
 
     SDL_FreeSurface(surface);
 }
 
 
 
-// Update load_tile1_texture
-void Platform::load_tile1_texture(const char* name)
+void Platform::load_tile1_texture(const char* name_or_path)
 {
+    info(name_or_path);
+    auto name = extract_texture_name(name_or_path);
+
     if (tile1_texture) {
         SDL_DestroyTexture(tile1_texture);
         tile1_texture = nullptr;
@@ -1265,7 +1625,7 @@ void Platform::load_tile1_texture(const char* name)
 
     std::string full_path = resource_path() + "images" + PATH_DELIMITER + name + ".png";
 
-    SDL_Surface* surface = load_png_with_stb(full_path, name);
+    SDL_Surface* surface = load_png_with_stb(full_path, name.c_str());
     if (!surface) {
         return;
     }
@@ -1282,7 +1642,7 @@ void Platform::load_tile1_texture(const char* name)
     tile1_texture_width = surface->w;
     tile1_texture_height = surface->h;
 
-    info(format("Loaded tile1 texture %: %x% pixels", name, tile1_texture_width, tile1_texture_height));
+    info(format("Loaded tile1 texture %: %x% pixels", name.c_str(), tile1_texture_width, tile1_texture_height));
 
     SDL_FreeSurface(surface);
 }
@@ -1309,9 +1669,27 @@ TileDesc Platform::map_tile1_chunk(TileDesc src)
 
 
 
+static float wrap_y(float y)
+{
+    if (y > 160) {
+        // FIXME: gba automatically wraps tile layers, and I happened to be
+        // displaying a wrapped region of a tile layer on the gba. I could fix
+        // it, but it's easier just to do this:
+        y -= 508;
+    }
+
+    return y;
+}
+
+
+
 void Platform::set_overlay_origin(Float x, Float y)
 {
-    overlay_origin = {x, y};
+    while (y < -256) {
+        y += 256;
+    }
+    info(format("overlay origin {%, %}", x, wrap_y(y)));
+    overlay_origin = {x, wrap_y(y)};
 }
 
 
@@ -1405,6 +1783,65 @@ void Platform::fatal(const char* msg)
 
 
 
+static void extract_text_colors_from_overlay()
+{
+    if (!overlay_surface) {
+        warning("extract_text_colors_from_overlay: overlay_surface not initialized");
+        return;
+    }
+
+    // Font color index tile is at index 81 (matches GBA)
+    const int font_color_index_tile = 81;
+    const int tile_size = 8;
+    const int tiles_per_row = overlay_surface->w / tile_size;
+
+    int tile_x = font_color_index_tile % tiles_per_row;
+    int tile_y = font_color_index_tile / tiles_per_row;
+
+    int pixel_x = tile_x * tile_size;
+    int pixel_y = tile_y * tile_size;
+
+    // Lock surface for pixel access
+    if (SDL_MUSTLOCK(overlay_surface)) {
+        if (SDL_LockSurface(overlay_surface) != 0) {
+            error(format("Failed to lock surface: %", SDL_GetError()));
+            return;
+        }
+    }
+
+    // Get the first two pixels (indices 0 and 1) which contain fg and bg color info
+    Uint8* pixels = (Uint8*)overlay_surface->pixels;
+    int pitch = overlay_surface->pitch;
+    Uint32 pixel_format = overlay_surface->format->format;
+
+    // Get pixel at (pixel_x, pixel_y) - foreground color
+    Uint8* fg_pixel = pixels + pixel_y * pitch + pixel_x * overlay_surface->format->BytesPerPixel;
+    Uint32 fg_pixel_value = *(Uint32*)fg_pixel;
+
+    // Get pixel at (pixel_x + 1, pixel_y) - background color
+    Uint8* bg_pixel = pixels + pixel_y * pitch + (pixel_x + 1) * overlay_surface->format->BytesPerPixel;
+    Uint32 bg_pixel_value = *(Uint32*)bg_pixel;
+
+    // Convert to SDL_Color
+    SDL_GetRGBA(fg_pixel_value, overlay_surface->format,
+                &default_text_fg_color.r, &default_text_fg_color.g,
+                &default_text_fg_color.b, &default_text_fg_color.a);
+
+    SDL_GetRGBA(bg_pixel_value, overlay_surface->format,
+                &default_text_bg_color.r, &default_text_bg_color.g,
+                &default_text_bg_color.b, &default_text_bg_color.a);
+
+    if (SDL_MUSTLOCK(overlay_surface)) {
+        SDL_UnlockSurface(overlay_surface);
+    }
+
+    info(format("Extracted text colors - FG: #%x%x%x, BG: #%x%x%x",
+                default_text_fg_color.r, default_text_fg_color.g, default_text_fg_color.b,
+                default_text_bg_color.r, default_text_bg_color.g, default_text_bg_color.b));
+}
+
+
+
 bool Platform::load_overlay_texture(const char* name)
 {
     if (name == last_overlay_texture) {
@@ -1443,7 +1880,6 @@ bool Platform::load_overlay_texture(const char* name)
         return false;
     }
 
-
     // Convert indexed color to RGBA32 if needed
     SDL_Surface* converted_surface = loaded_surface;
     if (loaded_surface->format->palette != nullptr) {
@@ -1463,9 +1899,7 @@ bool Platform::load_overlay_texture(const char* name)
     Uint32 color_key = SDL_MapRGB(loaded_surface->format, 0xFF, 0x00, 0xFF);
     SDL_SetColorKey(loaded_surface, SDL_TRUE, color_key);
 
-
     // GBA limitation: only load first 4032 pixels in X direction
-    // This is 504 tiles of 8x8 pixels (4032 / 8 = 504)
     const int max_width = 4032;
     int clamped_width = std::min(loaded_surface->w, max_width);
     int clamped_height = loaded_surface->h;
@@ -1491,6 +1925,9 @@ bool Platform::load_overlay_texture(const char* name)
 
     SDL_FreeSurface(loaded_surface);
 
+    // Extract text colors from tile 81 BEFORE creating the texture
+    extract_text_colors_from_overlay();
+
     current_overlay_texture = SDL_CreateTextureFromSurface(renderer, overlay_surface);
     if (!current_overlay_texture) {
         error(format("Failed to create overlay texture from %: %", full_path.c_str(), SDL_GetError()));
@@ -1512,7 +1949,6 @@ bool Platform::load_overlay_texture(const char* name)
                 loaded_surface->w, overlay_base_tile_count));
 
     last_overlay_texture = name;
-
 
     return true;
 }
@@ -1916,43 +2352,39 @@ static SDL_Rect get_sprite_source_rect(u16 texture_index, Sprite::Size size)
 {
     SDL_Rect src;
 
-    // GBA sprites are organized in 16x32 pixel meta-tiles
-    // Each meta-tile is 16 pixels wide and 32 pixels tall
+    // Check if this texture index is in the dynamic range and has been remapped
+    if (is_dynamic_texture_index(texture_index)) {
+        u8 slot = get_dynamic_slot_for_index(texture_index);
+        auto& mapping = dynamic_texture_mappings[slot];
+
+        if (mapping.reserved_) {
+            // Use the remapped spritesheet offset instead of the texture_index
+            texture_index = mapping.spritesheet_offset_;
+        }
+        // If not reserved, just use the original texture_index (shows default position)
+    }
+
+    // Normal sprite calculation using the (possibly remapped) texture_index
     const int meta_tile_width = 16;
     const int meta_tile_height = 32;
-
-    // Calculate which meta-tile this texture index refers to
-    // Meta-tiles are laid out left-to-right, top-to-bottom in the sprite sheet
     int tiles_per_row = sprite_texture_width / meta_tile_width;
     int meta_tile_x = texture_index % tiles_per_row;
     int meta_tile_y = texture_index / tiles_per_row;
-
-    // Base position of the meta-tile
     int base_x = meta_tile_x * meta_tile_width;
     int base_y = meta_tile_y * meta_tile_height;
 
     switch (size) {
         case Sprite::Size::w8_h8: {
-            // 8x8 sprites are packed 2 across, 4 down within a 16x32 meta-tile
-            // Layout within meta-tile:
-            // [0][1]
-            // [2][3]
-            // [4][5]
-            // [6][7]
             int base_x = (texture_index / 8) * 16;
-            base_x += 8 * texture_index % 2;
-
+            base_x += 8 * (texture_index % 2);
             int base_y = ((texture_index % 8) / 2) * 8;
-
             src.x = base_x;
             src.y = base_y;
             src.w = 8;
             src.h = 8;
             break;
         }
-
         case Sprite::Size::w16_h16: {
-            // 16x16 sprites are packed 2 vertically within a 16x32 meta-tile
             int base_x = (texture_index / 2) * 16;
             src.x = base_x;
             src.y = 16 * (texture_index % 2);
@@ -1960,40 +2392,21 @@ static SDL_Rect get_sprite_source_rect(u16 texture_index, Sprite::Size size)
             src.h = 16;
             break;
         }
-
         case Sprite::Size::w16_h32:
-            // 16x32 is exactly one meta-tile
             src.x = base_x;
             src.y = base_y;
             src.w = 16;
             src.h = 32;
             break;
-
-        case Sprite::Size::w32_h32: {
-            // 32x32 sprites span two meta-tiles horizontally
+        case Sprite::Size::w32_h32:
             src.x = base_x * 2;
             src.y = base_y;
             src.w = 32;
             src.h = 32;
             break;
-        }
     }
 
     return src;
-}
-
-
-
-static float wrap_y(float y)
-{
-    if (y > 160) {
-        // FIXME: gba automatically wraps tile layers, and I happened to be
-        // displaying a wrapped region of a tile layer on the gba. I could fix
-        // it, but it's easier just to do this:
-        y -= 508;
-    }
-
-    return y;
 }
 
 
@@ -2052,8 +2465,13 @@ void Platform::Screen::clear()
 {
     sprite_draw_list.clear();
 
-    SDL_SetRenderDrawColor(renderer, 99, 181, 231, 255);
+    // Clear entire screen to black first (for letterboxing)
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
+
+    SDL_SetRenderDrawColor(renderer, 99, 181, 231, 255);
+    SDL_Rect game_area = {0, 0, 240, 160};
+    SDL_RenderFillRect(renderer, &game_area);
 }
 
 
@@ -2400,19 +2818,34 @@ void Platform::Screen::display()
 
             // Draw background color for glyphs
             if (is_glyph(tile_desc)) {
-                auto bg_color_key = (int)tile_info.text_bg_color_ != 0
-                    ? tile_info.text_bg_color_
-                    : bg_color_default();
+                ColorConstant bg_color_key;
+                bool skip = false;
+                if ((int)tile_info.text_bg_color_ != 0) {
+                    bg_color_key = tile_info.text_bg_color_;
+                } else {
+                    bg_color_key = (ColorConstant)((default_text_bg_color.r << 16) |
+                                                   (default_text_bg_color.g << 8) |
+                                                   default_text_bg_color.b);
+                    skip = default_text_bg_color.a == 0;
+                }
 
-                auto color = color_to_sdl(bg_color_key);
-                SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, 255);
-                SDL_RenderFillRect(renderer, &dst);
+                if (not skip) {
+                    auto color = color_to_sdl(bg_color_key);
+                    SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, 255);
+                    SDL_RenderFillRect(renderer, &dst);
+                }
             }
 
             // Apply foreground color if specified, otherwise use default
             if ((int)tile_info.text_fg_color_ != 0) {
                 auto fg_color = color_to_sdl(tile_info.text_fg_color_);
                 SDL_SetTextureColorMod(current_overlay_texture, fg_color.r, fg_color.g, fg_color.b);
+            } else if (is_glyph(tile_desc)) {
+                // Use extracted default foreground color for glyphs
+                SDL_SetTextureColorMod(current_overlay_texture,
+                                      default_text_fg_color.r,
+                                      default_text_fg_color.g,
+                                      default_text_fg_color.b);
             }
 
             SDL_RenderCopy(renderer, current_overlay_texture, &src, &dst);
@@ -2580,6 +3013,9 @@ void Platform::Speaker::stop_music()
 
 Platform::Platform()
 {
+    update_viewport();
+    constrain_window_to_scale();
+
     std::ifstream in(save_file_name, std::ios_base::in | std::ios_base::binary);
     if (in) {
         in.read((char*)save_buffer, ::save_capacity);

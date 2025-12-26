@@ -373,7 +373,7 @@ void TitleScreenScene::exit(Scene& next)
     write_custom_graphics();
 
 
-    for (int x = 0; x < 16; ++x) {
+    for (int x = 0; x < 32; ++x) {
         for (int y = 0; y < 16; ++y) {
             PLATFORM.set_tile(Layer::map_0_ext, x, y, 0);
             PLATFORM.set_tile(Layer::map_1_ext, x, y, 0);
@@ -1035,13 +1035,20 @@ ScenePtr TitleScreenScene::update(Time delta)
                 play_gust_sound();
                 timer_ = 0;
             } else if (menu_selection_ == 0) {
-                menu_selection_ = 2;
-                put_menu_text();
-                state_ = State::scroll_macro;
-                play_gust_sound();
-                PLATFORM_EXTENSION(force_vsync);
-                PLATFORM.load_tile1_texture("skyland_title_2_flattened");
-                timer_ = 0;
+                if (PLATFORM.device_name() == "PC") {
+                    // TODO... none of these screens to the left on the title
+                    // screen are supported by the desktop (SDL) implementation.
+                    // I need to add support for networked multiplayer and other
+                    // stuff...
+                } else {
+                    menu_selection_ = 2;
+                    put_menu_text();
+                    state_ = State::scroll_macro;
+                    play_gust_sound();
+                    PLATFORM_EXTENSION(force_vsync);
+                    PLATFORM.load_tile1_texture("skyland_title_2_flattened");
+                    timer_ = 0;
+                }
             } else if (menu_selection_ == 3) {
                 menu_selection_ = 1;
                 put_menu_text();

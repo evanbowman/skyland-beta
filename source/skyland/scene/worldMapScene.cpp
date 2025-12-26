@@ -367,7 +367,7 @@ void WorldGraph::generate()
 static void draw_stormcloud_background(int cloud_depth, bool clear = true)
 {
     if (clear) {
-        for (int x = 0; x < 16; ++x) {
+        for (int x = 0; x < 32; ++x) {
             for (int y = 0; y < 16; ++y) {
                 PLATFORM.set_tile(Layer::map_1_ext, x, y, 1);
 
