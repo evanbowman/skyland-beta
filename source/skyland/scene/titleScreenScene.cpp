@@ -184,6 +184,9 @@ static void set_scroll(Layer layer, int x_scroll, int y_scroll)
 
 void TitleScreenScene::enter(Scene& prev)
 {
+    PLATFORM.clear_layer(Layer::map_0);
+    PLATFORM.clear_layer(Layer::map_1);
+
     PLATFORM.speaker().set_music_volume(Platform::Speaker::music_volume_max);
 
     PLATFORM.screen().schedule_fade(1.f);
@@ -373,7 +376,7 @@ void TitleScreenScene::exit(Scene& next)
     write_custom_graphics();
 
 
-    for (int x = 0; x < 32; ++x) {
+    for (int x = 0; x < 16; ++x) {
         for (int y = 0; y < 16; ++y) {
             PLATFORM.set_tile(Layer::map_0_ext, x, y, 0);
             PLATFORM.set_tile(Layer::map_1_ext, x, y, 0);

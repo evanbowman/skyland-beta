@@ -6848,6 +6848,45 @@ void setup_hardcoded_palettes()
 
 
 
+void Platform::clear_layer(Layer layer)
+{
+    switch (layer) {
+    case Layer::overlay:
+        fill_overlay(0);
+        break;
+
+    case Layer::map_0:
+        memset16(MEM_SCREENBLOCKS[sbb_t0_tiles], SE_PALBANK(0), 2048);
+        break;
+
+    case Layer::map_1:
+        memset16(MEM_SCREENBLOCKS[sbb_t1_tiles], SE_PALBANK(2), 2048);
+        break;
+
+    case Layer::map_0_ext:
+        for (int x = 0; x < 32; ++x) {
+            for (int y = 0; y < 16; ++y) {
+                set_tile(layer, x, y, 0);
+            }
+        }
+        break;
+
+    case Layer::map_1_ext:
+        for (int x = 0; x < 64; ++x) {
+            for (int y = 0; y < 32; ++y) {
+                set_tile(layer, x, y, 0);
+            }
+        }
+        break;
+
+    default:
+        fatal("clear layer for unsupported layer id");
+        break;
+    }
+}
+
+
+
 static const Platform::Extensions extensions{
     .stack_check = []() -> bool {
         if (not canary_check()) {

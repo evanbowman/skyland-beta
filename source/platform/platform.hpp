@@ -325,6 +325,7 @@ public:
     // very slow.
     TileDesc get_tile(Layer layer, u16 x, u16 y);
 
+    void clear_layer(Layer layer);
 
     void fill_overlay(u16 TileDesc);
 
