@@ -2547,11 +2547,15 @@ void Symbol::set_name(const char* name)
         memset(ptr, '\0', buffer_size + 1);
         for (u32 i = 0; i < buffer_size; ++i) {
             if (*name not_eq '\0') {
+#ifdef __GBA__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstringop-overflow"
 #pragma GCC diagnostic ignored "-Warray-bounds"
+#endif
                 ptr[i] = *(name++);
+#ifdef __GBA__
 #pragma GCC diagnostic pop
+#endif
             }
         }
         break;
@@ -4648,7 +4652,7 @@ BUILTIN_TABLE(
 
            lisp::ListBuilder result;
            for (int i = 0; i < len; ++i) {
-               result.push_back(L_INT(sbr->data_[i + offset]));
+               result.push_back(L_INT((u8)sbr->data_[i + offset]));
            }
 
            return result.result();

@@ -1837,8 +1837,24 @@ void Island::plot_construction_zones(bool matrix[16][16]) const
 
 
 
-bool Island::repaint_alloc_tiles(TileId buffer[16][16], bool retry)
+void clear_tiles(Layer layer)
 {
+    if (layer == Layer::map_0_ext) {
+        layer = Layer::map_0;
+    } else {
+        layer = Layer::map_1;
+    }
+
+    PLATFORM.clear_layer(layer);
+}
+
+
+
+bool Island::repaint_alloc_tiles(TileId buffer[16][16], bool retry)
+
+{
+    clear_tiles(layer_);
+
     for (int x = 0; x < 16; ++x) {
         // NOTE: only handle 15 rows because render_terrain() takes care of the
         // last row.

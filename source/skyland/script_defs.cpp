@@ -2583,6 +2583,17 @@ BINDING_TABLE({
 
           return L_NIL;
       }}},
+    {"device-info",
+      {SIG1(string, symbol),
+       [](int argc) {
+           auto sym = lisp::get_op(0)->symbol();
+           if (str_eq(sym.name(), "name")) {
+               return lisp::make_string(PLATFORM.device_name().c_str());
+           } else if (str_eq(sym.name(), "variant")) {
+               return lisp::make_string(PLATFORM.model_name().c_str());
+           }
+           return L_NIL;
+       }}},
     {"is-developer-mode",
      {SIG0(nil),
       [](int argc) { return lisp::make_boolean(APP.is_developer_mode()); }}},

@@ -405,6 +405,12 @@ void App::update(Time delta)
     const auto previous_score = score().get();
 
     if (next_scene_) {
+#ifndef __GBA__
+        {
+            auto& next_scene_ref = *next_scene_;
+            std::cout << "entering scene " << typeid(next_scene_ref).name() << std::endl;
+        }
+#endif
         next_scene_->enter(*current_scene_);
 
         current_scene_ = std::move(next_scene_);
@@ -866,6 +872,16 @@ ScenePtr reject_if_friendly()
     }
 
     return null_scene();
+}
+
+
+
+void App::shutdown()
+{
+    player_island().clear_rooms();
+    with_opponent_island([&](auto& island) {
+        island.clear_rooms();
+    });
 }
 
 
