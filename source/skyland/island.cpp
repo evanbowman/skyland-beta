@@ -1837,13 +1837,15 @@ void Island::plot_construction_zones(bool matrix[16][16]) const
 
 
 
-void clear_extraneous_tiles(Layer layer)
+void clear_tiles(Layer layer)
 {
-    for (int x = 16; x < 32; ++x) {
-        for (int y = 0; y < 16; ++y) {
-            PLATFORM.set_tile(layer, x, y, 0);
-        }
+    if (layer == Layer::map_0_ext) {
+        layer = Layer::map_0;
+    } else {
+        layer = Layer::map_1;
     }
+
+    PLATFORM.clear_layer(layer);
 }
 
 
@@ -1851,7 +1853,7 @@ void clear_extraneous_tiles(Layer layer)
 bool Island::repaint_alloc_tiles(TileId buffer[16][16], bool retry)
 
 {
-    clear_extraneous_tiles(layer_);
+    clear_tiles(layer_);
 
     for (int x = 0; x < 16; ++x) {
         // NOTE: only handle 15 rows because render_terrain() takes care of the
