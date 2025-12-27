@@ -329,7 +329,6 @@ int main(int argc, char** argv)
 
     // // Enable integer scaling for crisp pixels
     SDL_RenderSetIntegerScale(renderer, SDL_TRUE);
-    // SDL_RenderSetLogicalSize(renderer, 240, 160);
 
     tile_recolor_buffer = SDL_CreateTexture(renderer,
                                             SDL_PIXELFORMAT_RGBA8888,
@@ -1446,8 +1445,6 @@ void Platform::load_overlay_chunk(TileDesc dst,
 
 
 
-// Add these global variables near the top of the file with other texture globals
-
 static SDL_Texture* tile0_texture = nullptr;
 static int tile0_texture_width = 0;
 static int tile0_texture_height = 0;
@@ -1459,6 +1456,60 @@ static int tile1_texture_height = 0;
 static Vec2<s32> tile0_scroll;
 static Vec2<s32> tile1_scroll;
 Vec2<Float> overlay_origin;
+
+static bool tile0_index_zero_is_transparent = true;
+static bool tile1_index_zero_is_transparent = true;
+static bool overlay_index_zero_is_transparent = true;
+
+
+
+static bool is_tile_transparent(SDL_Surface* surface, int tile_x, int tile_y, int tile_size = 8)
+{
+    if (!surface) {
+        return true;
+    }
+
+    if (SDL_MUSTLOCK(surface)) {
+        if (SDL_LockSurface(surface) != 0) {
+            error(format("Failed to lock surface: %", SDL_GetError()));
+            return true;
+        }
+    }
+
+    bool is_transparent = true;
+    Uint8* pixels = (Uint8*)surface->pixels;
+    int pitch = surface->pitch;
+    int bpp = surface->format->BytesPerPixel;
+
+    for (int y = 0; y < tile_size && is_transparent; ++y) {
+        for (int x = 0; x < tile_size && is_transparent; ++x) {
+            int pixel_x = tile_x * tile_size + x;
+            int pixel_y = tile_y * tile_size + y;
+
+            Uint8* pixel_ptr = pixels + pixel_y * pitch + pixel_x * bpp;
+            Uint32 pixel_value = *(Uint32*)pixel_ptr;
+
+            Uint8 r, g, b, a;
+            SDL_GetRGBA(pixel_value, surface->format, &r, &g, &b, &a);
+
+            // Check if pixel is not transparent (alpha > 0)
+            if (r == 255 and g == 0 and b == 255) {
+
+            } else {
+                if (a > 0) {
+                    is_transparent = false;
+                }
+            }
+
+        }
+    }
+
+    if (SDL_MUSTLOCK(surface)) {
+        SDL_UnlockSurface(surface);
+    }
+
+    return is_transparent;
+}
 
 
 
@@ -1594,6 +1645,12 @@ void Platform::load_tile0_texture(const char* name_or_path)
         error(format("Failed to save debug image: %", SDL_GetError()));
     }
 
+    tile0_index_zero_is_transparent = is_tile_transparent(surface, 0, 0, 0);
+
+    info(format("Tile0 index 0 is % transparent",
+                tile0_index_zero_is_transparent ? "" : " NOT"));
+
+
     tile0_texture = SDL_CreateTextureFromSurface(renderer, surface);
     if (!tile0_texture) {
         error(format("Failed to create tile0 texture from %: %", full_path.c_str(), SDL_GetError()));
@@ -1629,6 +1686,12 @@ void Platform::load_tile1_texture(const char* name_or_path)
     if (!surface) {
         return;
     }
+
+    tile1_index_zero_is_transparent = is_tile_transparent(surface, 0, 0, 0);
+
+    info(format("Tile1 index 0 is % transparent",
+                tile1_index_zero_is_transparent ? "" : " NOT"));
+
 
     tile1_texture = SDL_CreateTextureFromSurface(renderer, surface);
     if (!tile1_texture) {
@@ -1688,7 +1751,6 @@ void Platform::set_overlay_origin(Float x, Float y)
     while (y < -256) {
         y += 256;
     }
-    info(format("overlay origin {%, %}", x, wrap_y(y)));
     overlay_origin = {x, wrap_y(y)};
 }
 
@@ -1927,6 +1989,8 @@ bool Platform::load_overlay_texture(const char* name)
 
     // Extract text colors from tile 81 BEFORE creating the texture
     extract_text_colors_from_overlay();
+
+    overlay_index_zero_is_transparent = is_tile_transparent(overlay_surface, 0, 0, 8);
 
     current_overlay_texture = SDL_CreateTextureFromSurface(renderer, overlay_surface);
     if (!current_overlay_texture) {
@@ -2466,7 +2530,7 @@ void Platform::Screen::clear()
     sprite_draw_list.clear();
 
     // Clear entire screen to black first (for letterboxing)
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 16, 255);
     SDL_RenderClear(renderer);
 
     SDL_SetRenderDrawColor(renderer, 99, 181, 231, 255);
@@ -2690,11 +2754,20 @@ static void draw_tile_layer(Layer layer, SDL_Texture* texture, int texture_width
         return;
     }
 
+    bool skip_tile_zero = true;
+    if (layer == Layer::map_0_ext || layer == Layer::map_0) {
+        skip_tile_zero = tile0_index_zero_is_transparent;
+    } else if (layer == Layer::map_1_ext || layer == Layer::map_1) {
+        skip_tile_zero = tile1_index_zero_is_transparent;
+    } else if (layer == Layer::overlay) {
+        skip_tile_zero = overlay_index_zero_is_transparent;
+    }
+
     auto view_center = view.int_center().cast<s32>();
     bool is_ext_layer = (layer == Layer::map_0_ext || layer == Layer::map_1_ext);
 
     for (auto& [pos, tile_info] : tiles) {
-        if (tile_info.tile_desc == 0) continue;
+        if (skip_tile_zero and tile_info.tile_desc == 0) continue;
 
         s32 tile_x = (s32)pos.first;
         s32 tile_y = (s32)pos.second;
