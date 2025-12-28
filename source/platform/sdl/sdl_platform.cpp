@@ -1144,11 +1144,147 @@ void Platform::overwrite_overlay_tile(u16 index, const EncodedTile& t)
 #include "stb_image.h"
 
 
-static SDL_Surface* load_png_with_stb(const std::string& path, const char* name)
-{
-    int width, height, channels;
+static Platform::Screen::Shader current_shader = passthrough_shader;
+static int current_shader_arg = 0;
 
-    // Load without forcing channel conversion - get the original format
+
+struct DynamicPalette {
+    std::map<u32, u8> color_to_index;  // RGB value -> palette index
+    SDL_Color colors[256];              // Up to 256 unique colors
+    u8 count = 0;
+
+    u8 add_color(const SDL_Color& c) {
+        u32 key = (c.r << 16) | (c.g << 8) | c.b;
+
+        auto it = color_to_index.find(key);
+        if (it != color_to_index.end()) {
+            return it->second;  // Already in palette
+        }
+
+        if (count >= 256) {
+            warning("Palette overflow - reusing index 0");
+            return 0;
+        }
+
+        u8 index = count++;
+        color_to_index[key] = index;
+        colors[index] = c;
+        return index;
+    }
+};
+
+
+
+static ColorConstant sdl_color_to_colorconstant(const SDL_Color& c) {
+    return (ColorConstant)((c.r << 16) | (c.g << 8) | c.b);
+}
+
+
+
+SDL_Color color_to_sdl(ColorConstant k) {
+    u32 hex = (u32)k;
+
+    // Extract RGB from hex color
+    u8 r = (hex >> 16) & 0xFF;
+    u8 g = (hex >> 8) & 0xFF;
+    u8 b = hex & 0xFF;
+
+    SDL_Color result = {r, g, b, 255};
+    return result;
+}
+
+
+
+struct PngPalette {
+    SDL_Color colors[256];
+    int count = 0;
+    bool found = false;
+};
+
+
+
+static PngPalette extract_png_palette(const std::string& path)
+{
+    PngPalette result;
+
+    std::ifstream file(path, std::ios::binary);
+    if (!file) {
+        error(format("Failed to open % for palette extraction", path.c_str()));
+        return result;
+    }
+
+    // Read and verify PNG signature
+    unsigned char signature[8];
+    file.read((char*)signature, 8);
+
+    // PNG signature: 137 80 78 71 13 10 26 10
+    const unsigned char png_sig[8] = {137, 80, 78, 71, 13, 10, 26, 10};
+    if (memcmp(signature, png_sig, 8) != 0) {
+        error(format("% is not a valid PNG file", path.c_str()));
+        return result;
+    }
+
+    // Read chunks until we find PLTE
+    while (file.good()) {
+        // Read chunk length (4 bytes, big-endian)
+        unsigned char length_bytes[4];
+        file.read((char*)length_bytes, 4);
+        if (!file.good()) break;
+
+        uint32_t chunk_length = (length_bytes[0] << 24) |
+                                (length_bytes[1] << 16) |
+                                (length_bytes[2] << 8) |
+                                length_bytes[3];
+
+        // Read chunk type (4 bytes)
+        char chunk_type[5] = {0};
+        file.read(chunk_type, 4);
+        if (!file.good()) break;
+
+        // Check if this is a PLTE chunk
+        if (strncmp(chunk_type, "PLTE", 4) == 0) {
+            // PLTE chunk found! Each entry is 3 bytes (RGB)
+            result.count = chunk_length / 3;
+
+            if (result.count > 256) {
+                warning(format("PNG palette has % entries, clamping to 256", result.count));
+                result.count = 256;
+            }
+
+            info(format("Found PNG palette with % colors", result.count));
+
+            for (int i = 0; i < result.count; i++) {
+                unsigned char rgb[3];
+                file.read((char*)rgb, 3);
+                result.colors[i].r = rgb[0];
+                result.colors[i].g = rgb[1];
+                result.colors[i].b = rgb[2];
+                result.colors[i].a = 255;
+            }
+
+            result.found = true;
+            return result;
+        }
+
+        // Skip this chunk's data and CRC (chunk_length + 4 bytes for CRC)
+        file.seekg(chunk_length + 4, std::ios::cur);
+    }
+
+    // No PLTE chunk found - not an indexed image
+    return result;
+}
+
+
+
+static SDL_Surface* load_png_with_stb(const std::string& path,
+                                      const char* name,
+                                      ShaderPalette shader_palette)
+{
+    // First, try to extract palette from PNG
+    PngPalette original_palette = extract_png_palette(path);
+
+    // Load the image with stb_image
+    int width, height, channels;
     unsigned char* data = stbi_load(path.c_str(), &width, &height, &channels, 0);
 
     if (!data) {
@@ -1156,39 +1292,131 @@ static SDL_Surface* load_png_with_stb(const std::string& path, const char* name)
         return nullptr;
     }
 
+    info(format("Loaded % with stb_image: %x% pixels, % channels",
+                name, width, height, channels));
+
     SDL_Surface* surface = nullptr;
 
-    if (channels == 1) {
-        // This is indexed color - but stb_image doesn't give us the palette!
-        // We need to use SDL_image for indexed PNGs
-        stbi_image_free(data);
+    // If we found a palette, we need to apply the shader
+    if (original_palette.found) {
+        info(format("Applying shader to indexed image % (% palette colors)",
+                   name, original_palette.count));
 
-        // Fall back to SDL_image for indexed color support
-        surface = IMG_Load(path.c_str());
+        // Apply shader to the original palette
+        SDL_Color transformed_palette[256];
+        for (int i = 0; i < original_palette.count; i++) {
+            ColorConstant original = sdl_color_to_colorconstant(original_palette.colors[i]);
+            ColorConstant transformed = current_shader(std::move(shader_palette),
+                                                       std::move(original),
+                                                       std::move(current_shader_arg),
+                                                       std::move(i));
+            transformed_palette[i] = color_to_sdl(transformed);
+        }
 
-        if (!surface) {
-            error(format("IMG_Load failed: %", IMG_GetError()));
+        // Now we need to map the RGB values back to palette indices
+        // Build a lookup map: RGB -> palette index
+        std::map<u32, u8> rgb_to_index;
+        for (int i = 0; i < original_palette.count; i++) {
+            u32 key = (original_palette.colors[i].r << 16) |
+                      (original_palette.colors[i].g << 8) |
+                      original_palette.colors[i].b;
+            rgb_to_index[key] = i;
+        }
+
+        // Create surface from stb_image data
+        int bpp = channels * 8;
+        SDL_Surface* temp_surface = SDL_CreateRGBSurfaceFrom(
+            data, width, height, bpp, width * channels,
+            0x000000FF, 0x0000FF00, 0x00FF0000,
+            channels == 4 ? 0xFF000000 : 0);
+
+        if (!temp_surface) {
+            stbi_image_free(data);
+            error(format("Failed to create surface: %", SDL_GetError()));
             return nullptr;
         }
 
-        // Handle palette
-        if (surface->format->palette) {
-            // Find magenta (0xFF, 0x00, 0xFF) in the palette and set it as color key
-            for (int i = 0; i < surface->format->palette->ncolors; i++) {
-                SDL_Color& c = surface->format->palette->colors[i];
-                if (c.r == 0xFF && c.g == 0x00 && c.b == 0xFF) {
-                    SDL_SetColorKey(surface, SDL_TRUE, i);
-                    break;
-                }
+        // Convert to RGBA32 for processing
+        SDL_Surface* rgba_surface = SDL_ConvertSurfaceFormat(
+            temp_surface, SDL_PIXELFORMAT_RGBA32, 0);
+        SDL_FreeSurface(temp_surface);
+        stbi_image_free(data);
+
+        if (!rgba_surface) {
+            error(format("Failed to convert to RGBA32: %", SDL_GetError()));
+            return nullptr;
+        }
+
+        // Create output surface
+        SDL_Surface* result_surface = SDL_CreateRGBSurface(
+            0, width, height, 32,
+            rgba_surface->format->Rmask,
+            rgba_surface->format->Gmask,
+            rgba_surface->format->Bmask,
+            rgba_surface->format->Amask);
+
+        if (!result_surface) {
+            error(format("Failed to create result surface: %", SDL_GetError()));
+            SDL_FreeSurface(rgba_surface);
+            return nullptr;
+        }
+
+        // Apply shader transformation
+        if (SDL_MUSTLOCK(rgba_surface)) SDL_LockSurface(rgba_surface);
+        if (SDL_MUSTLOCK(result_surface)) SDL_LockSurface(result_surface);
+
+        Uint32* src_pixels = (Uint32*)rgba_surface->pixels;
+        Uint32* dst_pixels = (Uint32*)result_surface->pixels;
+        int pixel_count = width * height;
+
+        for (int i = 0; i < pixel_count; i++) {
+            Uint32 pixel = src_pixels[i];
+            SDL_Color c;
+            SDL_GetRGBA(pixel, rgba_surface->format, &c.r, &c.g, &c.b, &c.a);
+
+            // Handle transparency
+            if (c.a == 0) {
+                dst_pixels[i] = 0;
+                continue;
+            }
+
+            // Look up original palette index
+            u32 key = (c.r << 16) | (c.g << 8) | c.b;
+            auto it = rgb_to_index.find(key);
+
+            if (it != rgb_to_index.end()) {
+                // Found palette index - use shader-transformed color
+                u8 index = it->second;
+                SDL_Color& transformed = transformed_palette[index];
+
+                dst_pixels[i] = SDL_MapRGBA(result_surface->format,
+                                            transformed.r,
+                                            transformed.g,
+                                            transformed.b,
+                                            c.a);
+            } else {
+                // Not in palette? This shouldn't happen for indexed images
+                // Just pass through
+                dst_pixels[i] = pixel;
             }
         }
 
-        return surface;
+        if (SDL_MUSTLOCK(rgba_surface)) SDL_UnlockSurface(rgba_surface);
+        if (SDL_MUSTLOCK(result_surface)) SDL_UnlockSurface(result_surface);
 
-    } else if (channels == 3 || channels == 4) {
-        // RGB or RGBA
+        SDL_FreeSurface(rgba_surface);
+
+        // Set magenta as color key
+        Uint32 magenta = SDL_MapRGB(result_surface->format, 0xFF, 0x00, 0xFF);
+        SDL_SetColorKey(result_surface, SDL_TRUE, magenta);
+
+        return result_surface;
+
+    } else {
+        // No palette - RGB/RGBA image, load without shader
+        info(format("% is RGB/RGBA, loading without shader", name));
+
         int bpp = channels * 8;
-
         surface = SDL_CreateRGBSurfaceFrom(
             data, width, height, bpp, width * channels,
             0x000000FF, 0x0000FF00, 0x00FF0000,
@@ -1200,23 +1428,17 @@ static SDL_Surface* load_png_with_stb(const std::string& path, const char* name)
             return nullptr;
         }
 
-        // Copy so we can free stb data
         SDL_Surface* copy = SDL_ConvertSurface(surface, surface->format, 0);
         SDL_FreeSurface(surface);
         stbi_image_free(data);
 
         if (copy) {
-            // Set magenta as color key for RGB images
             Uint32 magenta = SDL_MapRGB(copy->format, 0xFF, 0x00, 0xFF);
             SDL_SetColorKey(copy, SDL_TRUE, magenta);
         }
 
         return copy;
     }
-
-    stbi_image_free(data);
-    error(format("Unsupported channel count: %", channels));
-    return nullptr;
 }
 
 
@@ -1328,7 +1550,7 @@ void Platform::load_overlay_chunk(TileDesc dst,
             std::string full_path = resource_path() + "images" + PATH_DELIMITER +
                 image_file + ".png";
 
-            source_surface = load_png_with_stb(full_path, image_file);
+            source_surface = load_png_with_stb(full_path, image_file, ShaderPalette::overlay);
             if (!source_surface) {
                 error(format("load_overlay_chunk: Failed to load %", image_file));
                 return;
@@ -1354,7 +1576,7 @@ void Platform::load_overlay_chunk(TileDesc dst,
             std::string full_path = resource_path() + "images" + PATH_DELIMITER +
                 cache_key + ".png";
 
-            source_surface = load_png_with_stb(full_path, cache_key.c_str());
+            source_surface = load_png_with_stb(full_path, cache_key.c_str(), ShaderPalette::overlay);
             if (!source_surface) {
                 error(format("load_overlay_chunk: Failed to reload current texture %",
                              cache_key.c_str()));
@@ -1622,7 +1844,7 @@ void Platform::load_tile0_texture(const char* name_or_path)
 
     std::string full_path = resource_path() + "images" + PATH_DELIMITER + name + ".png";
 
-    SDL_Surface* surface = load_png_with_stb(full_path, name.c_str());
+    SDL_Surface* surface = load_png_with_stb(full_path, name.c_str(), ShaderPalette::tile0);
     if (!surface) {
         return;
     }
@@ -1665,7 +1887,7 @@ void Platform::load_tile1_texture(const char* name_or_path)
 
     std::string full_path = resource_path() + "images" + PATH_DELIMITER + name + ".png";
 
-    SDL_Surface* surface = load_png_with_stb(full_path, name.c_str());
+    SDL_Surface* surface = load_png_with_stb(full_path, name.c_str(), ShaderPalette::tile1);
     if (!surface) {
         return;
     }
@@ -1683,6 +1905,9 @@ void Platform::load_tile1_texture(const char* name_or_path)
 
     tile1_texture_width = surface->w;
     tile1_texture_height = surface->h;
+
+    info(format("Loaded tile1 texture %: %x% pixels", name.c_str(),
+               tile1_texture_width, tile1_texture_height));
 
     SDL_FreeSurface(surface);
 }
@@ -1749,7 +1974,7 @@ void Platform::load_sprite_texture(const char* name)
 
     std::string full_path = resource_path() + "images" + PATH_DELIMITER + name + ".png";
 
-    SDL_Surface* surface = IMG_Load(full_path.c_str());
+    SDL_Surface* surface = load_png_with_stb(full_path, name, ShaderPalette::spritesheet);
     if (!surface) {
         error(format("Failed to load image %: %", full_path.c_str(), IMG_GetError()));
         return;
@@ -2337,12 +2562,14 @@ Platform::Screen::Screen() : userdata_(nullptr)
 
 void Platform::Screen::set_shader(Shader shader)
 {
+    current_shader = shader;
 }
 
 
 
 void Platform::Screen::set_shader_argument(int arg)
 {
+    current_shader_arg = arg;
 }
 
 
@@ -2534,23 +2761,15 @@ void Platform::Screen::clear()
     SDL_SetRenderDrawColor(renderer, 0, 0, 16, 255);
     SDL_RenderClear(renderer);
 
-    SDL_SetRenderDrawColor(renderer, 99, 181, 231, 255);
+    auto bkg_color = current_shader(ShaderPalette::background,
+                                    custom_color(0x63b2e0),
+                                    0,
+                                    1);
+
+    auto clr = color_to_sdl(bkg_color);
+    SDL_SetRenderDrawColor(renderer, clr.r, clr.g, clr.b, clr.a);
     SDL_Rect game_area = {0, 0, 240, 160};
     SDL_RenderFillRect(renderer, &game_area);
-}
-
-
-
-SDL_Color color_to_sdl(ColorConstant k) {
-    u32 hex = (u32)k;
-
-    // Extract RGB from hex color
-    u8 r = (hex >> 16) & 0xFF;
-    u8 g = (hex >> 8) & 0xFF;
-    u8 b = hex & 0xFF;
-
-    SDL_Color result = {r, g, b, 255};
-    return result;
 }
 
 

@@ -1132,22 +1132,27 @@ endif()
 
 target_precompile_headers(${EXECUTABLE_NAME}
   PRIVATE
-  <limits>
-  <utility>
-  <new>
-  <tuple>
-  <variant>
-  <type_traits>
-  <initializer_list>
+  <algorithm>
+  <array>
   <ciso646>
-  <stddef.h>
+  <initializer_list>
+  <iterator>
+  <limits>
+  <memory>
+  <new>
   <optional>
+  <stddef.h>
+  <tuple>
+  <type_traits>
+  <utility>
+  <variant>
   ../source/unicode.hpp
   ../source/allocator.hpp
   ../source/containers/vector.hpp
   ../source/graphics/overlay.hpp
   ../source/globals.hpp
   ../source/memory/buffer.hpp
+  ../source/script/lisp.hpp
   ../source/number/numeric.hpp
   ../source/number/fixnum.hpp
   ../source/skyland/room.hpp
