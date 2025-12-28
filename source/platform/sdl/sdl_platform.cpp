@@ -107,6 +107,28 @@ static int last_window_height = 0;
 static SDL_Texture* tile_recolor_buffer = nullptr;
 
 
+static int circle_effect_radius = 0;
+static int circle_effect_origin_x = 0;
+static int circle_effect_origin_y = 0;
+
+
+
+static const Platform::Extensions extensions{
+    .overlay_circle_effect = [](int radius, int x, int y) {
+        circle_effect_radius = radius;
+        circle_effect_origin_x = x;
+        circle_effect_origin_y = y;
+    }
+};
+
+
+
+const Platform::Extensions& Platform::get_extensions()
+{
+    return extensions;
+}
+
+
 
 static int calculate_best_scale(int window_w, int window_h)
 {
@@ -3063,6 +3085,23 @@ ColorConstant bg_color_default()
 
 
 
+void SDL_RenderFillCircle(SDL_Renderer *renderer,
+                          int cx,
+                          int cy,
+                          int radius,
+                          Uint8 r,
+                          Uint8 g,
+                          Uint8 b,
+                          Uint8 a) {
+    SDL_SetRenderDrawColor(renderer, r, g, b, a);
+    for (int y = -radius; y <= radius; y++) {
+        int width = (int)sqrt(radius*radius - y*y);
+        SDL_RenderDrawLine(renderer, cx - width, cy + y, cx + width, cy + y);
+    }
+}
+
+
+
 void Platform::Screen::display()
 {
     draw_sprite_group(3);
@@ -3090,7 +3129,21 @@ void Platform::Screen::display()
         display_fade();
     }
 
-    if (current_overlay_texture) {
+    if (circle_effect_radius) {
+        ColorConstant color = custom_color(0xceb282);
+        if (circle_effect_radius <= 70) {
+            color = custom_color(0xca7f5c);
+        }
+        auto clr = color_to_sdl(color);
+        SDL_RenderFillCircle(renderer,
+                             circle_effect_origin_x,
+                             circle_effect_origin_y,
+                             circle_effect_radius,
+                             clr.r,
+                             clr.g,
+                             clr.b,
+                             255);
+    } else if (current_overlay_texture) {
         auto& overlay_tiles = tile_layers_[Layer::overlay];
         for (auto& [pos, tile_info] : overlay_tiles) {
             auto tile_desc = tile_info.tile_desc;
@@ -3340,18 +3393,6 @@ Platform::ModelName Platform::model_name() const
 #else
     return "Linux";
 #endif
-}
-
-
-
-static const Platform::Extensions extensions{
-};
-
-
-
-const Platform::Extensions& Platform::get_extensions()
-{
-    return extensions;
 }
 
 
