@@ -247,10 +247,8 @@ static void toggle_fullscreen()
         info(format("Entered fullscreen mode: %x%",
                    display_mode.w, display_mode.h));
     } else {
-        // Exit fullscreen
         SDL_SetWindowFullscreen(window, 0);
 
-        // Restore to previous size if we have it
         if (last_window_width > 0 && last_window_height > 0) {
             SDL_SetWindowSize(window, last_window_width, last_window_height);
         } else {
@@ -337,7 +335,6 @@ int main(int argc, char** argv)
     // Set minimum window size to 1x scale
     SDL_SetWindowMinimumSize(window, logical_width, logical_height);
 
-    // Create renderer instead of getting surface
     renderer = SDL_CreateRenderer(window, -1,
                                   SDL_RENDERER_ACCELERATED |
                                   SDL_RENDERER_PRESENTVSYNC);
@@ -347,7 +344,7 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    // // Enable integer scaling for crisp pixels
+    // Enable integer scaling for crisp pixels
     SDL_RenderSetIntegerScale(renderer, SDL_TRUE);
 
     tile_recolor_buffer = SDL_CreateTexture(renderer,
@@ -385,7 +382,7 @@ void Platform::restart()
 
 struct TileInfo {
     TileDesc tile_desc;
-    u16 palette;  // Store the palette index
+    u16 palette;
     ColorConstant text_fg_color_;
     ColorConstant text_bg_color_;
 };
@@ -419,8 +416,8 @@ TileDesc Platform::get_tile(Layer layer, u16 x, u16 y)
 }
 
 
-static SDL_Color default_text_fg_color = {0xcd, 0xc3, 0xeb, 255};  // Initial fallback
-static SDL_Color default_text_bg_color = {0x00, 0x00, 0x00, 255};  // Initial fallback
+static SDL_Color default_text_fg_color = {0xcd, 0xc3, 0xeb, 255};
+static SDL_Color default_text_bg_color = {0x00, 0x00, 0x00, 255};
 
 
 
@@ -515,7 +512,6 @@ void Platform::Keyboard::poll()
 {
     std::copy(std::begin(states_), std::end(states_), std::begin(prev_));
 
-    // Process all pending events
     SDL_Event e;
     while (SDL_PollEvent(&e)) {
         switch (e.type) {
@@ -622,7 +618,7 @@ std::pair<const char*, u32> Platform::load_file(const char* folder,
 struct DynamicTextureMapping
 {
     bool reserved_ = false;
-    u16 spritesheet_offset_ = 0;  // Where in the spritesheet to get data from
+    u16 spritesheet_offset_ = 0;
 } dynamic_texture_mappings[Platform::dynamic_texture_count];
 
 
@@ -788,7 +784,7 @@ u16 Platform::get_palette(Layer layer, u16 x, u16 y)
 
 void Platform::set_raw_tile(Layer layer, u16 x, u16 y, TileDesc val)
 {
-    set_tile(layer, x, y, val);// FIXME: leaves junk tiles everywhere...
+    set_tile(layer, x, y, val);
 }
 
 
@@ -872,7 +868,6 @@ static SDL_Texture* current_overlay_texture = nullptr;
 static int overlay_texture_width = 0;
 static int overlay_texture_height = 0;
 
-// For dynamic glyph mapping, we'll extend the texture
 static SDL_Surface* overlay_surface = nullptr;
 static int overlay_base_tile_count = 0; // How many tiles in the original texture
 
@@ -1003,7 +998,6 @@ TileDesc Platform::map_glyph(const utf8::Codepoint& glyph,
         }
     }
 
-    // Try to find an unused slot
     int slot_index = -1;
     for (size_t i = 0; i < glyph_cache.size(); ++i) {
         if (!glyph_cache[i].in_use) {
@@ -1012,7 +1006,6 @@ TileDesc Platform::map_glyph(const utf8::Codepoint& glyph,
         }
     }
 
-    // If no free slot, create a new one (up to the limit)
     if (slot_index == -1) {
         if (glyph_cache.size() >= max_glyph_cache_size) {
             // Cache full - could implement LRU eviction here
@@ -1080,8 +1073,6 @@ TileDesc Platform::map_glyph(const utf8::Codepoint& glyph,
 
 void Platform::set_tile(u16 x, u16 y, TileDesc glyph, const FontColors& colors)
 {
-    // For SDL, we'll ignore custom colors for now and just use the glyph
-    // Custom colors would require creating palette-swapped versions of glyphs
     set_tile(Layer::overlay, x, y, glyph);
 
     auto& val = tile_layers_[Layer::overlay][{x, y}];
@@ -1096,7 +1087,6 @@ void Platform::enable_glyph_mode(bool enabled)
     set_gflag(GlobalFlag::glyph_mode, enabled);
 
     if (enabled) {
-        // Clear glyph cache
         for (auto& entry : glyph_cache) {
             entry.in_use = false;
         }
@@ -1122,7 +1112,6 @@ void Platform::fill_overlay(u16 tile_desc)
 
 
 
-// Clean up on shutdown (add to Platform destructor or cleanup)
 void cleanup_charset_surfaces()
 {
     for (auto& [name, surface] : charset_surfaces) {
@@ -1489,15 +1478,11 @@ void load_metatiled_chunk(SDL_Surface* source_surface,
     const int tiles_per_row_src = source_surface->w / tile_size;
     const int meta_tiles_per_row = source_surface->w / meta_tile_size;
 
-    // Number of meta-tiles to copy
     int num_meta_tiles = copy_count / tiles_per_meta;
 
     for (u16 i = 0; i < num_meta_tiles; ++i) {
-        // src refers to the starting TILE index
-        // Each meta-tile we want is tiles_per_meta apart
         TileDesc src_tile_index = src + (i * tiles_per_meta);
 
-        // Convert tile index to meta-tile index
         int meta_tile_index = src_tile_index / tiles_per_meta;
 
         // Find which meta-tile block in the source texture
