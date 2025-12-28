@@ -2371,6 +2371,30 @@ void Platform::Screen::draw_batch(TextureIndex t,
                                   const Buffer<Vec2<s32>, 64>& coords,
                                   const SpriteBatchOptions& opts)
 {
+    auto view_center = get_view().int_center().cast<s32>();
+
+    for (const auto& coord : coords) {
+        Vec2<s32> pos = coord;
+
+        if (!opts.position_absolute_) {
+            pos = pos - view_center;
+        }
+
+        pos.y = wrap_y(pos.y);
+
+        sprite_draw_list.push_back({
+            pos,
+            opts.sz_,
+            ColorConstant::null,  // No color mixing
+            true,                 // visible
+            t,                    // texture_index
+            {false, false},       // flip
+            0.0,                  // rotation
+            1,                    // priority
+            opts.alpha_,
+            0                     // mix_amount
+        });
+    }
 }
 
 
