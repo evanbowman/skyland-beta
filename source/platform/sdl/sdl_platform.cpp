@@ -824,11 +824,18 @@ void Platform::blit_t1_tile_to_texture(u16 from_index, u16 to_index, bool hard)
 void Platform::walk_filesystem(
     Function<8 * sizeof(void*), void(const char* path)> callback)
 {
+    std::vector<std::string> paths;
+
     auto res_path = resource_path();
     using recursive_directory_iterator = std::filesystem::recursive_directory_iterator;
     for (const auto& dirent : recursive_directory_iterator(res_path)) {
         if (dirent.is_regular_file()) {
             auto full_path = dirent.path().string();
+            if (full_path.size() and
+                full_path[full_path.size() - 1] == '~') {
+                // Gah! It's an emacs temporary file...
+                continue;
+            }
             // Remove resource_path() prefix to get relative path
             if (full_path.size() > res_path.size() &&
                 full_path.substr(0, res_path.size()) == res_path) {
@@ -839,9 +846,13 @@ void Platform::walk_filesystem(
                     relative_path = relative_path.substr(1);
                 }
                 relative_path = "/" + relative_path;
-                callback(relative_path.c_str());
+                paths.push_back(relative_path);
             }
         }
+    }
+    std::sort(paths.begin(), paths.end());
+    for (auto& path : paths) {
+        callback(path.c_str());
     }
 }
 
