@@ -153,6 +153,9 @@ static const Platform::Extensions extensions{
         circle_effect_radius = radius;
         circle_effect_origin_x = x;
         circle_effect_origin_y = y;
+    },
+    .sprite_overlapping_supported = [](bool& result) {
+        result = true;
     }
 };
 

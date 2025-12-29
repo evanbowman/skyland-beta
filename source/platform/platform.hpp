@@ -959,6 +959,8 @@ public:
         void (*override_sprite_palette)(u8 index, ColorConstant c);
 
         bool (*__test_compare_sound)(const char* sound_name);
+
+        void (*sprite_overlapping_supported)(bool& result);
     };
 
 
