@@ -111,6 +111,41 @@ static int circle_effect_radius = 0;
 static int circle_effect_origin_x = 0;
 static int circle_effect_origin_y = 0;
 
+struct PngPalette {
+    SDL_Color colors[256];
+    int count = 0;
+    bool found = false;
+};
+
+// Store shader-transformed palettes for tile encoding
+static PngPalette overlay_transformed_palette;
+static PngPalette tile0_transformed_palette;
+static PngPalette tile1_transformed_palette;
+static PngPalette sprite_transformed_palette;
+
+
+static SDL_Texture* current_overlay_texture = nullptr;
+static int overlay_texture_width = 0;
+static int overlay_texture_height = 0;
+
+// For dynamic glyph mapping, we'll extend the texture
+static SDL_Surface* overlay_surface = nullptr;
+static int overlay_base_tile_count = 0; // How many tiles in the original texture
+
+static SDL_Texture* tile0_texture = nullptr;
+static SDL_Surface* tile0_surface = nullptr;
+static int tile0_texture_width = 0;
+static int tile0_texture_height = 0;
+
+static SDL_Texture* tile1_texture = nullptr;
+static SDL_Surface* tile1_surface = nullptr;
+static int tile1_texture_width = 0;
+static int tile1_texture_height = 0;
+
+
+static std::map<std::string, SDL_Surface*> charset_surfaces;
+static std::map<std::string, SDL_Surface*> overlay_source_cache;
+
 
 
 static const Platform::Extensions extensions{
@@ -741,7 +776,125 @@ bool Platform::read_save_data(void* buffer, u32 data_length, u32 offset)
 
 Platform::TilePixels Platform::extract_tile(Layer layer, u16 tile)
 {
-    return {};
+    TilePixels result;
+    // Initialize to zeros
+    memset(result.data_, 0, sizeof(result.data_));
+
+    SDL_Surface* surface = nullptr;
+    PngPalette* palette = nullptr;
+    int tile_size = 8;
+
+    // Determine which surface and palette to use based on layer
+    switch (layer) {
+    case Layer::map_1_ext:
+    case Layer::map_1:
+        surface = tile1_surface;
+        palette = &tile1_transformed_palette;
+        tile_size = 16;  // 16x16 tiles for map layers
+        break;
+
+    case Layer::map_0_ext:
+    case Layer::map_0:
+        surface = tile0_surface;
+        palette = &tile0_transformed_palette;
+        tile_size = 16;  // 16x16 tiles for map layers
+        break;
+
+    case Layer::overlay:
+        surface = overlay_surface;
+        palette = &overlay_transformed_palette;
+        tile_size = 8;  // 8x8 tiles for overlay
+        break;
+
+    case Layer::background:
+        error("extract_tile: background layer not implemented");
+        return result;
+
+    default:
+        error("extract_tile: unknown layer");
+        return result;
+    }
+
+    if (!surface) {
+        error("extract_tile: surface not initialized");
+        return result;
+    }
+
+    if (!palette || !palette->found) {
+        error("extract_tile: palette not available");
+        return result;
+    }
+
+    // Calculate tile position in the surface
+    const int tiles_per_row = surface->w / tile_size;
+    int tile_x = tile % tiles_per_row;
+    int tile_y = tile / tiles_per_row;
+
+    // Check bounds
+    if (tile_x * tile_size >= surface->w || tile_y * tile_size >= surface->h) {
+        error(format("extract_tile: tile index % out of bounds", tile));
+        return result;
+    }
+
+    // Build reverse lookup: RGB -> palette index
+    std::map<u32, u8> rgb_to_index;
+    for (int i = 0; i < palette->count; i++) {
+        u32 key = (palette->colors[i].r << 16) |
+                  (palette->colors[i].g << 8) |
+                  palette->colors[i].b;
+        rgb_to_index[key] = i;
+    }
+
+    // Lock surface for pixel access
+    if (SDL_MUSTLOCK(surface)) {
+        if (SDL_LockSurface(surface) != 0) {
+            error(format("Failed to lock surface: %", SDL_GetError()));
+            return result;
+        }
+    }
+
+    Uint8* pixels = (Uint8*)surface->pixels;
+    int pitch = surface->pitch;
+    int bpp = surface->format->BytesPerPixel;
+
+    // Extract pixels and convert to palette indices
+    for (int y = 0; y < tile_size && y < 16; y++) {
+        for (int x = 0; x < tile_size && x < 16; x++) {
+            int pixel_x = tile_x * tile_size + x;
+            int pixel_y = tile_y * tile_size + y;
+
+            // Read pixel
+            Uint8* pixel_ptr = pixels + pixel_y * pitch + pixel_x * bpp;
+            Uint32 pixel_value = *(Uint32*)pixel_ptr;
+
+            // Convert to RGBA
+            Uint8 r, g, b, a;
+            SDL_GetRGBA(pixel_value, surface->format, &r, &g, &b, &a);
+
+            // Look up palette index
+            u8 palette_index = 0;
+            if (a > 0) {  // Non-transparent pixel
+                u32 key = (r << 16) | (g << 8) | b;
+                auto it = rgb_to_index.find(key);
+                if (it != rgb_to_index.end()) {
+                    palette_index = it->second;
+                } else {
+                    // Color not in palette - find closest match or use 0
+                    warning(format("extract_tile: color not in palette at (%,%)", x, y));
+                    palette_index = 0;
+                }
+            }
+
+            // Store palette index
+            result.data_[x][y] = palette_index;
+        }
+    }
+
+    if (SDL_MUSTLOCK(surface)) {
+        SDL_UnlockSurface(surface);
+    }
+
+    return result;
 }
 
 
@@ -918,42 +1071,6 @@ struct GlyphCacheEntry {
 
 static std::vector<GlyphCacheEntry> glyph_cache;
 static const int max_glyph_cache_size = 256;
-
-static SDL_Texture* current_overlay_texture = nullptr;
-static int overlay_texture_width = 0;
-static int overlay_texture_height = 0;
-
-// For dynamic glyph mapping, we'll extend the texture
-static SDL_Surface* overlay_surface = nullptr;
-static int overlay_base_tile_count = 0; // How many tiles in the original texture
-
-static SDL_Texture* tile0_texture = nullptr;
-static SDL_Surface* tile0_surface = nullptr;
-static int tile0_texture_width = 0;
-static int tile0_texture_height = 0;
-
-static SDL_Texture* tile1_texture = nullptr;
-static SDL_Surface* tile1_surface = nullptr;
-static int tile1_texture_width = 0;
-static int tile1_texture_height = 0;
-
-
-struct PngPalette {
-    SDL_Color colors[256];
-    int count = 0;
-    bool found = false;
-};
-
-
-// Store shader-transformed palettes for tile encoding
-static PngPalette overlay_transformed_palette;
-static PngPalette tile0_transformed_palette;
-static PngPalette tile1_transformed_palette;
-static PngPalette sprite_transformed_palette;
-
-
-static std::map<std::string, SDL_Surface*> charset_surfaces;
-static std::map<std::string, SDL_Surface*> overlay_source_cache;
 
 
 
