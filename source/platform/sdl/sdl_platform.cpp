@@ -3584,7 +3584,6 @@ static void draw_parallax_background(SDL_Texture* texture,
 
     auto view_center = view.int_center().cast<s32>();
 
-    // Lambda to draw one strip
     auto draw_strip = [&](const ParallaxStrip& strip) {
         const int tile_size = 8;
         const int wrap_width = 256;  // 32 tiles * 8 pixels

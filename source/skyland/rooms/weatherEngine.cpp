@@ -114,6 +114,8 @@ public:
             PLATFORM.screen().set_shader(APP.environment().shader());
             PLATFORM.screen().set_shader_argument(0);
 
+            PLATFORM.load_background_texture(APP.environment().background_texture());
+
             APP.player_island().schedule_repaint();
 
             if (APP.opponent_island()) {

@@ -1331,6 +1331,7 @@ BINDING_TABLE({
           environment_init(L_LOAD_INT(0));
           PLATFORM.screen().set_shader(APP.environment().shader());
           PLATFORM.screen().set_shader_argument(0);
+          PLATFORM.load_background_texture(APP.environment().background_texture());
 
           if (not PLATFORM.speaker().is_music_playing(
                   APP.environment().music()->c_str())) {
