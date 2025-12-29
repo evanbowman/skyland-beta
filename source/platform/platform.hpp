@@ -961,6 +961,7 @@ public:
         bool (*__test_compare_sound)(const char* sound_name);
 
         void (*sprite_overlapping_supported)(bool& result);
+        bool (*has_startup_opt)(const char* opt);
     };
 
 

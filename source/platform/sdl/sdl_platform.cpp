@@ -122,7 +122,13 @@ static PngPalette overlay_transformed_palette;
 static PngPalette tile0_transformed_palette;
 static PngPalette tile1_transformed_palette;
 static PngPalette sprite_transformed_palette;
+static PngPalette background_transformed_palette;
 
+
+static SDL_Texture* background_texture = nullptr;
+static SDL_Surface* background_surface = nullptr;
+static int background_texture_width = 0;
+static int background_texture_height = 0;
 
 static SDL_Texture* current_overlay_texture = nullptr;
 static int overlay_texture_width = 0;
@@ -147,6 +153,25 @@ static std::map<std::string, SDL_Surface*> charset_surfaces;
 static std::map<std::string, SDL_Surface*> overlay_source_cache;
 
 
+static int process_argc;
+static char** process_argv;
+
+
+static bool parallax_clouds_enabled = false;
+static bool vertical_parallax_enabled = false;
+
+
+struct ParallaxStrip {
+    int start_tile_row;
+    int end_tile_row;      // inclusive
+    Vec2<s32> scroll;
+};
+
+static ParallaxStrip parallax_strip1 = {0, 13, {0, 0}};      // gradient
+static ParallaxStrip parallax_strip2 = {14, 15, {0, 0}};   // dark clouds
+static ParallaxStrip parallax_strip3 = {16, 19, {0, 0}};   // white clouds
+
+
 
 static const Platform::Extensions extensions{
     .overlay_circle_effect = [](int radius, int x, int y) {
@@ -154,9 +179,45 @@ static const Platform::Extensions extensions{
         circle_effect_origin_x = x;
         circle_effect_origin_y = y;
     },
+    .vertical_parallax_enable = [](bool on) {
+        vertical_parallax_enabled = on;
+    },
+    .enable_parallax_clouds = [](bool on) {
+        parallax_clouds_enabled = on;
+    },
     .sprite_overlapping_supported = [](bool& result) {
         result = true;
-    }
+    },
+    .has_startup_opt = [](const char* opt) -> bool {
+        for (int i = 0; i < process_argc; ++i) {
+            if (str_eq(process_argv[i], opt)) {
+                return true;
+            }
+        }
+        return false;
+    },
+    .update_parallax_r1 = [](u8 scroll) {
+        auto& screen = PLATFORM.screen();
+        auto center = screen.get_view().int_center().cast<s32>();
+        if (vertical_parallax_enabled) {
+            parallax_strip2.scroll.x = scroll + (center.x / 3);
+            parallax_strip2.scroll.y = center.y / 4 + 3;
+        } else {
+            parallax_strip2.scroll.x = scroll + (center.x / 3);
+            parallax_strip2.scroll.y = center.y / 2;
+        }
+    },
+    .update_parallax_r2 = [](u8 scroll) {
+        auto& screen = PLATFORM.screen();
+        auto center = screen.get_view().int_center().cast<s32>();
+        if (vertical_parallax_enabled) {
+            parallax_strip3.scroll.x = scroll + (center.x / 3);
+            parallax_strip3.scroll.y = center.y / 2 * 0.7f + 3;
+        } else {
+            parallax_strip3.scroll.x = scroll + (center.x / 3);
+            parallax_strip3.scroll.y = center.y / 2;
+        }
+    },
 };
 
 
@@ -350,6 +411,9 @@ int main(int argc, char** argv)
         fprintf(stderr, "SDL failed to initialise: %s\n", SDL_GetError());
         return 1;
     }
+
+    process_argc = argc;
+    process_argv = argv;
 
     SDL_SetHint(SDL_HINT_VIDEO_HIGHDPI_DISABLED, "0");
 
@@ -810,8 +874,10 @@ Platform::TilePixels Platform::extract_tile(Layer layer, u16 tile)
         break;
 
     case Layer::background:
-        error("extract_tile: background layer not implemented");
-        return result;
+        surface = background_surface;
+        palette = &background_transformed_palette;
+        tile_size = 8;
+        break;
 
     default:
         error("extract_tile: unknown layer");
@@ -1749,8 +1815,6 @@ static PngPalette extract_png_palette(const std::string& path)
                 result.count = 256;
             }
 
-            info(format("Found PNG palette with % colors", result.count));
-
             for (int i = 0; i < result.count; i++) {
                 unsigned char rgb[3];
                 file.read((char*)rgb, 3);
@@ -1790,16 +1854,10 @@ static SDL_Surface* load_png_with_stb(const std::string& path,
         return nullptr;
     }
 
-    info(format("Loaded % with stb_image: %x% pixels, % channels",
-                name, width, height, channels));
-
     SDL_Surface* surface = nullptr;
 
     // If we found a palette, we need to apply the shader
     if (original_palette.found) {
-        info(format("Applying shader to indexed image % (% palette colors)",
-                   name, original_palette.count));
-
         // Apply shader to the original palette
         SDL_Color transformed_palette[256];
         for (int i = 0; i < original_palette.count; i++) {
@@ -1821,6 +1879,8 @@ static SDL_Surface* load_png_with_stb(const std::string& path,
             target_palette = &tile1_transformed_palette;
         } else if (shader_palette == ShaderPalette::spritesheet) {
             target_palette = &sprite_transformed_palette;
+        } else if (shader_palette == ShaderPalette::background) {
+            target_palette = &background_transformed_palette;
         }
 
         if (target_palette) {
@@ -1930,9 +1990,6 @@ static SDL_Surface* load_png_with_stb(const std::string& path,
         return result_surface;
 
     } else {
-        // No palette - RGB/RGBA image, load without shader
-        info(format("% is RGB/RGBA, loading without shader", name));
-
         int bpp = channels * 8;
         surface = SDL_CreateRGBSurfaceFrom(
             data, width, height, bpp, width * channels,
@@ -2381,7 +2438,6 @@ void Platform::load_tile0_texture(const char* name_or_path)
 
 void Platform::load_tile1_texture(const char* name_or_path)
 {
-    info(name_or_path);
     auto name = extract_texture_name(name_or_path);
 
     if (tile1_texture) {
@@ -2417,9 +2473,6 @@ void Platform::load_tile1_texture(const char* name_or_path)
 
     tile1_texture_width = tile1_surface->w;
     tile1_texture_height = tile1_surface->h;
-
-    info(format("Loaded tile1 texture %: %x% pixels", name.c_str(),
-               tile1_texture_width, tile1_texture_height));
 }
 
 
@@ -2524,11 +2577,6 @@ void Platform::load_sprite_texture(const char* name)
 }
 
 
-void Platform::load_background_texture(const char* name)
-{
-}
-
-
 
 void Platform::clear_tile0_mappings()
 {
@@ -2606,6 +2654,51 @@ static void extract_text_colors_from_overlay()
 
 
 
+void Platform::load_background_texture(const char* name)
+{
+    auto texture_name = extract_texture_name(name);
+
+    if (background_texture) {
+        SDL_DestroyTexture(background_texture);
+        background_texture = nullptr;
+    }
+    if (background_surface) {
+        SDL_FreeSurface(background_surface);
+        background_surface = nullptr;
+    }
+
+    std::string full_path = resource_path() + "images" + PATH_DELIMITER +
+                           texture_name + ".png";
+
+    SDL_Surface* surface = load_png_with_stb(full_path, texture_name.c_str(),
+                                             ShaderPalette::background);
+    if (!surface) {
+        return;
+    }
+
+    // Keep the surface for later modification
+    background_surface = surface;
+
+    background_texture = SDL_CreateTextureFromSurface(renderer, background_surface);
+    if (!background_texture) {
+        error(format("Failed to create background texture from %: %",
+                    full_path.c_str(), SDL_GetError()));
+        SDL_FreeSurface(background_surface);
+        background_surface = nullptr;
+        return;
+    }
+
+    SDL_SetTextureBlendMode(background_texture, SDL_BLENDMODE_BLEND);
+
+    background_texture_width = background_surface->w;
+    background_texture_height = background_surface->h;
+
+    info(format("Loaded background texture %: %x% pixels",
+               texture_name.c_str(), background_texture_width, background_texture_height));
+}
+
+
+
 bool Platform::load_overlay_texture(const char* name)
 {
     if (name == last_overlay_texture) {
@@ -2628,7 +2721,9 @@ bool Platform::load_overlay_texture(const char* name)
 
     std::string full_path = resource_path() + "images" + PATH_DELIMITER + name + ".png";
 
-    SDL_Surface* loaded_surface = IMG_Load(full_path.c_str());
+    SDL_Surface* loaded_surface = load_png_with_stb(full_path,
+                                                    name,
+                                                    ShaderPalette::overlay);
     if (!loaded_surface) {
         error(format("Failed to load overlay %: %", full_path.c_str(), IMG_GetError()));
         return false;
@@ -3040,7 +3135,7 @@ void Platform::Logger::log(Severity level, const char* msg)
     log_data_->push_back('\n', t);
     std::cout << '\n';
     if (console_running) {
-        std::cout << "> ";
+        std::cout << "> " << std::flush;
     }
 }
 
@@ -3471,6 +3566,99 @@ void draw_sprite_group(int prio)
 
 
 
+static void draw_parallax_background(SDL_Texture* texture,
+                                     int texture_width,
+                                     const View& view,
+                                     const ParallaxStrip& strip1,  // gradient (rows 0-13)
+                                     const ParallaxStrip& strip2,  // dark clouds (rows 14-15)
+                                     const ParallaxStrip& strip3)  // white clouds (rows 16-19)
+{
+    if (!texture) {
+        return;
+    }
+
+    auto& tiles = tile_layers_[Layer::background];
+    if (tiles.empty()) {
+        return;
+    }
+
+    auto view_center = view.int_center().cast<s32>();
+
+    // Lambda to draw one strip
+    auto draw_strip = [&](const ParallaxStrip& strip) {
+        const int tile_size = 8;
+        const int wrap_width = 256;  // 32 tiles * 8 pixels
+
+        for (auto& [pos, tile_info] : tiles) {
+            if (tile_info.tile_desc == 0) continue;
+
+            s32 tile_x = (s32)pos.first;
+            s32 tile_y = (s32)pos.second;
+
+            // Skip tiles not in this strip's row range
+            if (tile_y < strip.start_tile_row || tile_y > strip.end_tile_row) {
+                continue;
+            }
+
+            SDL_Rect src = get_tile_source_rect_8x8(tile_info.tile_desc, texture_width);
+
+            // Calculate base position with scroll
+            s32 base_x = tile_x * tile_size - strip.scroll.x;
+            s32 base_y = tile_y * tile_size - strip.scroll.y;
+
+            SDL_Rect dst;
+            dst.x = base_x;
+            dst.y = base_y;
+            dst.w = tile_size;
+            dst.h = tile_size;
+
+            // Draw at base position if on screen
+            if (dst.x + dst.w > 0 && dst.x < 240 &&
+                dst.y + dst.h > 0 && dst.y < 160) {
+                SDL_RenderCopy(renderer, texture, &src, &dst);
+            }
+
+            // Draw wrapped copy if needed (either +256 or -256)
+            if (dst.x < 0) {
+                dst.x += wrap_width;
+                if (dst.x < 240) {
+                    SDL_RenderCopy(renderer, texture, &src, &dst);
+                }
+            } else if (dst.x >= 240) {
+                dst.x -= wrap_width;
+                if (dst.x + dst.w > 0) {
+                    SDL_RenderCopy(renderer, texture, &src, &dst);
+                }
+            }
+        }
+    };
+
+    // Gap filler strip (rows 20-21) - positioned flush with end of strip2
+    // This fills the gap between cloud layers during vertical parallax
+    ParallaxStrip gap_filler;
+    gap_filler.start_tile_row = 20;
+    gap_filler.end_tile_row = 21;
+    gap_filler.scroll = strip2.scroll;
+    gap_filler.scroll.y = strip2.scroll.y + 32;  // 32 pixels = 4 tile rows
+
+    // Bottom filler strip (rows 18-19 repeated) - positioned beneath strip3
+    // This fills the gap at the bottom when strip3 scrolls up
+    ParallaxStrip bottom_filler;
+    bottom_filler.start_tile_row = 18;
+    bottom_filler.end_tile_row = 19;
+    bottom_filler.scroll = strip3.scroll;
+    bottom_filler.scroll.y = strip3.scroll.y - 16;  // Bump down 32 pixels (4 rows)
+
+    // Draw all strips
+    draw_strip(strip1);
+    draw_strip(strip2);
+    draw_strip(gap_filler);
+    draw_strip(strip3);
+    draw_strip(bottom_filler);
+}
+
+
+
 static void draw_tile_layer(Layer layer, SDL_Texture* texture, int texture_width,
                             const Vec2<s32>& scroll, const View& view)
 {
@@ -3652,6 +3840,20 @@ void draw_overlay_layer(int y_offset)
 
 void Platform::Screen::display()
 {
+    if (background_texture) {
+        if (parallax_clouds_enabled) {
+            draw_parallax_background(background_texture, background_texture_width,
+                                     get_view(),
+                                     parallax_strip1,
+                                     parallax_strip2,
+                                     parallax_strip3);
+        } else {
+            // Normal uniform scrolling
+            draw_tile_layer(Layer::background, background_texture, background_texture_width,
+                            {0, 0}, get_view());
+        }
+    }
+
     draw_sprite_group(3);
     draw_tile_layer(Layer::map_1_ext, tile1_texture, tile1_texture_width,
                    tile1_scroll, get_view());

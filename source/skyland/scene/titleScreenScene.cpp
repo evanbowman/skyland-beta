@@ -182,6 +182,14 @@ static void set_scroll(Layer layer, int x_scroll, int y_scroll)
 
 
 
+void setup_pools()
+{
+    globals().room_pools_.create("room-mem");
+    globals().entity_pools_.create("entity-mem");
+}
+
+
+
 void TitleScreenScene::enter(Scene& prev)
 {
     PLATFORM.clear_layer(Layer::map_0);
@@ -213,8 +221,7 @@ void TitleScreenScene::enter(Scene& prev)
 
     APP.player_island().clear();
 
-    globals().room_pools_.create("room-mem");
-    globals().entity_pools_.create("entity-mem");
+    setup_pools();
 
     if (APP.opponent_island()) {
         APP.reset_opponent_island();

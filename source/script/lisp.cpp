@@ -43,7 +43,7 @@ static const u32 string_intern_table_size = 2000;
 #elif defined(__GBA__)
 #define VALUE_POOL_SIZE 10000
 #else
-#define VALUE_POOL_SIZE 200000
+#define VALUE_POOL_SIZE 20000
 #endif
 
 union ValueMemory

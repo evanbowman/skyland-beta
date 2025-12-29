@@ -22,9 +22,11 @@
 #include "skyland/scene/desktopOS.hpp"
 #include "skyland/scene/introCreditsScene.hpp"
 #include "skyland/scene/modules/skylandForever.hpp"
+#include "skyland/scene/modules/regressionModule.hpp"
 #include "skyland/scene_pool.hpp"
 #include "skyland/skyland.hpp"
 #include "version.hpp"
+#include "skyland/scene/titleScreenScene.hpp"
 
 
 
@@ -165,6 +167,10 @@ private:
         return result;
     }
 };
+
+
+
+void setup_pools();
 
 
 
@@ -491,6 +497,14 @@ public:
             }
 
             return make_scene<FadeInScene>();
+        }
+
+        if (auto match = PLATFORM.get_extensions().has_startup_opt) {
+            if (match("--regression") or match("--validate-scripts")) {
+                setup_pools();
+                TitleScreenScene::run_init_scripts(false);
+                return make_scene<RegressionModule>();
+            }
         }
 
         if (not flash_filesystem::file_exists(lang_file) or clean_boot_) {
