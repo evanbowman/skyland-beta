@@ -11,7 +11,7 @@ namespace skyland::weather
 
 Float ClearSkies::modulate_glow_amount()
 {
-    return 0.7f;
+    return 0.2f;
 }
 
 

@@ -62,9 +62,8 @@ Conf::String Environment::ambiance() const
 
 
 
-void Environment::render_glow_effect(Entity& ent, int radius, ColorConstant color, u8 intensity)
+void Environment::render_glow_effect(const Vec2<Fixnum>& pos, int radius, ColorConstant color, u8 intensity)
 {
-    auto pos = ent.sprite().get_position();
     PLATFORM_EXTENSION(draw_point_light,
                        pos.x,
                        pos.y,

@@ -722,13 +722,13 @@ void Island::FireState::display(Island& island)
                 auto fy = o.y + y * 16 - 16;
                 batch->push_back({fx, fy});
 
-                PLATFORM_EXTENSION(draw_point_light,
-                                   Fixnum::from_integer(fx + 8),
-                                   Fixnum::from_integer(fy + 8 + 16),
-                                   50 + rng::choice<8>(rng::utility_state),
-                                   ColorConstant::aerospace_orange,
-                                   64);
-
+                APP.environment().render_glow_effect({
+                        Fixnum::from_integer(fx + 8),
+                        Fixnum::from_integer(fy + 8 + 16),
+                    },
+                    50 + rng::choice<8>(rng::utility_state),
+                    ColorConstant::aerospace_orange,
+                    95);
             }
         }
     }

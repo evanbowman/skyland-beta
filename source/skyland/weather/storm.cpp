@@ -322,7 +322,7 @@ void Storm::display()
 
 Float Storm::modulate_glow_amount()
 {
-    return 0.8f;
+    return 0.25f;
 }
 
 

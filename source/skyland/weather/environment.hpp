@@ -109,7 +109,7 @@ public:
     }
 
 
-    void render_glow_effect(Entity& ent, int radius, ColorConstant color, u8 intensity);
+    void render_glow_effect(const Vec2<Fixnum>& pos, int radius, ColorConstant color, u8 intensity);
 
 
     virtual Float modulate_glow_amount();
