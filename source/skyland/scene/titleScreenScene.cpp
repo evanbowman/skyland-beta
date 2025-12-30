@@ -398,6 +398,10 @@ void TitleScreenScene::exit(Scene& next)
     set_scroll(Layer::map_1_ext, 0, 8);
     set_scroll(Layer::map_0_ext, 0, 0);
 
+    PLATFORM.clear_layer(Layer::map_0);
+    PLATFORM.clear_layer(Layer::map_1);
+
+
     APP.birds().clear();
     APP.effects().clear();
 }
