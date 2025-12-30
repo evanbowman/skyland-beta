@@ -237,4 +237,14 @@ void FireBolt::on_collision(Entity& entity)
 
 
 
+void FireBolt::project_glow()
+{
+    APP.environment().render_glow_effect(*this,
+                                         50 + rng::choice<8>(rng::utility_state),
+                                         ColorConstant::aerospace_orange,
+                                         40);
+}
+
+
+
 } // namespace skyland

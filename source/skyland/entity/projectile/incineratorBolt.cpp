@@ -270,4 +270,14 @@ void IncineratorBolt::on_collision(Entity& entity)
 
 
 
+void IncineratorBolt::project_glow()
+{
+    APP.environment().render_glow_effect(*this,
+                                         50 + rng::choice<8>(rng::utility_state),
+                                         ColorConstant::aerospace_orange,
+                                         80);
+}
+
+
+
 } // namespace skyland

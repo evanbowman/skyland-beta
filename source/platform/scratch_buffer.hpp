@@ -33,7 +33,12 @@ struct ScratchBuffer
     Tag tag_;
 };
 
+
+#ifdef __GBA__
 static constexpr const int scratch_buffer_count = 82;
+#else
+static constexpr const int scratch_buffer_count = 160;
+#endif
 using ScratchBufferPtr =
     Rc<ScratchBuffer,
        PooledRcControlBlock<ScratchBuffer, scratch_buffer_count>>;

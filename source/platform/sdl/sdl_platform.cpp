@@ -32,6 +32,8 @@
 #include <sstream>
 #include <thread>
 #include <SDL2/SDL_image.h>
+#include <list>
+#include <unordered_set>
 
 
 
@@ -172,6 +174,142 @@ static ParallaxStrip parallax_strip2 = {14, 15, {0, 0}};   // dark clouds
 static ParallaxStrip parallax_strip3 = {16, 19, {0, 0}};   // white clouds
 
 
+struct PointLight {
+    SDL_Texture* texture;
+    int radius;
+};
+
+
+static std::map<int, PointLight> point_light_cache;
+static std::vector<std::tuple<Fixnum, Fixnum, int, ColorConstant, u8>> point_lights;
+
+
+static ColorConstant sdl_color_to_colorconstant(const SDL_Color& c) {
+    return (ColorConstant)((c.r << 16) | (c.g << 8) | c.b);
+}
+
+
+
+SDL_Color color_to_sdl(ColorConstant k) {
+    u32 hex = (u32)k;
+
+    // Extract RGB from hex color
+    u8 r = (hex >> 16) & 0xFF;
+    u8 g = (hex >> 8) & 0xFF;
+    u8 b = hex & 0xFF;
+
+    SDL_Color result = {r, g, b, 255};
+    return result;
+}
+
+
+
+static SDL_Texture* create_point_light_texture(int radius)
+{
+    if (radius <= 0) {
+        return nullptr;
+    }
+
+    // Check cache first
+    auto it = point_light_cache.find(radius);
+    if (it != point_light_cache.end()) {
+        return it->second.texture;
+    }
+
+    // Create a new light texture
+    int size = radius * 2;
+    SDL_Surface* surface = SDL_CreateRGBSurface(
+        0, size, size, 32,
+        0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
+
+    if (!surface) {
+        error(format("Failed to create point light surface: %", SDL_GetError()));
+        return nullptr;
+    }
+
+    // Lock surface for pixel access
+    if (SDL_MUSTLOCK(surface)) {
+        if (SDL_LockSurface(surface) != 0) {
+            error(format("Failed to lock surface: %", SDL_GetError()));
+            SDL_FreeSurface(surface);
+            return nullptr;
+        }
+    }
+
+    Uint32* pixels = (Uint32*)surface->pixels;
+    float center = radius;
+
+    const int falloff_type = 2;
+
+    // Generate radial gradient
+    for (int y = 0; y < size; y++) {
+        for (int x = 0; x < size; x++) {
+            float dx = x - center;
+            float dy = y - center;
+            float distance = sqrt(dx * dx + dy * dy);
+
+            float t = 1.0f - (distance / radius);
+            t = std::max(0.0f, t);
+
+            float intensity;
+            switch (falloff_type) {
+            case 0: // Quadratic
+                intensity = t * t;
+                break;
+            case 1: // Smoothstep
+                intensity = t * t * (3.0f - 2.0f * t);
+                break;
+            case 2: // Cubic
+                intensity = t * t * t;
+                break;
+            case 3: // Exponential
+                intensity = exp(-4.0f * (1.0f - t)) / exp(-4.0f);
+                break;
+            case 4: // Inverse square (physically accurate)
+                intensity = 1.0f / (1.0f + (distance * distance) / (radius * radius));
+                break;
+            default:
+                intensity = t * t;
+            }
+
+            u8 value = (u8)(intensity * 255);
+            Uint32 pixel = SDL_MapRGBA(surface->format, value, value, value, 255);
+            pixels[y * size + x] = pixel;
+        }
+    }
+
+    if (SDL_MUSTLOCK(surface)) {
+        SDL_UnlockSurface(surface);
+    }
+
+    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+    SDL_FreeSurface(surface);
+
+    if (!texture) {
+        error(format("Failed to create point light texture: %", SDL_GetError()));
+        return nullptr;
+    }
+
+    SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_ADD);
+
+    point_light_cache[radius] = {texture, radius};
+
+    info(format("Created point light texture with radius %", radius));
+
+    return texture;
+}
+
+
+static void cleanup_point_light_cache()
+{
+    for (auto& [radius, light] : point_light_cache) {
+        if (light.texture) {
+            SDL_DestroyTexture(light.texture);
+        }
+    }
+    point_light_cache.clear();
+}
+
 
 static const Platform::Extensions extensions{
     .overlay_circle_effect = [](int radius, int x, int y) {
@@ -217,6 +355,13 @@ static const Platform::Extensions extensions{
             parallax_strip3.scroll.x = scroll + (center.x / 3);
             parallax_strip3.scroll.y = center.y / 2;
         }
+    },
+    .draw_point_light = [](Fixnum x, Fixnum y, int radius, ColorConstant tint, u8 intensity) {
+        if (radius <= 0 or intensity == 0) {
+            return;
+        }
+
+        point_lights.push_back({x, y, radius, tint, intensity});
     },
 };
 
@@ -702,7 +847,7 @@ std::pair<const char*, u32> Platform::load_file(const char* folder,
     if (found == files.end()) {
         std::fstream file(resource_path() + path);
         if (not file) {
-            error(format("missing file %", (resource_path() + path).c_str()));
+            warning(format("missing file %", (resource_path() + path).c_str()));
         }
         std::stringstream buffer;
         buffer << file.rdbuf();
@@ -1744,26 +1889,6 @@ struct DynamicPalette {
         return index;
     }
 };
-
-
-
-static ColorConstant sdl_color_to_colorconstant(const SDL_Color& c) {
-    return (ColorConstant)((c.r << 16) | (c.g << 8) | c.b);
-}
-
-
-
-SDL_Color color_to_sdl(ColorConstant k) {
-    u32 hex = (u32)k;
-
-    // Extract RGB from hex color
-    u8 r = (hex >> 16) & 0xFF;
-    u8 g = (hex >> 8) & 0xFF;
-    u8 b = hex & 0xFF;
-
-    SDL_Color result = {r, g, b, 255};
-    return result;
-}
 
 
 
@@ -3208,29 +3333,24 @@ void Platform::Screen::draw_batch(TextureIndex t,
                                   const Buffer<Vec2<s32>, 64>& coords,
                                   const SpriteBatchOptions& opts)
 {
+    // There's no need for an optimized batch drawing function like what we
+    // needed on gba.
     auto view_center = get_view().int_center().cast<s32>();
 
     for (const auto& coord : coords) {
         Vec2<s32> pos = coord;
 
-        if (!opts.position_absolute_) {
-            pos = pos - view_center;
+        if (opts.position_absolute_) {
+            pos = pos + view_center;
         }
 
-        pos.y = wrap_y(pos.y);
-
-        sprite_draw_list.push_back({
-            pos,
-            opts.sz_,
-            ColorConstant::null,  // No color mixing
-            true,                 // visible
-            t,                    // texture_index
-            {false, false},       // flip
-            0.0,                  // rotation
-            1,                    // priority
-            opts.alpha_,
-            0                     // mix_amount
-        });
+        Sprite spr;
+        spr.set_size(opts.sz_);
+        spr.set_position(Vec2<Fixnum>{Fixnum::from_integer(pos.x),
+                                      Fixnum::from_integer(pos.y)});
+        spr.set_alpha(opts.alpha_);
+        spr.set_texture_index(t);
+        draw(spr);
     }
 }
 
@@ -3366,6 +3486,7 @@ void Platform::Screen::draw(const Sprite& spr)
 void Platform::Screen::clear()
 {
     sprite_draw_list.clear();
+    point_lights.clear();
 
     // Clear entire screen to black first (for letterboxing)
     SDL_SetRenderDrawColor(renderer, 0, 0, 16, 255);
@@ -3878,6 +3999,36 @@ void Platform::Screen::display()
         display_fade();
     }
 
+    for (auto [x, y, radius, tint, intensity] : point_lights) {
+        SDL_Texture* light_texture = create_point_light_texture(radius);
+        if (!light_texture) {
+            return;
+        }
+        // Apply color tint
+        auto color = color_to_sdl(tint);
+        SDL_SetTextureColorMod(light_texture, color.r, color.g, color.b);
+        SDL_SetTextureAlphaMod(light_texture, intensity);
+
+        // Transform to screen coordinates (relative to view)
+        auto view_center = PLATFORM.screen().get_view().int_center().cast<s32>();
+        s32 screen_x = x.as_integer() - view_center.x;
+        s32 screen_y = wrap_y(y.as_integer() - view_center.y);
+
+        // Position the light (centered on transformed coordinates)
+        SDL_Rect dst;
+        dst.x = screen_x - radius;
+        dst.y = screen_y - radius;
+        dst.w = radius * 2;
+        dst.h = radius * 2;
+
+        // Draw with additive blending
+        SDL_RenderCopy(renderer, light_texture, nullptr, &dst);
+
+        // Reset color mod
+        SDL_SetTextureColorMod(light_texture, 255, 255, 255);
+        SDL_SetTextureAlphaMod(light_texture, 255);
+    }
+
     if (circle_effect_radius) {
         ColorConstant color = custom_color(0xceb282);
         if (circle_effect_radius <= 70) {
@@ -3933,16 +4084,394 @@ void Platform::Screen::pixelate(u8 amount,
 
 
 
+struct AudioChannel {
+    const u8* data;
+    StringBuffer<48> name;
+    u32 length;
+    u32 position;
+    float volume;
+    int priority;
+    bool playing;
+};
+
+
+
+struct AudioState {
+    // Music channel
+    const u8* music_data;
+    StringBuffer<48> music_name;
+    u32 music_length;
+    u32 music_position;
+    float music_volume;
+    float music_speed;
+    bool music_playing;
+
+    // Sound effect channels (matching your GBA's active_sounds)
+    static const int max_sound_channels = 8;
+    AudioChannel sound_effects[max_sound_channels];
+
+    Buffer<StringBuffer<48>, 32> completed_sounds;
+    std::mutex completed_sounds_lock;
+
+    AudioState() {
+        music_data = nullptr;
+        music_length = 0;
+        music_position = 0;
+        music_playing = false;
+        music_volume = 1.0f;
+        music_speed = 1.0f;
+
+        for (int i = 0; i < max_sound_channels; i++) {
+            sound_effects[i].data = nullptr;
+            sound_effects[i].length = 0;
+            sound_effects[i].position = 0;
+            sound_effects[i].playing = false;
+            sound_effects[i].volume = 1.0f;
+        }
+    }
+};
+
+
+
+static AudioState audio_state;
+
+
+
+typedef void (*AudioMixerFunc)(AudioState* state, s8* output, int len);
+
+
+
+void audio_mix_normal(AudioState* state, s8* output, int len)
+{
+    for (int i = 0; i < len; i++) {
+        s16 mixed = 0;
+
+        // Mix music
+        if (state->music_playing && state->music_data) {
+            if (state->music_position >= state->music_length) {
+                state->music_position = 0;  // Loop music
+            }
+            s8 sample = ((s8*)state->music_data)[state->music_position++];
+            mixed = (s16)(sample * state->music_volume);
+        }
+
+        for (int ch = 0; ch < AudioState::max_sound_channels; ch++) {
+            auto& sfx = state->sound_effects[ch];
+            if (!sfx.playing || !sfx.data) continue;
+
+            if (sfx.position >= sfx.length) {
+                sfx.playing = false;
+                sfx.data = nullptr;
+
+                std::unique_lock<std::mutex> lock(state->completed_sounds_lock, std::try_to_lock);
+                if (lock.owns_lock()) {
+                    state->completed_sounds.push_back(sfx.name.c_str());
+                }
+                continue;
+            }
+
+            s8 sample = ((s8*)sfx.data)[sfx.position++];
+            mixed += (s16)(sample * sfx.volume);
+        }
+
+        // Clamp and output
+        output[i] = (s8)std::clamp(mixed, (s16)-128, (s16)127);
+    }
+}
+
+
+
+// Half speed - play every sample twice
+void audio_mix_halved(AudioState* state, s8* output, int len)
+{
+    for (int i = 0; i < len; i++) {
+        s16 mixed = 0;
+
+        // Mix music
+        if (state->music_playing && state->music_data) {
+            if (state->music_position >= state->music_length) {
+                state->music_position = 0;
+            }
+            // Advance position every other sample
+            u32 actual_pos = state->music_position / 2;
+            s8 sample = ((s8*)state->music_data)[actual_pos];
+            mixed = (s16)(sample * state->music_volume);
+            state->music_position++;
+        }
+
+        for (int ch = 0; ch < AudioState::max_sound_channels; ch++) {
+            auto& sfx = state->sound_effects[ch];
+            if (!sfx.playing || !sfx.data) continue;
+
+            if (sfx.position >= sfx.length * 2) {
+                sfx.playing = false;
+                sfx.data = nullptr;
+                std::unique_lock<std::mutex> lock(state->completed_sounds_lock, std::try_to_lock);
+                if (lock.owns_lock()) {
+                    state->completed_sounds.push_back(sfx.name.c_str());
+                }
+                continue;
+            }
+
+            u32 actual_pos = sfx.position / 2;
+            s8 sample = ((s8*)sfx.data)[actual_pos];
+            mixed += (s16)(sample * sfx.volume);
+            sfx.position++;
+        }
+
+        output[i] = (s8)std::clamp(mixed, (s16)-128, (s16)127);
+    }
+}
+
+
+
+// Double speed - skip every other sample
+void audio_mix_doubled(AudioState* state, s8* output, int len)
+{
+    for (int i = 0; i < len; i++) {
+        s16 mixed = 0;
+
+        // Mix music
+        if (state->music_playing && state->music_data) {
+            if (state->music_position >= state->music_length) {
+                state->music_position = 0;
+            }
+            s8 sample = ((s8*)state->music_data)[state->music_position];
+            mixed = (s16)(sample * state->music_volume);
+            state->music_position += 2;  // Skip every other sample
+        }
+
+        for (int ch = 0; ch < AudioState::max_sound_channels; ch++) {
+            auto& sfx = state->sound_effects[ch];
+            if (!sfx.playing || !sfx.data) continue;
+
+            if (sfx.position >= sfx.length) {
+                sfx.playing = false;
+                sfx.data = nullptr;
+                std::unique_lock<std::mutex> lock(state->completed_sounds_lock, std::try_to_lock);
+                if (lock.owns_lock()) {
+                    state->completed_sounds.push_back(sfx.name.c_str());
+                }
+                continue;
+            }
+
+            s8 sample = ((s8*)sfx.data)[sfx.position];
+            mixed += (s16)(sample * sfx.volume);
+            sfx.position += 2;
+        }
+
+        output[i] = (s8)std::clamp(mixed, (s16)-128, (s16)127);
+    }
+}
+
+
+
+// Reverse playback - decrement position
+void audio_mix_reversed(AudioState* state, s8* output, int len)
+{
+    for (int i = 0; i < len; i++) {
+        s16 mixed = 0;
+
+        // Mix music
+        if (state->music_playing && state->music_data) {
+            if (state->music_position == 0) {
+                state->music_position = state->music_length - 1;
+            }
+            s8 sample = ((s8*)state->music_data)[state->music_position--];
+            mixed = (s16)(sample * state->music_volume);
+        }
+
+        for (int ch = 0; ch < AudioState::max_sound_channels; ch++) {
+            auto& sfx = state->sound_effects[ch];
+            if (!sfx.playing || !sfx.data) continue;
+
+            if (sfx.position == 0) {
+                sfx.playing = false;
+                sfx.data = nullptr;
+                continue;
+            }
+
+            s8 sample = ((s8*)sfx.data)[sfx.position--];
+            mixed += (s16)(sample * sfx.volume);
+        }
+
+        output[i] = (s8)std::clamp(mixed, (s16)-128, (s16)127);
+    }
+}
+
+
+
+// Reverse 4x speed
+void audio_mix_reversed4x(AudioState* state, s8* output, int len)
+{
+    for (int i = 0; i < len; i++) {
+        s16 mixed = 0;
+
+        // Mix music
+        if (state->music_playing && state->music_data) {
+            if (state->music_position < 4) {
+                state->music_position = state->music_length - 1;
+            }
+            s8 sample = ((s8*)state->music_data)[state->music_position];
+            mixed = (s16)(sample * state->music_volume);
+            state->music_position -= 4;
+        }
+
+        for (int ch = 0; ch < AudioState::max_sound_channels; ch++) {
+            auto& sfx = state->sound_effects[ch];
+            if (!sfx.playing || !sfx.data) continue;
+
+            if (sfx.position < 4) {
+                sfx.playing = false;
+                sfx.data = nullptr;
+                continue;
+            }
+
+            s8 sample = ((s8*)sfx.data)[sfx.position];
+            mixed += (s16)(sample * sfx.volume);
+            sfx.position -= 4;
+        }
+
+        output[i] = (s8)std::clamp(mixed, (s16)-128, (s16)127);
+    }
+}
+
+
+
+// Reverse 8x speed
+void audio_mix_reversed8x(AudioState* state, s8* output, int len)
+{
+    for (int i = 0; i < len; i++) {
+        s16 mixed = 0;
+
+        // Mix music
+        if (state->music_playing && state->music_data) {
+            if (state->music_position < 8) {
+                state->music_position = state->music_length - 1;
+            }
+            s8 sample = ((s8*)state->music_data)[state->music_position];
+            mixed = (s16)(sample * state->music_volume);
+            state->music_position -= 8;
+        }
+
+        for (int ch = 0; ch < AudioState::max_sound_channels; ch++) {
+            auto& sfx = state->sound_effects[ch];
+            if (!sfx.playing || !sfx.data) continue;
+
+            if (sfx.position < 8) {
+                sfx.playing = false;
+                sfx.data = nullptr;
+                continue;
+            }
+
+            s8 sample = ((s8*)sfx.data)[sfx.position];
+            mixed += (s16)(sample * sfx.volume);
+            sfx.position -= 8;
+        }
+
+        output[i] = (s8)std::clamp(mixed, (s16)-128, (s16)127);
+    }
+}
+
+
+
+// Reverse slow (half speed backwards)
+void audio_mix_reversed_slow(AudioState* state, s8* output, int len)
+{
+    for (int i = 0; i < len; i++) {
+        s16 mixed = 0;
+
+        // Mix music
+        if (state->music_playing && state->music_data) {
+            if (state->music_position == 0) {
+                state->music_position = state->music_length * 2 - 1;
+            }
+            // Decrement every other sample
+            u32 actual_pos = state->music_position / 2;
+            s8 sample = ((s8*)state->music_data)[actual_pos];
+            mixed = (s16)(sample * state->music_volume);
+            state->music_position--;
+        }
+
+        for (int ch = 0; ch < AudioState::max_sound_channels; ch++) {
+            auto& sfx = state->sound_effects[ch];
+            if (!sfx.playing || !sfx.data) continue;
+
+            if (sfx.position == 0) {
+                sfx.playing = false;
+                sfx.data = nullptr;
+                continue;
+            }
+
+            u32 actual_pos = sfx.position / 2;
+            s8 sample = ((s8*)sfx.data)[actual_pos];
+            mixed += (s16)(sample * sfx.volume);
+            sfx.position--;
+        }
+
+        output[i] = (s8)std::clamp(mixed, (s16)-128, (s16)127);
+    }
+}
+
+
+
+static AudioMixerFunc current_mixer = audio_mix_normal;
+
+
+
+void audio_callback(void* userdata, Uint8* stream, int len)
+{
+    AudioState* state = (AudioState*)userdata;
+    s8* output = (s8*)stream;
+    current_mixer(state, output, len);
+}
+
+
+
 StringBuffer<48> Platform::Speaker::current_music()
 {
-    return "";
+    StringBuffer<48> music_name;
+    SDL_LockAudio();
+    music_name = audio_state.music_name;
+    SDL_UnlockAudio();
+
+    return music_name;
 }
 
 
 
 bool Platform::Speaker::stream_music(const char* filename, Microseconds offset)
 {
-    return true; // FIXME!!!
+    info(format("stream music called for %", filename));
+
+    std::string full_path = std::string("scripts") + PATH_DELIMITER +
+                           "data" + PATH_DELIMITER +
+                           "music" + PATH_DELIMITER + filename;
+
+    auto [data, length] = PLATFORM.load_file("", full_path.c_str());
+    if (not data or not length) {
+        error(format("failed to load %", filename));
+        stop_music();
+        return false;
+    }
+
+    SDL_LockAudio();
+
+    // Stop old music
+    audio_state.music_playing = false;
+    audio_state.music_data = nullptr;
+    audio_state.music_position = 0;
+
+    // Now set new music
+    audio_state.music_data = (const u8*)data;
+    audio_state.music_length = length;
+    audio_state.music_position = (offset * 16000) / 1000000;
+    audio_state.music_playing = true;
+    audio_state.music_name = filename;
+
+    SDL_UnlockAudio();
+
+    return true;
 }
 
 
@@ -3961,18 +4490,67 @@ Platform::Speaker::Speaker()
 
 void Platform::Speaker::set_music_speed(MusicSpeed speed)
 {
+    SDL_LockAudio();
+
+    switch (speed) {
+        case MusicSpeed::regular:
+            current_mixer = audio_mix_normal;
+            break;
+        case MusicSpeed::halved:
+            current_mixer = audio_mix_halved;
+            break;
+        case MusicSpeed::doubled:
+            current_mixer = audio_mix_doubled;
+            break;
+        case MusicSpeed::reversed:
+            current_mixer = audio_mix_reversed;
+            break;
+        case MusicSpeed::reversed4x:
+            current_mixer = audio_mix_reversed4x;
+            break;
+        case MusicSpeed::reversed8x:
+            current_mixer = audio_mix_reversed8x;
+            break;
+        case MusicSpeed::reversed_slow:
+            current_mixer = audio_mix_reversed_slow;
+            break;
+    }
+
+    SDL_UnlockAudio();
 }
 
 
 
 void Platform::Speaker::set_music_volume(u8 volume)
 {
+    // Volume ranges from 0 to 19 (music_volume_max)
+    // Convert to 0.0 to 1.0 range
+    float normalized_volume = volume / (float)music_volume_max;
+
+    SDL_LockAudio();
+    audio_state.music_volume = normalized_volume;
+    SDL_UnlockAudio();
 }
 
 
 
 void Platform::Speaker::set_sounds_volume(u8 volume)
 {
+    // Volume ranges from 0 to 19 (music_volume_max)
+    // Convert to 0.0 to 1.0 range
+    float normalized_volume = volume / (float)music_volume_max;
+
+    // Scale down to prevent clipping
+    normalized_volume;
+
+    SDL_LockAudio();
+
+    // Apply to all sound effect channels
+    for (int i = 0; i < AudioState::max_sound_channels; i++) {
+        audio_state.sound_effects[i].volume = normalized_volume;
+    }
+
+    SDL_UnlockAudio();
 }
 
 
@@ -4004,33 +4582,86 @@ Microseconds Platform::Speaker::track_length(const char* name)
 
 bool Platform::Speaker::is_sound_playing(const char* name)
 {
-    return false;
+    SDL_LockAudio();
+
+    bool playing = false;
+    for (int i = 0; i < AudioState::max_sound_channels; i++) {
+        auto& channel = audio_state.sound_effects[i];
+        if (channel.playing and channel.name == name) {
+            playing = true;
+            break;
+        }
+    }
+
+    SDL_UnlockAudio();
+    return playing;
 }
 
 
 
 bool Platform::Speaker::is_music_playing(const char* name)
 {
-    return false;
+    return current_music() == name;
 }
 
 
+
+// Use a static cache that never removes entries (strings are small)
+static std::unordered_set<std::string> completed_sounds_string_cache;
+
+const char* completed_sound_name(const char* name)
+{
+    // Insert returns a pair<iterator, bool>
+    // The iterator always points to the element (whether newly inserted or existing)
+    auto [it, inserted] = completed_sounds_string_cache.insert(name);
+
+    // Return pointer to the string data in the set
+    // This is stable because unordered_set never moves elements once inserted
+    return it->c_str();
+}
 
 Buffer<const char*, 4> Platform::Speaker::completed_sounds()
 {
-    return {};
-}
+    Buffer<const char*, 4> result;
 
+    std::unique_lock<std::mutex> lock(audio_state.completed_sounds_lock, std::try_to_lock);
+    if (lock.owns_lock()) {
+        while (!audio_state.completed_sounds.empty() && result.size() < 4) {
+            result.push_back(completed_sound_name(audio_state.completed_sounds.back().c_str()));
+            audio_state.completed_sounds.pop_back();
+        }
+    }
+
+    return result;
+}
 
 
 void Platform::Speaker::stop_sound(const char* name)
 {
+    SDL_LockAudio();
+
+    for (int i = 0; i < AudioState::max_sound_channels; i++) {
+        auto& channel = audio_state.sound_effects[i];
+        if (channel.playing and channel.name == name) {
+            channel.playing = false;
+        }
+    }
+
+    SDL_UnlockAudio();
 }
 
 
 
 void Platform::Speaker::clear_sounds()
 {
+    SDL_LockAudio();
+
+    for (int i = 0; i < AudioState::max_sound_channels; i++) {
+        auto& channel = audio_state.sound_effects[i];
+        channel.playing = false;
+    }
+
+    SDL_UnlockAudio();
 }
 
 
@@ -4039,12 +4670,117 @@ void Platform::Speaker::play_sound(const char* name,
                                    int priority,
                                    Optional<Vec2<Float>> position)
 {
+    const char* data = nullptr;
+    u32 length = 0;
+
+    // Try option 1: sounds/sound_<name>.raw
+    std::string path1 = std::string("sounds") + PATH_DELIMITER +
+                        "sound_" + name + ".raw";
+    auto result1 = PLATFORM.load_file("", path1.c_str());
+
+    if (result1.first && result1.second) {
+        data = result1.first;
+        length = result1.second;
+    } else {
+        // Try option 2: scripts/data/sounds/<name> (no extension)
+        std::string path2 = std::string("scripts") + PATH_DELIMITER +
+                           "data" + PATH_DELIMITER +
+                           "sounds" + PATH_DELIMITER + name;
+        auto result2 = PLATFORM.load_file("", path2.c_str());
+
+        if (result2.first && result2.second) {
+            data = result2.first;
+            length = result2.second;
+        } else {
+            warning(format("Failed to load sound: % (tried % and %)",
+                          name, path1.c_str(), path2.c_str()));
+            return;
+        }
+    }
+
+    SDL_LockAudio();
+
+    // Find a free channel or replace lowest priority
+    int target_channel = -1;
+    int lowest_priority_channel = 0;
+    int lowest_priority = INT_MAX;
+
+    for (int i = 0; i < AudioState::max_sound_channels; i++) {
+        if (!audio_state.sound_effects[i].playing) {
+            target_channel = i;
+            break;
+        }
+        // Track lowest priority for potential replacement
+        if (audio_state.sound_effects[i].priority < lowest_priority) {
+            lowest_priority = audio_state.sound_effects[i].priority;
+            lowest_priority_channel = i;
+        }
+    }
+
+    // If no free channel, check if we can evict a lower priority sound
+    if (target_channel == -1) {
+        if (priority > lowest_priority) {
+            target_channel = lowest_priority_channel;
+        } else {
+            SDL_UnlockAudio();
+            return;  // Can't play this sound, all channels busy with higher priority
+        }
+    }
+
+    // Set up the channel
+    auto& channel = audio_state.sound_effects[target_channel];
+    channel.data = (const u8*)data;
+    channel.length = length;
+    channel.position = 0;
+    if (current_mixer == audio_mix_reversed or
+        current_mixer == audio_mix_reversed4x or
+        current_mixer == audio_mix_reversed8x or
+        current_mixer == audio_mix_reversed_slow) {
+        // Note: if we're playing a sound from the rewind logic, naturally we'll
+        // want to initiate the song from the final sample, as it'll be playing
+        // in reverse. You could certainly set the position to zero, but then
+        // nothing would play...
+        channel.position = channel.length - 1;
+    }
+    channel.playing = true;
+    channel.volume = 1.0f;
+    channel.priority = priority;
+    channel.name = name;  // Note: assumes name string persists
+
+    SDL_UnlockAudio();
 }
 
 
 
 void Platform::Speaker::stop_music()
 {
+    SDL_LockAudio();
+
+    audio_state.music_playing = false;
+    audio_state.music_data = nullptr;
+    audio_state.music_position = 0;
+    audio_state.music_name.clear();
+
+    SDL_UnlockAudio();
+}
+
+
+
+void initialize_audio()
+{
+    SDL_AudioSpec desired, obtained;
+    desired.freq = 16000;
+    desired.format = AUDIO_S8;
+    desired.channels = 1;
+    desired.samples = 1024;
+    desired.callback = audio_callback;
+    desired.userdata = &audio_state;
+
+    if (SDL_OpenAudio(&desired, &obtained) < 0) {
+        error(format("Failed to open audio: %", SDL_GetError()));
+    }
+
+    SDL_PauseAudio(0);
 }
 
 
@@ -4060,6 +4796,8 @@ Platform::Platform()
     update_viewport();
     constrain_window_to_scale();
 
+    initialize_audio();
+
     std::ifstream in(save_file_name, std::ios_base::in | std::ios_base::binary);
     if (in) {
         in.read((char*)save_buffer, ::save_capacity);
@@ -4070,6 +4808,8 @@ Platform::Platform()
 
 Platform::~Platform()
 {
+    cleanup_point_light_cache();
+    cleanup_charset_surfaces();
 }
 
 

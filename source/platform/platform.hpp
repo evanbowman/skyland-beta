@@ -962,6 +962,11 @@ public:
 
         void (*sprite_overlapping_supported)(bool& result);
         bool (*has_startup_opt)(const char* opt);
+        void (*draw_point_light)(Fixnum x,
+                                 Fixnum y,
+                                 int radius,
+                                 ColorConstant tint,
+                                 u8 intensity);
     };
 
 

@@ -320,6 +320,13 @@ void Storm::display()
 
 
 
+Float Storm::modulate_glow_amount()
+{
+    return 0.8f;
+}
+
+
+
 Platform::Screen::Shader Storm::shader() const
 {
     return [](ShaderPalette palette, ColorConstant k, int arg, int index) {

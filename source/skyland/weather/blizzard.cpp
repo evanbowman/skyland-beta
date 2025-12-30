@@ -192,4 +192,11 @@ void Blizzard::display()
 
 
 
+Float Blizzard::modulate_glow_amount()
+{
+    return 0.8f;
+}
+
+
+
 } // namespace skyland::weather
