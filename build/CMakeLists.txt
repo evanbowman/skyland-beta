@@ -1078,8 +1078,9 @@ elseif(APPLE)
     COMMAND cp -r ${ROOT_DIR}/strings/ ${EXECUTABLE_NAME}.app/Contents/Resources/strings/
     # Copy SDL2 framework
     COMMAND cp -r /Library/Frameworks/SDL2.framework ${EXECUTABLE_NAME}.app/Contents/Frameworks
-    # Copy SDL2_image library (find the actual dylib)
-    COMMAND bash -c "cp /opt/homebrew/opt/sdl2_image/lib/libSDL2_image*.dylib ${EXECUTABLE_NAME}.app/Contents/Frameworks/ || true"
+    # Copy SDL2_image library - remove old ones first to avoid permission issues
+    COMMAND rm -f ${EXECUTABLE_NAME}.app/Contents/Frameworks/libSDL2_image*.dylib
+    COMMAND cp /opt/homebrew/opt/sdl2_image/lib/libSDL2_image*.dylib ${EXECUTABLE_NAME}.app/Contents/Frameworks/
     DEPENDS ${EXECUTABLE_NAME}
     COMMENT "Copying resources into app bundle")
 

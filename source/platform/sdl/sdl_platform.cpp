@@ -957,7 +957,42 @@ Optional<Platform::DynamicTexturePtr> Platform::make_dynamic_texture()
 
 
 
-static const char* const save_file_name = "save.dat";
+#ifdef __APPLE__
+#include <pwd.h>
+#include <unistd.h>
+#include <sys/stat.h>
+
+std::string get_save_file_path()
+{
+    static std::string save_path;
+
+    if (save_path.empty()) {
+        // Get user's home directory
+        const char* home = getenv("HOME");
+        if (!home) {
+            struct passwd* pw = getpwuid(getuid());
+            home = pw->pw_dir;
+        }
+
+        // Use Application Support directory (standard macOS location)
+        std::string app_support = std::string(home) + "/Library/Application Support/Skyland";
+
+        // Create directory if it doesn't exist
+        mkdir(app_support.c_str(), 0755);
+
+        save_path = app_support + "/save.dat";
+
+        info(format("Save file location: %", save_path.c_str()));
+    }
+
+    return save_path;
+}
+#else
+std::string get_save_file_path()
+{
+    return "save.dat";  // Current directory for Linux/Windows
+}
+#endif
 
 
 
@@ -987,7 +1022,7 @@ bool Platform::write_save_data(const void* data, u32 length, u32 offset)
 {
     memcpy(save_buffer + offset, data, length);
 
-    std::ofstream out(save_file_name,
+    std::ofstream out(get_save_file_path(),
                       std::ios_base::out | std::ios_base::binary);
 
     out.write((const char*)save_buffer, ::save_capacity);
@@ -1001,7 +1036,7 @@ bool Platform::read_save_data(void* buffer, u32 data_length, u32 offset)
 {
     memcpy(buffer, save_buffer + offset, data_length);
 
-    std::ifstream in(save_file_name, std::ios_base::in | std::ios_base::binary);
+    std::ifstream in(get_save_file_path(), std::ios_base::in | std::ios_base::binary);
 
     if (!in) {
         return true;
@@ -5024,7 +5059,7 @@ Platform::Platform()
 
     initialize_audio();
 
-    std::ifstream in(save_file_name, std::ios_base::in | std::ios_base::binary);
+    std::ifstream in(get_save_file_path(), std::ios_base::in | std::ios_base::binary);
     if (in) {
         in.read((char*)save_buffer, ::save_capacity);
     }
