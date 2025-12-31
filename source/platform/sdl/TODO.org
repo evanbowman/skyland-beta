@@ -1,4 +1,4 @@
-* Screen implementation [9/15]
+* Screen implementation [10/15]
 ** DONE fix dynamic texture mapping for certain texture sizes...
 ** DONE implement rendering for background layer
 ** TODO figure out what to do about overapping transparency issues
@@ -12,6 +12,6 @@
 ** DONE background layer tranparency
 ** TODO fix missing tile in top left corner (again!?)
 ** DONE populate completed sounds array
-** TODO fix issue where textures aren't recolored correctly when using weather engine
+** DONE fix issue where textures aren't recolored correctly when using weather engine
 ** TODO make shields glow?
 ** 
