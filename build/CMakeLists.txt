@@ -570,6 +570,7 @@ endif()
 
 if(APPLE)
   set(EXECUTABLE_NAME Skyland)
+  set(MACOSX_BUNDLE_ICON_FILE AppIcon.icns)
   add_executable(${EXECUTABLE_NAME} MACOSX_BUNDLE ${SOURCES})
 
 elseif(GAMEBOY_ADVANCE)
@@ -1072,6 +1073,7 @@ elseif(APPLE)
     COMMAND cp -r ${ROOT_DIR}/lisp_symtab.dat ${EXECUTABLE_NAME}.app/Contents/Resources/
     COMMAND cp -r ${ROOT_DIR}/lisp_constant_tab.dat ${EXECUTABLE_NAME}.app/Contents/Resources/
     COMMAND cp -r ${ROOT_DIR}/images/ ${EXECUTABLE_NAME}.app/Contents/Resources/images/
+    COMMAND cp -r ${ROOT_DIR}/images/AppIcon.icns ${EXECUTABLE_NAME}.app/Contents/Resources/
     COMMAND cp -r ${ROOT_DIR}/shaders/ ${EXECUTABLE_NAME}.app/Contents/Resources/shaders/
     COMMAND cp -r ${ROOT_DIR}/sounds/ ${EXECUTABLE_NAME}.app/Contents/Resources/sounds/
     COMMAND cp -r ${ROOT_DIR}/scripts/ ${EXECUTABLE_NAME}.app/Contents/Resources/scripts/
