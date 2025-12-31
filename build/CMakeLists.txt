@@ -1038,6 +1038,9 @@ elseif(GAMEBOY_ADVANCE)
 
 elseif(APPLE)
 
+  # Set minimum macOS version to avoid version mismatch warnings
+  set(CMAKE_OSX_DEPLOYMENT_TARGET "13.3" CACHE STRING "Minimum macOS deployment version")
+
   target_include_directories(${EXECUTABLE_NAME} PRIVATE
     /opt/homebrew/include)
 
@@ -1066,13 +1069,13 @@ elseif(APPLE)
     COMMAND mkdir -p ${EXECUTABLE_NAME}.app/Contents/Resources
     COMMAND mkdir -p ${EXECUTABLE_NAME}.app/Contents/Frameworks
     COMMAND python3 ../tools/encode_files.py
-    COMMAND cp -r ${ROOT_DIR}/lisp_symtab.dat ${EXECUTABLE_NAME}.app/Contents/
-    COMMAND cp -r ${ROOT_DIR}/lisp_constant_tab.dat ${EXECUTABLE_NAME}.app/Contents/
-    COMMAND cp -r ${ROOT_DIR}/images/ ${EXECUTABLE_NAME}.app/Contents/images/
-    COMMAND cp -r ${ROOT_DIR}/shaders/ ${EXECUTABLE_NAME}.app/Contents/shaders/
-    COMMAND cp -r ${ROOT_DIR}/sounds/ ${EXECUTABLE_NAME}.app/Contents/sounds/
-    COMMAND cp -r ${ROOT_DIR}/scripts/ ${EXECUTABLE_NAME}.app/Contents/scripts/
-    COMMAND cp -r ${ROOT_DIR}/strings/ ${EXECUTABLE_NAME}.app/Contents/strings/
+    COMMAND cp -r ${ROOT_DIR}/lisp_symtab.dat ${EXECUTABLE_NAME}.app/Contents/Resources/
+    COMMAND cp -r ${ROOT_DIR}/lisp_constant_tab.dat ${EXECUTABLE_NAME}.app/Contents/Resources/
+    COMMAND cp -r ${ROOT_DIR}/images/ ${EXECUTABLE_NAME}.app/Contents/Resources/images/
+    COMMAND cp -r ${ROOT_DIR}/shaders/ ${EXECUTABLE_NAME}.app/Contents/Resources/shaders/
+    COMMAND cp -r ${ROOT_DIR}/sounds/ ${EXECUTABLE_NAME}.app/Contents/Resources/sounds/
+    COMMAND cp -r ${ROOT_DIR}/scripts/ ${EXECUTABLE_NAME}.app/Contents/Resources/scripts/
+    COMMAND cp -r ${ROOT_DIR}/strings/ ${EXECUTABLE_NAME}.app/Contents/Resources/strings/
     # Copy SDL2 framework
     COMMAND cp -r /Library/Frameworks/SDL2.framework ${EXECUTABLE_NAME}.app/Contents/Frameworks
     # Copy SDL2_image library (find the actual dylib)
