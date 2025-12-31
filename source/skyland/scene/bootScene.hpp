@@ -21,12 +21,12 @@
 #include "skyland/player/coOpTeam.hpp"
 #include "skyland/scene/desktopOS.hpp"
 #include "skyland/scene/introCreditsScene.hpp"
-#include "skyland/scene/modules/skylandForever.hpp"
 #include "skyland/scene/modules/regressionModule.hpp"
+#include "skyland/scene/modules/skylandForever.hpp"
+#include "skyland/scene/titleScreenScene.hpp"
 #include "skyland/scene_pool.hpp"
 #include "skyland/skyland.hpp"
 #include "version.hpp"
-#include "skyland/scene/titleScreenScene.hpp"
 
 
 
@@ -63,8 +63,7 @@ private:
     Buffer<Text, 8> text_opts_;
 
 public:
-    LanguageSelectScene()
-        : opts_(load_language_options())
+    LanguageSelectScene() : opts_(load_language_options())
     {
     }
 

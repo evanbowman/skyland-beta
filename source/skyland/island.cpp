@@ -722,7 +722,8 @@ void Island::FireState::display(Island& island)
                 auto fy = o.y + y * 16 - 16;
                 batch->push_back({fx, fy});
 
-                APP.environment().render_glow_effect({
+                APP.environment().render_glow_effect(
+                    {
                         Fixnum::from_integer(fx + 8),
                         Fixnum::from_integer(fy + 8 + 16),
                     },

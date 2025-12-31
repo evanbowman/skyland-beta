@@ -180,7 +180,8 @@ ScenePtr SkylandForever::update(Time delta)
 
         PLATFORM.screen().set_shader(APP.environment().shader());
         PLATFORM.screen().set_shader_argument(0);
-        PLATFORM.load_background_texture(APP.environment().background_texture());
+        PLATFORM.load_background_texture(
+            APP.environment().background_texture());
 
         PLATFORM.screen().schedule_fade(
             0.7f, {ColorConstant::rich_black, false, false});

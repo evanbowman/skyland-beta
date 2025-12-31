@@ -12,9 +12,9 @@
 #include "resonanceCore.hpp"
 #include "skyland/entity/explosion/coreExplosion.hpp"
 #include "skyland/room_metatable.hpp"
+#include "skyland/sharedVariable.hpp"
 #include "skyland/sound.hpp"
 #include "skyland/tile.hpp"
-#include "skyland/sharedVariable.hpp"
 
 
 
@@ -47,7 +47,8 @@ Power ResonanceCore::power_usage() const
     const auto base_power = (*metaclass())->consumes_power();
     Power result = base_power;
     for (auto& room : parent()->rooms()) {
-        if (room.get() not_eq this and room->metaclass_index() == metaclass_index()) {
+        if (room.get() not_eq this and
+            room->metaclass_index() == metaclass_index()) {
             result -= resonance_core_ability_power;
         }
     }

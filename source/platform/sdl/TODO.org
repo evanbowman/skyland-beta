@@ -14,4 +14,3 @@
 ** DONE populate completed sounds array
 ** DONE fix issue where textures aren't recolored correctly when using weather engine
 ** TODO make shields glow?
-** 

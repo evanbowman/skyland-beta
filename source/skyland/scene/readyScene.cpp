@@ -1062,7 +1062,7 @@ void ReadyScene::display()
 
     if (APP.game_mode() == App::GameMode::adventure and
         APP.world_graph().nodes_[APP.current_world_location()].type_ ==
-        WorldGraph::Node::Type::shop) {
+            WorldGraph::Node::Type::shop) {
         Sprite spr;
         spr.set_texture_index(57);
         auto o = APP.player_island().origin();

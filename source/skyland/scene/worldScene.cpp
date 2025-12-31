@@ -434,9 +434,8 @@ void WorldScene::display()
     if (auto fn = PLATFORM.get_extensions().draw_point_light) {
         project_glow(APP.effects());
         project_glow(APP.player_island().projectiles());
-        APP.with_opponent_island([&](Island& isle) {
-            project_glow(isle.projectiles());
-        });
+        APP.with_opponent_island(
+            [&](Island& isle) { project_glow(isle.projectiles()); });
     }
 }
 

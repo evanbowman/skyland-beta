@@ -13,14 +13,14 @@
 #include "platform/flash_filesystem.hpp"
 #include "platform/platform.hpp"
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 #include <fstream>
 #include <iostream>
+#include <list>
 #include <map>
 #include <queue>
 #include <sstream>
 #include <thread>
-#include <SDL2/SDL_image.h>
-#include <list>
 #include <unordered_set>
 
 
@@ -101,7 +101,8 @@ static int circle_effect_radius = 0;
 static int circle_effect_origin_x = 0;
 static int circle_effect_origin_y = 0;
 
-struct PngPalette {
+struct PngPalette
+{
     SDL_Color colors[256];
     int count = 0;
     bool found = false;
@@ -126,7 +127,8 @@ static int overlay_texture_height = 0;
 
 // For dynamic glyph mapping, we'll extend the texture
 static SDL_Surface* overlay_surface = nullptr;
-static int overlay_base_tile_count = 0; // How many tiles in the original texture
+static int overlay_base_tile_count =
+    0; // How many tiles in the original texture
 
 static SDL_Texture* tile0_texture = nullptr;
 static SDL_Surface* tile0_surface = nullptr;
@@ -151,37 +153,42 @@ static bool parallax_clouds_enabled = false;
 static bool vertical_parallax_enabled = false;
 
 
-struct ParallaxStrip {
+struct ParallaxStrip
+{
     int start_tile_row;
-    int end_tile_row;      // inclusive
+    int end_tile_row; // inclusive
     Vec2<s32> scroll;
 };
 
-static ParallaxStrip parallax_strip1 = {0, 13, {0, 0}};      // gradient
-static ParallaxStrip parallax_strip2 = {14, 15, {0, 0}};   // dark clouds
-static ParallaxStrip parallax_strip3 = {16, 19, {0, 0}};   // white clouds
+static ParallaxStrip parallax_strip1 = {0, 13, {0, 0}};  // gradient
+static ParallaxStrip parallax_strip2 = {14, 15, {0, 0}}; // dark clouds
+static ParallaxStrip parallax_strip3 = {16, 19, {0, 0}}; // white clouds
 
 static bool tile0_translucent = false;
 static bool tile1_translucent = false;
 
 
-struct PointLight {
+struct PointLight
+{
     SDL_Texture* texture;
     int radius;
 };
 
 
 static std::map<int, PointLight> point_light_cache;
-static std::vector<std::tuple<Fixnum, Fixnum, int, ColorConstant, u8>> point_lights;
+static std::vector<std::tuple<Fixnum, Fixnum, int, ColorConstant, u8>>
+    point_lights;
 
 
-static ColorConstant sdl_color_to_colorconstant(const SDL_Color& c) {
+static ColorConstant sdl_color_to_colorconstant(const SDL_Color& c)
+{
     return (ColorConstant)((c.r << 16) | (c.g << 8) | c.b);
 }
 
 
 
-SDL_Color color_to_sdl(ColorConstant k) {
+SDL_Color color_to_sdl(ColorConstant k)
+{
     u32 hex = (u32)k;
 
     // Extract RGB from hex color
@@ -210,11 +217,11 @@ static SDL_Texture* create_point_light_texture(int radius)
     // Create a new light texture
     int size = radius * 2;
     SDL_Surface* surface = SDL_CreateRGBSurface(
-        0, size, size, 32,
-        0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
+        0, size, size, 32, 0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000);
 
     if (!surface) {
-        error(format("Failed to create point light surface: %", SDL_GetError()));
+        error(
+            format("Failed to create point light surface: %", SDL_GetError()));
         return nullptr;
     }
 
@@ -257,14 +264,16 @@ static SDL_Texture* create_point_light_texture(int radius)
                 intensity = exp(-4.0f * (1.0f - t)) / exp(-4.0f);
                 break;
             case 4: // Inverse square (physically accurate)
-                intensity = 1.0f / (1.0f + (distance * distance) / (radius * radius));
+                intensity =
+                    1.0f / (1.0f + (distance * distance) / (radius * radius));
                 break;
             default:
                 intensity = t * t;
             }
 
             u8 value = (u8)(intensity * 255);
-            Uint32 pixel = SDL_MapRGBA(surface->format, value, value, value, 255);
+            Uint32 pixel =
+                SDL_MapRGBA(surface->format, value, value, value, 255);
             pixels[y * size + x] = pixel;
         }
     }
@@ -277,7 +286,8 @@ static SDL_Texture* create_point_light_texture(int radius)
     SDL_FreeSurface(surface);
 
     if (!texture) {
-        error(format("Failed to create point light texture: %", SDL_GetError()));
+        error(
+            format("Failed to create point light texture: %", SDL_GetError()));
         return nullptr;
     }
 
@@ -303,20 +313,15 @@ static void cleanup_point_light_cache()
 
 
 static const Platform::Extensions extensions{
-    .overlay_circle_effect = [](int radius, int x, int y) {
-        circle_effect_radius = radius;
-        circle_effect_origin_x = x;
-        circle_effect_origin_y = y;
-    },
-    .vertical_parallax_enable = [](bool on) {
-        vertical_parallax_enabled = on;
-    },
-    .enable_parallax_clouds = [](bool on) {
-        parallax_clouds_enabled = on;
-    },
-    .sprite_overlapping_supported = [](bool& result) {
-        result = true;
-    },
+    .overlay_circle_effect =
+        [](int radius, int x, int y) {
+            circle_effect_radius = radius;
+            circle_effect_origin_x = x;
+            circle_effect_origin_y = y;
+        },
+    .vertical_parallax_enable = [](bool on) { vertical_parallax_enabled = on; },
+    .enable_parallax_clouds = [](bool on) { parallax_clouds_enabled = on; },
+    .sprite_overlapping_supported = [](bool& result) { result = true; },
     .has_startup_opt = [](const char* opt) -> bool {
         for (int i = 0; i < process_argc; ++i) {
             if (str_eq(process_argv[i], opt)) {
@@ -325,50 +330,54 @@ static const Platform::Extensions extensions{
         }
         return false;
     },
-    .update_parallax_r1 = [](u8 scroll) {
-        auto& screen = PLATFORM.screen();
-        auto center = screen.get_view().int_center().cast<s32>();
-        if (vertical_parallax_enabled) {
-            parallax_strip2.scroll.x = scroll + (center.x / 3);
-            parallax_strip2.scroll.y = center.y / 4 + 3;
-        } else {
-            parallax_strip2.scroll.x = scroll + (center.x / 3);
-            parallax_strip2.scroll.y = center.y / 2;
-        }
-    },
-    .update_parallax_r2 = [](u8 scroll) {
-        auto& screen = PLATFORM.screen();
-        auto center = screen.get_view().int_center().cast<s32>();
-        if (vertical_parallax_enabled) {
-            parallax_strip3.scroll.x = scroll + (center.x / 3);
-            parallax_strip3.scroll.y = center.y / 2 * 0.7f + 3;
-        } else {
-            parallax_strip3.scroll.x = scroll + (center.x / 3);
-            parallax_strip3.scroll.y = center.y / 2;
-        }
-    },
-    .draw_point_light = [](Fixnum x, Fixnum y, int radius, ColorConstant tint, u8 intensity) {
-        if (radius <= 0 or intensity == 0) {
-            return;
-        }
-
-        point_lights.push_back({x, y, radius, tint, intensity});
-    },
-    .enable_translucence = [](const Buffer<Layer, 4>& layers) {
-        // Reset translucence flags
-        tile0_translucent = false;
-        tile1_translucent = false;
-
-        // Set translucence for requested layers
-        for (auto& layer : layers) {
-            if (layer == Layer::map_0_ext || layer == Layer::map_0) {
-                tile0_translucent = true;
+    .update_parallax_r1 =
+        [](u8 scroll) {
+            auto& screen = PLATFORM.screen();
+            auto center = screen.get_view().int_center().cast<s32>();
+            if (vertical_parallax_enabled) {
+                parallax_strip2.scroll.x = scroll + (center.x / 3);
+                parallax_strip2.scroll.y = center.y / 4 + 3;
+            } else {
+                parallax_strip2.scroll.x = scroll + (center.x / 3);
+                parallax_strip2.scroll.y = center.y / 2;
             }
-            if (layer == Layer::map_1_ext || layer == Layer::map_1) {
-                tile1_translucent = true;
+        },
+    .update_parallax_r2 =
+        [](u8 scroll) {
+            auto& screen = PLATFORM.screen();
+            auto center = screen.get_view().int_center().cast<s32>();
+            if (vertical_parallax_enabled) {
+                parallax_strip3.scroll.x = scroll + (center.x / 3);
+                parallax_strip3.scroll.y = center.y / 2 * 0.7f + 3;
+            } else {
+                parallax_strip3.scroll.x = scroll + (center.x / 3);
+                parallax_strip3.scroll.y = center.y / 2;
             }
-        }
-    },
+        },
+    .draw_point_light =
+        [](Fixnum x, Fixnum y, int radius, ColorConstant tint, u8 intensity) {
+            if (radius <= 0 or intensity == 0) {
+                return;
+            }
+
+            point_lights.push_back({x, y, radius, tint, intensity});
+        },
+    .enable_translucence =
+        [](const Buffer<Layer, 4>& layers) {
+            // Reset translucence flags
+            tile0_translucent = false;
+            tile1_translucent = false;
+
+            // Set translucence for requested layers
+            for (auto& layer : layers) {
+                if (layer == Layer::map_0_ext || layer == Layer::map_0) {
+                    tile0_translucent = true;
+                }
+                if (layer == Layer::map_1_ext || layer == Layer::map_1) {
+                    tile1_translucent = true;
+                }
+            }
+        },
 };
 
 
@@ -398,7 +407,7 @@ static int calculate_best_scale(int window_w, int window_h)
 static void constrain_window_to_scale()
 {
     if (is_fullscreen) {
-        return;  // Don't constrain in fullscreen
+        return; // Don't constrain in fullscreen
     }
 
     int current_w, current_h;
@@ -432,8 +441,8 @@ static void constrain_window_to_scale()
         SDL_SetWindowSize(window, target_w, target_h);
         window_scale = scale;
 
-        info(format("Window resized to %x scale (%x%)",
-                   scale, target_w, target_h));
+        info(format(
+            "Window resized to %x scale (%x%)", scale, target_w, target_h));
     }
 }
 
@@ -494,8 +503,8 @@ static void toggle_fullscreen()
         SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
 #endif
 
-        info(format("Entered fullscreen mode: %x%",
-                   display_mode.w, display_mode.h));
+        info(format(
+            "Entered fullscreen mode: %x%", display_mode.w, display_mode.h));
     } else {
         SDL_SetWindowFullscreen(window, 0);
 
@@ -504,12 +513,12 @@ static void toggle_fullscreen()
         } else {
             // Default to current scale
             SDL_SetWindowSize(window,
-                            logical_width * window_scale,
-                            logical_height * window_scale);
+                              logical_width * window_scale,
+                              logical_height * window_scale);
         }
 
-         info("Exited fullscreen mode");
-     }
+        info("Exited fullscreen mode");
+    }
 
     update_viewport();
 }
@@ -534,13 +543,13 @@ static void handle_window_resize(int w, int h)
 static void cycle_window_scale(bool increase)
 {
     if (is_fullscreen) {
-        return;  // Don't change scale in fullscreen
+        return; // Don't change scale in fullscreen
     }
 
     if (increase) {
-        window_scale = std::min(window_scale + 1, 8);  // Max 8x
+        window_scale = std::min(window_scale + 1, 8); // Max 8x
     } else {
-        window_scale = std::max(window_scale - 1, 1);  // Min 1x
+        window_scale = std::max(window_scale - 1, 1); // Min 1x
     }
 
     int new_w = logical_width * window_scale;
@@ -576,34 +585,32 @@ int main(int argc, char** argv)
                               SDL_WINDOWPOS_UNDEFINED,
                               initial_width,
                               initial_height,
-                              SDL_WINDOW_SHOWN |
-                              SDL_WINDOW_RESIZABLE |
-                              SDL_WINDOW_ALLOW_HIGHDPI);
+                              SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE |
+                                  SDL_WINDOW_ALLOW_HIGHDPI);
 
     if (window == NULL) {
-        fprintf(stderr, "SDL window failed to initialise: %s\n", SDL_GetError());
+        fprintf(
+            stderr, "SDL window failed to initialise: %s\n", SDL_GetError());
         return 1;
     }
 
     // Set minimum window size to 1x scale
     SDL_SetWindowMinimumSize(window, logical_width, logical_height);
 
-    renderer = SDL_CreateRenderer(window, -1,
-                                  SDL_RENDERER_ACCELERATED |
-                                  SDL_RENDERER_PRESENTVSYNC);
+    renderer = SDL_CreateRenderer(
+        window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
     if (renderer == NULL) {
-        fprintf(stderr, "SDL renderer failed to initialise: %s\n", SDL_GetError());
+        fprintf(
+            stderr, "SDL renderer failed to initialise: %s\n", SDL_GetError());
         return 1;
     }
 
     // Enable integer scaling for crisp pixels
     SDL_RenderSetIntegerScale(renderer, SDL_TRUE);
 
-    tile_recolor_buffer = SDL_CreateTexture(renderer,
-                                            SDL_PIXELFORMAT_RGBA8888,
-                                            SDL_TEXTUREACCESS_TARGET,
-                                            16, 16);
+    tile_recolor_buffer = SDL_CreateTexture(
+        renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, 16, 16);
 
     rng::critical_state = time(nullptr);
 
@@ -633,7 +640,8 @@ void Platform::restart()
 
 
 
-struct TileInfo {
+struct TileInfo
+{
     TileDesc tile_desc;
     u16 palette;
     ColorConstant text_fg_color_;
@@ -647,9 +655,9 @@ static std::map<Layer, std::map<std::pair<u16, u16>, TileInfo>> tile_layers_;
 
 
 static const std::map<u16, SDL_Color> special_palettes = {
-    {15, {0xef, 0x0d, 0x54, 255}},  // Red (custom_color(0xef0d54))
-    {14, {0x10, 0x31, 0x63, 255}},  // Blue-black (custom_color(0x103163))
-    {13, {0xff, 0xff, 0xff, 255}},  // White (silver_white)
+    {15, {0xef, 0x0d, 0x54, 255}}, // Red (custom_color(0xef0d54))
+    {14, {0x10, 0x31, 0x63, 255}}, // Blue-black (custom_color(0x103163))
+    {13, {0xff, 0xff, 0xff, 255}}, // White (silver_white)
 };
 
 
@@ -676,8 +684,7 @@ static SDL_Color default_text_bg_color = {0x00, 0x00, 0x00, 255};
 
 ColorConstant default_fg_color()
 {
-    u32 hex = (default_text_fg_color.r << 16) |
-              (default_text_fg_color.g << 8) |
+    u32 hex = (default_text_fg_color.r << 16) | (default_text_fg_color.g << 8) |
               default_text_fg_color.b;
     return (ColorConstant)hex;
 }
@@ -690,7 +697,8 @@ bool is_glyph(TileDesc);
 
 void Platform::clear_layer(Layer layer)
 {
-    if (auto found = tile_layers_.find(layer); found not_eq tile_layers_.end()) {
+    if (auto found = tile_layers_.find(layer);
+        found not_eq tile_layers_.end()) {
         tile_layers_.erase(found);
     }
 }
@@ -747,16 +755,16 @@ void Platform::Keyboard::rumble(bool enabled)
 
 
 static std::map<SDL_Keycode, Key> keymap = {
-    {SDLK_z, Key::action_2},      // Z for A button
-    {SDLK_x, Key::action_1},      // X for B button
+    {SDLK_z, Key::action_2}, // Z for A button
+    {SDLK_x, Key::action_1}, // X for B button
     {SDLK_RETURN, Key::start},
     {SDLK_RSHIFT, Key::select},
     {SDLK_RIGHT, Key::right},
     {SDLK_LEFT, Key::left},
     {SDLK_DOWN, Key::down},
     {SDLK_UP, Key::up},
-    {SDLK_a, Key::alt_1},         // A for L button
-    {SDLK_s, Key::alt_2},         // S for R button
+    {SDLK_a, Key::alt_1}, // A for L button
+    {SDLK_s, Key::alt_2}, // S for R button
 };
 
 
@@ -772,7 +780,7 @@ void Platform::Keyboard::poll()
             sdl_running = false;
             break;
 
-         case SDL_WINDOWEVENT:
+        case SDL_WINDOWEVENT:
             switch (e.window.event) {
             case SDL_WINDOWEVENT_RESIZED:
             case SDL_WINDOWEVENT_SIZE_CHANGED:
@@ -793,13 +801,15 @@ void Platform::Keyboard::poll()
             // F11 or Cmd+F (macOS) or Alt+Enter for fullscreen
             if (e.key.keysym.sym == SDLK_F11 ||
                 (e.key.keysym.sym == SDLK_f && (e.key.keysym.mod & KMOD_GUI)) ||
-                (e.key.keysym.sym == SDLK_RETURN && (e.key.keysym.mod & KMOD_ALT))) {
+                (e.key.keysym.sym == SDLK_RETURN &&
+                 (e.key.keysym.mod & KMOD_ALT))) {
                 toggle_fullscreen();
-                break;  // Don't fall through
+                break; // Don't fall through
             }
             // Cmd/Ctrl + Plus/Minus to change window scale
             if ((e.key.keysym.mod & (KMOD_GUI | KMOD_CTRL))) {
-                if (e.key.keysym.sym == SDLK_EQUALS || e.key.keysym.sym == SDLK_PLUS) {
+                if (e.key.keysym.sym == SDLK_EQUALS ||
+                    e.key.keysym.sym == SDLK_PLUS) {
                     cycle_window_scale(true);
                     break;
                 } else if (e.key.keysym.sym == SDLK_MINUS) {
@@ -808,7 +818,8 @@ void Platform::Keyboard::poll()
                 }
             }
             if (e.key.keysym.sym == SDLK_F11 ||
-                (e.key.keysym.sym == SDLK_RETURN && (e.key.keysym.mod & KMOD_ALT))) {
+                (e.key.keysym.sym == SDLK_RETURN &&
+                 (e.key.keysym.mod & KMOD_ALT))) {
                 toggle_fullscreen();
             }
 
@@ -914,7 +925,8 @@ Optional<Platform::DynamicTexturePtr> Platform::make_dynamic_texture()
 {
     auto finalizer =
         [](PooledRcControlBlock<DynamicTexture, dynamic_texture_count>* ctrl) {
-            auto& mapping = dynamic_texture_mappings[ctrl->data_.mapping_index()];
+            auto& mapping =
+                dynamic_texture_mappings[ctrl->data_.mapping_index()];
             mapping.reserved_ = false;
             dynamic_texture_pool.free(ctrl);
         };
@@ -1008,20 +1020,20 @@ Platform::TilePixels Platform::extract_tile(Layer layer, u16 tile)
     case Layer::map_1:
         surface = tile1_surface;
         palette = &tile1_transformed_palette;
-        tile_size = 16;  // 16x16 tiles for map layers
+        tile_size = 16; // 16x16 tiles for map layers
         break;
 
     case Layer::map_0_ext:
     case Layer::map_0:
         surface = tile0_surface;
         palette = &tile0_transformed_palette;
-        tile_size = 16;  // 16x16 tiles for map layers
+        tile_size = 16; // 16x16 tiles for map layers
         break;
 
     case Layer::overlay:
         surface = overlay_surface;
         palette = &overlay_transformed_palette;
-        tile_size = 8;  // 8x8 tiles for overlay
+        tile_size = 8; // 8x8 tiles for overlay
         break;
 
     case Layer::background:
@@ -1059,8 +1071,7 @@ Platform::TilePixels Platform::extract_tile(Layer layer, u16 tile)
     // Build reverse lookup: RGB -> palette index
     std::map<u32, u8> rgb_to_index;
     for (int i = 0; i < palette->count; i++) {
-        u32 key = (palette->colors[i].r << 16) |
-                  (palette->colors[i].g << 8) |
+        u32 key = (palette->colors[i].r << 16) | (palette->colors[i].g << 8) |
                   palette->colors[i].b;
         rgb_to_index[key] = i;
     }
@@ -1093,14 +1104,15 @@ Platform::TilePixels Platform::extract_tile(Layer layer, u16 tile)
 
             // Look up palette index
             u8 palette_index = 0;
-            if (a > 0) {  // Non-transparent pixel
+            if (a > 0) { // Non-transparent pixel
                 u32 key = (r << 16) | (g << 8) | b;
                 auto it = rgb_to_index.find(key);
                 if (it != rgb_to_index.end()) {
                     palette_index = it->second;
                 } else {
                     // Color not in palette - find closest match or use 0
-                    warning(format("extract_tile: color not in palette at (%,%)", x, y));
+                    warning(format(
+                        "extract_tile: color not in palette at (%,%)", x, y));
                     palette_index = 0;
                 }
             }
@@ -1130,20 +1142,20 @@ Platform::EncodedTile Platform::encode_tile(u8 tile_data[16][16])
     u8* out = t.bytes_;
 
     // Top-left 8x8 quadrant
-    for (int i = 0; i < 8; ++i) {           // y
-        for (int j = 0; j < 8; ++j) {       // x
+    for (int i = 0; i < 8; ++i) {     // y
+        for (int j = 0; j < 8; ++j) { // x
             if (j % 2 == 0) {
-                *out = tile_data[j][i] & 0x0F;  // Low nibble
+                *out = tile_data[j][i] & 0x0F; // Low nibble
             } else {
-                *out |= (tile_data[j][i] & 0x0F) << 4;  // High nibble
+                *out |= (tile_data[j][i] & 0x0F) << 4; // High nibble
                 out++;
             }
         }
     }
 
     // Top-right 8x8 quadrant
-    for (int i = 0; i < 8; ++i) {           // y
-        for (int j = 8; j < 16; ++j) {      // x
+    for (int i = 0; i < 8; ++i) {      // y
+        for (int j = 8; j < 16; ++j) { // x
             if (j % 2 == 0) {
                 *out = tile_data[j][i] & 0x0F;
             } else {
@@ -1154,8 +1166,8 @@ Platform::EncodedTile Platform::encode_tile(u8 tile_data[16][16])
     }
 
     // Bottom-left 8x8 quadrant
-    for (int i = 8; i < 16; ++i) {          // y
-        for (int j = 0; j < 8; ++j) {       // x
+    for (int i = 8; i < 16; ++i) {    // y
+        for (int j = 0; j < 8; ++j) { // x
             if (j % 2 == 0) {
                 *out = tile_data[j][i] & 0x0F;
             } else {
@@ -1166,8 +1178,8 @@ Platform::EncodedTile Platform::encode_tile(u8 tile_data[16][16])
     }
 
     // Bottom-right 8x8 quadrant
-    for (int i = 8; i < 16; ++i) {          // y
-        for (int j = 8; j < 16; ++j) {      // x
+    for (int i = 8; i < 16; ++i) {     // y
+        for (int j = 8; j < 16; ++j) { // x
             if (j % 2 == 0) {
                 *out = tile_data[j][i] & 0x0F;
             } else {
@@ -1251,12 +1263,12 @@ void Platform::walk_filesystem(
     std::vector<std::string> paths;
 
     auto res_path = resource_path();
-    using recursive_directory_iterator = std::filesystem::recursive_directory_iterator;
+    using recursive_directory_iterator =
+        std::filesystem::recursive_directory_iterator;
     for (const auto& dirent : recursive_directory_iterator(res_path)) {
         if (dirent.is_regular_file()) {
             auto full_path = dirent.path().string();
-            if (full_path.size() and
-                full_path[full_path.size() - 1] == '~') {
+            if (full_path.size() and full_path[full_path.size() - 1] == '~') {
                 // Gah! It's an emacs temporary file...
                 continue;
             }
@@ -1282,7 +1294,8 @@ void Platform::walk_filesystem(
 
 
 
-struct GlyphCacheEntry {
+struct GlyphCacheEntry
+{
     std::string texture_name;
     u16 offset_in_texture;
     TileDesc vram_tile_index;
@@ -1308,11 +1321,13 @@ static SDL_Surface* load_charset_surface(const char* texture_name)
         return it->second;
     }
 
-    std::string full_path = resource_path() + "images" + PATH_DELIMITER + texture_name + ".png";
+    std::string full_path =
+        resource_path() + "images" + PATH_DELIMITER + texture_name + ".png";
 
     SDL_Surface* surface = IMG_Load(full_path.c_str());
     if (!surface) {
-        error(format("Failed to load charset %: %", full_path.c_str(), IMG_GetError()));
+        error(format(
+            "Failed to load charset %: %", full_path.c_str(), IMG_GetError()));
         return nullptr;
     }
 
@@ -1327,9 +1342,12 @@ static SDL_Surface* load_charset_surface(const char* texture_name)
 
 
 
-static void copy_tile_to_surface(SDL_Surface* dst, SDL_Surface* src,
-                                 int dst_tile_x, int dst_tile_y,
-                                 int src_tile_x, int src_tile_y)
+static void copy_tile_to_surface(SDL_Surface* dst,
+                                 SDL_Surface* src,
+                                 int dst_tile_x,
+                                 int dst_tile_y,
+                                 int src_tile_x,
+                                 int src_tile_y)
 {
     SDL_Rect src_rect;
     src_rect.x = src_tile_x * 8;
@@ -1361,13 +1379,15 @@ static void expand_overlay_surface()
     // Expand vertically (add a new row of 8 pixel height)
     int new_height = old_height + 8;
 
-    SDL_Surface* new_surface = SDL_CreateRGBSurface(
-        0, old_width, new_height,
-        overlay_surface->format->BitsPerPixel,
-        overlay_surface->format->Rmask,
-        overlay_surface->format->Gmask,
-        overlay_surface->format->Bmask,
-        overlay_surface->format->Amask);
+    SDL_Surface* new_surface =
+        SDL_CreateRGBSurface(0,
+                             old_width,
+                             new_height,
+                             overlay_surface->format->BitsPerPixel,
+                             overlay_surface->format->Rmask,
+                             overlay_surface->format->Gmask,
+                             overlay_surface->format->Bmask,
+                             overlay_surface->format->Amask);
 
     if (!new_surface) {
         error(format("Failed to expand overlay surface: %", SDL_GetError()));
@@ -1390,7 +1410,8 @@ static void expand_overlay_surface()
         SDL_DestroyTexture(current_overlay_texture);
     }
 
-    current_overlay_texture = SDL_CreateTextureFromSurface(renderer, overlay_surface);
+    current_overlay_texture =
+        SDL_CreateTextureFromSurface(renderer, overlay_surface);
     SDL_SetTextureBlendMode(current_overlay_texture, SDL_BLENDMODE_BLEND);
 
     overlay_texture_width = overlay_surface->w;
@@ -1408,8 +1429,7 @@ TileDesc Platform::map_glyph(const utf8::Codepoint& glyph,
 
     // Check if this glyph is already mapped
     for (auto& entry : glyph_cache) {
-        if (entry.in_use &&
-            entry.texture_name == mapping_info.texture_name_ &&
+        if (entry.in_use && entry.texture_name == mapping_info.texture_name_ &&
             entry.offset_in_texture == mapping_info.offset_) {
             return entry.vram_tile_index;
         }
@@ -1447,11 +1467,13 @@ TileDesc Platform::map_glyph(const utf8::Codepoint& glyph,
     // Check if we need to expand the overlay surface
     int tiles_per_row = overlay_texture_width / 8;
     int required_tiles = new_tile_index + 1;
-    int current_tiles = (overlay_texture_width / 8) * (overlay_texture_height / 8);
+    int current_tiles =
+        (overlay_texture_width / 8) * (overlay_texture_height / 8);
 
     while (current_tiles < required_tiles) {
         expand_overlay_surface();
-        current_tiles = (overlay_texture_width / 8) * (overlay_texture_height / 8);
+        current_tiles =
+            (overlay_texture_width / 8) * (overlay_texture_height / 8);
     }
 
     // Calculate position in overlay surface where this glyph will go
@@ -1464,24 +1486,24 @@ TileDesc Platform::map_glyph(const utf8::Codepoint& glyph,
     int src_tile_y = mapping_info.offset_ / charset_tiles_per_row;
 
     // Copy the 8x8 glyph from charset to overlay surface
-    copy_tile_to_surface(overlay_surface, charset,
-                        dst_tile_x, dst_tile_y,
-                        src_tile_x, src_tile_y);
+    copy_tile_to_surface(overlay_surface,
+                         charset,
+                         dst_tile_x,
+                         dst_tile_y,
+                         src_tile_x,
+                         src_tile_y);
 
     // Recreate the texture from the modified surface
     if (current_overlay_texture) {
         SDL_DestroyTexture(current_overlay_texture);
     }
-    current_overlay_texture = SDL_CreateTextureFromSurface(renderer, overlay_surface);
+    current_overlay_texture =
+        SDL_CreateTextureFromSurface(renderer, overlay_surface);
     SDL_SetTextureBlendMode(current_overlay_texture, SDL_BLENDMODE_BLEND);
 
     // Update cache entry
     glyph_cache[slot_index] = {
-        mapping_info.texture_name_,
-        mapping_info.offset_,
-        new_tile_index,
-        true
-    };
+        mapping_info.texture_name_, mapping_info.offset_, new_tile_index, true};
 
     return new_tile_index;
 }
@@ -1540,7 +1562,6 @@ void cleanup_charset_surfaces()
         SDL_FreeSurface(surface);
     }
     overlay_source_cache.clear();
-
 }
 
 
@@ -1599,8 +1620,8 @@ void Platform::overwrite_t0_tile(u16 index, const EncodedTile& t)
             int pixel_y = tile_y * tile_size + y;
 
             // Calculate which quadrant and position within quadrant
-            int quadrant_x = x / 8;  // 0 or 1
-            int quadrant_y = y / 8;  // 0 or 1
+            int quadrant_x = x / 8; // 0 or 1
+            int quadrant_y = y / 8; // 0 or 1
             int local_x = x % 8;
             int local_y = y % 8;
 
@@ -1628,8 +1649,8 @@ void Platform::overwrite_t0_tile(u16 index, const EncodedTile& t)
             }
 
             // Write the pixel to the surface
-            Uint32 pixel_value = SDL_MapRGBA(tile0_surface->format,
-                                            color.r, color.g, color.b, color.a);
+            Uint32 pixel_value = SDL_MapRGBA(
+                tile0_surface->format, color.r, color.g, color.b, color.a);
 
             Uint8* pixel_ptr = pixels + pixel_y * pitch + pixel_x * bpp;
             *(Uint32*)pixel_ptr = pixel_value;
@@ -1701,8 +1722,8 @@ void Platform::overwrite_t1_tile(u16 index, const EncodedTile& t)
             int pixel_y = tile_y * tile_size + y;
 
             // Calculate which quadrant and position within quadrant
-            int quadrant_x = x / 8;  // 0 or 1
-            int quadrant_y = y / 8;  // 0 or 1
+            int quadrant_x = x / 8; // 0 or 1
+            int quadrant_y = y / 8; // 0 or 1
             int local_x = x % 8;
             int local_y = y % 8;
 
@@ -1730,8 +1751,8 @@ void Platform::overwrite_t1_tile(u16 index, const EncodedTile& t)
             }
 
             // Write the pixel to the surface
-            Uint32 pixel_value = SDL_MapRGBA(tile1_surface->format,
-                                            color.r, color.g, color.b, color.a);
+            Uint32 pixel_value = SDL_MapRGBA(
+                tile1_surface->format, color.r, color.g, color.b, color.a);
 
             Uint8* pixel_ptr = pixels + pixel_y * pitch + pixel_x * bpp;
             *(Uint32*)pixel_ptr = pixel_value;
@@ -1818,9 +1839,9 @@ void Platform::overwrite_overlay_tile(u16 index, const EncodedTile& t)
             // Extract the 4-bit palette index
             u8 palette_index;
             if (x % 2 == 0) {
-                palette_index = src[byte_offset] & 0x0F;  // Low nibble
+                palette_index = src[byte_offset] & 0x0F; // Low nibble
             } else {
-                palette_index = (src[byte_offset] >> 4) & 0x0F;  // High nibble
+                palette_index = (src[byte_offset] >> 4) & 0x0F; // High nibble
             }
 
             // Look up the color in the palette
@@ -1837,8 +1858,8 @@ void Platform::overwrite_overlay_tile(u16 index, const EncodedTile& t)
             }
 
             // Write the pixel to the surface
-            Uint32 pixel_value = SDL_MapRGBA(overlay_surface->format,
-                                            color.r, color.g, color.b, color.a);
+            Uint32 pixel_value = SDL_MapRGBA(
+                overlay_surface->format, color.r, color.g, color.b, color.a);
 
             Uint8* pixel_ptr = pixels + pixel_y * pitch + pixel_x * bpp;
             *(Uint32*)pixel_ptr = pixel_value;
@@ -1853,7 +1874,8 @@ void Platform::overwrite_overlay_tile(u16 index, const EncodedTile& t)
     if (current_overlay_texture) {
         SDL_DestroyTexture(current_overlay_texture);
     }
-    current_overlay_texture = SDL_CreateTextureFromSurface(renderer, overlay_surface);
+    current_overlay_texture =
+        SDL_CreateTextureFromSurface(renderer, overlay_surface);
     if (!current_overlay_texture) {
         error(format("Failed to recreate overlay texture: %", SDL_GetError()));
         return;
@@ -1871,17 +1893,19 @@ static Platform::Screen::Shader current_shader = passthrough_shader;
 static int current_shader_arg = 0;
 
 
-struct DynamicPalette {
-    std::map<u32, u8> color_to_index;  // RGB value -> palette index
-    SDL_Color colors[256];              // Up to 256 unique colors
+struct DynamicPalette
+{
+    std::map<u32, u8> color_to_index; // RGB value -> palette index
+    SDL_Color colors[256];            // Up to 256 unique colors
     u8 count = 0;
 
-    u8 add_color(const SDL_Color& c) {
+    u8 add_color(const SDL_Color& c)
+    {
         u32 key = (c.r << 16) | (c.g << 8) | c.b;
 
         auto it = color_to_index.find(key);
         if (it != color_to_index.end()) {
-            return it->second;  // Already in palette
+            return it->second; // Already in palette
         }
 
         if (count >= 256) {
@@ -1924,17 +1948,18 @@ static PngPalette extract_png_palette(const std::string& path)
         // Read chunk length (4 bytes, big-endian)
         unsigned char length_bytes[4];
         file.read((char*)length_bytes, 4);
-        if (!file.good()) break;
+        if (!file.good())
+            break;
 
         uint32_t chunk_length = (length_bytes[0] << 24) |
                                 (length_bytes[1] << 16) |
-                                (length_bytes[2] << 8) |
-                                length_bytes[3];
+                                (length_bytes[2] << 8) | length_bytes[3];
 
         // Read chunk type (4 bytes)
         char chunk_type[5] = {0};
         file.read(chunk_type, 4);
-        if (!file.good()) break;
+        if (!file.good())
+            break;
 
         // Check if this is a PLTE chunk
         if (strncmp(chunk_type, "PLTE", 4) == 0) {
@@ -1942,7 +1967,8 @@ static PngPalette extract_png_palette(const std::string& path)
             result.count = chunk_length / 3;
 
             if (result.count > 256) {
-                warning(format("PNG palette has % entries, clamping to 256", result.count));
+                warning(format("PNG palette has % entries, clamping to 256",
+                               result.count));
                 result.count = 256;
             }
 
@@ -1978,10 +2004,13 @@ static SDL_Surface* load_png_with_stb(const std::string& path,
 
     // Load the image with stb_image
     int width, height, channels;
-    unsigned char* data = stbi_load(path.c_str(), &width, &height, &channels, 0);
+    unsigned char* data =
+        stbi_load(path.c_str(), &width, &height, &channels, 0);
 
     if (!data) {
-        error(format("stb_image failed to load %: %", path.c_str(), stbi_failure_reason()));
+        error(format("stb_image failed to load %: %",
+                     path.c_str(),
+                     stbi_failure_reason()));
         return nullptr;
     }
 
@@ -1992,11 +2021,13 @@ static SDL_Surface* load_png_with_stb(const std::string& path,
         // Apply shader to the original palette
         SDL_Color transformed_palette[256];
         for (int i = 0; i < original_palette.count; i++) {
-            ColorConstant original = sdl_color_to_colorconstant(original_palette.colors[i]);
-            ColorConstant transformed = current_shader(std::move(shader_palette),
-                                                       std::move(original),
-                                                       std::move(current_shader_arg),
-                                                       std::move(i));
+            ColorConstant original =
+                sdl_color_to_colorconstant(original_palette.colors[i]);
+            ColorConstant transformed =
+                current_shader(std::move(shader_palette),
+                               std::move(original),
+                               std::move(current_shader_arg),
+                               std::move(i));
             transformed_palette[i] = color_to_sdl(transformed);
         }
 
@@ -2017,7 +2048,8 @@ static SDL_Surface* load_png_with_stb(const std::string& path,
         if (target_palette) {
             target_palette->count = original_palette.count;
             target_palette->found = true;
-            memcpy(target_palette->colors, transformed_palette,
+            memcpy(target_palette->colors,
+                   transformed_palette,
                    sizeof(SDL_Color) * original_palette.count);
         }
 
@@ -2033,10 +2065,16 @@ static SDL_Surface* load_png_with_stb(const std::string& path,
 
         // Create surface from stb_image data
         int bpp = channels * 8;
-        SDL_Surface* temp_surface = SDL_CreateRGBSurfaceFrom(
-            data, width, height, bpp, width * channels,
-            0x000000FF, 0x0000FF00, 0x00FF0000,
-            channels == 4 ? 0xFF000000 : 0);
+        SDL_Surface* temp_surface =
+            SDL_CreateRGBSurfaceFrom(data,
+                                     width,
+                                     height,
+                                     bpp,
+                                     width * channels,
+                                     0x000000FF,
+                                     0x0000FF00,
+                                     0x00FF0000,
+                                     channels == 4 ? 0xFF000000 : 0);
 
         if (!temp_surface) {
             stbi_image_free(data);
@@ -2045,8 +2083,8 @@ static SDL_Surface* load_png_with_stb(const std::string& path,
         }
 
         // Convert to RGBA32 for processing
-        SDL_Surface* rgba_surface = SDL_ConvertSurfaceFormat(
-            temp_surface, SDL_PIXELFORMAT_RGBA32, 0);
+        SDL_Surface* rgba_surface =
+            SDL_ConvertSurfaceFormat(temp_surface, SDL_PIXELFORMAT_RGBA32, 0);
         SDL_FreeSurface(temp_surface);
         stbi_image_free(data);
 
@@ -2056,12 +2094,15 @@ static SDL_Surface* load_png_with_stb(const std::string& path,
         }
 
         // Create output surface
-        SDL_Surface* result_surface = SDL_CreateRGBSurface(
-            0, width, height, 32,
-            rgba_surface->format->Rmask,
-            rgba_surface->format->Gmask,
-            rgba_surface->format->Bmask,
-            rgba_surface->format->Amask);
+        SDL_Surface* result_surface =
+            SDL_CreateRGBSurface(0,
+                                 width,
+                                 height,
+                                 32,
+                                 rgba_surface->format->Rmask,
+                                 rgba_surface->format->Gmask,
+                                 rgba_surface->format->Bmask,
+                                 rgba_surface->format->Amask);
 
         if (!result_surface) {
             error(format("Failed to create result surface: %", SDL_GetError()));
@@ -2070,8 +2111,10 @@ static SDL_Surface* load_png_with_stb(const std::string& path,
         }
 
         // Apply shader transformation
-        if (SDL_MUSTLOCK(rgba_surface)) SDL_LockSurface(rgba_surface);
-        if (SDL_MUSTLOCK(result_surface)) SDL_LockSurface(result_surface);
+        if (SDL_MUSTLOCK(rgba_surface))
+            SDL_LockSurface(rgba_surface);
+        if (SDL_MUSTLOCK(result_surface))
+            SDL_LockSurface(result_surface);
 
         Uint32* src_pixels = (Uint32*)rgba_surface->pixels;
         Uint32* dst_pixels = (Uint32*)result_surface->pixels;
@@ -2109,8 +2152,10 @@ static SDL_Surface* load_png_with_stb(const std::string& path,
             }
         }
 
-        if (SDL_MUSTLOCK(rgba_surface)) SDL_UnlockSurface(rgba_surface);
-        if (SDL_MUSTLOCK(result_surface)) SDL_UnlockSurface(result_surface);
+        if (SDL_MUSTLOCK(rgba_surface))
+            SDL_UnlockSurface(rgba_surface);
+        if (SDL_MUSTLOCK(result_surface))
+            SDL_UnlockSurface(result_surface);
 
         SDL_FreeSurface(rgba_surface);
 
@@ -2122,10 +2167,15 @@ static SDL_Surface* load_png_with_stb(const std::string& path,
 
     } else {
         int bpp = channels * 8;
-        surface = SDL_CreateRGBSurfaceFrom(
-            data, width, height, bpp, width * channels,
-            0x000000FF, 0x0000FF00, 0x00FF0000,
-            channels == 4 ? 0xFF000000 : 0);
+        surface = SDL_CreateRGBSurfaceFrom(data,
+                                           width,
+                                           height,
+                                           bpp,
+                                           width * channels,
+                                           0x000000FF,
+                                           0x0000FF00,
+                                           0x00FF0000,
+                                           channels == 4 ? 0xFF000000 : 0);
 
         if (!surface) {
             stbi_image_free(data);
@@ -2182,7 +2232,8 @@ void load_metatiled_chunk(SDL_Surface* source_surface,
         // Copy horizontal strips
         for (int strip = 0; strip < strips_per_meta; ++strip) {
             // Copy tiles in this strip
-            for (int tile_in_strip = 0; tile_in_strip < tiles_per_strip; ++tile_in_strip) {
+            for (int tile_in_strip = 0; tile_in_strip < tiles_per_strip;
+                 ++tile_in_strip) {
                 // Source: this 8x8 tile within the meta-tile block
                 SDL_Rect src_rect;
                 src_rect.x = base_src_x + (tile_in_strip * tile_size);
@@ -2200,9 +2251,15 @@ void load_metatiled_chunk(SDL_Surface* source_surface,
                 dst_rect.w = tile_size;
                 dst_rect.h = tile_size;
 
-                if (SDL_BlitSurface(source_surface, &src_rect, overlay_surface, &dst_rect) != 0) {
-                    error(format("load_overlay_chunk: Failed to blit strip %/tile %: %",
-                                 strip, tile_in_strip, SDL_GetError()));
+                if (SDL_BlitSurface(source_surface,
+                                    &src_rect,
+                                    overlay_surface,
+                                    &dst_rect) != 0) {
+                    error(format(
+                        "load_overlay_chunk: Failed to blit strip %/tile %: %",
+                        strip,
+                        tile_in_strip,
+                        SDL_GetError()));
                 }
             }
         }
@@ -2248,12 +2305,14 @@ void Platform::load_overlay_chunk(TileDesc dst,
         if (it != overlay_source_cache.end()) {
             source_surface = it->second;
         } else {
-            std::string full_path = resource_path() + "images" + PATH_DELIMITER +
-                image_file + ".png";
+            std::string full_path = resource_path() + "images" +
+                                    PATH_DELIMITER + image_file + ".png";
 
-            source_surface = load_png_with_stb(full_path, image_file, ShaderPalette::overlay);
+            source_surface = load_png_with_stb(
+                full_path, image_file, ShaderPalette::overlay);
             if (!source_surface) {
-                error(format("load_overlay_chunk: Failed to load %", image_file));
+                error(
+                    format("load_overlay_chunk: Failed to load %", image_file));
                 return;
             }
 
@@ -2274,13 +2333,15 @@ void Platform::load_overlay_chunk(TileDesc dst,
         if (it != overlay_source_cache.end()) {
             source_surface = it->second;
         } else {
-            std::string full_path = resource_path() + "images" + PATH_DELIMITER +
-                cache_key + ".png";
+            std::string full_path = resource_path() + "images" +
+                                    PATH_DELIMITER + cache_key + ".png";
 
-            source_surface = load_png_with_stb(full_path, cache_key.c_str(), ShaderPalette::overlay);
+            source_surface = load_png_with_stb(
+                full_path, cache_key.c_str(), ShaderPalette::overlay);
             if (!source_surface) {
-                error(format("load_overlay_chunk: Failed to reload current texture %",
-                             cache_key.c_str()));
+                error(format(
+                    "load_overlay_chunk: Failed to reload current texture %",
+                    cache_key.c_str()));
                 return;
             }
 
@@ -2335,9 +2396,12 @@ void Platform::load_overlay_chunk(TileDesc dst,
             dst_rect.h = tile_size;
 
             // Blit the tile
-            if (SDL_BlitSurface(source_surface, &src_rect, overlay_surface, &dst_rect) != 0) {
+            if (SDL_BlitSurface(
+                    source_surface, &src_rect, overlay_surface, &dst_rect) !=
+                0) {
                 error(format("load_overlay_chunk: Failed to blit tile %: %",
-                            i, SDL_GetError()));
+                             i,
+                             SDL_GetError()));
             }
         }
     }
@@ -2348,7 +2412,8 @@ void Platform::load_overlay_chunk(TileDesc dst,
         SDL_DestroyTexture(current_overlay_texture);
     }
 
-    current_overlay_texture = SDL_CreateTextureFromSurface(renderer, overlay_surface);
+    current_overlay_texture =
+        SDL_CreateTextureFromSurface(renderer, overlay_surface);
     if (!current_overlay_texture) {
         error(format("load_overlay_chunk: Failed to recreate texture: %",
                      SDL_GetError()));
@@ -2370,7 +2435,10 @@ static bool overlay_index_zero_is_transparent = true;
 
 
 
-static bool is_tile_transparent(SDL_Surface* surface, int tile_x, int tile_y, int tile_size = 8)
+static bool is_tile_transparent(SDL_Surface* surface,
+                                int tile_x,
+                                int tile_y,
+                                int tile_size = 8)
 {
     if (!surface) {
         return true;
@@ -2407,7 +2475,6 @@ static bool is_tile_transparent(SDL_Surface* surface, int tile_x, int tile_y, in
                     is_transparent = false;
                 }
             }
-
         }
     }
 
@@ -2465,7 +2532,8 @@ Vec2<u16> Platform::get_scroll(Layer layer)
 
 
 
-static SDL_Rect get_tile_source_rect_16x16(TileDesc tile_index, int texture_width)
+static SDL_Rect get_tile_source_rect_16x16(TileDesc tile_index,
+                                           int texture_width)
 {
     SDL_Rect src;
 
@@ -2512,8 +2580,8 @@ static std::string extract_texture_name(const char* path_or_name)
     // Find the last path separator (/ or \)
     size_t last_slash = input.find_last_of("/\\");
     std::string filename = (last_slash != std::string::npos)
-        ? input.substr(last_slash + 1)
-        : input;
+                               ? input.substr(last_slash + 1)
+                               : input;
 
     // Remove any extension (.img.bin, .pal.bin, .png, etc.)
     size_t first_dot = filename.find('.');
@@ -2539,9 +2607,11 @@ void Platform::load_tile0_texture(const char* name_or_path)
         tile0_surface = nullptr;
     }
 
-    std::string full_path = resource_path() + "images" + PATH_DELIMITER + name + ".png";
+    std::string full_path =
+        resource_path() + "images" + PATH_DELIMITER + name + ".png";
 
-    SDL_Surface* surface = load_png_with_stb(full_path, name.c_str(), ShaderPalette::tile0);
+    SDL_Surface* surface =
+        load_png_with_stb(full_path, name.c_str(), ShaderPalette::tile0);
     if (!surface) {
         return;
     }
@@ -2553,7 +2623,9 @@ void Platform::load_tile0_texture(const char* name_or_path)
 
     tile0_texture = SDL_CreateTextureFromSurface(renderer, tile0_surface);
     if (!tile0_texture) {
-        error(format("Failed to create tile0 texture from %: %", full_path.c_str(), SDL_GetError()));
+        error(format("Failed to create tile0 texture from %: %",
+                     full_path.c_str(),
+                     SDL_GetError()));
         SDL_FreeSurface(tile0_surface);
         tile0_surface = nullptr;
         return;
@@ -2580,9 +2652,11 @@ void Platform::load_tile1_texture(const char* name_or_path)
         tile1_surface = nullptr;
     }
 
-    std::string full_path = resource_path() + "images" + PATH_DELIMITER + name + ".png";
+    std::string full_path =
+        resource_path() + "images" + PATH_DELIMITER + name + ".png";
 
-    SDL_Surface* surface = load_png_with_stb(full_path, name.c_str(), ShaderPalette::tile1);
+    SDL_Surface* surface =
+        load_png_with_stb(full_path, name.c_str(), ShaderPalette::tile1);
     if (!surface) {
         return;
     }
@@ -2594,7 +2668,9 @@ void Platform::load_tile1_texture(const char* name_or_path)
 
     tile1_texture = SDL_CreateTextureFromSurface(renderer, tile1_surface);
     if (!tile1_texture) {
-        error(format("Failed to create tile1 texture from %: %", full_path.c_str(), SDL_GetError()));
+        error(format("Failed to create tile1 texture from %: %",
+                     full_path.c_str(),
+                     SDL_GetError()));
         SDL_FreeSurface(tile1_surface);
         tile1_surface = nullptr;
         return;
@@ -2666,22 +2742,25 @@ void Platform::load_sprite_texture(const char* name)
         current_sprite_texture = nullptr;
     }
 
-    std::string full_path = resource_path() + "images" + PATH_DELIMITER + name + ".png";
+    std::string full_path =
+        resource_path() + "images" + PATH_DELIMITER + name + ".png";
 
-    SDL_Surface* surface = load_png_with_stb(full_path, name, ShaderPalette::spritesheet);
+    SDL_Surface* surface =
+        load_png_with_stb(full_path, name, ShaderPalette::spritesheet);
     if (!surface) {
-        error(format("Failed to load image %: %", full_path.c_str(), IMG_GetError()));
+        error(format(
+            "Failed to load image %: %", full_path.c_str(), IMG_GetError()));
         return;
     }
 
     // Convert indexed color to RGBA32 if needed
     if (surface->format->palette != nullptr) {
-        SDL_Surface* converted = SDL_ConvertSurfaceFormat(surface,
-                                                           SDL_PIXELFORMAT_RGBA32,
-                                                           0);
+        SDL_Surface* converted =
+            SDL_ConvertSurfaceFormat(surface, SDL_PIXELFORMAT_RGBA32, 0);
         SDL_FreeSurface(surface);
         if (!converted) {
-            error(format("Failed to convert sprite surface: %", SDL_GetError()));
+            error(
+                format("Failed to convert sprite surface: %", SDL_GetError()));
             return;
         }
         surface = converted;
@@ -2693,7 +2772,9 @@ void Platform::load_sprite_texture(const char* name)
 
     current_sprite_texture = SDL_CreateTextureFromSurface(renderer, surface);
     if (!current_sprite_texture) {
-        error(format("Failed to create texture from %: %", full_path.c_str(), SDL_GetError()));
+        error(format("Failed to create texture from %: %",
+                     full_path.c_str(),
+                     SDL_GetError()));
         SDL_FreeSurface(surface);
         return;
     }
@@ -2732,7 +2813,8 @@ void Platform::fatal(const char* msg)
 static void extract_text_colors_from_overlay()
 {
     if (!overlay_surface) {
-        warning("extract_text_colors_from_overlay: overlay_surface not initialized");
+        warning("extract_text_colors_from_overlay: overlay_surface not "
+                "initialized");
         return;
     }
 
@@ -2761,26 +2843,33 @@ static void extract_text_colors_from_overlay()
     Uint32 pixel_format = overlay_surface->format->format;
 
     // Get pixel at (pixel_x, pixel_y) - foreground color
-    Uint8* fg_pixel = pixels + pixel_y * pitch + pixel_x * overlay_surface->format->BytesPerPixel;
+    Uint8* fg_pixel = pixels + pixel_y * pitch +
+                      pixel_x * overlay_surface->format->BytesPerPixel;
     Uint32 fg_pixel_value = *(Uint32*)fg_pixel;
 
     // Get pixel at (pixel_x + 1, pixel_y) - background color
-    Uint8* bg_pixel = pixels + pixel_y * pitch + (pixel_x + 1) * overlay_surface->format->BytesPerPixel;
+    Uint8* bg_pixel = pixels + pixel_y * pitch +
+                      (pixel_x + 1) * overlay_surface->format->BytesPerPixel;
     Uint32 bg_pixel_value = *(Uint32*)bg_pixel;
 
     // Convert to SDL_Color
-    SDL_GetRGBA(fg_pixel_value, overlay_surface->format,
-                &default_text_fg_color.r, &default_text_fg_color.g,
-                &default_text_fg_color.b, &default_text_fg_color.a);
+    SDL_GetRGBA(fg_pixel_value,
+                overlay_surface->format,
+                &default_text_fg_color.r,
+                &default_text_fg_color.g,
+                &default_text_fg_color.b,
+                &default_text_fg_color.a);
 
-    SDL_GetRGBA(bg_pixel_value, overlay_surface->format,
-                &default_text_bg_color.r, &default_text_bg_color.g,
-                &default_text_bg_color.b, &default_text_bg_color.a);
+    SDL_GetRGBA(bg_pixel_value,
+                overlay_surface->format,
+                &default_text_bg_color.r,
+                &default_text_bg_color.g,
+                &default_text_bg_color.b,
+                &default_text_bg_color.a);
 
     if (SDL_MUSTLOCK(overlay_surface)) {
         SDL_UnlockSurface(overlay_surface);
     }
-
 }
 
 
@@ -2798,11 +2887,11 @@ void Platform::load_background_texture(const char* name)
         background_surface = nullptr;
     }
 
-    std::string full_path = resource_path() + "images" + PATH_DELIMITER +
-                           texture_name + ".png";
+    std::string full_path =
+        resource_path() + "images" + PATH_DELIMITER + texture_name + ".png";
 
-    SDL_Surface* surface = load_png_with_stb(full_path, texture_name.c_str(),
-                                             ShaderPalette::background);
+    SDL_Surface* surface = load_png_with_stb(
+        full_path, texture_name.c_str(), ShaderPalette::background);
     if (!surface) {
         return;
     }
@@ -2810,10 +2899,12 @@ void Platform::load_background_texture(const char* name)
     // Keep the surface for later modification
     background_surface = surface;
 
-    background_texture = SDL_CreateTextureFromSurface(renderer, background_surface);
+    background_texture =
+        SDL_CreateTextureFromSurface(renderer, background_surface);
     if (!background_texture) {
         error(format("Failed to create background texture from %: %",
-                    full_path.c_str(), SDL_GetError()));
+                     full_path.c_str(),
+                     SDL_GetError()));
         SDL_FreeSurface(background_surface);
         background_surface = nullptr;
         return;
@@ -2825,7 +2916,9 @@ void Platform::load_background_texture(const char* name)
     background_texture_height = background_surface->h;
 
     info(format("Loaded background texture %: %x% pixels",
-               texture_name.c_str(), background_texture_width, background_texture_height));
+                texture_name.c_str(),
+                background_texture_width,
+                background_texture_height));
 }
 
 
@@ -2850,13 +2943,14 @@ bool Platform::load_overlay_texture(const char* name)
         entry.in_use = false;
     }
 
-    std::string full_path = resource_path() + "images" + PATH_DELIMITER + name + ".png";
+    std::string full_path =
+        resource_path() + "images" + PATH_DELIMITER + name + ".png";
 
-    SDL_Surface* loaded_surface = load_png_with_stb(full_path,
-                                                    name,
-                                                    ShaderPalette::overlay);
+    SDL_Surface* loaded_surface =
+        load_png_with_stb(full_path, name, ShaderPalette::overlay);
     if (!loaded_surface) {
-        error(format("Failed to load overlay %: %", full_path.c_str(), IMG_GetError()));
+        error(format(
+            "Failed to load overlay %: %", full_path.c_str(), IMG_GetError()));
         return false;
     }
 
@@ -2864,7 +2958,9 @@ bool Platform::load_overlay_texture(const char* name)
 
     if (loaded_surface->w == 0 || loaded_surface->h == 0) {
         error(format("Overlay % has invalid dimensions: %x%",
-                     name, loaded_surface->w, loaded_surface->h));
+                     name,
+                     loaded_surface->w,
+                     loaded_surface->h));
         SDL_FreeSurface(loaded_surface);
         return false;
     }
@@ -2872,9 +2968,8 @@ bool Platform::load_overlay_texture(const char* name)
     // Convert indexed color to RGBA32 if needed
     SDL_Surface* converted_surface = loaded_surface;
     if (loaded_surface->format->palette != nullptr) {
-        converted_surface = SDL_ConvertSurfaceFormat(loaded_surface,
-                                                      SDL_PIXELFORMAT_RGBA32,
-                                                      0);
+        converted_surface =
+            SDL_ConvertSurfaceFormat(loaded_surface, SDL_PIXELFORMAT_RGBA32, 0);
         SDL_FreeSurface(loaded_surface);
         if (!converted_surface) {
             error(format("Failed to convert surface: %", SDL_GetError()));
@@ -2893,13 +2988,14 @@ bool Platform::load_overlay_texture(const char* name)
     int source_height = loaded_surface->h;
 
     // Always create surface with max_width to match GBA VRAM expectations
-    overlay_surface = SDL_CreateRGBSurface(
-        0, max_width, source_height,
-        loaded_surface->format->BitsPerPixel,
-        loaded_surface->format->Rmask,
-        loaded_surface->format->Gmask,
-        loaded_surface->format->Bmask,
-        loaded_surface->format->Amask);
+    overlay_surface = SDL_CreateRGBSurface(0,
+                                           max_width,
+                                           source_height,
+                                           loaded_surface->format->BitsPerPixel,
+                                           loaded_surface->format->Rmask,
+                                           loaded_surface->format->Gmask,
+                                           loaded_surface->format->Bmask,
+                                           loaded_surface->format->Amask);
 
     if (!overlay_surface) {
         error(format("Failed to create overlay surface: %", SDL_GetError()));
@@ -2908,7 +3004,8 @@ bool Platform::load_overlay_texture(const char* name)
     }
 
     // Fill entire surface with transparent magenta first
-    Uint32 transparent_magenta = SDL_MapRGBA(overlay_surface->format, 0xFF, 0x00, 0xFF, 0x00);
+    Uint32 transparent_magenta =
+        SDL_MapRGBA(overlay_surface->format, 0xFF, 0x00, 0xFF, 0x00);
     SDL_FillRect(overlay_surface, nullptr, transparent_magenta);
 
     // Copy the actual texture data into the beginning
@@ -2921,11 +3018,15 @@ bool Platform::load_overlay_texture(const char* name)
     // Extract text colors from tile 81 BEFORE creating the texture
     extract_text_colors_from_overlay();
 
-    overlay_index_zero_is_transparent = is_tile_transparent(overlay_surface, 0, 0, 8);
+    overlay_index_zero_is_transparent =
+        is_tile_transparent(overlay_surface, 0, 0, 8);
 
-    current_overlay_texture = SDL_CreateTextureFromSurface(renderer, overlay_surface);
+    current_overlay_texture =
+        SDL_CreateTextureFromSurface(renderer, overlay_surface);
     if (!current_overlay_texture) {
-        error(format("Failed to create overlay texture from %: %", full_path.c_str(), SDL_GetError()));
+        error(format("Failed to create overlay texture from %: %",
+                     full_path.c_str(),
+                     SDL_GetError()));
         SDL_FreeSurface(overlay_surface);
         overlay_surface = nullptr;
         return false;
@@ -2933,11 +3034,12 @@ bool Platform::load_overlay_texture(const char* name)
 
     SDL_SetTextureBlendMode(current_overlay_texture, SDL_BLENDMODE_BLEND);
 
-    overlay_texture_width = max_width;  // Always report max_width
+    overlay_texture_width = max_width; // Always report max_width
     overlay_texture_height = source_height;
 
     // Calculate how many 8x8 tiles fit in the original texture
-    overlay_base_tile_count = (overlay_texture_width / 8) * (overlay_texture_height / 8);
+    overlay_base_tile_count =
+        (overlay_texture_width / 8) * (overlay_texture_height / 8);
 
     last_overlay_texture = name;
 
@@ -3315,7 +3417,8 @@ void Platform::Screen::set_shader_argument(int arg)
 
 
 
-struct SpriteDrawInfo {
+struct SpriteDrawInfo
+{
     Vec2<s32> position;
     Sprite::Size size;
     ColorConstant color;
@@ -3388,36 +3491,36 @@ static SDL_Rect get_sprite_source_rect(u16 texture_index, Sprite::Size size)
     int base_y = meta_tile_y * meta_tile_height;
 
     switch (size) {
-        case Sprite::Size::w8_h8: {
-            int base_x = (texture_index / 8) * 16;
-            base_x += 8 * (texture_index % 2);
-            int base_y = ((texture_index % 8) / 2) * 8;
-            src.x = base_x;
-            src.y = base_y;
-            src.w = 8;
-            src.h = 8;
-            break;
-        }
-        case Sprite::Size::w16_h16: {
-            int base_x = (texture_index / 2) * 16;
-            src.x = base_x;
-            src.y = 16 * (texture_index % 2);
-            src.w = 16;
-            src.h = 16;
-            break;
-        }
-        case Sprite::Size::w16_h32:
-            src.x = base_x;
-            src.y = base_y;
-            src.w = 16;
-            src.h = 32;
-            break;
-        case Sprite::Size::w32_h32:
-            src.x = base_x * 2;
-            src.y = base_y;
-            src.w = 32;
-            src.h = 32;
-            break;
+    case Sprite::Size::w8_h8: {
+        int base_x = (texture_index / 8) * 16;
+        base_x += 8 * (texture_index % 2);
+        int base_y = ((texture_index % 8) / 2) * 8;
+        src.x = base_x;
+        src.y = base_y;
+        src.w = 8;
+        src.h = 8;
+        break;
+    }
+    case Sprite::Size::w16_h16: {
+        int base_x = (texture_index / 2) * 16;
+        src.x = base_x;
+        src.y = 16 * (texture_index % 2);
+        src.w = 16;
+        src.h = 16;
+        break;
+    }
+    case Sprite::Size::w16_h32:
+        src.x = base_x;
+        src.y = base_y;
+        src.w = 16;
+        src.h = 32;
+        break;
+    case Sprite::Size::w32_h32:
+        src.x = base_x * 2;
+        src.y = base_y;
+        src.w = 32;
+        src.h = 32;
+        break;
     }
 
     return src;
@@ -3449,14 +3552,30 @@ void Platform::Screen::draw(const Sprite& spr)
 
     ColorConstant color = ColorConstant::null;
     switch (spr.get_texture_index() % 8) {
-        case 0: color = custom_color(0xFF0000); break;
-        case 1: color = custom_color(0x00FF00); break;
-        case 2: color = custom_color(0x0000FF); break;
-        case 3: color = custom_color(0xFFFF00); break;
-        case 4: color = custom_color(0xFF00FF); break;
-        case 5: color = custom_color(0x00FFFF); break;
-        case 6: color = custom_color(0xFFFFFF); break;
-        case 7: color = custom_color(0x808080); break;
+    case 0:
+        color = custom_color(0xFF0000);
+        break;
+    case 1:
+        color = custom_color(0x00FF00);
+        break;
+    case 2:
+        color = custom_color(0x0000FF);
+        break;
+    case 3:
+        color = custom_color(0xFFFF00);
+        break;
+    case 4:
+        color = custom_color(0xFF00FF);
+        break;
+    case 5:
+        color = custom_color(0x00FFFF);
+        break;
+    case 6:
+        color = custom_color(0xFFFFFF);
+        break;
+    case 7:
+        color = custom_color(0x808080);
+        break;
     }
 
     // Convert GBA scale to SDL scale
@@ -3472,19 +3591,17 @@ void Platform::Screen::draw(const Sprite& spr)
         scale_y = 256.0 / pd;
     }
 
-    sprite_draw_list.push_back({
-        pos,
-        spr.get_size(),
-        spr.get_mix().color_,
-        true,
-        spr.get_texture_index(),
-        spr.get_flip(),
-        sprite_rotation_to_degrees(-spr.get_rotation()),
-        spr.get_priority(),
-        spr.get_alpha(),
-        spr.get_mix().amount_,
-        {scale_x, scale_y}
-    });
+    sprite_draw_list.push_back({pos,
+                                spr.get_size(),
+                                spr.get_mix().color_,
+                                true,
+                                spr.get_texture_index(),
+                                spr.get_flip(),
+                                sprite_rotation_to_degrees(-spr.get_rotation()),
+                                spr.get_priority(),
+                                spr.get_alpha(),
+                                spr.get_mix().amount_,
+                                {scale_x, scale_y}});
 }
 
 
@@ -3498,10 +3615,8 @@ void Platform::Screen::clear()
     SDL_SetRenderDrawColor(renderer, 0, 0, 16, 255);
     SDL_RenderClear(renderer);
 
-    auto bkg_color = current_shader(ShaderPalette::background,
-                                    custom_color(0x63b2e0),
-                                    0,
-                                    1);
+    auto bkg_color =
+        current_shader(ShaderPalette::background, custom_color(0x63b2e0), 0, 1);
 
     auto clr = color_to_sdl(bkg_color);
     SDL_SetRenderDrawColor(renderer, clr.r, clr.g, clr.b, clr.a);
@@ -3565,8 +3680,7 @@ bool Platform::Screen::fade_active() const
 
 
 
-void Platform::Screen::schedule_fade(Float amount,
-                                     const FadeProperties& props)
+void Platform::Screen::schedule_fade(Float amount, const FadeProperties& props)
 {
     last_fade_amt = amount;
     fade_color = props.color;
@@ -3589,7 +3703,8 @@ void display_fade()
 
     auto color = color_to_sdl(fade_color);
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-    SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, 255 * last_fade_amt);
+    SDL_SetRenderDrawColor(
+        renderer, color.r, color.g, color.b, 255 * last_fade_amt);
     SDL_RenderFillRect(renderer, &rect);
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
 }
@@ -3603,7 +3718,8 @@ void draw_sprite_group(int prio)
         if (sprite.priority not_eq prio) {
             continue;
         }
-        if (!sprite.visible) continue;
+        if (!sprite.visible)
+            continue;
 
         if (!current_sprite_texture) {
             // Fallback to colored rectangles if no texture loaded
@@ -3613,45 +3729,48 @@ void draw_sprite_group(int prio)
 
             // Set size based on sprite size enum
             switch (sprite.size) {
-                case Sprite::Size::w8_h8:
-                    rect.w = 8;
-                    rect.h = 8;
-                    break;
-                case Sprite::Size::w16_h16:
-                    rect.w = 16;
-                    rect.h = 16;
-                    break;
-                case Sprite::Size::w16_h32:
-                    rect.w = 16;
-                    rect.h = 32;
-                    break;
-                case Sprite::Size::w32_h32:
-                    rect.w = 32;
-                    rect.h = 32;
-                    break;
+            case Sprite::Size::w8_h8:
+                rect.w = 8;
+                rect.h = 8;
+                break;
+            case Sprite::Size::w16_h16:
+                rect.w = 16;
+                rect.h = 16;
+                break;
+            case Sprite::Size::w16_h32:
+                rect.w = 16;
+                rect.h = 32;
+                break;
+            case Sprite::Size::w32_h32:
+                rect.w = 32;
+                rect.h = 32;
+                break;
             }
 
             // Set color and draw
             auto color = color_to_sdl(sprite.color);
-            SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
+            SDL_SetRenderDrawColor(
+                renderer, color.r, color.g, color.b, color.a);
             SDL_RenderFillRect(renderer, &rect);
 
             // Draw border for visibility
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
             SDL_RenderDrawRect(renderer, &rect);
         } else {
-            SDL_Rect src = get_sprite_source_rect(sprite.texture_index, sprite.size);
+            SDL_Rect src =
+                get_sprite_source_rect(sprite.texture_index, sprite.size);
 
             SDL_Rect dst;
-            dst.w = src.w * sprite.scale.x;  // Apply scale
-            dst.h = src.h * sprite.scale.y;  // Apply scale
+            dst.w = src.w * sprite.scale.x; // Apply scale
+            dst.h = src.h * sprite.scale.y; // Apply scale
             dst.x = sprite.position.x - (dst.w - src.w) / 2;
             dst.y = sprite.position.y - (dst.h - src.h) / 2;
 
             // Handle flipping
             SDL_RendererFlip flip = SDL_FLIP_NONE;
             if (sprite.flip.x && sprite.flip.y) {
-                flip = (SDL_RendererFlip)(SDL_FLIP_HORIZONTAL | SDL_FLIP_VERTICAL);
+                flip =
+                    (SDL_RendererFlip)(SDL_FLIP_HORIZONTAL | SDL_FLIP_VERTICAL);
             } else if (sprite.flip.x) {
                 flip = SDL_FLIP_HORIZONTAL;
             } else if (sprite.flip.y) {
@@ -3659,22 +3778,38 @@ void draw_sprite_group(int prio)
             }
 
             // Calculate base alpha
-            u8 base_alpha = (sprite.alpha == Sprite::Alpha::translucent) ? 127 : 255;
+            u8 base_alpha =
+                (sprite.alpha == Sprite::Alpha::translucent) ? 127 : 255;
 
             if (sprite.color != ColorConstant::null && sprite.mix_amount > 0) {
                 // Dual-pass rendering with scaling
                 float mix_ratio = sprite.mix_amount / 255.0f;
 
                 SDL_SetTextureColorMod(current_sprite_texture, 255, 255, 255);
-                SDL_SetTextureAlphaMod(current_sprite_texture, base_alpha * (1.0f - mix_ratio));
-                SDL_RenderCopyEx(renderer, current_sprite_texture, &src, &dst,
-                                sprite.rotation, nullptr, flip);
+                SDL_SetTextureAlphaMod(current_sprite_texture,
+                                       base_alpha * (1.0f - mix_ratio));
+                SDL_RenderCopyEx(renderer,
+                                 current_sprite_texture,
+                                 &src,
+                                 &dst,
+                                 sprite.rotation,
+                                 nullptr,
+                                 flip);
 
                 auto mix_color = color_to_sdl(sprite.color);
-                SDL_SetTextureColorMod(current_sprite_texture, mix_color.r, mix_color.g, mix_color.b);
-                SDL_SetTextureAlphaMod(current_sprite_texture, base_alpha * mix_ratio);
-                SDL_RenderCopyEx(renderer, current_sprite_texture, &src, &dst,
-                                sprite.rotation, nullptr, flip);
+                SDL_SetTextureColorMod(current_sprite_texture,
+                                       mix_color.r,
+                                       mix_color.g,
+                                       mix_color.b);
+                SDL_SetTextureAlphaMod(current_sprite_texture,
+                                       base_alpha * mix_ratio);
+                SDL_RenderCopyEx(renderer,
+                                 current_sprite_texture,
+                                 &src,
+                                 &dst,
+                                 sprite.rotation,
+                                 nullptr,
+                                 flip);
 
                 SDL_SetTextureColorMod(current_sprite_texture, 255, 255, 255);
                 SDL_SetTextureAlphaMod(current_sprite_texture, 255);
@@ -3682,8 +3817,13 @@ void draw_sprite_group(int prio)
                 SDL_SetTextureColorMod(current_sprite_texture, 255, 255, 255);
                 SDL_SetTextureAlphaMod(current_sprite_texture, base_alpha);
 
-                SDL_RenderCopyEx(renderer, current_sprite_texture, &src, &dst,
-                                sprite.rotation, nullptr, flip);
+                SDL_RenderCopyEx(renderer,
+                                 current_sprite_texture,
+                                 &src,
+                                 &dst,
+                                 sprite.rotation,
+                                 nullptr,
+                                 flip);
 
                 SDL_SetTextureAlphaMod(current_sprite_texture, 255);
             }
@@ -3693,12 +3833,13 @@ void draw_sprite_group(int prio)
 
 
 
-static void draw_parallax_background(SDL_Texture* texture,
-                                     int texture_width,
-                                     const View& view,
-                                     const ParallaxStrip& strip1,  // gradient (rows 0-13)
-                                     const ParallaxStrip& strip2,  // dark clouds (rows 14-15)
-                                     const ParallaxStrip& strip3)  // white clouds (rows 16-19)
+static void draw_parallax_background(
+    SDL_Texture* texture,
+    int texture_width,
+    const View& view,
+    const ParallaxStrip& strip1, // gradient (rows 0-13)
+    const ParallaxStrip& strip2, // dark clouds (rows 14-15)
+    const ParallaxStrip& strip3) // white clouds (rows 16-19)
 {
     if (!texture) {
         return;
@@ -3713,10 +3854,11 @@ static void draw_parallax_background(SDL_Texture* texture,
 
     auto draw_strip = [&](const ParallaxStrip& strip) {
         const int tile_size = 8;
-        const int wrap_width = 256;  // 32 tiles * 8 pixels
+        const int wrap_width = 256; // 32 tiles * 8 pixels
 
         for (auto& [pos, tile_info] : tiles) {
-            if (tile_info.tile_desc == 0) continue;
+            if (tile_info.tile_desc == 0)
+                continue;
 
             s32 tile_x = (s32)pos.first;
             s32 tile_y = (s32)pos.second;
@@ -3726,7 +3868,8 @@ static void draw_parallax_background(SDL_Texture* texture,
                 continue;
             }
 
-            SDL_Rect src = get_tile_source_rect_8x8(tile_info.tile_desc, texture_width);
+            SDL_Rect src =
+                get_tile_source_rect_8x8(tile_info.tile_desc, texture_width);
 
             // Calculate base position with scroll
             s32 base_x = tile_x * tile_size - strip.scroll.x;
@@ -3739,8 +3882,8 @@ static void draw_parallax_background(SDL_Texture* texture,
             dst.h = tile_size;
 
             // Draw at base position if on screen
-            if (dst.x + dst.w > 0 && dst.x < 240 &&
-                dst.y + dst.h > 0 && dst.y < 160) {
+            if (dst.x + dst.w > 0 && dst.x < 240 && dst.y + dst.h > 0 &&
+                dst.y < 160) {
                 SDL_RenderCopy(renderer, texture, &src, &dst);
             }
 
@@ -3765,7 +3908,7 @@ static void draw_parallax_background(SDL_Texture* texture,
     gap_filler.start_tile_row = 20;
     gap_filler.end_tile_row = 21;
     gap_filler.scroll = strip2.scroll;
-    gap_filler.scroll.y = strip2.scroll.y + 32;  // 32 pixels = 4 tile rows
+    gap_filler.scroll.y = strip2.scroll.y + 32; // 32 pixels = 4 tile rows
 
     // Bottom filler strip (rows 18-19 repeated) - positioned beneath strip3
     // This fills the gap at the bottom when strip3 scrolls up
@@ -3773,7 +3916,8 @@ static void draw_parallax_background(SDL_Texture* texture,
     bottom_filler.start_tile_row = 18;
     bottom_filler.end_tile_row = 19;
     bottom_filler.scroll = strip3.scroll;
-    bottom_filler.scroll.y = strip3.scroll.y - 16;  // Bump down 32 pixels (4 rows)
+    bottom_filler.scroll.y =
+        strip3.scroll.y - 16; // Bump down 32 pixels (4 rows)
 
     // Draw all strips
     draw_strip(strip1);
@@ -3785,8 +3929,11 @@ static void draw_parallax_background(SDL_Texture* texture,
 
 
 
-static void draw_tile_layer(Layer layer, SDL_Texture* texture, int texture_width,
-                            const Vec2<s32>& scroll, const View& view)
+static void draw_tile_layer(Layer layer,
+                            SDL_Texture* texture,
+                            int texture_width,
+                            const Vec2<s32>& scroll,
+                            const View& view)
 {
     if (!texture) {
         return;
@@ -3820,10 +3967,12 @@ static void draw_tile_layer(Layer layer, SDL_Texture* texture, int texture_width
     }
 
     auto view_center = view.int_center().cast<s32>();
-    bool is_ext_layer = (layer == Layer::map_0_ext || layer == Layer::map_1_ext);
+    bool is_ext_layer =
+        (layer == Layer::map_0_ext || layer == Layer::map_1_ext);
 
     for (auto& [pos, tile_info] : tiles) {
-        if (skip_tile_zero and tile_info.tile_desc == 0) continue;
+        if (skip_tile_zero and tile_info.tile_desc == 0)
+            continue;
 
         s32 tile_x = (s32)pos.first;
         s32 tile_y = (s32)pos.second;
@@ -3832,7 +3981,8 @@ static void draw_tile_layer(Layer layer, SDL_Texture* texture, int texture_width
         SDL_Rect dst;
 
         if (is_ext_layer) {
-            src = get_tile_source_rect_16x16(tile_info.tile_desc, texture_width);
+            src =
+                get_tile_source_rect_16x16(tile_info.tile_desc, texture_width);
             dst.x = tile_x * 16 - scroll.x - view_center.x;
             dst.y = wrap_y(tile_y * 16 - scroll.y - view_center.y);
             dst.w = 16;
@@ -3853,10 +4003,10 @@ static void draw_tile_layer(Layer layer, SDL_Texture* texture, int texture_width
 
             // Fill buffer with the solid color
             SDL_SetRenderDrawColor(renderer,
-                                  special_it->second.r,
-                                  special_it->second.g,
-                                  special_it->second.b,
-                                  0);  // Alpha 0 for now
+                                   special_it->second.r,
+                                   special_it->second.g,
+                                   special_it->second.b,
+                                   0); // Alpha 0 for now
             SDL_RenderClear(renderer);
 
             // Copy ONLY the alpha channel from the tile
@@ -3868,14 +4018,16 @@ static void draw_tile_layer(Layer layer, SDL_Texture* texture, int texture_width
             SDL_SetTextureAlphaMod(texture, 255);
 
             // Use a blend mode that copies the source alpha to destination alpha
-            SDL_SetTextureBlendMode(texture, SDL_ComposeCustomBlendMode(
-                SDL_BLENDFACTOR_ZERO,           // srcColorFactor (ignore source RGB)
-                SDL_BLENDFACTOR_ONE,            // dstColorFactor (keep our solid color)
-                SDL_BLENDOPERATION_ADD,         // colorOperation
-                SDL_BLENDFACTOR_ONE,            // srcAlphaFactor (use source alpha)
-                SDL_BLENDFACTOR_ZERO,           // dstAlphaFactor (replace dest alpha)
-                SDL_BLENDOPERATION_ADD          // alphaOperation
-            ));
+            SDL_SetTextureBlendMode(
+                texture,
+                SDL_ComposeCustomBlendMode(
+                    SDL_BLENDFACTOR_ZERO, // srcColorFactor (ignore source RGB)
+                    SDL_BLENDFACTOR_ONE, // dstColorFactor (keep our solid color)
+                    SDL_BLENDOPERATION_ADD, // colorOperation
+                    SDL_BLENDFACTOR_ONE,    // srcAlphaFactor (use source alpha)
+                    SDL_BLENDFACTOR_ZERO, // dstAlphaFactor (replace dest alpha)
+                    SDL_BLENDOPERATION_ADD // alphaOperation
+                    ));
 
             SDL_RenderCopy(renderer, texture, &src, &temp_dst);
 
@@ -3910,17 +4062,18 @@ ColorConstant bg_color_default()
 
 
 
-void SDL_RenderFillCircle(SDL_Renderer *renderer,
+void SDL_RenderFillCircle(SDL_Renderer* renderer,
                           int cx,
                           int cy,
                           int radius,
                           Uint8 r,
                           Uint8 g,
                           Uint8 b,
-                          Uint8 a) {
+                          Uint8 a)
+{
     SDL_SetRenderDrawColor(renderer, r, g, b, a);
     for (int y = -radius; y <= radius; y++) {
-        int width = (int)sqrt(radius*radius - y*y);
+        int width = (int)sqrt(radius * radius - y * y);
         SDL_RenderDrawLine(renderer, cx - width, cy + y, cx + width, cy + y);
     }
 }
@@ -3932,7 +4085,8 @@ void draw_overlay_layer(int y_offset)
     auto& overlay_tiles = tile_layers_[Layer::overlay];
     for (auto& [pos, tile_info] : overlay_tiles) {
         auto tile_desc = tile_info.tile_desc;
-        if (tile_desc == 0) continue;
+        if (tile_desc == 0)
+            continue;
 
         SDL_Rect src = get_overlay_tile_source_rect(tile_desc);
         SDL_Rect dst;
@@ -3956,7 +4110,8 @@ void draw_overlay_layer(int y_offset)
 
             if (not skip) {
                 auto color = color_to_sdl(bg_color_key);
-                SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, 255);
+                SDL_SetRenderDrawColor(
+                    renderer, color.r, color.g, color.b, 255);
                 SDL_RenderFillRect(renderer, &dst);
             }
         }
@@ -3964,7 +4119,8 @@ void draw_overlay_layer(int y_offset)
         // Apply foreground color if specified, otherwise use default
         if ((int)tile_info.text_fg_color_ != 0) {
             auto fg_color = color_to_sdl(tile_info.text_fg_color_);
-            SDL_SetTextureColorMod(current_overlay_texture, fg_color.r, fg_color.g, fg_color.b);
+            SDL_SetTextureColorMod(
+                current_overlay_texture, fg_color.r, fg_color.g, fg_color.b);
         } else if (is_glyph(tile_desc)) {
             // Use extracted default foreground color for glyphs
             SDL_SetTextureColorMod(current_overlay_texture,
@@ -3986,35 +4142,54 @@ void Platform::Screen::display()
 {
     if (background_texture) {
         if (parallax_clouds_enabled) {
-            draw_parallax_background(background_texture, background_texture_width,
+            draw_parallax_background(background_texture,
+                                     background_texture_width,
                                      get_view(),
                                      parallax_strip1,
                                      parallax_strip2,
                                      parallax_strip3);
         } else {
             // Normal uniform scrolling
-            draw_tile_layer(Layer::background, background_texture, background_texture_width,
-                            {0, 0}, get_view());
+            draw_tile_layer(Layer::background,
+                            background_texture,
+                            background_texture_width,
+                            {0, 0},
+                            get_view());
         }
     }
 
     draw_sprite_group(3);
-    draw_tile_layer(Layer::map_1_ext, tile1_texture, tile1_texture_width,
-                   tile1_scroll, get_view());
-    draw_tile_layer(Layer::map_1, tile1_texture, tile1_texture_width,
-                   tile1_scroll, get_view());
+    draw_tile_layer(Layer::map_1_ext,
+                    tile1_texture,
+                    tile1_texture_width,
+                    tile1_scroll,
+                    get_view());
+    draw_tile_layer(Layer::map_1,
+                    tile1_texture,
+                    tile1_texture_width,
+                    tile1_scroll,
+                    get_view());
     // Draw tile0 layer
-    draw_tile_layer(Layer::map_0_ext, tile0_texture, tile0_texture_width,
-                   tile0_scroll, get_view());
-    draw_tile_layer(Layer::map_0, tile0_texture, tile0_texture_width,
-                   tile0_scroll, get_view());
+    draw_tile_layer(Layer::map_0_ext,
+                    tile0_texture,
+                    tile0_texture_width,
+                    tile0_scroll,
+                    get_view());
+    draw_tile_layer(Layer::map_0,
+                    tile0_texture,
+                    tile0_texture_width,
+                    tile0_scroll,
+                    get_view());
     if (tile0_scroll.x > 240 and tile0_scroll.x < 512) {
         // Hack to account for gba scroll wrapping, in the inteval between where
         // the x coordinate of a scrolled layer wraps.
         auto scroll_tmp = tile0_scroll;
         scroll_tmp.x -= 512;
-        draw_tile_layer(Layer::map_0, tile0_texture, tile0_texture_width,
-                        scroll_tmp, get_view());
+        draw_tile_layer(Layer::map_0,
+                        tile0_texture,
+                        tile0_texture_width,
+                        scroll_tmp,
+                        get_view());
     }
     draw_sprite_group(2);
     draw_sprite_group(1);
@@ -4034,7 +4209,8 @@ void Platform::Screen::display()
         SDL_SetTextureAlphaMod(light_texture, intensity);
 
         // Transform to screen coordinates (relative to view)
-        auto view_center = PLATFORM.screen().get_view().int_center().cast<s32>();
+        auto view_center =
+            PLATFORM.screen().get_view().int_center().cast<s32>();
         s32 screen_x = x.as_integer() - view_center.x;
         s32 screen_y = wrap_y(y.as_integer() - view_center.y);
 
@@ -4108,7 +4284,8 @@ void Platform::Screen::pixelate(u8 amount,
 
 
 
-struct AudioChannel {
+struct AudioChannel
+{
     const u8* data;
     StringBuffer<48> name;
     u32 length;
@@ -4120,7 +4297,8 @@ struct AudioChannel {
 
 
 
-struct AudioState {
+struct AudioState
+{
     // Music channel
     const u8* music_data;
     StringBuffer<48> music_name;
@@ -4137,7 +4315,8 @@ struct AudioState {
     Buffer<StringBuffer<48>, 32> completed_sounds;
     std::mutex completed_sounds_lock;
 
-    AudioState() {
+    AudioState()
+    {
         music_data = nullptr;
         music_length = 0;
         music_position = 0;
@@ -4173,7 +4352,7 @@ void audio_mix_normal(AudioState* state, s8* output, int len)
         // Mix music
         if (state->music_playing && state->music_data) {
             if (state->music_position >= state->music_length) {
-                state->music_position = 0;  // Loop music
+                state->music_position = 0; // Loop music
             }
             s8 sample = ((s8*)state->music_data)[state->music_position++];
             mixed = (s16)(sample * state->music_volume);
@@ -4181,13 +4360,15 @@ void audio_mix_normal(AudioState* state, s8* output, int len)
 
         for (int ch = 0; ch < AudioState::max_sound_channels; ch++) {
             auto& sfx = state->sound_effects[ch];
-            if (!sfx.playing || !sfx.data) continue;
+            if (!sfx.playing || !sfx.data)
+                continue;
 
             if (sfx.position >= sfx.length) {
                 sfx.playing = false;
                 sfx.data = nullptr;
 
-                std::unique_lock<std::mutex> lock(state->completed_sounds_lock, std::try_to_lock);
+                std::unique_lock<std::mutex> lock(state->completed_sounds_lock,
+                                                  std::try_to_lock);
                 if (lock.owns_lock()) {
                     state->completed_sounds.push_back(sfx.name.c_str());
                 }
@@ -4225,12 +4406,14 @@ void audio_mix_halved(AudioState* state, s8* output, int len)
 
         for (int ch = 0; ch < AudioState::max_sound_channels; ch++) {
             auto& sfx = state->sound_effects[ch];
-            if (!sfx.playing || !sfx.data) continue;
+            if (!sfx.playing || !sfx.data)
+                continue;
 
             if (sfx.position >= sfx.length * 2) {
                 sfx.playing = false;
                 sfx.data = nullptr;
-                std::unique_lock<std::mutex> lock(state->completed_sounds_lock, std::try_to_lock);
+                std::unique_lock<std::mutex> lock(state->completed_sounds_lock,
+                                                  std::try_to_lock);
                 if (lock.owns_lock()) {
                     state->completed_sounds.push_back(sfx.name.c_str());
                 }
@@ -4262,17 +4445,19 @@ void audio_mix_doubled(AudioState* state, s8* output, int len)
             }
             s8 sample = ((s8*)state->music_data)[state->music_position];
             mixed = (s16)(sample * state->music_volume);
-            state->music_position += 2;  // Skip every other sample
+            state->music_position += 2; // Skip every other sample
         }
 
         for (int ch = 0; ch < AudioState::max_sound_channels; ch++) {
             auto& sfx = state->sound_effects[ch];
-            if (!sfx.playing || !sfx.data) continue;
+            if (!sfx.playing || !sfx.data)
+                continue;
 
             if (sfx.position >= sfx.length) {
                 sfx.playing = false;
                 sfx.data = nullptr;
-                std::unique_lock<std::mutex> lock(state->completed_sounds_lock, std::try_to_lock);
+                std::unique_lock<std::mutex> lock(state->completed_sounds_lock,
+                                                  std::try_to_lock);
                 if (lock.owns_lock()) {
                     state->completed_sounds.push_back(sfx.name.c_str());
                 }
@@ -4307,7 +4492,8 @@ void audio_mix_reversed(AudioState* state, s8* output, int len)
 
         for (int ch = 0; ch < AudioState::max_sound_channels; ch++) {
             auto& sfx = state->sound_effects[ch];
-            if (!sfx.playing || !sfx.data) continue;
+            if (!sfx.playing || !sfx.data)
+                continue;
 
             if (sfx.position == 0) {
                 sfx.playing = false;
@@ -4343,7 +4529,8 @@ void audio_mix_reversed4x(AudioState* state, s8* output, int len)
 
         for (int ch = 0; ch < AudioState::max_sound_channels; ch++) {
             auto& sfx = state->sound_effects[ch];
-            if (!sfx.playing || !sfx.data) continue;
+            if (!sfx.playing || !sfx.data)
+                continue;
 
             if (sfx.position < 4) {
                 sfx.playing = false;
@@ -4380,7 +4567,8 @@ void audio_mix_reversed8x(AudioState* state, s8* output, int len)
 
         for (int ch = 0; ch < AudioState::max_sound_channels; ch++) {
             auto& sfx = state->sound_effects[ch];
-            if (!sfx.playing || !sfx.data) continue;
+            if (!sfx.playing || !sfx.data)
+                continue;
 
             if (sfx.position < 8) {
                 sfx.playing = false;
@@ -4419,7 +4607,8 @@ void audio_mix_reversed_slow(AudioState* state, s8* output, int len)
 
         for (int ch = 0; ch < AudioState::max_sound_channels; ch++) {
             auto& sfx = state->sound_effects[ch];
-            if (!sfx.playing || !sfx.data) continue;
+            if (!sfx.playing || !sfx.data)
+                continue;
 
             if (sfx.position == 0) {
                 sfx.playing = false;
@@ -4468,9 +4657,9 @@ bool Platform::Speaker::stream_music(const char* filename, Microseconds offset)
 {
     info(format("stream music called for %", filename));
 
-    std::string full_path = std::string("scripts") + PATH_DELIMITER +
-                           "data" + PATH_DELIMITER +
-                           "music" + PATH_DELIMITER + filename;
+    std::string full_path = std::string("scripts") + PATH_DELIMITER + "data" +
+                            PATH_DELIMITER + "music" + PATH_DELIMITER +
+                            filename;
 
     auto [data, length] = PLATFORM.load_file("", full_path.c_str());
     if (not data or not length) {
@@ -4517,27 +4706,27 @@ void Platform::Speaker::set_music_speed(MusicSpeed speed)
     SDL_LockAudio();
 
     switch (speed) {
-        case MusicSpeed::regular:
-            current_mixer = audio_mix_normal;
-            break;
-        case MusicSpeed::halved:
-            current_mixer = audio_mix_halved;
-            break;
-        case MusicSpeed::doubled:
-            current_mixer = audio_mix_doubled;
-            break;
-        case MusicSpeed::reversed:
-            current_mixer = audio_mix_reversed;
-            break;
-        case MusicSpeed::reversed4x:
-            current_mixer = audio_mix_reversed4x;
-            break;
-        case MusicSpeed::reversed8x:
-            current_mixer = audio_mix_reversed8x;
-            break;
-        case MusicSpeed::reversed_slow:
-            current_mixer = audio_mix_reversed_slow;
-            break;
+    case MusicSpeed::regular:
+        current_mixer = audio_mix_normal;
+        break;
+    case MusicSpeed::halved:
+        current_mixer = audio_mix_halved;
+        break;
+    case MusicSpeed::doubled:
+        current_mixer = audio_mix_doubled;
+        break;
+    case MusicSpeed::reversed:
+        current_mixer = audio_mix_reversed;
+        break;
+    case MusicSpeed::reversed4x:
+        current_mixer = audio_mix_reversed4x;
+        break;
+    case MusicSpeed::reversed8x:
+        current_mixer = audio_mix_reversed8x;
+        break;
+    case MusicSpeed::reversed_slow:
+        current_mixer = audio_mix_reversed_slow;
+        break;
     }
 
     SDL_UnlockAudio();
@@ -4648,10 +4837,12 @@ Buffer<const char*, 4> Platform::Speaker::completed_sounds()
 {
     Buffer<const char*, 4> result;
 
-    std::unique_lock<std::mutex> lock(audio_state.completed_sounds_lock, std::try_to_lock);
+    std::unique_lock<std::mutex> lock(audio_state.completed_sounds_lock,
+                                      std::try_to_lock);
     if (lock.owns_lock()) {
         while (!audio_state.completed_sounds.empty() && result.size() < 4) {
-            result.push_back(completed_sound_name(audio_state.completed_sounds.back().c_str()));
+            result.push_back(completed_sound_name(
+                audio_state.completed_sounds.back().c_str()));
             audio_state.completed_sounds.pop_back();
         }
     }
@@ -4698,8 +4889,8 @@ void Platform::Speaker::play_sound(const char* name,
     u32 length = 0;
 
     // Try option 1: sounds/sound_<name>.raw
-    std::string path1 = std::string("sounds") + PATH_DELIMITER +
-                        "sound_" + name + ".raw";
+    std::string path1 =
+        std::string("sounds") + PATH_DELIMITER + "sound_" + name + ".raw";
     auto result1 = PLATFORM.load_file("", path1.c_str());
 
     if (result1.first && result1.second) {
@@ -4707,9 +4898,8 @@ void Platform::Speaker::play_sound(const char* name,
         length = result1.second;
     } else {
         // Try option 2: scripts/data/sounds/<name> (no extension)
-        std::string path2 = std::string("scripts") + PATH_DELIMITER +
-                           "data" + PATH_DELIMITER +
-                           "sounds" + PATH_DELIMITER + name;
+        std::string path2 = std::string("scripts") + PATH_DELIMITER + "data" +
+                            PATH_DELIMITER + "sounds" + PATH_DELIMITER + name;
         auto result2 = PLATFORM.load_file("", path2.c_str());
 
         if (result2.first && result2.second) {
@@ -4717,7 +4907,9 @@ void Platform::Speaker::play_sound(const char* name,
             length = result2.second;
         } else {
             warning(format("Failed to load sound: % (tried % and %)",
-                          name, path1.c_str(), path2.c_str()));
+                           name,
+                           path1.c_str(),
+                           path2.c_str()));
             return;
         }
     }
@@ -4747,7 +4939,7 @@ void Platform::Speaker::play_sound(const char* name,
             target_channel = lowest_priority_channel;
         } else {
             SDL_UnlockAudio();
-            return;  // Can't play this sound, all channels busy with higher priority
+            return; // Can't play this sound, all channels busy with higher priority
         }
     }
 
@@ -4769,7 +4961,7 @@ void Platform::Speaker::play_sound(const char* name,
     channel.playing = true;
     channel.volume = 1.0f;
     channel.priority = priority;
-    channel.name = name;  // Note: assumes name string persists
+    channel.name = name; // Note: assumes name string persists
 
     SDL_UnlockAudio();
 }

@@ -1007,7 +1007,8 @@ ArgBindings make_arg_bindings(Value* arg_lat, ArgBindings* parent)
         } else {
             sym = val;
         }
-        if (not b.bindings_.push_back(ArgBinding{&sym->symbol(), (u8)arg++, type, false})) {
+        if (not b.bindings_.push_back(
+                ArgBinding{&sym->symbol(), (u8)arg++, type, false})) {
             PLATFORM.fatal("too many named arguments for function! Max 5");
         }
     });
@@ -1086,7 +1087,9 @@ static void arg_substitution_impl(Value* impl, ArgBindings& bindings)
                             if (binding.referenced_in_closure_) {
                                 ListBuilder bind;
                                 bind.push_back((lisp::Value*)binding.sym_);
-                                bind.push_back(ctx->argument_symbols_[binding.replacement_]);
+                                bind.push_back(
+                                    ctx->argument_symbols_[binding
+                                                               .replacement_]);
                                 closure.push_back(bind.result());
                                 arg_closure_exists = true;
                             }
@@ -1103,10 +1106,10 @@ static void arg_substitution_impl(Value* impl, ArgBindings& bindings)
                             // function arguments from stack slots to actual
                             // variable names.
                             val->cons().set_car(make_symbol("let"));
-                            val->cons().set_cdr(L_CONS(closure.result(),
-                                                       L_CONS(L_CONS(make_symbol("fn"),
-                                                                     fn_impl),
-                                                              L_NIL)));
+                            val->cons().set_cdr(L_CONS(
+                                closure.result(),
+                                L_CONS(L_CONS(make_symbol("fn"), fn_impl),
+                                       L_NIL)));
                         }
 
                     } else if (str_eq(first->symbol().name(), "fn")) {
@@ -3750,18 +3753,17 @@ static void eval_quasiquote(Value* code)
 
 
 
-
 #if defined(__GBA__) or defined(__APPLE__)
-#define STANDARD_FORMS                                                      \
-    MAPBOX_ETERNAL_CONSTEXPR const auto standard_forms =                    \
+#define STANDARD_FORMS                                                         \
+    MAPBOX_ETERNAL_CONSTEXPR const auto standard_forms =                       \
         mapbox::eternal::hash_map<mapbox::eternal::string, EvalCB>
 #else
-#define STANDARD_FORMS                                                  \
+#define STANDARD_FORMS                                                         \
     const auto standard_forms = std::unordered_map<std::string, EvalCB>
 #endif
 
 
-using EvalCB = void(*)(Value*);
+using EvalCB = void (*)(Value*);
 // clang-format off
 STANDARD_FORMS({
         {"if", [](Value* code) {

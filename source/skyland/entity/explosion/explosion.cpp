@@ -94,7 +94,8 @@ void Explosion::update(Time delta)
 void Explosion::project_glow()
 {
     APP.environment().render_glow_effect(sprite_.get_position(),
-                                         50 + rng::choice<8>(rng::utility_state),
+                                         50 +
+                                             rng::choice<8>(rng::utility_state),
                                          ColorConstant::aerospace_orange,
                                          48);
 }
