@@ -269,7 +269,12 @@ public:
         PLATFORM.screen().display();
 
         PLATFORM.speaker().start();
-        PLATFORM.speaker().play_sound("click_digital_1", 1);
+        if (PLATFORM.device_name() not_eq "PC") {
+            // NOTE: the pc port loads so much faster than the gba edition that
+            // the boot screen doesn't really even have time to display.
+            PLATFORM.speaker().play_sound("click_digital_1", 1);
+        }
+
 
 
         auto vn = format("version %.%.%.%",

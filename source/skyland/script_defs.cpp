@@ -2578,7 +2578,7 @@ BINDING_TABLE({
 
           PLATFORM.fill_overlay(0);
           PLATFORM.speaker().clear_sounds();
-          PLATFORM.speaker().stream_music("unaccompanied_wind", 0);
+          PLATFORM.speaker().stream_music("unaccompanied_wind.raw", 0);
           APP.game_mode() = App::GameMode::adventure;
 
           push_menu_queue.push_back(make_deferred_scene<StartAdventureScene>());

@@ -667,7 +667,7 @@ ScenePtr WorldMapScene::update(Time delta)
     }
 
 
-    if (PLATFORM.speaker().is_music_playing("unaccompanied_wind") and
+    if (PLATFORM.speaker().is_music_playing("unaccompanied_wind.raw") and
         not PLATFORM.speaker().is_sound_playing("creaking")) {
         PLATFORM.speaker().play_sound("creaking", 9);
     }

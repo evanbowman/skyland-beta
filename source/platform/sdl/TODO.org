@@ -1,16 +1,17 @@
-* Screen implementation [10/15]
+* Screen implementation [12/16]
 ** DONE fix dynamic texture mapping for certain texture sizes...
 ** DONE implement rendering for background layer
-** TODO figure out what to do about overapping transparency issues
 ** DONE top left corner in textures loaded from files doesn't display...
 ** DONE select menu doesn't display correctly...
-** TODO Display charted course on sky map
 ** DONE Paletted colors for specific zones...
 ** DONE support window resizing
 ** DONE support overwriting tile data with encoded tiles
-** TODO missing sound effects
 ** DONE background layer tranparency
-** TODO fix missing tile in top left corner (again!?)
 ** DONE populate completed sounds array
 ** DONE fix issue where textures aren't recolored correctly when using weather engine
-** TODO make shields glow?
+** DONE macOS distribution and bundling
+** DONE add missing sound effects
+** TODO figure out what to do about overapping transparency issues
+** TODO Display charted course on sky map
+** TODO display keyboard buttons in tutorial player for desktop version
+** TODO fix missing tile in top left corner (again!?)

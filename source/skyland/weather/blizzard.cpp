@@ -194,7 +194,7 @@ void Blizzard::display()
 
 Float Blizzard::modulate_glow_amount()
 {
-    return 0.25f;
+    return 0.3f;
 }
 
 

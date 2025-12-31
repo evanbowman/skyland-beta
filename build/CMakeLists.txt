@@ -571,6 +571,7 @@ endif()
 if(APPLE)
   set(EXECUTABLE_NAME Skyland)
   set(MACOSX_BUNDLE_ICON_FILE AppIcon.icns)
+  set(MACOSX_BUNDLE_GUI_IDENTIFIER "io.skylandgame.skyland")
   add_executable(${EXECUTABLE_NAME} MACOSX_BUNDLE ${SOURCES})
 
 elseif(GAMEBOY_ADVANCE)

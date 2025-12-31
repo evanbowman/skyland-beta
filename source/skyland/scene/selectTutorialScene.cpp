@@ -63,7 +63,7 @@ void SelectTutorialScene::enter(Scene& prev)
 {
     PLATFORM.screen().set_shader(passthrough_shader);
 
-    PLATFORM.speaker().stream_music("unaccompanied_wind", 0);
+    PLATFORM.speaker().stream_music("unaccompanied_wind.raw", 0);
 
     APP.set_coins(0);
 
