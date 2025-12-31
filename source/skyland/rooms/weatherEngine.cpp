@@ -117,9 +117,11 @@ public:
             PLATFORM.load_background_texture(APP.environment().background_texture());
 
             APP.player_island().schedule_repaint();
+            show_island(&APP.player_island());
 
             if (APP.opponent_island()) {
                 APP.opponent_island()->schedule_repaint();
+                show_island(APP.opponent_island());
             }
 
             if (not PLATFORM.speaker().is_music_playing(
