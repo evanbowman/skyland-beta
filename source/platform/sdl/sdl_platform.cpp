@@ -567,13 +567,23 @@ Platform* __platform__ = nullptr;
 
 int main(int argc, char** argv)
 {
+    process_argc = argc;
+    process_argv = argv;
+
+    for (int i = 0; i < argc; ++i) {
+        if (str_eq(argv[i], "--help")) {
+            std::cout << "usage: skyland [optional-flags] \n"
+                      << " --regression        Run test cases, regression tests, and then exit \n"
+                      << " --validate-scripts  Just run syntax checks on scripts, and then exit"
+                      << std::endl;
+            return EXIT_SUCCESS;
+        }
+    }
+
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
         fprintf(stderr, "SDL failed to initialise: %s\n", SDL_GetError());
         return 1;
     }
-
-    process_argc = argc;
-    process_argv = argv;
 
     SDL_SetHint(SDL_HINT_VIDEO_HIGHDPI_DISABLED, "0");
 
