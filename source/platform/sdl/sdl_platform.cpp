@@ -1,22 +1,10 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Copyright 2024 Evan Bowman
+// Copyright (c) 2023 Evan Bowman
 //
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the “Software”), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.  THE SOFTWARE IS PROVIDED
-// “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
-// LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
-// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
-// HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
-// ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-// WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.//
+// This Source Code Form is subject to the terms of the Mozilla Public License,
+// v. 2.0. If a copy of the MPL was not distributed with this file, You can
+// obtain one at http://mozilla.org/MPL/2.0/. */
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -172,6 +160,9 @@ struct ParallaxStrip {
 static ParallaxStrip parallax_strip1 = {0, 13, {0, 0}};      // gradient
 static ParallaxStrip parallax_strip2 = {14, 15, {0, 0}};   // dark clouds
 static ParallaxStrip parallax_strip3 = {16, 19, {0, 0}};   // white clouds
+
+static bool tile0_translucent = false;
+static bool tile1_translucent = false;
 
 
 struct PointLight {
@@ -362,6 +353,21 @@ static const Platform::Extensions extensions{
         }
 
         point_lights.push_back({x, y, radius, tint, intensity});
+    },
+    .enable_translucence = [](const Buffer<Layer, 4>& layers) {
+        // Reset translucence flags
+        tile0_translucent = false;
+        tile1_translucent = false;
+
+        // Set translucence for requested layers
+        for (auto& layer : layers) {
+            if (layer == Layer::map_0_ext || layer == Layer::map_0) {
+                tile0_translucent = true;
+            }
+            if (layer == Layer::map_1_ext || layer == Layer::map_1) {
+                tile1_translucent = true;
+            }
+        }
     },
 };
 
@@ -3422,7 +3428,7 @@ static SDL_Rect get_sprite_source_rect(u16 texture_index, Sprite::Size size)
 static double sprite_rotation_to_degrees(s16 rotation)
 {
     // The GBA code uses -(INT16_MAX / 360) * degrees
-    // So rotation ranges from 0 to 32767 for a full 360Â° rotation
+    // So rotation ranges from 0 to 32767 for a full 360Ã‚Â° rotation
     // We need to convert back to degrees
     return (rotation * 360.0) / 32767.0;
 }
@@ -3800,6 +3806,19 @@ static void draw_tile_layer(Layer layer, SDL_Texture* texture, int texture_width
         skip_tile_zero = overlay_index_zero_is_transparent;
     }
 
+    // Check if this layer should be drawn with translucence
+    bool apply_translucence = false;
+    if (layer == Layer::map_0_ext || layer == Layer::map_0) {
+        apply_translucence = tile0_translucent;
+    } else if (layer == Layer::map_1_ext || layer == Layer::map_1) {
+        apply_translucence = tile1_translucent;
+    }
+
+    // Set alpha for translucent layers
+    if (apply_translucence) {
+        SDL_SetTextureAlphaMod(texture, 127);
+    }
+
     auto view_center = view.int_center().cast<s32>();
     bool is_ext_layer = (layer == Layer::map_0_ext || layer == Layer::map_1_ext);
 
@@ -3862,7 +3881,7 @@ static void draw_tile_layer(Layer layer, SDL_Texture* texture, int texture_width
 
             // Reset texture settings
             SDL_SetTextureColorMod(texture, 255, 255, 255);
-            SDL_SetTextureAlphaMod(texture, 255);
+            SDL_SetTextureAlphaMod(texture, apply_translucence ? 127 : 255);
             SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
 
             // Switch back to main screen
@@ -3873,6 +3892,11 @@ static void draw_tile_layer(Layer layer, SDL_Texture* texture, int texture_width
         } else {
             SDL_RenderCopy(renderer, texture, &src, &dst);
         }
+    }
+
+    // Reset alpha after drawing
+    if (apply_translucence) {
+        SDL_SetTextureAlphaMod(texture, 255);
     }
 }
 
