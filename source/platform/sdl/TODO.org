@@ -1,4 +1,4 @@
-* Screen implementation [8/15]
+* Screen implementation [9/15]
 ** DONE fix dynamic texture mapping for certain texture sizes...
 ** DONE implement rendering for background layer
 ** TODO figure out what to do about overapping transparency issues
@@ -9,7 +9,7 @@
 ** DONE support window resizing
 ** DONE support overwriting tile data with encoded tiles
 ** TODO missing sound effects
-** TODO background layer tranparency
+** DONE background layer tranparency
 ** TODO fix missing tile in top left corner (again!?)
 ** DONE populate completed sounds array
 ** TODO fix issue where textures aren't recolored correctly when using weather engine
