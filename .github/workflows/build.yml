@@ -26,7 +26,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y git wget tar bzip2 python3 python3-pip cmake
-          pip3 install pillow
+          pip3 install --break-system-packages pillow
           
       - name: Build project
         run: |
