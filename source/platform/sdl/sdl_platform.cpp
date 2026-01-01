@@ -312,6 +312,17 @@ static void cleanup_point_light_cache()
 }
 
 
+struct RectInfo
+{
+    int x, y, w, h;
+    ColorConstant tint;
+    int priority;
+};
+
+
+std::vector<RectInfo> rect_draw_queue;
+
+
 static const Platform::Extensions extensions{
     .overlay_circle_effect =
         [](int radius, int x, int y) {
@@ -378,6 +389,9 @@ static const Platform::Extensions extensions{
                 }
             }
         },
+    .draw_rect = [](int x, int y, int w, int h, ColorConstant tint, int priority) {
+        rect_draw_queue.push_back({x, y, w, h, tint, priority});
+    },
 };
 
 
@@ -3756,6 +3770,27 @@ void display_fade()
 
 
 
+void draw_rect_group(int prio)
+{
+    for (auto& rect_info : reversed(rect_draw_queue)) {
+        if (rect_info.priority not_eq prio) {
+            continue;
+        }
+
+        SDL_Rect rect;
+        rect.x = rect_info.x;
+        rect.y = rect_info.y;
+        rect.w = rect_info.w;
+        rect.h = rect_info.h;
+
+        auto color = color_to_sdl(rect_info.tint);
+        SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
+        SDL_RenderFillRect(renderer, &rect);
+    }
+}
+
+
+
 void draw_sprite_group(int prio)
 {
     // Draw all sprites as colored rectangles or textured
@@ -4203,6 +4238,7 @@ void Platform::Screen::display()
         }
     }
 
+    draw_rect_group(3);
     draw_sprite_group(3);
     draw_tile_layer(Layer::map_1_ext,
                     tile1_texture,
@@ -4236,7 +4272,9 @@ void Platform::Screen::display()
                         scroll_tmp,
                         get_view());
     }
+    draw_rect_group(2);
     draw_sprite_group(2);
+    draw_rect_group(1);
     draw_sprite_group(1);
 
     if (not fade_include_overlay) {
@@ -4295,6 +4333,7 @@ void Platform::Screen::display()
         }
     }
 
+    draw_rect_group(0);
     draw_sprite_group(0);
 
     if (fade_include_overlay) {
@@ -4303,6 +4342,7 @@ void Platform::Screen::display()
 
     SDL_RenderPresent(renderer);
     sprite_draw_list.clear();
+    rect_draw_queue.clear();
 }
 
 

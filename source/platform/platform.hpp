@@ -967,6 +967,13 @@ public:
                                  int radius,
                                  ColorConstant tint,
                                  u8 intensity);
+
+        void (*draw_rect)(int x,
+                          int y,
+                          int w,
+                          int h,
+                          ColorConstant tint,
+                          int priority);
     };
 
 
