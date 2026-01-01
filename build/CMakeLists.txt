@@ -104,7 +104,6 @@ set(SOURCES
   ${SOURCE_DIR}/skyland/camera.cpp
   ${SOURCE_DIR}/skyland/console.cpp
   ${SOURCE_DIR}/skyland/skyland.cpp
-  ${SOURCE_DIR}/skyland/minimap.cpp
   ${SOURCE_DIR}/skyland/network.cpp
   ${SOURCE_DIR}/skyland/dataCart.cpp
   ${SOURCE_DIR}/skyland/roomPool.cpp
@@ -223,12 +222,12 @@ set(SOURCES
   ${SOURCE_DIR}/skyland/scene/macro/menuOptionsScene.cpp
   ${SOURCE_DIR}/skyland/scene/macro/moveCheckerScene.cpp
   ${SOURCE_DIR}/skyland/scene/macro/modifiedSelectorScene.cpp
-  ${SOURCE_DIR}/skyland/scene/modules/colorProfileModule.cpp
-  ${SOURCE_DIR}/skyland/scene/modules/regressionModule.cpp
-  ${SOURCE_DIR}/skyland/scene/modules/feedbackModule.cpp
-  ${SOURCE_DIR}/skyland/scene/modules/bugReportModule.cpp
-  ${SOURCE_DIR}/skyland/scene/modules/factoryResetModule.cpp
   ${SOURCE_DIR}/skyland/scene/modules/developerModeModule.cpp
+  ${SOURCE_DIR}/skyland/scene/modules/regressionModule.cpp
+  ${SOURCE_DIR}/skyland/scene/modules/factoryResetModule.cpp
+  ${SOURCE_DIR}/skyland/scene/modules/bugReportModule.cpp
+  ${SOURCE_DIR}/skyland/scene/modules/feedbackModule.cpp
+  ${SOURCE_DIR}/skyland/scene/modules/colorProfileModule.cpp
   ${SOURCE_DIR}/skyland/scene/modules/creditsModule.cpp
   ${SOURCE_DIR}/skyland/scene/modules/checkersModule.cpp
   ${SOURCE_DIR}/skyland/scene/modules/macrocosmFreebuildModule.cpp
@@ -255,8 +254,10 @@ set(SOURCES
 add_library(FASTPATH
   ${SOURCE_DIR}/skyland/room.cpp
   ${SOURCE_DIR}/skyland/island.cpp
+  ${SOURCE_DIR}/skyland/minimap.cpp
   ${SOURCE_DIR}/skyland/rooms/ice.cpp
   ${SOURCE_DIR}/skyland/rooms/tnt.cpp
+  ${SOURCE_DIR}/skyland/rooms/bell.cpp
   ${SOURCE_DIR}/skyland/rooms/core.cpp
   ${SOURCE_DIR}/skyland/rooms/hull.cpp
   ${SOURCE_DIR}/skyland/rooms/lava.cpp
@@ -319,6 +320,8 @@ add_library(FASTPATH
   ${SOURCE_DIR}/skyland/rooms/commandModule.cpp
   ${SOURCE_DIR}/skyland/rooms/overdriveCore.cpp
   ${SOURCE_DIR}/skyland/rooms/plunderedRoom.cpp
+  ${SOURCE_DIR}/skyland/rooms/particleLance.cpp
+  ${SOURCE_DIR}/skyland/rooms/resonanceCore.cpp
   ${SOURCE_DIR}/skyland/rooms/weatherEngine.cpp
   ${SOURCE_DIR}/skyland/rooms/targetingComputer.cpp
   # ${SOURCE_DIR}/skyland/rooms/swerveMissileSilo.cpp
@@ -347,6 +350,7 @@ add_library(FASTPATH
 
 target_compile_options(FASTPATH PRIVATE
   -O3
+  -Wsuggest-override
   ${G_COMPILE_FLAGS})
 
 
@@ -365,6 +369,7 @@ target_compile_options(LISP PRIVATE
   -g
   -O3 # Script execution is a bit of a bottleneck
   -fno-rtti
+  -Wsuggest-override
   ${G_COMPILE_FLAGS})
 
 
@@ -383,6 +388,7 @@ if(NINTENDO_DS OR GAMEBOY_ADVANCE)
     ${DATA_DIR}/overlay.s
     ${DATA_DIR}/overlay_qr.s
     ${DATA_DIR}/overlay_dialog.s
+    ${DATA_DIR}/appendix.s
     ${DATA_DIR}/overlay_datacart.s
     ${DATA_DIR}/overlay_textview.s
     ${DATA_DIR}/overlay_dialog_fullscreen.s
@@ -431,6 +437,7 @@ if(NINTENDO_DS OR GAMEBOY_ADVANCE)
     ${DATA_DIR}/boot_img_flattened.s
     ${DATA_DIR}/savegame_flattened.s
     ${DATA_DIR}/goblin_savegame_flattened.s
+    ${DATA_DIR}/sylph_savegame_flattened.s
     ${DATA_DIR}/ending_img_flattened.s
     ${DATA_DIR}/macro_rendertexture.s
     ${DATA_DIR}/developer_mode_flattened.s
@@ -788,6 +795,7 @@ if(GAMEBOY_ADVANCE OR NINTENDO_DS)
     add_tilesheet(boot_img 0 0 YES YES)
     add_tilesheet(savegame 0 0 YES YES)
     add_tilesheet(goblin_savegame 0 0 YES YES)
+    add_tilesheet(sylph_savegame 0 0 YES YES)
     add_tilesheet(ending_img 0 0 YES YES)
     add_tilesheet(macro_rendertexture 0 0 NO NO)
     add_tilesheet(developer_mode 0 0 YES YES)
@@ -810,6 +818,7 @@ if(GAMEBOY_ADVANCE OR NINTENDO_DS)
     add_overlay(colorProfiles 12 7 NO NO)
     add_overlay(flags 2 2 NO NO)
     add_overlay(character_art 4 4 NO NO)
+    add_overlay(appendix 4 4 NO NO)
     add_overlay(paint_icons 2 2 NO NO)
     add_overlay(traded_core 0 0 YES YES)
     add_overlay(photo_village 0 0 YES YES)

@@ -1,6 +1,7 @@
 ;;;
-;;; decimator.lisp
+;;; challenges/decimator.lisp
 ;;;
+
 
 (defn challenge-hint ()
   (dialog "Are you sure you want a hint?")
@@ -89,7 +90,7 @@
 
 
 
-(weather-set 3)
+(weather-set weather-id-rain)
 
 
 (defn on-victory ()

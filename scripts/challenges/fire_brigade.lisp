@@ -1,5 +1,5 @@
 ;;;
-;;; fire_brigade.lisp
+;;; challenges/fire_brigade.lisp
 ;;;
 
 
@@ -36,4 +36,4 @@
 (chr-new (opponent) 5 14 'hostile 0)
 
 
-(weather-set 4)
+(weather-set weather-id-snow)

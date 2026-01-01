@@ -1,5 +1,5 @@
 ;;;
-;;; goliath.lisp
+;;; challenges/goliath.lisp
 ;;;
 
 
@@ -72,4 +72,4 @@
 (chr-new (opponent) 3 14 'hostile 0)
 
 
-(weather-set 3)
+(weather-set weather-id-rain)

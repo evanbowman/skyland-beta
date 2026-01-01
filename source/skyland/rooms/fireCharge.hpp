@@ -60,7 +60,9 @@ public:
     {
         return RoomProperties::disallow_chimney | RoomProperties::roof_hidden |
                RoomProperties::manufactory_required |
-               RoomProperties::multiplayer_unsupported;
+               RoomProperties::oversize_explosion |
+               RoomProperties::multiplayer_unsupported |
+               RoomProperties::oversize_explosion;
     }
 
 
@@ -76,7 +78,7 @@ public:
     }
 
 
-    static const char* name()
+    static constexpr const char* name()
     {
         return "fire-charge";
     }

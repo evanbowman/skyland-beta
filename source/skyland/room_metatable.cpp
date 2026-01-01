@@ -32,7 +32,6 @@
 #include "skyland/rooms/canvas.hpp"
 #include "skyland/rooms/cargoBay.hpp"
 #include "skyland/rooms/chaosCore.hpp"
-#include "skyland/rooms/overdriveCore.hpp"
 #include "skyland/rooms/cloak.hpp"
 #include "skyland/rooms/clumpBomb.hpp"
 #include "skyland/rooms/commandModule.hpp"
@@ -64,7 +63,10 @@
 #include "skyland/rooms/missileSilo.hpp"
 #include "skyland/rooms/mycelium.hpp"
 #include "skyland/rooms/nemesis.hpp"
+#include "skyland/rooms/overdriveCore.hpp"
+#include "skyland/rooms/resonanceCore.hpp"
 #include "skyland/rooms/palm.hpp"
+#include "skyland/rooms/particleLance.hpp"
 #include "skyland/rooms/phaseShifter.hpp"
 #include "skyland/rooms/plunderedRoom.hpp"
 #include "skyland/rooms/portal.hpp"
@@ -92,6 +94,7 @@
 #include "skyland/rooms/tnt.hpp"
 #include "skyland/rooms/torch.hpp"
 #include "skyland/rooms/transporter.hpp"
+#include "skyland/rooms/tuningCrystal.hpp"
 #include "skyland/rooms/warEngine.hpp"
 #include "skyland/rooms/warhead.hpp"
 #include "skyland/rooms/water.hpp"
@@ -249,6 +252,10 @@ void RoomMeta::init_plugin()
 template <int plugin_slots, typename... Rooms> struct RoomMetatable
 {
 public:
+
+    static constexpr const char* room_names_[sizeof...(Rooms)] = {Rooms::name()...};
+
+
     template <size_t i, typename First, typename... Rest> void init()
     {
         table_[i].template init<First>();
@@ -292,7 +299,7 @@ public:
 
 
 
-using RoomMetatableType = RoomMetatable<10,
+using RoomMetatableType = RoomMetatable<6,
                                         // walls
                                         Hull,
                                         BronzeHull,
@@ -319,6 +326,7 @@ using RoomMetatableType = RoomMetatable<10,
                                         SparkCannon,
                                         Incinerator,
                                         BeamGun,
+                                        ParticleLance,
                                         Ballista,
                                         MissileSilo,
                                         RocketSilo,
@@ -365,8 +373,10 @@ using RoomMetatableType = RoomMetatable<10,
                                         Deflector,
                                         Amplifier,
                                         PhaseShifter,
+                                        PlunderedRoom,
                                         // decoration
                                         Bell,
+                                        TuningCrystal,
                                         Speaker,
                                         Synth,
                                         Statue,
@@ -383,7 +393,6 @@ using RoomMetatableType = RoomMetatable<10,
                                         Basalt,
                                         Snow,
                                         MarketStall,
-                                        PlunderedRoom,
                                         Canvas>;
 
 
@@ -498,7 +507,7 @@ MetaclassIndex metaclass_index(const char* name)
     auto [mt, ms] = room_metatable();
 
     for (int i = 0; i < ms; ++i) {
-        if (str_cmp(mt[i]->name(), name) == 0) {
+        if (str_cmp(__metatable().room_names_[i], name) == 0) {
             return i;
         }
     }

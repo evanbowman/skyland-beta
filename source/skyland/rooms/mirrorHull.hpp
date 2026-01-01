@@ -32,13 +32,19 @@ public:
     void rewind(Time delta) override;
 
 
+    Optional<UpgradeList> upgrade_mt_list() const override
+    {
+        return nullopt();
+    }
+
+
     int debris_tile() override
     {
         return 2;
     }
 
 
-    static const char* name()
+    static constexpr const char* name()
     {
         return "mirror-hull";
     }

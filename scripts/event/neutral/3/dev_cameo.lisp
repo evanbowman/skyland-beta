@@ -33,7 +33,7 @@
    (ice 5 14)
    (bronze-hull 6 14)))
 
-(flag-show (opponent) 4)
+(flag-show (opponent) flag-id-old-empire)
 
 
 (setq on-converge
@@ -44,7 +44,7 @@
                 (lambda ()
                   (sound "click_digital_1")
                   (cart-add 0)
-                  (dialog "You pick up a cart labled "
+                  (dialog "You pick up a cart labeled "
                           (get info 0)
                           "! (cartridge 1)")
                   (setq on-dialog-closed nil)

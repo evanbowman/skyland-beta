@@ -5,7 +5,7 @@
 
 (dialog
  ;; The first time this event happens, show a cover image
- (if (not (adv-var-load "mercenary-event"))
+ (if (not (adv-var-load 'mercenary-event))
      "<b:/scripts/data/img/marauder.img.bin> "
    "")
  "You discover a fortress inhabited by some mercenaries...")
@@ -16,7 +16,7 @@
 
 (island-configure
  (opponent)
- (if (not (adv-var-load "mercenary-event"))
+ (if (not (adv-var-load 'mercenary-event))
      '((cannon 1 13)
        (hull 2 14)
        (hull 2 13)
@@ -65,7 +65,7 @@
        (masonry 4 8 3)
        (shrubbery 4 7))))))
 
-(flag-show (opponent) 1)
+(flag-show (opponent) flag-id-marauder)
 
 
 (chr-new (opponent) 0 14 'neutral 0)
@@ -94,7 +94,7 @@
             (setq dest (sample dest))
             (chr-new (player) (car dest) (cdr dest) 'neutral '((race . 0) (icon . 17)))
             (chr-del (opponent) 0 14)
-            (dialog "<c:mercenary:17> Ahoy! Ready to knock some heads!?")
+            (dialog "<c:Mercenary:17> Ahoy! Ready to knock some heads!?")
             (defn on-dialog-closed ()
               (setq on-dialog-closed nil)
               (dialog "The mercenary joined your crew!")
@@ -113,4 +113,4 @@
         (exit)))
 
 
-(adv-var-store "mercenary-event" true)
+(adv-var-store 'mercenary-event true)

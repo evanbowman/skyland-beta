@@ -14,6 +14,7 @@
 #include "entity/explosion/explosion.hpp"
 #include "entity/misc/smokePuff.hpp"
 #include "entity/projectile/projectile.hpp"
+#include "ext_workram_data.hpp"
 #include "globals.hpp"
 #include "latency.hpp"
 #include "minimap.hpp"
@@ -28,6 +29,7 @@
 #include "rooms/weapon.hpp"
 #include "script/lisp.hpp"
 #include "skyland.hpp"
+#include "skyland/entity/explosion/exploSpawner.hpp"
 #include "skyland/entity/ghost.hpp"
 #include "skyland/rooms/canvas.hpp"
 #include "skyland/rooms/droneBay.hpp"
@@ -74,13 +76,17 @@ void Island::init_terrain(int width, bool render)
 }
 
 
+EXT_WORKRAM_DATA RoomMatrix player_room_matrix;
+EXT_WORKRAM_DATA RoomMatrix opponent_room_matrix;
+
 
 Island::Island(Layer layer, u8 width, Player& owner)
-    : owner_(&owner), layer_(layer), timer_(0),
-      flag_anim_index_(Tile::flag_start), interior_visible_(false),
-      show_flag_(false), dispatch_cancelled_(false), schedule_repaint_(false),
-      schedule_repaint_partial_(false), has_radar_(false), is_boarded_(false),
-      hidden_(false)
+    : owner_(&owner), rooms_(owner_ == &APP.opponent() ? &opponent_room_matrix
+                                                       : &player_room_matrix),
+      layer_(layer), timer_(0), flag_anim_index_(Tile::flag_start),
+      interior_visible_(false), show_flag_(false), dispatch_cancelled_(false),
+      schedule_repaint_(false), schedule_repaint_partial_(false),
+      has_radar_(false), is_boarded_(false), hidden_(false)
 {
     init_terrain(width, false);
 }
@@ -455,12 +461,12 @@ void Island::fire_extinguish(const RoomCoord& coord)
         time_stream::event::PlayerFireExtinguished e;
         e.x_ = x;
         e.y_ = y;
-        APP.time_stream().push(APP.level_timer(), e);
+        APP.push_time_stream(e);
     } else {
         time_stream::event::OpponentFireExtinguished e;
         e.x_ = x;
         e.y_ = y;
-        APP.time_stream().push(APP.level_timer(), e);
+        APP.push_time_stream(e);
     }
 
     fire_.positions_.set(x, y, false);
@@ -482,12 +488,12 @@ void Island::fire_create(const RoomCoord& coord)
         time_stream::event::PlayerFireCreated e;
         e.x_ = x;
         e.y_ = y;
-        APP.time_stream().push(APP.level_timer(), e);
+        APP.push_time_stream(e);
     } else {
         time_stream::event::OpponentFireCreated e;
         e.x_ = x;
         e.y_ = y;
-        APP.time_stream().push(APP.level_timer(), e);
+        APP.push_time_stream(e);
     }
 
     fire_.positions_.set(x, y, true);
@@ -815,7 +821,7 @@ void Island::update(Time dt)
         e.max_health_ = c.get_max_health();
         e.health_ = c.health();
         e.stats_ = c.stats().info_;
-        APP.time_stream().push(APP.level_timer(), e);
+        APP.push_time_stream(e);
     };
 
 
@@ -891,6 +897,8 @@ void Island::update(Time dt)
 
             medium_explosion((*it)->sprite().get_position());
 
+            minimap::schedule_repaint();
+            ExploSpawner::create((*it)->sprite().get_position());
             it = drones_.erase(it);
         } else {
             (*it)->update(dt);
@@ -1041,20 +1049,20 @@ void Island::update(Time dt)
                     p.y_ = pos.y;
                     p.type_ = mt;
                     p.group_ = (u8)group;
-                    APP.time_stream().push(APP.level_timer(), p);
+                    APP.push_time_stream(p);
                 } else {
                     time_stream::event::PlayerRoomDestroyed p;
                     p.x_ = pos.x;
                     p.y_ = pos.y;
                     p.type_ = mt;
-                    APP.time_stream().push(APP.level_timer(), p);
+                    APP.push_time_stream(p);
                 }
             } else {
                 time_stream::event::OpponentRoomDestroyed p;
                 p.x_ = pos.x;
                 p.y_ = pos.y;
                 p.type_ = mt;
-                APP.time_stream().push(APP.level_timer(), p);
+                APP.push_time_stream(p);
             }
 
 
@@ -1264,12 +1272,12 @@ void Island::display()
 
         Optional<u16> palette;
 
-        if (layer_ == Layer::map_0_ext) {
-            // NOTE: the player can design his/her own flag, so we reserve a
-            // specific palette bank just for the flag image. Untimately, doing
-            // so simplifies things.
-            palette = 12;
-        }
+        // NOTE: the player can design his/her own flag, so we reserve a
+        // specific palette bank just for the flag image. Untimately, doing so
+        // simplifies things. The opponent island doesn't necessarily need the
+        // custom flag palette, but why not keep things simple and consistent...
+        palette = 12;
+
         PLATFORM.set_tile(
             layer_, flag_pos_->x, flag_pos_->y, flag_anim_index_, palette);
     }
@@ -1333,6 +1341,16 @@ void Island::test_collision(Entity& entity)
         return;
     }
 
+    Vec2<Fixnum> hitbox_pos = this->origin();
+    HitBox island_hitbox;
+    island_hitbox.position_ = &hitbox_pos;
+    island_hitbox.dimension_.size_.x = terrain_.size() * 16;
+    island_hitbox.dimension_.size_.y = 16 * 16;
+
+    if (not island_hitbox.overlapping(entity.hitbox())) {
+        return;
+    }
+
     // Calculate the position of the entity in terms of the island's grid
     // coordinates.
     auto entity_pos = ivec((entity.sprite().get_position() - this->origin()));
@@ -1370,18 +1388,10 @@ void Island::test_collision(Entity& entity)
         }
     }
 
-    Vec2<Fixnum> hitbox_pos = this->origin();
-    HitBox island_hitbox;
-    island_hitbox.position_ = &hitbox_pos;
-    island_hitbox.dimension_.size_.x = terrain_.size() * 16;
-    island_hitbox.dimension_.size_.y = 16 * 16;
-
-    if (island_hitbox.overlapping(entity.hitbox())) {
-        for (auto& drone_sp : drones_) {
-            if (entity.hitbox().overlapping((drone_sp)->hitbox())) {
-                entity.on_collision(*drone_sp);
-                (drone_sp)->on_collision(entity);
-            }
+    for (auto& drone_sp : drones_) {
+        if (entity.hitbox().overlapping((drone_sp)->hitbox())) {
+            entity.on_collision(*drone_sp);
+            (drone_sp)->on_collision(entity);
         }
     }
 }
@@ -1420,7 +1430,7 @@ void Island::set_phase(u8 phase)
         time_stream::event::IslePhaseChange e;
         e.prev_phase_ = phase_;
         e.near_ = is_player_island(this);
-        APP.time_stream().push(APP.level_timer(), e);
+        APP.push_time_stream(e);
     }
 
     phase_ = phase;
@@ -1547,6 +1557,10 @@ void Island::render_interior_fast()
 
 
 
+void set_glow_color();
+
+
+
 void Island::render_interior()
 {
     interior_visible_ = true;
@@ -1554,6 +1568,7 @@ void Island::render_interior()
     if (layer_ == Layer::map_0_ext) {
         auto t = APP.environment().player_island_interior_texture();
         PLATFORM.load_tile0_texture(t);
+        set_glow_color();
     } else {
         auto t = APP.environment().opponent_island_interior_texture();
         PLATFORM.load_tile1_texture(t);
@@ -1585,6 +1600,7 @@ void Island::render_exterior()
 
     if (layer_ == Layer::map_0_ext) {
         PLATFORM.load_tile0_texture(APP.environment().player_island_texture());
+        set_glow_color();
     } else {
         PLATFORM.load_tile1_texture(
             APP.environment().opponent_island_texture());
@@ -1712,14 +1728,14 @@ void Island::move_room(const RoomCoord& from, const RoomCoord& to)
                 e.y_ = to.y;
                 e.prev_x_ = from.x;
                 e.prev_y_ = from.y;
-                APP.time_stream().push(APP.level_timer(), e);
+                APP.push_time_stream(e);
             } else {
                 time_stream::event::OpponentRoomMoved e;
                 e.x_ = to.x;
                 e.y_ = to.y;
                 e.prev_x_ = from.x;
                 e.prev_y_ = from.y;
-                APP.time_stream().push(APP.level_timer(), e);
+                APP.push_time_stream(e);
             }
 
             Buffer<Vec2<u8>, 16> fire_respawn_locs;
@@ -1946,6 +1962,8 @@ void Island::repaint()
     if (hidden_) {
         return;
     }
+
+    set_glow_color();
 
     // The engine only knows how to draw an island wholistically, because some
     // tiles need to be joined etc., so whenever the island changes, the whole
@@ -2300,7 +2318,7 @@ void Island::set_drift(Fixnum drift)
         time_stream::event::OpponentIslandDriftChanged e;
         e.previous_speed__data_.set(drift_.data());
 
-        APP.time_stream().push(APP.level_timer(), e);
+        APP.push_time_stream(e);
     }
 
     if (is_player_island(this)) {
@@ -2472,6 +2490,7 @@ void show_island(Island* island)
             show_island_exterior(island);
         }
     }
+    set_glow_color();
 }
 
 

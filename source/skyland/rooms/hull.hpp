@@ -44,6 +44,9 @@ public:
     static void format_description(StringBuffer<512>& buffer);
 
 
+    Optional<UpgradeList> upgrade_mt_list() const override;
+
+
     static Category category()
     {
         return Category::wall;
@@ -75,7 +78,7 @@ public:
     }
 
 
-    static const char* name()
+    static constexpr const char* name()
     {
         return "hull";
     }

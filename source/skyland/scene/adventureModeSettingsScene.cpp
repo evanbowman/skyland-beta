@@ -10,11 +10,11 @@
 
 
 #include "adventureModeSettingsScene.hpp"
+#include "skyland/achievement.hpp"
 #include "skyland/room_metatable.hpp"
 #include "skyland/sharedVariable.hpp"
 #include "skyland/skyland.hpp"
 #include "zoneImageScene.hpp"
-
 
 
 namespace skyland
@@ -49,8 +49,15 @@ static const SettingInfo difficulty_text[] = {
 static const SettingInfo faction_text[] = {
     {SystemString::faction_human, SystemString::faction_desc_human},
     {SystemString::faction_goblin, SystemString::faction_desc_goblin},
-    {SystemString::faction_sylph, SystemString::faction_desc_sylph}};
+    {SystemString::faction_sylph, SystemString::faction_desc_sylph},
+    {SystemString::faction_random, SystemString::faction_desc_random}};
 
+
+
+bool has_completed_adv_mode()
+{
+    return achievements::is_unlocked(achievements::hero);
+}
 
 
 void AdventureModeSettingsScene::repaint_difficulty(int difficulty,
@@ -65,7 +72,11 @@ void AdventureModeSettingsScene::repaint_difficulty(int difficulty,
 void AdventureModeSettingsScene::repaint_faction(Faction faction, bool selected)
 {
     auto d = faction_text[(int)faction];
-    render_line(2, d.text_, d.desc_, selected);
+    auto desc = d.desc_;
+    if (faction == Faction::sylph and not has_completed_adv_mode()) {
+        desc = SystemString::faction_desc_sylph_locked;
+    }
+    render_line(2, d.text_, desc, selected);
 }
 
 
@@ -195,6 +206,10 @@ void AdventureModeSettingsScene::repaint()
         case Faction::sylph:
             filter = RoomProperties::sylph_only;
             break;
+
+        case Faction::random:
+            filter = RoomProperties::none;
+            break;
         }
 
         Buffer<int, 5> icons;
@@ -242,6 +257,10 @@ void AdventureModeSettingsScene::enter(Scene& prev)
                    Text::OptColors{{ColorConstant::med_blue_gray,
                                     ColorConstant::rich_black}});
 
+
+    if (APP.gp_.stateflags_.get(GlobalPersistentData::random_faction)) {
+        APP.faction() = Faction::random;
+    }
 
     if (APP.gp_.stateflags_.get(GlobalPersistentData::goblin_faction)) {
         APP.faction() = Faction::goblin;
@@ -314,11 +333,9 @@ void AdventureModeSettingsScene::update_field(bool inc)
         u32 index = 0;
         Buffer<Faction, (int)Faction::count> factions;
         for (int i = 0; i < (int)Faction::count; ++i) {
-            if (enabled_factions_bitfield & (1 << i)) {
-                factions.push_back((Faction)i);
-                if ((Faction)i == APP.faction()) {
-                    index = i;
-                }
+            factions.push_back((Faction)i);
+            if ((Faction)i == APP.faction()) {
+                index = i;
             }
         }
         if (inc) {
@@ -394,6 +411,12 @@ ScenePtr AdventureModeSettingsScene::update(Time delta)
 
 
     if (APP.player().key_down(Key::action_1)) {
+
+        if (APP.faction() == Faction::sylph and not has_completed_adv_mode()) {
+            PLATFORM.speaker().play_sound("beep_error", 3);
+            return null_scene();
+        }
+
         PLATFORM.speaker().play_sound("button_wooden", 3);
         load_difficulty_profile();
 
@@ -401,6 +424,7 @@ ScenePtr AdventureModeSettingsScene::update(Time delta)
             APP.gp_.stateflags_.set(GlobalPersistentData::goblin_faction,
                                     false);
             APP.gp_.stateflags_.set(GlobalPersistentData::sylph_faction, false);
+            APP.gp_.stateflags_.set(GlobalPersistentData::random_faction, false);
 
             switch (APP.faction()) {
             default:
@@ -415,14 +439,32 @@ ScenePtr AdventureModeSettingsScene::update(Time delta)
                 APP.gp_.stateflags_.set(GlobalPersistentData::sylph_faction,
                                         true);
                 break;
+
+            case Faction::random:
+                APP.gp_.stateflags_.set(GlobalPersistentData::random_faction,
+                                        true);
             }
         }
-
 
         if ((u8)APP.gp_.difficulty_ not_eq original_ or
             APP.gp_.stateflags_ not_eq stateflags_cached_) {
             save::store_global_data(APP.gp_);
         }
+
+        if (APP.faction() == Faction::random) {
+            APP.faction() = (Faction)rng::choice<3>(rng::critical_state);
+            if (not has_completed_adv_mode()) {
+                // Sylph are not selectable yet...
+                APP.faction() = (Faction)rng::choice<2>(rng::critical_state);
+            }
+            sel_ = sel_max;
+            repaint();
+            for (int i = 0; i < 25; ++i) {
+                PLATFORM.screen().clear();
+                PLATFORM.screen().display();
+            }
+        }
+
 
         if (newgame_) {
             APP.invoke_script("/scripts/newgame.lisp");

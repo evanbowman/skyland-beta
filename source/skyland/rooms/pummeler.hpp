@@ -46,7 +46,8 @@ public:
 
     static RoomProperties::Bitmask properties()
     {
-        return RoomProperties::disallow_chimney | RoomProperties::roof_hidden;
+        return RoomProperties::disallow_chimney |
+               RoomProperties::oversize_explosion | RoomProperties::roof_hidden;
     }
 
 
@@ -62,7 +63,7 @@ public:
     }
 
 
-    static const char* name()
+    static const constexpr char* name()
     {
         return "pummeler";
     }

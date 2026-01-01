@@ -1,4 +1,6 @@
 ;;;
+;;; save.lisp
+;;;
 ;;; The game invokes this script when creating a save file. The result of this
 ;;; script will be stored in save memory, and passed to restore_save.lisp when
 ;;; reloading a game. As you see below, the list itself is an association list,
@@ -28,4 +30,7 @@
  (cons 'groups (groups))
  (cons 'nav (wg-nav-path))
  (cons 'faction (faction))
- (cons 'pending-events pending-events))
+ (cons 'pending-events pending-events)
+ (cons 'crystal-tone (list (getvar "energy_glow_color")
+                           (getvar "spr_energy_color_1")
+                           (getvar "spr_energy_color_2"))))

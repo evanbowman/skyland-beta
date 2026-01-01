@@ -133,11 +133,12 @@ public:
     static RoomProperties::Bitmask properties()
     {
         return (Decoration::properties() & ~RoomProperties::roof_hidden) |
-               RoomProperties::disabled_in_tutorials | RoomProperties::habitable;
+               RoomProperties::disabled_in_tutorials |
+               RoomProperties::habitable;
     }
 
 
-    static const char* name()
+    static const constexpr char* name()
     {
         return "bridge";
     }
@@ -155,7 +156,7 @@ public:
     }
 
 
-   ScenePtr resize_bridge_scene();
+    ScenePtr resize_bridge_scene();
 
 
     ScenePtr select_impl(const RoomCoord& cursor) override;

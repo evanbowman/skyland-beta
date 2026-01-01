@@ -59,6 +59,10 @@ public:
     }
 
 
+    void display_on_hover(Platform::Screen& screen,
+                          const RoomCoord& cursor) override;
+
+
     bool description_visible() override
     {
         return true;
@@ -77,7 +81,7 @@ public:
     }
 
 
-    static const char* name()
+    static const constexpr char* name()
     {
         return "deflector";
     }

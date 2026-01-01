@@ -30,6 +30,7 @@
 #include "skyland/player/playerP1.hpp"
 #include "skyland/scene_pool.hpp"
 #include "skyland/skyland.hpp"
+#include "skyland/sound.hpp"
 #include "skyland/systemString.hpp"
 #include "startAdventureScene.hpp"
 #include "zoneImageScene.hpp"
@@ -201,6 +202,8 @@ void TitleScreenScene::enter(Scene& prev)
     APP.camera().emplace<Camera>();
 
     APP.swap_player<PlayerP1>();
+
+    psg_stop_all();
 
     init_clouds();
     PLATFORM_EXTENSION(vertical_parallax_enable, false);
@@ -899,7 +902,7 @@ ScenePtr TitleScreenScene::update(Time delta)
         } else {
             const auto amount = 1.f - smoothstep(0.f, fade_duration, timer_);
             PLATFORM.screen().schedule_fade(
-                amount, ColorConstant::rich_black, true, true);
+                amount, {ColorConstant::rich_black, true, true});
         }
         break;
     }
@@ -918,10 +921,10 @@ ScenePtr TitleScreenScene::update(Time delta)
             const auto amount = 1.f - smoothstep(0.f, fade_duration, timer_);
             if (flower_effect_) {
                 PLATFORM.screen().schedule_fade(
-                    amount, ColorConstant::rich_black, false, true);
+                    amount, {ColorConstant::rich_black, false, true});
             } else {
                 PLATFORM.screen().schedule_fade(
-                    amount, ColorConstant::rich_black, true, true);
+                    amount, {ColorConstant::rich_black, true, true});
             }
         }
         break;
@@ -1338,7 +1341,7 @@ ScenePtr TitleScreenScene::update(Time delta)
 
 
             PLATFORM.screen().schedule_fade(
-                amount, ColorConstant::rich_black, true, true);
+                amount, {ColorConstant::rich_black, true, true});
         }
         break;
     }
@@ -1361,7 +1364,7 @@ ScenePtr TitleScreenScene::update(Time delta)
             auto amount = smoothstep(0.f, fade_duration, timer_);
 
             PLATFORM.screen().schedule_fade(
-                0.7f - 0.7f * amount, ColorConstant::rich_black, true, true);
+                0.7f - 0.7f * amount, {ColorConstant::rich_black, true, true});
         }
         break;
     }
@@ -1379,7 +1382,7 @@ ScenePtr TitleScreenScene::update(Time delta)
             PLATFORM.speaker().set_music_volume(2);
 
             PLATFORM.screen().schedule_fade(
-                0.7f, ColorConstant::rich_black, true, true);
+                0.7f, {ColorConstant::rich_black, true, true});
 
             if (not module_cursor_) {
                 module_cursor_ = {0, 0};
@@ -1391,7 +1394,7 @@ ScenePtr TitleScreenScene::update(Time delta)
             auto amount = smoothstep(0.f, fade_duration, timer_);
 
             PLATFORM.screen().schedule_fade(
-                0.7f * amount, ColorConstant::rich_black, true, true);
+                0.7f * amount, {ColorConstant::rich_black, true, true});
         }
         break;
     }
@@ -1405,7 +1408,7 @@ ScenePtr TitleScreenScene::update(Time delta)
         }
 
         PLATFORM.screen().schedule_fade(
-            0.69f, ColorConstant::rich_black, false, false);
+            0.69f, {ColorConstant::rich_black, false, false});
         if (APP.player().key_down(Key::action_2)) {
             state_ = State::fade_modules_backout;
             timer_ = 0;

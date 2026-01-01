@@ -69,7 +69,7 @@ public:
     }
 
 
-    static const char* name()
+    static constexpr const char* name()
     {
         return "missile-silo";
     }
@@ -102,6 +102,7 @@ public:
     static RoomProperties::Bitmask properties()
     {
         return RoomProperties::disallow_chimney | RoomProperties::roof_hidden |
+               RoomProperties::oversize_explosion |
                RoomProperties::multiboot_compatible;
     }
 

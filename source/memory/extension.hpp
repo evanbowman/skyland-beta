@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "platform/platform.hpp"
 #include "platform/scratch_buffer.hpp"
 
 

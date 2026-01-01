@@ -45,6 +45,12 @@ public:
     }
 
 
+    static SystemString get_description()
+    {
+        return SystemString::cannon_drone_description;
+    }
+
+
     const char* name() const override
     {
         return get_name();
@@ -169,7 +175,7 @@ public:
                     e.x_pos_ = position().x;
                     e.y_pos_ = position().y;
                     e.destination_near_ = is_player_island(destination());
-                    APP.time_stream().push(APP.level_timer(), e);
+                    APP.push_time_stream(e);
                 }
             }
 

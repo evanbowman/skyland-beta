@@ -44,6 +44,8 @@ class Character;
 class Drone;
 struct RoomMeta;
 class Weapon;
+class SelectMenuScene;
+enum class SystemString;
 
 
 
@@ -481,7 +483,10 @@ public:
     RoomMeta* metaclass() const;
 
 
-    MetaclassIndex metaclass_index() const;
+    inline MetaclassIndex metaclass_index() const
+    {
+        return metaclass_index_;
+    }
 
 
     const char* name() const;
@@ -768,7 +773,7 @@ public:
     }
 
 
-    using UpgradeList = Buffer<MetaclassIndex, 4>;
+    using UpgradeList = TinyBuffer<MetaclassIndex, 4>;
     virtual Optional<UpgradeList> upgrade_mt_list() const;
 
 
@@ -788,6 +793,9 @@ public:
 
 
     virtual void amplify(bool enabled);
+
+
+    virtual void register_select_menu_options(SelectMenuScene&);
 
 
 protected:

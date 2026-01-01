@@ -1,3 +1,7 @@
+;;;
+;;; quest_marker/dyanmite-ii.lisp
+;;;
+
 
 (dialog "You reach the destination mining platform...")
 
@@ -37,7 +41,7 @@
 
 
 (defn on-converge ()
-  (let ((bloc (if (equal (difficulty) 0)
+  (let ((bloc (if (equal (difficulty) difficulty-beginner)
                   'dynamite
                 'dynamite-ii)))
     (let ((pos 2)
@@ -49,11 +53,11 @@
                                     (rooms (player)))))))))
       (if (equal c 0)
           (progn
-            (dialog "<c:mining chief:20> You lost the explosives along the way? You're lucky to have survived! But sorry, we can't pay you.")
+            (dialog "<c:Mining Chief:20>You lost the explosives along the way? You're lucky to have survived! But sorry, we can't pay you.")
             (setq on-dialog-closed exit))
         (progn
 
-          (dialog "<c:mining cheif:20>Fantastic! We were a bit worried, but you did great! Here's "
+          (dialog "<c:Mining Chief:20>Fantastic! We were a bit worried, but you did great! Here's "
                   (string c)
                   "@ for your trouble!")
 

@@ -492,13 +492,26 @@ public:
                   bool include_overlay = false);
 
 
-        void schedule_fade(Float amount,
-                           ColorConstant color = ColorConstant::rich_black,
-                           bool include_sprites = true,
-                           bool include_overlay = false,
-                           bool include_background = true,
-                           bool include_tiles = true,
-                           bool dodge = false);
+        struct FadeProperties
+        {
+            ColorConstant color = ColorConstant::rich_black;
+            bool include_sprites = true;
+            bool include_overlay = false;
+            bool include_background = true;
+            bool include_tiles = true;
+            bool dodge = false;
+
+            static FadeProperties defaults()
+            {
+                FadeProperties props;
+                return props;
+            }
+        };
+
+
+        void
+        schedule_fade(Float amount,
+                      const FadeProperties& props = FadeProperties::defaults());
 
 
         bool fade_active() const;
@@ -941,6 +954,8 @@ public:
         void (*psg_init_wave)(Speaker::ChannelSettings s);
         void (*psg_init_noise)(Speaker::ChannelSettings s);
         void (*rotate_palette)(Layer l, u8 range_start, u8 range_end);
+        void (*override_palette)(Layer l, u8 index, ColorConstant c);
+        void (*override_sprite_palette)(u8 index, ColorConstant c);
 
         bool (*__test_compare_sound)(const char* sound_name);
     };

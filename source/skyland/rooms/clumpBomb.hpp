@@ -65,7 +65,7 @@ public:
     }
 
 
-    static const char* name()
+    static constexpr const char* name()
     {
         return "splitter";
     }
@@ -99,6 +99,7 @@ public:
     {
         return RoomProperties::disallow_chimney | RoomProperties::roof_hidden |
                RoomProperties::multiplayer_unsupported |
+               RoomProperties::oversize_explosion |
                RoomProperties::only_constructible_in_sandbox;
     }
 

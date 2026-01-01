@@ -122,7 +122,7 @@ ScenePtr FadeInScene::update(Time delta)
             APP.time_stream().clear();
 
             time_stream::event::Initial e;
-            APP.time_stream().push(APP.level_timer(), e);
+            APP.push_time_stream(e);
         }
 
         const auto loc = APP.current_world_location();
@@ -205,7 +205,7 @@ ScenePtr FadeInScene::update(Time delta)
         Color color(fast_interpolate(ao.r_, input.r_, amt),
                     fast_interpolate(ao.g_, input.g_, amt),
                     fast_interpolate(ao.b_, input.b_, amt));
-        PLATFORM.screen().schedule_fade(amount, color.hex());
+        PLATFORM.screen().schedule_fade(amount, {.color = color.hex()});
     }
 
     return null_scene();

@@ -86,7 +86,7 @@ public:
     }
 
 
-    static const char* name()
+    static constexpr const char* name()
     {
         return "decimator";
     }
@@ -125,8 +125,9 @@ public:
     static RoomProperties::Bitmask properties()
     {
         return RoomProperties::manufactory_required |
-               RoomProperties::roof_hidden | RoomProperties::goblin_only |
-               RoomProperties::habitable;
+               RoomProperties::roof_hidden |
+               RoomProperties::oversize_explosion |
+               RoomProperties::goblin_only | RoomProperties::habitable;
     }
 
 

@@ -48,7 +48,7 @@ public:
     }
 
 
-    void enter(Scene& prev)
+    void enter(Scene& prev) override
     {
         ActiveWorldScene::enter(prev);
 
@@ -62,7 +62,7 @@ public:
     }
 
 
-    void exit(Scene& next)
+    void exit(Scene& next) override
     {
         ActiveWorldScene::exit(next);
 
@@ -80,7 +80,7 @@ public:
     }
 
 
-    ScenePtr update(Time delta)
+    ScenePtr update(Time delta) override
     {
         ActiveWorldScene::update(delta);
 
@@ -107,7 +107,7 @@ public:
             time_stream::event::WeatherChanged e;
 
             e.prev_weather_ = APP.environment().id();
-            APP.time_stream().push(APP.level_timer(), e);
+            APP.push_time_stream(e);
 
             environment_init(index_ + 1);
 
@@ -126,7 +126,8 @@ public:
                     APP.environment().music()->c_str(), 0);
             }
 
-            PLATFORM.screen().schedule_fade(1.f, ColorConstant::silver_white);
+            PLATFORM.screen().schedule_fade(
+                1.f, {.color = ColorConstant::silver_white});
             PLATFORM.screen().clear();
             PLATFORM.screen().display();
             PLATFORM.sleep(4);

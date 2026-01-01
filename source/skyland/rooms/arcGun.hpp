@@ -69,7 +69,7 @@ public:
     }
 
 
-    static const char* name()
+    static constexpr const char* name()
     {
         return "arc-gun";
     }
@@ -110,6 +110,7 @@ public:
     {
         return RoomProperties::manufactory_required |
                RoomProperties::roof_hidden |
+               RoomProperties::oversize_explosion |
                RoomProperties::multiboot_compatible |
                RoomProperties::multiboot_compatible;
     }

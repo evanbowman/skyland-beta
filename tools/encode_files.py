@@ -9,6 +9,53 @@ bytes_encoded = 0
 
 
 lisp_symbol_tab = {}
+lisp_constant_tab = {}
+
+
+def build_lisp_constant_tab(codestring):
+    i = 0
+    while i < len(codestring):
+        start = codestring.find("(defconstant ", i)
+        if start == -1:
+            break
+        # Skip past "(defconstant "
+        i = start + 13
+        while i < len(codestring) and codestring[i].isspace():
+            i += 1
+        sym_start = i
+        while i < len(codestring) and not codestring[i].isspace():
+            i += 1
+        symbol = codestring[sym_start:i]
+        while i < len(codestring) and codestring[i].isspace():
+            i += 1
+        # Extract constant value (handle expressions with parens)
+        const_start = i
+        if i < len(codestring) and codestring[i] == '"':
+            # Handle quoted strings
+            i += 1
+            while i < len(codestring) and codestring[i] != '"':
+                i += 1
+            if i < len(codestring):
+                i += 1
+        elif i < len(codestring) and codestring[i] == '(':
+            # Handle parenthesized expressions
+            paren_count = 0
+            while i < len(codestring):
+                if codestring[i] == '(':
+                    paren_count += 1
+                elif codestring[i] == ')':
+                    paren_count -= 1
+                    if paren_count == 0:
+                        i += 1
+                        break
+                i += 1
+        else:
+            # Handle unquoted atomic values
+            while i < len(codestring) and not codestring[i].isspace() and codestring[i] != ')':
+                i += 1
+        constant = codestring[const_start:i]
+        if symbol and constant:
+            lisp_constant_tab[symbol] = constant
 
 
 # This is just an optimization allowing us to minimize the size of the lisp string
@@ -50,55 +97,6 @@ def build_lisp_symtab(codestring):
                     lisp_symbol_tab[string] = lisp_symbol_tab[string] + 1
                 else:
                     lisp_symbol_tab[string] = 1
-
-
-
-def minify_lisp(codestring):
-    # originally I was actually minifying the sources.
-    # But spaces to tabs alone saves a lot of space... without the
-    # hassle of having to unminify stuff when I unzip the rom.
-
-    result = ""
-    spc_count = 0
-
-    for c in codestring:
-        if c == ' ':
-            spc_count += 1
-            if spc_count == 4:
-                result += '\t'
-                spc_count = 0
-        else:
-            if spc_count:
-                result += ' ' * spc_count
-                spc_count = 0
-
-            result += c
-
-    if spc_count:
-        result += ' ' * spc_count
-        spc_count = 0
-
-    # We're doing a little hack to replace 3 spaces with a vertical tab. The
-    # interpreter ignores whitespace, and doing this saves rom space.
-
-    result2 = ""
-    for c in result:
-        if c == ' ':
-            spc_count += 1
-            if spc_count == 3:
-                result2 += '\v'
-                spc_count = 0
-        else:
-            if spc_count:
-                result2 += ' ' * spc_count
-                spc_count = 0
-
-            result2 += c
-
-    if spc_count:
-        result2 += ' ' * spc_count
-
-    return result2
 
 
 
@@ -148,7 +146,7 @@ def encode_file(path, real_name, out):
         if extension(path) == 'lisp':
             src_contents = data.decode('utf-8')
             build_lisp_symtab(src_contents)
-            #file_contents = minify_lisp(src_contents).encode('utf-8')
+            build_lisp_constant_tab(src_contents)
 
         null_padding = 1
 
@@ -218,7 +216,7 @@ with open('fs.bin', 'wb') as filesystem:
         if extension(info[0]) == "idf":
             make_index_file(info[1])
 
-    fs_count = len(files_list) + 1 # +1 for symtab file
+    fs_count = len(files_list) + 2 # +1 for symtab file, +1 for constant tab
     print("encoding %d files..." % fs_count)
 
     filesystem.write(fs_count.to_bytes(4, 'little'))
@@ -229,7 +227,7 @@ with open('fs.bin', 'wb') as filesystem:
     symtab_fname = "lisp_symtab.dat"
     symtab_path = os.path.join(project_root_path, symtab_fname)
     with open(symtab_path, 'wb') as sym_file:
-        for sym, v in reversed(sorted(lisp_symbol_tab.items(), key=lambda item: item[1])):
+        for sym, v in sorted(lisp_symbol_tab.items(), key=lambda item: item[0]):
             enc_sym = sym.encode('utf-8')
             if len(enc_sym) > 30:
                 raise Error("symbol " + sym + " too long!")
@@ -239,7 +237,25 @@ with open('fs.bin', 'wb') as filesystem:
             sym_file.write('\n'.encode('utf-8')) # This is just to make the file easier to read in an editor. Yes, it wastes space.
 
     encode_file(symtab_path, "/" + symtab_fname, filesystem)
+    print("symbol tab count: %d" % len(lisp_symbol_tab))
 
+    consttab_fname = "lisp_constant_tab.dat"
+    consttab_path = os.path.join(project_root_path, consttab_fname)
+    with open(consttab_path, 'wb') as const_file:
+        for sym, v in lisp_constant_tab.items():
+            enc_sym = sym.encode('utf-8')
+            enc_constant = v.encode('utf-8')
+            const_file.write((len(enc_sym) + 1).to_bytes(1, 'little'))
+            const_file.write((len(enc_constant) + 1).to_bytes(1, 'little'))
+            const_file.write(enc_sym)
+            const_file.write('\0'.encode('utf-8'))
+            const_file.write(enc_constant)
+            const_file.write('\0'.encode('utf-8'))
+            if len(enc_constant) > 255:
+                raise Error("constant value " + enc_constant + " for constant " + enc_sym + " exceeds 255 bytes!")
+
+    encode_file(consttab_path, "/" + consttab_fname, filesystem)
+    print("constant tab count: %d" % len(lisp_constant_tab))
 
     print("encoded {} bytes".format(bytes_encoded))
 

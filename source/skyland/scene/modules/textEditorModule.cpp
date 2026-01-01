@@ -640,13 +640,6 @@ TextEditorModule::TextEditorModule(UserContext&& user_context,
 
 
 
-bool TextEditorModule::has_text()
-{
-    return not text_buffer_.size() not_eq 0 and text_buffer_[0] not_eq '\0';
-}
-
-
-
 void TextEditorModule::tabs_to_spaces()
 {
     Vector<char> temp_buffer;
@@ -721,9 +714,11 @@ void TextEditorModule::enter(Scene& prev)
         }
     }
 
-    // render(0);
+    if (not gui_mode_) {
+        render(0);
+    }
 }
-// /scripts/event/quest/human/0.lisp
+
 
 
 void TextEditorModule::repaint()
@@ -1175,7 +1170,11 @@ ScenePtr TextEditorModule::update(Time delta)
             bool do_render = false;
 
             if (cursor_.y < start_line_) {
-                start_line_ = std::max(0, cursor_.y - ((y_max() - 2) / 2));
+                if (syntax_mode_ == SyntaxMode::plain_text) {
+                    --start_line_;
+                } else {
+                    start_line_ = std::max(0, cursor_.y - ((y_max() - 2) / 2));
+                }
                 do_render = true;
             }
             cursor_.x = ideal_cursor_right_;
@@ -1219,7 +1218,11 @@ ScenePtr TextEditorModule::update(Time delta)
             }
 
             if (cursor_.y > start_line_ + (y_max() - yo)) {
-                start_line_ = std::max(0, cursor_.y - ((y_max() - 2) / 2));
+                if (syntax_mode_ == SyntaxMode::plain_text) {
+                    ++start_line_;
+                } else {
+                    start_line_ = std::max(0, cursor_.y - ((y_max() - 2) / 2));
+                }
                 do_render = true;
             }
             cursor_.x = ideal_cursor_right_;

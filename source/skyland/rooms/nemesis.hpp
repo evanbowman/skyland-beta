@@ -55,6 +55,7 @@ public:
     {
         return Weapon::properties() | RoomProperties::roof_hidden |
                RoomProperties::manufactory_required |
+               RoomProperties::oversize_explosion |
                RoomProperties::multiboot_compatible |
                RoomProperties::goblin_only;
     }
@@ -72,7 +73,7 @@ public:
     }
 
 
-    static const char* name()
+    static constexpr const char* name()
     {
         return "nemesis";
     }

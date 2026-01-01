@@ -318,6 +318,12 @@ BINDING_TABLE({
           }
           return L_NIL;
       }}},
+    {"repaint",
+     {SIG0(nil),
+      [](int argc) {
+          APP.player_island().repaint();
+          return L_NIL;
+      }}},
     {"emit",
      {EMPTY_SIG(5),
       [](int argc) {
@@ -2679,7 +2685,8 @@ void App::init_scripts(Function<4 * sizeof(void*), void(const char*)> msg)
 {
     msg("lisp init...");
 
-    lisp::init(PLATFORM.load_file("", "/lisp_symtab.dat"));
+    lisp::init(PLATFORM.load_file("", "/lisp_symtab.dat"),
+               PLATFORM.load_file("", "/lisp_constant_tab.dat"));
 
     msg("export api...");
 

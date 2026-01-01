@@ -1,5 +1,5 @@
 ;;;
-;;; neutral/1/8.lisp
+;;; neutral/1/7.lisp
 ;;;
 
 
@@ -40,7 +40,7 @@
    (masonry 8 13 0)
    (masonry 8 14 0)))
 
-(flag-show (opponent) 7)
+(flag-show (opponent) flag-id-colonist)
 
 
 (defn on-converge ()
@@ -48,7 +48,7 @@
   (let ((c (choice 6))
         (end (lambda ()
                (run-util-script "pickup-cart" 4
-                                "Something else catches your attention.<d:500>.<d:500>.<d:500> a data cartridge!"
+                                "Something else catches your attention. <d:500>.<d:500>.<d:500> a data cartridge!"
                                 exit))))
     (cond
      ((equal c 0)
@@ -66,6 +66,7 @@
                     manufactory
                     incinerator
                     warhead
+                    particle-lance
                     beam-gun
                     deflector
                     splitter)))

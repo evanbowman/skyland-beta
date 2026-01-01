@@ -46,6 +46,10 @@ IonBurst::IonBurst(const Vec2<Fixnum>& position,
     static const Float speed = 0.00015f;
     auto step = direction(fvec(position), fvec(target)) * speed;
     step_vector_ = Vec2<Fixnum>{Fixnum(step.x), Fixnum(step.y)};
+
+    if (source == &player_island()) {
+        sprite_.set_palette(2);
+    }
 }
 
 
@@ -140,11 +144,11 @@ void IonBurst::destroy(bool explosion)
     if (is_player_island(source_)) {
         time_stream::event::PlayerIonBurstDestroyed c;
         timestream_record(c);
-        APP.time_stream().push(APP.level_timer(), c);
+        APP.push_time_stream(c);
     } else {
         time_stream::event::OpponentIonBurstDestroyed c;
         timestream_record(c);
-        APP.time_stream().push(APP.level_timer(), c);
+        APP.push_time_stream(c);
     }
 
     kill();

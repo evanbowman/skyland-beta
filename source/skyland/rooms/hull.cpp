@@ -10,14 +10,32 @@
 
 
 #include "hull.hpp"
+#include "mirrorHull.hpp"
 #include "platform/platform.hpp"
+#include "poweredHull.hpp"
+#include "skyland/achievement.hpp"
 #include "skyland/island.hpp"
+#include "skyland/room_metatable.hpp"
 #include "skyland/tile.hpp"
+#include "stackedHull.hpp"
 
 
 
 namespace skyland
 {
+
+
+
+Optional<Room::UpgradeList> Hull::upgrade_mt_list() const
+{
+    UpgradeList upgrades;
+    upgrades.push_back(skyland::metaclass_index(PoweredHull::name()));
+    if (achievements::is_unlocked(achievements::Achievement::ship_of_theseus)) {
+        upgrades.push_back(skyland::metaclass_index(MirrorHull::name()));
+    }
+    upgrades.push_back(skyland::metaclass_index(StackedHull::name()));
+    return upgrades;
+}
 
 
 

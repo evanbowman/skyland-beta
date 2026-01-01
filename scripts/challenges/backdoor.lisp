@@ -1,5 +1,5 @@
 ;;;
-;;; backdoor.lisp
+;;; challenges/backdoor.lisp
 ;;;
 
 
@@ -14,8 +14,8 @@
   (dialog-await-y/n)
 
   (defn on-dialog-accepted ()
-    (dialog "Hint: You may need to use a repair-drone in an unconventional way. Also: read the description for nemesis in the game's glossary.")
-    
+    (dialog "Hint: You may need to use a repair-drone in an unconventional way. Also: Read the description for nemesis in the game's glossary.")
+
     (push-menu "glossary" '(nemesis)))
 
   (setq on-dialog-declined (lambda ())))
@@ -81,4 +81,4 @@
 (chr-new (opponent) 5 11 'hostile 0)
 
 
-(weather-set 3)
+(weather-set weather-id-rain)

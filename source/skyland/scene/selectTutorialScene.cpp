@@ -122,8 +122,8 @@ void SelectTutorialScene::enter(Scene& prev)
 
         PLATFORM.screen().set_view({});
 
-        PLATFORM.screen().schedule_fade(
-            default_fade, ColorConstant::rich_black, {}, false);
+        PLATFORM.screen().schedule_fade(default_fade,
+                                        {ColorConstant::rich_black, {}, false});
     }
 
     PLATFORM.delta_clock().reset();
@@ -293,7 +293,7 @@ ScenePtr SelectTutorialScene::update(Time delta)
             APP.time_stream().clear();
 
             time_stream::event::Initial e;
-            APP.time_stream().push(APP.level_timer(), e);
+            APP.push_time_stream(e);
 
             return make_scene<FadeInScene>();
         } else {

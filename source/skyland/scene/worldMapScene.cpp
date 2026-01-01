@@ -20,6 +20,7 @@
 #include "skyland/save.hpp"
 #include "skyland/scene_pool.hpp"
 #include "skyland/skyland.hpp"
+#include "skyland/sound.hpp"
 #include "skyland/systemString.hpp"
 #include "skyland/worldGraph.hpp"
 #include "titleScreenScene.hpp"
@@ -673,7 +674,9 @@ ScenePtr WorldMapScene::update(Time delta)
 
 
     auto load_savegame_txtr = [&] {
-        if (APP.faction() == Faction::goblin) {
+        if (APP.faction() == Faction::sylph) {
+            PLATFORM.load_tile1_texture("sylph_savegame_flattened");
+        } else if (APP.faction() == Faction::goblin) {
             PLATFORM.load_tile1_texture("goblin_savegame_flattened");
         } else {
             PLATFORM.load_tile1_texture("savegame_flattened");
@@ -1349,7 +1352,7 @@ ScenePtr WorldMapScene::update(Time delta)
                         {ColorConstant::rich_black, custom_color(0xff8e38)}});
         exit_label_.reset();
         PLATFORM.screen().schedule_fade(
-            0.5f, ColorConstant::rich_black, true, true);
+            0.5f, {ColorConstant::rich_black, true, true});
         PLATFORM.screen().clear();
         PLATFORM.screen().display();
         PLATFORM.speaker().play_sound("cancel", 5);
@@ -1409,7 +1412,7 @@ ScenePtr WorldMapScene::update(Time delta)
         } else {
             const auto amount = 1.f - smoothstep(0.f, fade_duration, timer_);
             PLATFORM.screen().schedule_fade(
-                amount, ColorConstant::rich_black, true, true);
+                amount, {ColorConstant::rich_black, true, true});
         }
         break;
     }
@@ -1969,6 +1972,8 @@ void WorldMapScene::enter(Scene& prev_scene)
     auto view = PLATFORM.screen().get_view();
     view.set_center({});
     PLATFORM.screen().set_view(view);
+
+    psg_stop_all();
 
     APP.time_stream().clear();
 

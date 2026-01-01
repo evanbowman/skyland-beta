@@ -1,5 +1,5 @@
 ;;;
-;;; porcupine2.lisp
+;;; challenges/porcupine2.lisp
 ;;;
 
 
@@ -91,4 +91,4 @@
   (challenge-complete 6))
 
 
-(weather-set 3)
+(weather-set weather-id-rain)

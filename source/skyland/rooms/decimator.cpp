@@ -11,6 +11,7 @@
 
 #include "decimator.hpp"
 #include "skyland/entity/explosion/exploSpawner.hpp"
+#include "skyland/entity/explosion/explosion.hpp"
 #include "skyland/entity/projectile/decimatorBurst.hpp"
 #include "skyland/scene/weaponSetTargetScene.hpp"
 #include "skyland/skyland.hpp"
@@ -77,6 +78,10 @@ void Decimator::display(Platform::Screen& screen)
     Sprite spr;
     auto pos = visual_center();
     spr.set_size(Sprite::Size::w16_h16);
+
+    if (parent() == &player_island()) {
+        spr.set_palette(2);
+    }
 
     pos.y -= 16.0_fixed;
 
@@ -229,12 +234,12 @@ void Decimator::update(Time delta)
                     time_stream::event::PlayerRoomReloadComplete e;
                     e.room_x_ = position().x;
                     e.room_y_ = position().y;
-                    APP.time_stream().push(APP.level_timer(), e);
+                    APP.push_time_stream(e);
                 } else {
                     time_stream::event::OpponentRoomReloadComplete e;
                     e.room_x_ = position().x;
                     e.room_y_ = position().y;
-                    APP.time_stream().push(APP.level_timer(), e);
+                    APP.push_time_stream(e);
                 }
             }
         }
@@ -271,13 +276,13 @@ void Decimator::update(Time delta)
                 e.src_x_ = position().x;
                 e.src_y_ = position().y;
                 e.prev_counter_ = counter_;
-                APP.time_stream().push(APP.level_timer(), e);
+                APP.push_time_stream(e);
             } else {
                 time_stream::event::OpponentDecimatorBurstCreated e;
                 e.src_x_ = position().x;
                 e.src_y_ = position().y;
                 e.prev_counter_ = counter_;
-                APP.time_stream().push(APP.level_timer(), e);
+                APP.push_time_stream(e);
             }
 
             firing_ = true;
@@ -426,6 +431,7 @@ void Decimator::finalize()
 
     if (health() <= 0) {
         ExploSpawner::create(center());
+        dramatic_explosion(center());
     }
 }
 

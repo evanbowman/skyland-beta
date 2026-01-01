@@ -12,6 +12,7 @@
 #include "tnt.hpp"
 #include "skyland/entity/explosion/exploSpawner.hpp"
 #include "skyland/entity/explosion/exploTrail.hpp"
+#include "skyland/entity/explosion/explosion.hpp"
 #include "skyland/entity/misc/smokePuff.hpp"
 #include "skyland/entity/projectile/fireBolt.hpp"
 #include "skyland/entity/projectile/flak.hpp"
@@ -81,7 +82,8 @@ public:
         WorldScene::enter(prev);
         auto st = calc_screen_tiles();
 
-        text_.emplace("ignite?", OverlayCoord{0, u8(st.y - 1)});
+        text_.emplace(SYSTR(ignite_dynamite_prompt)->c_str(),
+                      OverlayCoord{0, u8(st.y - 1)});
 
         const int count = st.x - text_->len();
         for (int i = 0; i < count; ++i) {
@@ -217,7 +219,7 @@ void Explosive::ignite(int range, Health damage, bool spread_fire)
     make_flak_smoke(center());
     make_flak_smoke(center());
 
-    for (int i = 0; i < 2; ++i) {
+    for (int i = 0; i < 3; ++i) {
         if (auto e =
                 alloc_entity<ExploTrail>(center(),
                                          rng::choice<360>(rng::utility_state),
@@ -327,6 +329,7 @@ void TNT::finalize()
     } else {
         ignite(2, 180, true);
         ExploSpawner::create(center());
+        dramatic_explosion(center());
 
         if (not PLATFORM.network_peer().is_connected()) {
             for (int i = 0; i < 10; ++i) {

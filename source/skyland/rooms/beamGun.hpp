@@ -57,6 +57,7 @@ public:
     {
         return RoomProperties::disallow_chimney | RoomProperties::roof_hidden |
                RoomProperties::multiboot_compatible |
+               RoomProperties::oversize_explosion |
                RoomProperties::only_constructible_in_sandbox;
     }
 
@@ -73,7 +74,7 @@ public:
     }
 
 
-    static const char* name()
+    static constexpr const char* name()
     {
         return "beam-gun";
     }

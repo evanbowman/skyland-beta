@@ -67,28 +67,6 @@ static u8 minimap_width()
 
 
 
-static Platform::EncodedTile encode_small_tile(u8 tile_data[16][16])
-{
-    Platform::EncodedTile t;
-    u8* out = t.bytes_;
-
-    u8 temp = 0;
-    for (int i = 0; i < 8; ++i) {
-        for (int j = 0; j < 8; ++j) {
-            if (j % 2) {
-                temp |= tile_data[j][i] << 4;
-                *(out++) = temp;
-            } else {
-                temp = tile_data[j][i] & 0xff;
-            }
-        }
-    }
-
-    return t;
-}
-
-
-
 void move(u8 new_y_anchor)
 {
     hide();
@@ -290,9 +268,33 @@ void repaint(const Settings& settings)
 
         for (auto& room : APP.player_island().rooms()) {
             auto pos = room->position();
-            auto mt = room->metaclass();
-            for (u8 x = pos.x; x < pos.x + room->size().x; ++x) {
-                for (u8 y = pos.y; y < pos.y + room->size().y; ++y) {
+            auto mt = &room_metatable().first[room->metaclass_index()];
+            auto category = (*mt)->category();
+            const auto sz = room->size();
+
+            u8 base_clr;
+            switch (category) {
+            case Room::Category::wall:
+                if ((*mt)->properties() & RoomProperties::accepts_ion_damage) {
+                    base_clr = color_el_blue_index;
+                } else {
+                    base_clr = color_gray_index;
+                }
+                break;
+
+            case Room::Category::weapon:
+                base_clr = color_burnt_orange_index;
+                break;
+
+            default:
+                base_clr = color_tan_index;
+                break;
+            }
+
+            const auto group = room->group();
+
+            for (u8 x = pos.x; x < pos.x + sz.x; ++x) {
+                for (u8 y = pos.y; y < pos.y + sz.y; ++y) {
                     auto set_pixel = [&](int xo, int yo, int v) {
                         pixel_buffer[(x + 1) * 3 + xo][((y - 3) * 3 + yo) - 2] =
                             v;
@@ -311,12 +313,11 @@ void repaint(const Settings& settings)
                         set_pixel(2, 2, color_bright_yellow_index);
                         continue;
                     }
-                    if ((*mt)->category() == Room::Category::weapon and
+                    if (category == Room::Category::weapon and
                         ((settings.weapon_loc_ and
                           *settings.weapon_loc_ == Vec2<u8>{x, y}) or
-                         (room->group() not_eq Room::Group::none and
-                          settings.group_ and
-                          room->group() == (*settings.group_)) or
+                         (group not_eq Room::Group::none and settings.group_ and
+                          group == (*settings.group_)) or
                          is_selected({x, y}))) {
                         bool found = false;
                         for (auto& wpn : weapons) {
@@ -329,34 +330,17 @@ void repaint(const Settings& settings)
                             weapons.push_back(room.get());
                         }
                     }
+
+                    bool wpn_match =
+                        ((settings.weapon_loc_ and
+                          *settings.weapon_loc_ == Vec2<u8>{x, y}) or
+                         (group not_eq Room::Group::none and settings.group_ and
+                          group == *settings.group_));
+
                     for (int xx = 0; xx < 3; ++xx) {
                         for (int yy = 0; yy < 3; ++yy) {
-                            u8 clr;
-                            switch ((*mt)->category()) {
-                            case Room::Category::wall:
-                                if ((*mt)->properties() &
-                                    RoomProperties::accepts_ion_damage) {
-                                    clr = color_el_blue_index;
-                                } else {
-                                    clr = color_gray_index;
-                                }
-                                break;
-
-                            case Room::Category::weapon:
-                                clr = color_burnt_orange_index;
-                                break;
-
-                            default:
-                                clr = color_tan_index;
-                                break;
-                            }
-
-                            if (((settings.weapon_loc_ and
-                                  *settings.weapon_loc_ == Vec2<u8>{x, y}) or
-                                 (room->group() not_eq Room::Group::none and
-                                  settings.group_ and
-                                  room->group() == *settings.group_)) and
-                                not(xx == 1 and yy == 1)) {
+                            u8 clr = base_clr;
+                            if (wpn_match and not(xx == 1 and yy == 1)) {
                                 clr = color_white_index;
                             }
 
@@ -387,9 +371,32 @@ void repaint(const Settings& settings)
         APP.with_opponent_island([&](auto& isle) {
             for (auto& room : isle.rooms()) {
                 auto pos = room->position();
-                auto mt = room->metaclass();
-                for (u8 x = pos.x; x < pos.x + room->size().x; ++x) {
-                    for (u8 y = pos.y; y < pos.y + room->size().y; ++y) {
+                auto mt = &room_metatable().first[room->metaclass_index()];
+                auto category = (*mt)->category();
+                const auto sz = room->size();
+
+                u8 clr;
+                switch (category) {
+                case Room::Category::wall:
+                    if ((*mt)->properties() &
+                        RoomProperties::accepts_ion_damage) {
+                        clr = color_el_blue_index;
+                    } else {
+                        clr = color_gray_index;
+                    }
+                    break;
+
+                case Room::Category::weapon:
+                    clr = color_burnt_orange_index;
+                    break;
+
+                default:
+                    clr = color_tan_index;
+                    break;
+                }
+
+                for (u8 x = pos.x; x < pos.x + sz.x; ++x) {
+                    for (u8 y = pos.y; y < pos.y + sz.y; ++y) {
                         if (isle.fire_present({x, y})) {
                             auto set_pixel = [&](int xo, int yo, int v) {
                                 pixel_buffer[(x + opp_offset) * 3 + xo - 2]
@@ -408,28 +415,9 @@ void repaint(const Settings& settings)
                             set_pixel(2, 2, color_bright_yellow_index);
                             continue;
                         }
+
                         for (int xx = 0; xx < 3; ++xx) {
                             for (int yy = 0; yy < 3; ++yy) {
-                                u8 clr;
-                                switch ((*mt)->category()) {
-                                case Room::Category::wall:
-                                    if ((*mt)->properties() &
-                                        RoomProperties::accepts_ion_damage) {
-                                        clr = color_el_blue_index;
-                                    } else {
-                                        clr = color_gray_index;
-                                    }
-                                    break;
-
-                                case Room::Category::weapon:
-                                    clr = color_burnt_orange_index;
-                                    break;
-
-                                default:
-                                    clr = color_tan_index;
-                                    break;
-                                }
-
                                 pixel_buffer[(x + opp_offset) * 3 + xx - 2]
                                             [((y - 3) * 3 + yy) - 2] = clr;
                             }
@@ -442,6 +430,33 @@ void repaint(const Settings& settings)
 
         save_pixels();
     }
+
+    auto draw_drones = [&](auto& drone_list, int xoff, int x_align) {
+        for (auto& drone : drone_list) {
+            auto cl = color_red_index;
+            if (drone->parent() == &APP.player_island()) {
+                cl = color_green_index;
+            }
+            auto pos = drone->position();
+            auto x = pos.x;
+            auto y = pos.y;
+
+            const int px = x_align;
+
+            pixel_buffer[(x + xoff) * 3 + 0 - px][((y - 3) * 3 + 0) - 2] = cl;
+            pixel_buffer[(x + xoff) * 3 + 1 - px][((y - 3) * 3 + 0) - 2] = cl;
+            pixel_buffer[(x + xoff) * 3 + 2 - px][((y - 3) * 3 + 0) - 2] = cl;
+
+            pixel_buffer[(x + xoff) * 3 + 1 - px][((y - 3) * 3 + 1) - 2] = cl;
+
+            pixel_buffer[(x + xoff) * 3 + 0 - px][((y - 3) * 3 + 2) - 2] = cl;
+            pixel_buffer[(x + xoff) * 3 + 2 - px][((y - 3) * 3 + 2) - 2] = cl;
+        }
+    };
+
+    draw_drones(APP.player_island().drones(), 1, 0);
+    APP.with_opponent_island(
+        [&](auto& isle) { draw_drones(isle.drones(), opp_offset, 2); });
 
     const u8 cursor_center_px_x = (cursor_loc.x + opp_offset) * 3 + 1 - 2;
     const u8 cursor_center_px_y = ((cursor_loc.y - 3) * 3) - 2 + 1;
@@ -710,13 +725,24 @@ void repaint(const Settings& settings)
     u16 tile = minimap_start_tile;
     for (int y = 0; y < 5; ++y) {
         for (int x = 0; x < width; ++x) {
-            Platform::TilePixels td;
-            for (int xx = 0; xx < 8; ++xx) {
-                for (int yy = 0; yy < 8; ++yy) {
-                    td.data_[xx][yy] = pixel_buffer[x * 8 + xx][y * 8 + yy];
+
+            Platform::EncodedTile t;
+            u8* out = t.bytes_;
+
+            u8 temp = 0;
+            for (int i = 0; i < 8; ++i) {
+                for (int j = 0; j < 8; ++j) {
+                    auto p = pixel_buffer[x * 8 + j][y * 8 + i];
+                    if (j % 2) {
+                        temp |= p << 4;
+                        *(out++) = temp;
+                    } else {
+                        temp = p & 0xff;
+                    }
                 }
             }
-            PLATFORM.overwrite_overlay_tile(tile, encode_small_tile(td.data_));
+
+            PLATFORM.overwrite_overlay_tile(tile, t);
             tile++;
         }
     }

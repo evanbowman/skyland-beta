@@ -58,7 +58,7 @@ void TextEntryScene::enter(Scene& prev)
     auto base_colors =
         FontColors{custom_color(0xffffff), custom_color(0x007cbf)};
 
-    PLATFORM.screen().schedule_fade(1.f, custom_color(0x007cbf));
+    PLATFORM.screen().schedule_fade(1.f, {.color = custom_color(0x007cbf)});
 
     auto mapping_info_lbrace = locale_texture_map()('<');
     const u16 lbrace = PLATFORM.map_glyph('<', *mapping_info_lbrace);
@@ -95,7 +95,7 @@ void TextEntryScene::enter(Scene& prev)
 static const char* keyboard[4] = {"# 1 2 3 4 5 6 7 8 9 0 = ",
                                   "q w e r t y u i o p [ ] ",
                                   "a s d f g h j k l ; ' - ",
-                                  "z x c v b n m , . _ / ? "};
+                                  "z x c v b n m , .   / ? "};
 
 
 ScenePtr TextEntryScene::update(Time delta)

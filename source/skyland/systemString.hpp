@@ -95,6 +95,7 @@ enum class SystemString {
     block_bulkhead_door,
     block_cannon,
     block_cargo_bay,
+    block_particle_lance,
     block_phase_shifter,
     block_power_core,
     block_portal,
@@ -152,6 +153,7 @@ enum class SystemString {
     block_radiator,
     block_reactor,
     block_replicator,
+    block_resonance_core,
     block_rice,
     block_road_ns,
     block_road_we,
@@ -180,6 +182,7 @@ enum class SystemString {
     block_tea,
     block_terrain,
     block_tulips,
+    block_tuning_crystal,
     block_dynamite_1,
     block_dynamite_2,
     block_torch,
@@ -216,6 +219,7 @@ enum class SystemString {
     character_label_replicant,
     character_label_bad_human,
     character_label_dog,
+    character_label_sylph,
 
     menu_text_adventure,
     menu_text_challenge,
@@ -344,6 +348,11 @@ enum class SystemString {
 
     macro_mode_lock,
 
+    cannon_drone_description,
+    combat_drone_description,
+    repair_drone_description,
+    reconstruction_drone_description,
+    flak_drone_description,
 
     description_annihilator,
     description_crane,
@@ -433,6 +442,9 @@ enum class SystemString {
     description_bell,
     description_bridge,
     description_overdrive_core,
+    description_tuning_crystal,
+    description_particle_lance,
+    description_resonance_core,
 
     gs_paused,
     gs_slow,
@@ -549,6 +561,9 @@ enum class SystemString {
 
     create_replicant,
 
+    upgrade_displace_cancel,
+    upgrade_displace_affirm,
+
     reset_sandbox_query,
     exit,
 
@@ -613,10 +628,13 @@ enum class SystemString {
     faction_setting,
     faction_desc_human,
     faction_desc_sylph,
+    faction_desc_sylph_locked,
     faction_desc_goblin,
+    faction_desc_random,
     faction_human,
     faction_sylph,
     faction_goblin,
+    faction_random,
 
     exit_tutorial,
 
@@ -666,6 +684,8 @@ enum class SystemString {
     achievement_raid_description,
     achievement_pacifist_name,
     achievement_pacifist_description,
+    achievement_core_technician_name,
+    achievement_core_technician_description,
 
     options,
 
@@ -700,6 +720,10 @@ enum class SystemString {
 
     no_dlc_prompt = filter_end,
     dlc_erase_hint,
+
+    glossary_drones,
+    glossary_projectiles,
+    glossary_appendix,
 
     glossary_workshop_required,
     glossary_manufactory_required,
@@ -795,6 +819,7 @@ enum class SystemString {
     sel_menu_drone_stats,
     sel_menu_eight_bells,
     sel_menu_resize_bridge,
+    sel_menu_flag_info,
 
     drone_info_heading,
     drone_info_notes,
@@ -827,6 +852,8 @@ enum class SystemString {
 
     flag_designer_presets,
     flag_designer_flood,
+
+    ignite_dynamite_prompt,
 
     the_end,
 

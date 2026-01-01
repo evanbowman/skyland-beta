@@ -340,6 +340,14 @@ struct Tile
         bell,
         overdrive_core_1,
         overdrive_core_2,
+        tuning_crystal,
+        particle_lance_1,
+        particle_lance_2,
+        particle_lance_3,
+        unused_res_1,
+        unused_res_2,
+        unused_res_3,
+        unused_res_4,
         count
     };
 };
@@ -662,6 +670,14 @@ struct InteriorTile
         bell,
         overdrive_core_1,
         overdrive_core_2,
+        tuning_crystal,
+        particle_lance_1,
+        particle_lance_2,
+        particle_lance_3,
+        resonator_1,
+        resonator_2,
+        resonator_3,
+        resonator_4,
         count
     };
 };

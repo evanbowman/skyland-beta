@@ -23,16 +23,40 @@ namespace skyland
 
 
 
-void OverdriveCore::format_description(StringBuffer<512>& buffer)
+static const Fixnum overdrive_shutdown_ratio = 0.75_fixed;
+
+
+
+Health OverdriveCore::overload_threshold(Health max_hp)
 {
-    const auto max_hp = (*load_metaclass(OverdriveCore::name()))->full_health();
-    buffer += format<256>(SYS_CSTR(description_overdrive_core),
-                          OverdriveCore::overload_threshold(max_hp)).c_str();
+    return (Fixnum::from_integer(max_hp) * overdrive_shutdown_ratio)
+        .as_integer();
 }
 
 
 
-OverdriveCore::OverdriveCore(Island* parent, const RoomCoord& position, const char* n)
+bool OverdriveCore::is_overloaded() const
+{
+    return health() <= overload_threshold(max_health());
+}
+
+
+
+void OverdriveCore::format_description(StringBuffer<512>& buffer)
+{
+    const auto max_hp = (*load_metaclass(OverdriveCore::name()))->full_health();
+    buffer += format<256>(SYS_CSTR(description_overdrive_core),
+                          (overdrive_shutdown_ratio * 100.0_fixed).as_integer(),
+                          "%",
+                          OverdriveCore::overload_threshold(max_hp))
+                  .c_str();
+}
+
+
+
+OverdriveCore::OverdriveCore(Island* parent,
+                             const RoomCoord& position,
+                             const char* n)
     : Room(parent, n, position)
 {
 }
@@ -59,24 +83,6 @@ void OverdriveCore::update(Time delta)
 
 
 
-static const Fixnum overdrive_shutdown_ratio = 0.75_fixed;
-
-
-
-Health OverdriveCore::overload_threshold(Health max_hp)
-{
-    return (Fixnum::from_integer(max_hp) * overdrive_shutdown_ratio).as_integer();
-}
-
-
-
-bool OverdriveCore::is_overloaded() const
-{
-    return health() <= overload_threshold(max_health());
-}
-
-
-
 void OverdriveCore::apply_damage(Health damage, const DamageConfiguration& conf)
 {
     const bool was_overloaded = is_overloaded();
@@ -93,15 +99,7 @@ void OverdriveCore::apply_damage(Health damage, const DamageConfiguration& conf)
 
 Optional<Room::UpgradeList> OverdriveCore::upgrade_mt_list() const
 {
-    UpgradeList upgrades;
-    if (APP.faction() == Faction::goblin) {
-        upgrades.push_back(skyland::metaclass_index("chaos-core"));
-    } else if (APP.faction() == Faction::sylph) {
-        return nullopt();
-    } else {
-        upgrades.push_back(skyland::metaclass_index("reactor"));
-    }
-    return upgrades;
+    return nullopt();
 }
 
 
@@ -126,4 +124,4 @@ void OverdriveCore::render_exterior(App* app, TileId buffer[16][16])
 
 
 
-}
+} // namespace skyland

@@ -2,21 +2,22 @@
 ;;; storm_king.lisp
 ;;;
 
+
 (eval-file "/scripts/reset_hooks.lisp")
 
 
 (dialog
  "The storm overtakes your castle... A massive fortress emerges from the tempest... "
- (cond
-  ((equal (zone) 0) "There is little hope of survival...")
-  ((equal (zone) 1) "You probably aren't strong enough yet...")
-  ((equal (zone) 2) "You just might survive...")
-  ((equal (zone) 3) "Ready for the final showdown?")))
+ (case (zone)
+  (0 "There is little hope of survival...")
+  (1 "You probably aren't strong enough yet...")
+  (2 "You just might survive...")
+  (3 "Ready for the final showdown?")))
 
 
 (setq on-fadein
       (lambda ()
-        (dialog "<c:storm king:4> . . .")))
+        (dialog "<c:Storm King:4> . . .")))
 
 
 (adventure-log-add 48 '())
@@ -90,11 +91,11 @@
    (hull 12 7)))
 
 
-(when (> (difficulty) 1)
+(when (> (difficulty) difficulty-normal)
   (eval-file "/scripts/event/storm_king_hard.lisp"))
 
 
-(if (> (difficulty) 1)
+(if (> (difficulty) difficulty-normal)
     (let ((s (filter (lambda (xy)
                        (> (second xy) 10))
                      (chr-slots (opponent)))))

@@ -2,13 +2,14 @@
 ;;; init.lisp
 ;;;
 
+
 (when (is-developer-mode)
   (strict-mode true)
   (lisp-mem-crit-gc-alert true))
 
 
 ;; NOTE: Based on some testing (see the game's syslog),
-;; SKYLAND rarely ever has more than about 2000 lisp values
+;; SKYLAND rarely ever has more than about 2000 LISP values
 ;; allocated at a time. When we're down to 3000 out of
 ;; 10k available vals seems like a reasonable time to
 ;; run it early. We could wait until we're completely out
@@ -38,13 +39,11 @@
    (true v)))
 
 (defn/c procgen ()
-  (opponent-generate
-   (cond
-    ((equal (zone) 0)
-     (clamp (- (length enemies-seen) 1) 0 3))
-    ((equal (zone) 1) 5)
-    ((equal (zone) 2) 12)
-    (true 16))))
+  (opponent-generate (case (zone)
+                       (0 (clamp (- (length enemies-seen) 1) 0 3))
+                       (1 5)
+                       (2 12)
+                       (else 16))))
 
 (defn/c zone ()
   (car (wg-pos)))
@@ -175,8 +174,6 @@
 
 
 (setvar "enabled_factions_bitfield"
-        (bit-or
-         (bit-shift-left 1 0) ; human
-         (bit-shift-left 1 1) ; goblin
-         ;; (bit-shift-left 1 2) ; sylph
-         ))
+        (bit-or faction-enable-human-mask
+                faction-enable-goblin-mask
+                faction-enable-sylph-mask))

@@ -39,11 +39,23 @@ public:
     {
         sprite_.set_texture_index(65);
 
-        health_ = 65;
+        health_ = full_health();
+    }
+
+
+    static Health full_health()
+    {
+        return 65;
     }
 
 
     static const auto reload_time = milliseconds(3000);
+
+
+    static SystemString get_description()
+    {
+        return SystemString::combat_drone_description;
+    }
 
 
     Time reload_time_remaining() const override
@@ -124,7 +136,7 @@ public:
                     e.x_pos_ = position().x;
                     e.y_pos_ = position().y;
                     e.destination_near_ = is_player_island(destination());
-                    APP.time_stream().push(APP.level_timer(), e);
+                    APP.push_time_stream(e);
                 }
             }
 

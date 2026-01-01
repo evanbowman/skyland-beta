@@ -1,9 +1,12 @@
+;;;
+;;; hostile/0/7.lisp
+;;;
 
 
 (opponent-init 6 'hostile)
 
 
-(flag-show (opponent) 0)
+(flag-show (opponent) flag-id-pirate)
 
 
 (island-configure

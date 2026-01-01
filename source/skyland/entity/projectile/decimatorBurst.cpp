@@ -47,6 +47,10 @@ DecimatorBurst::DecimatorBurst(const Vec2<Fixnum>& position,
     static const Float speed = 0.00025f;
     const auto step = direction(fvec(position), fvec(target)) * speed;
     step_vector_ = Vec2<Fixnum>{Fixnum(step.x), Fixnum(step.y)};
+
+    if (source == &player_island()) {
+        sprite_.set_palette(2);
+    }
 }
 
 
@@ -159,11 +163,11 @@ void DecimatorBurst::on_collision(Room& room, Vec2<u8> origin)
     if (is_player_island(source_)) {
         time_stream::event::PlayerDecimatorBurstDestroyed e;
         timestream_record(e);
-        APP.time_stream().push(APP.level_timer(), e);
+        APP.push_time_stream(e);
     } else {
         time_stream::event::OpponentDecimatorBurstDestroyed e;
         timestream_record(e);
-        APP.time_stream().push(APP.level_timer(), e);
+        APP.push_time_stream(e);
     }
 
 

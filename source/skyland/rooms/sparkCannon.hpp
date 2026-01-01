@@ -78,6 +78,7 @@ public:
     {
         return RoomProperties::disallow_chimney | RoomProperties::roof_hidden |
                RoomProperties::disabled_in_tutorials |
+               RoomProperties::oversize_explosion |
                RoomProperties::multiplayer_unsupported |
                RoomProperties::locked_by_default |
                RoomProperties::manufactory_required;
@@ -96,7 +97,7 @@ public:
     }
 
 
-    static const char* name()
+    static constexpr const char* name()
     {
         return "spark-cannon";
     }
@@ -132,7 +133,9 @@ public:
         return 3656;
     }
 
+
     ScenePtr select_impl(const RoomCoord& cursor) override;
+
 
     Time reload_time_remaining() const override
     {

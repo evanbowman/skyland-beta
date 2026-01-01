@@ -3,7 +3,6 @@
 ;;;
 
 
-
 (defn challenge-hint ()
   (dialog "Sorry, no hints for this one."))
 
@@ -50,4 +49,4 @@
 
 
 
-(weather-set 3)
+(weather-set weather-id-rain)

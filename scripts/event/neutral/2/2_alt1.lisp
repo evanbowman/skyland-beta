@@ -1,4 +1,5 @@
 ;;;
+;;; neutral/2/2_alt1.lisp
 ;;;
 
 
@@ -57,13 +58,13 @@
 
 
 
-(flag-show (opponent) 4)
+(flag-show (opponent) flag-id-old-empire)
 
 
 (defn take (w)
   (let ((wpn w))
     (list
-     (string "take " (rinfo 'name wpn) "…")
+     (string "Take " (rinfo 'name wpn) "…")
      (lambda ()
        (sel-input
         wpn
@@ -84,9 +85,9 @@
                 (wake
                  (lambda ()
                    (opponent-mode 'hostile)
-                   (dialog "<c:abandoned ship ai:25> .<d:500>.<d:500>.<d:500>.<d:500> "
+                   (dialog "<c:Abandoned Ship AI:25> .<d:500>.<d:500>.<d:500>.<d:500> "
                            "PROCESSING INTERRUPT... <B:0> BLOCK DETECTED MISSING! "
-                           "<B:0> HOSTILE THREAT DETECTED")
+                           "<B:0> HOSTILE THREAT DETECTED!")
                    (defn on-dialog-closed ()
                      (map (curry room-new (opponent))
                           '((forcefield* 0 10)
@@ -109,8 +110,8 @@
 
             (setq opts (filter (notequal? wpn) opts))
             (dialog-opts-reset)
-            (dialog-opts-push (string "take " (rinfo 'name (get opts 0)) "…") wake)
-            (dialog-opts-push (string "take " (rinfo 'name (get opts 1)) "…") wake)
+            (dialog-opts-push (string "Take " (rinfo 'name (get opts 0)) "…") wake)
+            (dialog-opts-push (string "Take " (rinfo 'name (get opts 1)) "…") wake)
             (unbind 'take))))))))
 
 

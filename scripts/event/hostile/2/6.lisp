@@ -1,3 +1,6 @@
+;;;
+;;; hostile/2/6.lisp
+;;;
 
 
 (opponent-init 10 'hostile)
@@ -47,7 +50,7 @@
    (hull 9 12)))
 
 
-(flag-show (opponent) 0)
+(flag-show (opponent) flag-id-pirate)
 
 
 (chr-new (opponent) 4 14 'hostile 0)

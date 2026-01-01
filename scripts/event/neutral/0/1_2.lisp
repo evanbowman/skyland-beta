@@ -1,5 +1,5 @@
 ;;;
-;;; neutral/0/1.lisp
+;;; neutral/0/1_2.lisp
 ;;;
 
 
@@ -38,7 +38,7 @@
    (rocket-bomb 4 8)
    (hull 4 11)))
 
-(flag-show (opponent) 4)
+(flag-show (opponent) flag-id-old-empire)
 
 
 (defn on-converge ()

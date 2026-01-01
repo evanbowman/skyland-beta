@@ -41,8 +41,9 @@ public:
     {
         if (auto attached = recons_drone->attached_to()) {
             if (auto db = attached->cast<DroneBay>()) {
-                for (int i = 0; i < db->rq_.size(); ++i) {
-                    reconstruction_queue_.push_back(db->rq_[i]);
+                auto& q = db->get_rq();
+                for (int i = 0; i < q.size(); ++i) {
+                    reconstruction_queue_.push_back(q[i]);
                 }
             }
         }
@@ -102,13 +103,13 @@ public:
                     time_stream::event::AttachReconstructionQueue e;
                     e.db_x_ = attached->position().x;
                     e.db_y_ = attached->position().y;
-                    e.previous_queue_memory_ = db->rq_.mem_;
-                    e.previous_queue_size_ = db->rq_.count_;
-                    APP.time_stream().push(APP.level_timer(), e);
+                    e.previous_queue_memory_ = db->get_rq().mem_;
+                    e.previous_queue_size_ = db->get_rq().count_;
+                    APP.push_time_stream(e);
 
-                    db->rq_.clear();
+                    db->get_rq().clear();
                     for (auto& elem : reconstruction_queue_) {
-                        db->rq_.push_back(elem);
+                        db->get_rq().push_back(elem);
                     }
 
                     db->ready();
@@ -260,7 +261,7 @@ ReconstructionDrone::ReconstructionDrone(Island* parent,
     : Drone(get_name(), parent, destination, grid_pos)
 {
     sprite_.set_texture_index(50);
-    health_ = 100;
+    health_ = full_health();
 }
 
 
@@ -309,8 +310,9 @@ void ReconstructionDrone::update(Time delta)
         if (recons_index_ > -1) {
             auto room = attached_to();
             if (auto db = room->cast<DroneBay>()) {
-                if (recons_index_ < db->rq_.size()) {
-                    auto entry = db->rq_[recons_index_];
+                auto& q = db->get_rq();
+                if (recons_index_ < q.size()) {
+                    auto entry = q[recons_index_];
                     RoomCoord pos = {entry.x_, entry.y_};
                     if (not parent()->get_room(pos)) {
                         auto metaclass = load_metaclass(entry.block_metaclass_);
@@ -328,7 +330,7 @@ void ReconstructionDrone::update(Time delta)
                             time_stream::event::PlayerRoomCreated p;
                             p.x_ = pos.x;
                             p.y_ = pos.y;
-                            APP.time_stream().push(APP.level_timer(), p);
+                            APP.push_time_stream(p);
 
                             network::packet::RoomConstructed packet;
                             packet.metaclass_index_.set(entry.block_metaclass_);
@@ -362,8 +364,9 @@ void ReconstructionDrone::update(Time delta)
             timer_ -= milliseconds(400);
             auto room = attached_to();
             if (auto db = room->cast<DroneBay>()) {
-                for (int i = 0; i < db->rq_.size(); ++i) {
-                    auto entry = db->rq_[i];
+                auto& q = db->get_rq();
+                for (int i = 0; i < q.size(); ++i) {
+                    auto entry = q[i];
                     RoomCoord pos = {entry.x_, entry.y_};
                     bool destroyed =
                         minimap::player_destroyed_rooms.get(pos.x, pos.y);

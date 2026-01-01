@@ -12,6 +12,7 @@
 #pragma once
 
 
+#include "memory/extension.hpp"
 #include "reconstructionQueue.hpp"
 #include "skyland/coins.hpp"
 #include "skyland/entity/drones/drone.hpp"
@@ -69,7 +70,7 @@ public:
     }
 
 
-    static const char* name()
+    static const constexpr char* name()
     {
         return "drone-bay";
     }
@@ -132,7 +133,7 @@ public:
     void detach_drone(bool quiet) override;
 
 
-    Time reload_interval() const;
+    Time reload_interval() const override;
 
 
     void start_reload()
@@ -165,14 +166,15 @@ public:
     void amplify(bool enable) override;
 
 
+    ReconstructionQueue& get_rq();
+
+
 private:
     Optional<SharedEntityRef<Drone>> drone_;
     Time reload_ = 0;
 
-public:
-    ReconstructionQueue rq_;
+    Optional<ExtensionField<ReconstructionQueue>> rq_;
 
-private:
     bool amplify_ = false;
 };
 

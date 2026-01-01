@@ -62,6 +62,10 @@ Beam::Beam(const Vec2<Fixnum>& position,
 
     auto step = direction(fvec(position), fvec(target)) * speed;
     step_vector_ = Vec2<Fixnum>{Fixnum(step.x), Fixnum(step.y)};
+
+    if (source == &player_island()) {
+        sprite_.set_palette(2);
+    }
 }
 
 
@@ -203,11 +207,11 @@ void Beam::record_destroyed()
     if (is_player_island(source_)) {
         time_stream::event::PlayerBeamDestroyed c;
         timestream_record(c);
-        APP.time_stream().push(APP.level_timer(), c);
+        APP.push_time_stream(c);
     } else {
         time_stream::event::OpponentBeamDestroyed c;
         timestream_record(c);
-        APP.time_stream().push(APP.level_timer(), c);
+        APP.push_time_stream(c);
     }
 }
 

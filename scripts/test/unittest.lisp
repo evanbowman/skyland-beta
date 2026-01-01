@@ -1,10 +1,11 @@
 ;;;
 ;;; unittest.lisp
 ;;;
-;;; This test case file intends to test the behavior of the lisp interpreter and
-;;; standard library. For extended functions related to game logic speficially,
+;;; This test case file intends to test the behavior of the LISP interpreter and
+;;; standard library. For extended functions related to game logic specifically,
 ;;; see apitest.lisp.
 ;;;
+
 
 (gc)
 
@@ -26,7 +27,7 @@
     (error (format "in test %: assert failed! %" current-test v))))
 
 (if (not (error? (assert-v false)))
-    (error "something has gone terribly wrong"))
+    (error "Something has gone terribly wrong!"))
 
 (defn assert-eq (lhs rhs)
   (when (not (equal lhs rhs))
@@ -41,10 +42,10 @@
 (assert-eq 6 (lisp-mem-stack-used))
 
 (if (not (error? (assert-eq 1 2)))
-    (error "something is wrong with assert-eq..."))
+    (error "Something is wrong with assert-eq..."))
 
 (if (not (error? (error "...")))
-    (fatal "unable to raise errors!?"))
+    (fatal "Unable to raise errors!?"))
 
 ;; First, test the functions used in the implementations of the assert
 ;; functions. If they don't work, then the rest is pointless.
@@ -92,7 +93,7 @@
 
 (begin-test "math")
 
-;; basic math
+;; Basic math
 (assert-eq 5.0 (* 2.5 2.0))
 (assert-eq 10 (* 2 5))
 (assert-eq 1 (*))
@@ -118,6 +119,11 @@
 (assert-v (int? 22))
 (assert-v (int? -22))
 (assert-v (int? -0))
+
+(assert-v (boolean? nil))
+(assert-v (boolean? true))
+(assert-v (boolean? false))
+(assert-v (not (boolean? 55)))
 
 (assert-eq 1 (mod 10 3))
 
@@ -148,9 +154,9 @@
 ;; The interpreter does an internal buffer optimization for small strings, which
 ;; is the reason why there is no character datatype. Although... technically the
 ;; internal buffer optimization only covers strings that are three bytes or
-;; shorter, so some extended utf8 chars will not be optimized and, instead,
-;; require an extra allocation. But looking at the list of four byte untf8
-;; charsets... is anyone going to care if emojis, egyptian heiroglyphics, or
+;; shorter, so some extended UTF-8 chars will not be optimized and, instead,
+;; require an extra allocation. But looking at the list of four byte UTF-8
+;; charsets... is anyone going to care if emojis, egyptian hieroglyphs, or
 ;; musical symbols are not hyper-optimized?
 (assert-eq (lisp-mem-string-storage) (+ temp 7))
 "yy"
@@ -181,6 +187,11 @@
 
 (begin-test "closure")
 
+(assert-eq 10 (((lambda (a b c)
+                  (lambda (d e) (+ a d e)))
+                1 2 3)
+               4 5))
+
 (setq temp 1)
 
 (let ((temp 4))
@@ -209,8 +220,8 @@
   (* arg 2))
 
 (assert-eq (foo 2) 4)
-(assert-v (error? (foo 'abcd)))           ; pass invalid type
-(assert-v (error? ((compile foo) 'abcd))) ; compilation preserves type signature
+(assert-v (error? (foo 'abcd)))           ;; Pass invalid type.
+(assert-v (error? ((compile foo) 'abcd))) ;; Compilation preserves type signature.
 
 (defn foo ((str . string) (iv . int))
   (format str iv iv))
@@ -232,18 +243,18 @@
 (setq temp 99)
 (assert-eq temp 99)
 (unbind 'temp)
-(assert-v (error? temp)) ;; should raise undefined variable error
+(assert-v (error? temp)) ;; Should raise undefined variable error.
 
 (assert-eq 10100 (apply + (map (curry * 2) (range 0 101))))
 
 (defn cons (a b)
   (list a b))
-(assert-eq '(5 6) (cons 5 6)) ;; you may override builtins
+(assert-eq '(5 6) (cons 5 6)) ;; You may override built-ins.
 (unbind 'cons)
-(assert-v (not (error? cons))) ;; the builtin still exits when deleting the override value
+(assert-v (not (error? cons))) ;; The built-in still exits when deleting the override value.
 (unbind 'cons)
-(assert-v (not (error? cons))) ;; you may not delete a builtin
-(assert-eq '(5 . 6) (cons 5 6)) ;; the builtin function is back
+(assert-v (not (error? cons))) ;; You may not delete a built-in.
+(assert-eq '(5 . 6) (cons 5 6)) ;; The built-in function is back.
 
 (end-test)
 
@@ -308,9 +319,9 @@
 ;; you're really doing something strange.
 
 (global 'test-var)
-(assert-v (nil? test-var)) ; Declared global variables are initialized to nil
+(assert-v (nil? test-var)) ;; Declared global variables are initialized to nil.
 (unbind 'test-var)
-(assert-v (error? (setq test-var 8))) ; Write to undefined variable raises error
+(assert-v (error? (setq test-var 8))) ;; Write to undefined variable raises error.
 
 (global 'temp)
 (setq temp (read "(lambda (a b c) (+ a b c))"))
@@ -319,7 +330,7 @@
 ;; about this. But we want test coverage for these sorts of weird cases.
 ;; Really, when doing argument substitution, we shouldn't be modifying the input
 ;; list. Nothing should modify lists. But for practical purposes, it creates a
-;; whole bunch of pressure on the gc if we need to clone an entire function
+;; whole bunch of pressure on the GC if we need to clone an entire function
 ;; implementation every time we do argument substitution.
 (assert-eq temp '(lambda (a b c) (+ $0 $1 $2)))
 
@@ -332,6 +343,31 @@
 ;; Now a more complex one with a nested lambda:
 (setq temp (read "(lambda (a b c) (let ((x a) (y (+ b c))) (lambda (w v) (+ w v x y))))"))
 (assert-eq (disassemble (eval temp)) '(fn (let ((x $0) (y (+ $1 $2))) (fn (+ $0 $1 x y)))))
+
+;; Ok, now this gets really nasty. Because we're substituting function arguments
+;; for stack slots, returning a lambda that forms a closure over arguments
+;; doesn't work, because the stack no longer exists. So we use a bad hack where
+;; we generate a synthetic let binding representing the function arguments that
+;; need to be injected into the closure.
+(assert-eq (disassemble (lambda (a b c)
+                          (lambda (d e) (+ a b d e))))
+           '(fn (let ((a $0)
+                      (b $1))
+                  (fn (+ a b $0 $1)))))
+
+;; Let's make sure that argument closure nesting works correctly...
+(assert-eq (disassemble (lambda (a)
+                          (lambda (b)
+                            (lambda (c)
+                              (+ a b c)))))
+           '(fn (let ((a $0))
+                  (fn (let ((b $0))
+                        (fn (+ a b $0)))))))
+;; The above stuff is such a mess... but the important thing is that nobody ever
+;; really needs to know how it actually works when they're writing scripts,
+;; unless for some reason they're disassembling functions and messing around
+;; with the reader...
+
 
 ;; Test some macros... the reader eagerly expands macros. This is pretty bad,
 ;; but again, macroexpanding stuff during evaluation every time isn't
@@ -359,6 +395,53 @@
                  (equal (error-info result)
                         "no more than 5 named args allowed in function"))))
 
+(assert-eq
+ 9
+ (case (+ 5 1)
+   (5 0)
+   (1 0)
+   (6 9)))
+
+(assert-eq (read "(case (+ 5 1) (5 0) (6 9) (else 55))")
+           '(let ((--TEMP-CASE-V (+ 5 1)))
+             (if (equal --TEMP-CASE-V 5)
+                 (let () 0)
+                 (if (equal --TEMP-CASE-V 6)
+                     (let () 9)
+                     (let () 55)))))
+
+(assert-eq
+  3
+  (let ((x 0))
+    (case 5
+      (5 (setq x 1) (setq x 2) (setq x 3) x)
+      (else 0))))
+
+
+(assert-eq nil
+  (case 5
+    (1 "a")
+    (2 "b")))
+
+(assert-eq "first"
+  (case 5
+    (5 "first")
+    (5 "second")
+    (else "third")))
+
+(let ((counter 0))
+  (defn incr-and-return ()
+    (+= counter 1)
+    counter)
+
+  (case (incr-and-return)
+    (1 "one")
+    (2 "two")
+    (else "other"))
+
+  (assert-eq 1 counter))  ;; Should be 1, not 2 or more
+
+
 (end-test)
 
 
@@ -380,11 +463,11 @@
 
 (let ((str "Hello, there!"))
   (buffer-write! temp 6 (string-to-bytes str))
-  ;; FIXME: the string is ascii, so (length str) works here... but it's not good
+  ;; FIXME: The string is ASCII, so (length str) works here... but it's not good
   ;; style.
   (assert-eq str (bytes-to-string (buffer-read temp 6 (length str)))))
 
-(assert-eq (buffer-read temp 0 5) '(1 2 3 4 255)) ; make sure it's still there...
+(assert-eq (buffer-read temp 0 5) '(1 2 3 4 255)) ;; Make sure it's still there...
 
 (assert-eq 2147483647 (bytes-to-int (int-to-bytes 2147483647)))
 
@@ -431,6 +514,250 @@
 (assert-eq "invalid value in lambda arglist!" (error-info (lint '(lambda (1)))))
 (assert-eq "invalid lambda syntax!" (error-info (lint '(lambda ))))
 (assert-eq "invalid while syntax!" (error-info (lint '(while ))))
+
+(end-test)
+
+
+(begin-test "constants")
+
+(defconstant test-const 5)
+(assert-eq test-const 5)
+
+;; NOTE: you may initialize a constant with a runtime expression, but if you do,
+;; that runtime expression will be evaluated every time that the constant is
+;; accessed. Arguably, this behavior makes constants not really constant, but
+;; it's needed to allow constant definition in terms of other constants.
+(defconstant test-const-2 (string (* test-const 2)))
+(assert-eq test-const-2 "10")
+
+(end-test)
+
+
+
+(begin-test "edge-cases")
+
+;; Empty list operations
+(assert-eq 0 (length '()))
+(assert-eq '() (reverse '()))
+(assert-eq '() (filter (lambda (x) true) '()))
+(assert-eq '() (map (lambda (x) (* x 2)) '()))
+
+;; Single element operations
+(assert-eq 1 (length '(5)))
+(assert-eq '(5) (reverse '(5)))
+(assert-eq 5 (min '(5)))
+(assert-eq 5 (max '(5)))
+
+;; Nested empty structures
+(assert-eq '() (flatten '(() () ())))
+(assert-eq '(1 2) (flatten '(() 1 () 2 ())))
+
+;; String edge cases
+(assert-eq 0 (length ""))
+(assert-eq "" (slice "" 0 0))
+(assert-eq '() (split "" ","))
+
+;; Range edge cases
+(assert-eq '() (range 5 5))
+(assert-eq '() (range 10 0))
+
+(end-test)
+
+
+(begin-test "recursion")
+
+;; Fibonacci
+(defn fib (n)
+  (if (< n 2)
+      n
+      (+ (fib (- n 1)) (fib (- n 2)))))
+
+(assert-eq 55 (fib 10))
+
+;; List length (recursive)
+(defn len-rec (lst)
+  (if (nil? lst)
+      0
+      (+ 1 (len-rec (cdr lst)))))
+
+(assert-eq 5 (len-rec '(1 2 3 4 5)))
+(assert-eq 0 (len-rec '()))
+
+(unbind 'factorial 'fib 'len-rec)
+
+(end-test)
+
+
+(begin-test "list-manipulation")
+
+;; Insert at various positions
+(assert-eq '(99 1 2 3) (insert 99 '(1 2 3) 0))
+(assert-eq '(1 99 2 3) (insert 99 '(1 2 3) 1))
+(assert-eq '(1 2 3 99) (insert 99 '(1 2 3) 3))
+
+;; Find various elements
+(assert-eq 0 (find 1 '(1 2 3)))
+(assert-eq 2 (find 3 '(1 2 3)))
+(assert-eq nil (find 99 '(1 2 3)))
+
+;; Association lists
+(setq temp '((a . 1) (b . 2) (c . 3)))
+(assert-eq '(b . 2) (assoc 'b temp))
+(assert-eq nil (assoc 'd temp))
+(assert-eq '((d . 4) (a . 1) (b . 2) (c . 3)) (acons 'd 4 temp))
+
+;; Replace with predicate
+(assert-eq '(0 2 0 4 0) (replace '(1 2 3 4 5) odd? 0))
+
+(end-test)
+
+
+(begin-test "special-variables")
+
+;; arg function
+(defn arg-test ()
+  (list (arg 0) (arg 1) (arg 2)))
+
+(assert-eq '(1 2 3) (arg-test 1 2 3))
+
+(unbind 'varargs-test 'arg-test)
+
+(end-test)
+
+
+
+(begin-test "sorting-comparisons")
+
+;; Sort with custom comparator
+(defn compare-second (a b)
+  (< (cdr a) (cdr b)))
+
+(assert-eq '((c . 1) (a . 2) (b . 3))
+           (sort '((a . 2) (b . 3) (c . 1)) compare-second))
+
+;; Sort strings (if supported)
+;; (assert-eq '("a" "b" "c") (sort '("c" "a" "b") string<?))
+
+;; Already sorted list
+(assert-eq (range 0 10) (sort (range 0 10) <))
+
+;; Reverse sorted
+(assert-eq (reverse (range 0 10)) (sort (range 0 10) >))
+
+(unbind 'compare-second)
+
+(end-test)
+
+
+(begin-test "memory-stress")
+
+;; Large list operations
+(let ((temp (range 100)))
+  (assert-eq 100 (length temp))
+  (assert-eq 4950 (apply + temp)))
+
+
+;; String manipulation
+(setq temp (apply string (map (lambda (x) (format "%" x)) (range 0 10))))
+(assert-eq "0123456789" temp)
+
+(end-test)
+
+
+(begin-test "let-bindings")
+
+;; Nested lets
+(assert-eq 6
+  (let ((x 1))
+    (let ((y 2))
+      (let ((z 3))
+        (+ x y z)))))
+
+;; Shadowing
+(setq temp 99)
+(assert-eq 5
+  (let ((temp 5))
+    temp))
+(assert-eq 99 temp)
+
+;; Multiple bindings
+(assert-eq 10
+  (let ((a 1) (b 2) (c 3) (d 4))
+    (+ a b c d)))
+
+;; Let with no bindings
+(assert-eq 5
+  (let ()
+    5))
+
+(end-test)
+
+
+(begin-test "boolean-logic")
+
+;; And short-circuit
+(setq temp 0)
+(defn side-effect ()
+  (setq temp 1)
+  true)
+
+(and false (side-effect))
+(assert-eq 0 temp) ;; Should not have called side-effect
+
+(and true (side-effect))
+(assert-eq 1 temp)
+
+;; Or short-circuit
+(setq temp 0)
+(or true (side-effect))
+(assert-eq 0 temp) ;; temp still 1 from before, not called again
+
+(setq temp 0)
+(or false (side-effect))
+(assert-eq 1 temp) ;; Now it should be called
+
+;; Nested boolean logic
+(assert-v (and true (or false true)))
+(assert-v (not (and true (or false false))))
+(assert-v (or (and false true) (and true true)))
+
+(unbind 'side-effect 'temp)
+
+(end-test)
+
+
+(begin-test "numeric-edge-cases")
+
+;; Zero operations
+(assert-eq 0 (* 5 0))
+(assert-eq 0 (* 0 5))
+(assert-eq 0 (+ 0 0))
+(assert-eq 0 (- 0 0))
+
+;; Negative numbers
+(assert-eq -5 (- 0 5))
+(assert-eq -10 (* -2 5))
+(assert-eq -10 (* 2 -5))
+(assert-eq 10 (* -2 -5))
+(assert-eq -3 (+ -5 2))
+
+;; Modulo with negatives (behavior may vary)
+;; (assert-eq ? (mod -10 3))
+;; (assert-eq ? (mod 10 -3))
+
+;; Float precision
+(assert-v (< (abs (- (* 0.1 10.0) 1.0)) 0.01))
+
+(end-test)
+
+
+(begin-test "symbol-manipulation")
+
+;; Symbol creation and comparison
+(assert-eq 'test (symbol "test"))
+(assert-v (not (equal 'test 'TEST)))
+(assert-v (symbol? 'test))
+(assert-v (symbol? (symbol "dynamic")))
 
 (end-test)
 

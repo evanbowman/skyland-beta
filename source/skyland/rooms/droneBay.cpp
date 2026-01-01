@@ -73,12 +73,12 @@ void DroneBay::update(Time delta)
                 time_stream::event::PlayerRoomReloadComplete e;
                 e.room_x_ = position().x;
                 e.room_y_ = position().y;
-                APP.time_stream().push(APP.level_timer(), e);
+                APP.push_time_stream(e);
             } else {
                 time_stream::event::OpponentRoomReloadComplete e;
                 e.room_x_ = position().x;
                 e.room_y_ = position().y;
-                APP.time_stream().push(APP.level_timer(), e);
+                APP.push_time_stream(e);
             }
         }
     }
@@ -254,7 +254,7 @@ void DroneBay::detach_drone(bool quiet)
         e.duration_.set((*drone_)->duration());
         e.db_x_pos_ = position().x;
         e.db_y_pos_ = position().y;
-        APP.time_stream().push(APP.level_timer(), e);
+        APP.push_time_stream(e);
 
         if (not PLATFORM.screen().fade_active()) {
             PLATFORM.speaker().play_sound("explosion1", 0);
@@ -276,17 +276,27 @@ void DroneBay::amplify(bool enable)
 
 
 
+ReconstructionQueue& DroneBay::get_rq()
+{
+    if (not rq_) {
+        rq_.emplace();
+    }
+    return **rq_;
+}
+
+
+
 void DroneBay::finalize()
 {
     detach_drone(false);
 
-    if (not rq_.empty()) {
+    if (rq_ and not(*rq_)->empty()) {
         time_stream::event::AttachReconstructionQueue e;
         e.db_x_ = position().x;
         e.db_y_ = position().y;
-        e.previous_queue_memory_ = rq_.mem_;
-        e.previous_queue_size_ = rq_.count_;
-        APP.time_stream().push(APP.level_timer(), e);
+        e.previous_queue_memory_ = get_rq().mem_;
+        e.previous_queue_size_ = get_rq().count_;
+        APP.push_time_stream(e);
     }
 
     Room::finalize();
@@ -296,11 +306,14 @@ void DroneBay::finalize()
 
 void DroneBay::parent_layout_changed(RoomCoord moved_from, RoomCoord to)
 {
-    for (int i = 0; i < rq_.size(); ++i) {
-        auto& elem = rq_[i];
-        if (elem.x_ == moved_from.x and elem.y_ == moved_from.y) {
-            elem.x_ = to.x;
-            elem.y_ = to.y;
+    if (rq_) {
+        auto& q = get_rq();
+        for (int i = 0; i < q.size(); ++i) {
+            auto& elem = q[i];
+            if (elem.x_ == moved_from.x and elem.y_ == moved_from.y) {
+                elem.x_ = to.x;
+                elem.y_ = to.y;
+            }
         }
     }
 }

@@ -40,7 +40,7 @@
    (missile-silo 4 13)
    (missile-silo 5 13)))
 
-(flag-show (opponent) 0)
+(flag-show (opponent) flag-id-pirate)
 
 
 (autopilot
@@ -137,11 +137,10 @@
    (784 Right)
    (1635 L-np)
    (16000 nil)
-   (100 "<c:Milo:5>Ok, I've let this go on too long... I hate admitting my mistakes, but I've messed up everything! But guess what? You can rewind the battle too! Let's go all the way back to the beginning!")
+   (100 "<c:Milo:5>OK, I've let this go on too long... I hate admitting my mistakes, but I've messed up everything! But guess what? You can rewind the battle too! Let's go all the way back to the beginning!")
    (1206 L-p)
    (3306 Left)
    (1306 Left)
    (500 L-np)
-
    (1000 nil)
    (100 "<c:Milo:5>Alright, I think I've showed you all the different game speeds: slow, regular, fast, paused, and rewind!")))

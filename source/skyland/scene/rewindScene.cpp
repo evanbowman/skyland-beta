@@ -37,6 +37,7 @@
 #include "skyland/rooms/cargoBay.hpp"
 #include "skyland/rooms/decimator.hpp"
 #include "skyland/rooms/droneBay.hpp"
+#include "skyland/rooms/particleLance.hpp"
 #include "skyland/rooms/phaseShifter.hpp"
 #include "skyland/rooms/weapon.hpp"
 #include "skyland/skyland.hpp"
@@ -246,6 +247,10 @@ void RewindScene::print_timestamp()
 
 
 
+void set_glow_color();
+
+
+
 ScenePtr RewindScene::update(Time)
 {
     bool speed_changed = false;
@@ -295,7 +300,11 @@ ScenePtr RewindScene::update(Time)
         delta *= 4;
     }
 
+
     APP.delta_fp() = delta;
+
+
+    set_glow_color();
 
 
     // Some functions called in this block may try to call other functions that
@@ -369,7 +378,7 @@ ScenePtr RewindScene::update(Time)
             // to. Our implementation only allows rewinding until the earliest
             // existing event.
             time_stream::event::Initial e;
-            APP.time_stream().push(APP.level_timer(), e);
+            APP.push_time_stream(e);
         }
 
         if (far_camera_) {
@@ -595,8 +604,13 @@ ScenePtr RewindScene::update(Time)
             for (auto& room : APP.player_island().rooms()) {
                 room->set_hidden(false);
             }
-            for (auto& room : APP.opponent_island()->rooms()) {
-                room->set_hidden(false);
+            APP.player_island().rooms().reindex(true);
+
+            if (APP.opponent_island()) {
+                for (auto& room : APP.opponent_island()->rooms()) {
+                    room->set_hidden(false);
+                }
+                APP.opponent_island()->rooms().reindex(true);
             }
             APP.time_stream().pop(sizeof *e);
             break;
@@ -650,8 +664,8 @@ ScenePtr RewindScene::update(Time)
                 if (auto db = room->cast<DroneBay>()) {
                     static_assert(std::is_trivially_copyable_v<
                                   ReconstructionQueue::ValueType>);
-                    db->rq_.mem_ = e->previous_queue_memory_;
-                    db->rq_.count_ = e->previous_queue_size_;
+                    db->get_rq().mem_ = e->previous_queue_memory_;
+                    db->get_rq().count_ = e->previous_queue_size_;
                 }
             }
             APP.time_stream().pop(sizeof *e);
@@ -1962,6 +1976,26 @@ ScenePtr RewindScene::update(Time)
                 if (auto room = isle->get_room({e->room_x_, e->room_y_})) {
                     room->adjust_width(e->prev_width_ - room->size().x);
                     isle->schedule_repaint();
+                }
+            }
+
+            APP.time_stream().pop(sizeof *e);
+            break;
+        }
+
+
+        case time_stream::event::particle_lance_destroyed: {
+            auto e = (time_stream::event::ParticleLanceDestroyed*)end;
+
+            Island* isle =
+                e->near_ ? &APP.player_island() : APP.opponent_island();
+
+            if (isle) {
+                if (auto room = isle->get_room({e->x_, e->y_})) {
+                    if (auto l = room->cast<ParticleLance>()) {
+                        l->active_ = e->active_;
+                        l->dmg_count_ = e->accum_dmg_.get();
+                    }
                 }
             }
 

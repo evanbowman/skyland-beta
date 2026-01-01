@@ -1,5 +1,5 @@
 ;;;
-;;; porcupine1.lisp
+;;; challenges/porcupine1.lisp
 ;;;
 
 
@@ -20,7 +20,7 @@
   (dialog-await-y/n)
 
   (defn on-dialog-accepted ()
-    (dialog "clear out some of that masonry, then, flak-guns might be useful..."))
+    (dialog "Clear out some of that masonry, then, flak-guns might be useful..."))
 
   (setq on-dialog-declined (lambda ())))
 
@@ -89,11 +89,11 @@
    (stacked-hull 6 5)))
 
 (chr-new (opponent) 5 14 'hostile 0)
-(flag-show (opponent) 0)
+(flag-show (opponent) flag-id-pirate)
 
 
 (defn on-victory ()
   (challenge-complete 5))
 
 
-(weather-set 3)
+(weather-set weather-id-rain)

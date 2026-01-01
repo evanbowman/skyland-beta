@@ -14,6 +14,7 @@
 #include "skyland/entity/drones/droneMeta.hpp"
 #include "skyland/entity/projectile/missile.hpp"
 #include "skyland/latency.hpp"
+#include "skyland/minimap.hpp"
 #include "skyland/network.hpp"
 #include "skyland/room_metatable.hpp"
 #include "skyland/rooms/arcGun.hpp"
@@ -31,10 +32,10 @@
 #include "skyland/rooms/ionCannon.hpp"
 #include "skyland/rooms/masonry.hpp"
 #include "skyland/rooms/missileSilo.hpp"
+#include "skyland/rooms/overdriveCore.hpp"
 #include "skyland/rooms/rocketSilo.hpp"
 #include "skyland/rooms/sparkCannon.hpp"
 #include "skyland/rooms/transporter.hpp"
-#include "skyland/rooms/overdriveCore.hpp"
 #include "skyland/rooms/warhead.hpp"
 #include "skyland/scene/constructionScene.hpp"
 #include "skyland/skyland.hpp"
@@ -666,7 +667,8 @@ void EnemyAI::assign_local_character(Character& character,
                 // }
             }
 
-            if (room->is_powered_down() and room->metaclass() not_eq overdrive_mt) {
+            if (room->is_powered_down() and
+                room->metaclass() not_eq overdrive_mt) {
                 slot.ai_weight_ /= 2.0_atp;
             }
 
@@ -1271,6 +1273,7 @@ static void place_offensive_drone(DroneBay& db,
             (*drone)->set_movement_target(*ideal_coord);
             db.attach_drone(*drone);
             player_island.drones().push(*drone);
+            minimap::schedule_repaint();
         }
     } else {
         // ...
@@ -1472,6 +1475,7 @@ void EnemyAI::update_drone_bay(const Bitmatrix<16, 16>& matrix,
                         (*drone)->set_movement_target({x, y});
                         db.attach_drone(*drone);
                         ai_island->drones().push(*drone);
+                        minimap::schedule_repaint();
                         return;
                     }
                 }

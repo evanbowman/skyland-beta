@@ -1,7 +1,6 @@
 ;;;
-;;; mycelium.lisp
+;;; challenges/mycelium.lisp
 ;;;
-
 
 
 (defn on-victory ()
@@ -18,16 +17,13 @@
 
     (defn on-dialog-accepted ()
       (dialog
-       (cond
-        ((equal cnt 0)
-         (+= cnt 1)
-         "Hint: mycelium won't grow on forcefields, and is weak against arc-guns.")
-        ((equal cnt 1)
-         (+= cnt 1)
-         "Hint: you can incapacitate the cannon by destroying the two forcefields in front of it, allowing the mycelium to grow over the cannon.")
-        ((equal cnt 2)
-         (setq cnt 0)
-         "Ok, one final hint: After building anything that you need from the manufactory, salvage it for resources."))))
+       (case cnt
+        (0 (+= cnt 1)
+           "Hint: Mycelium won't grow on forcefields, and is weak against arc-guns.")
+        (1 (+= cnt 1)
+           "Hint: You can incapacitate the cannon by destroying the two forcefields in front of it, allowing the mycelium to grow over the cannon.")
+        (2 (setq cnt 0)
+           "OK, one final hint: After building anything that you need from the manufactory, salvage it for resources."))))
 
 
     (setq on-dialog-declined (lambda ()))))
@@ -122,4 +118,4 @@
    (mycelium 8 12)))
 
 
-(weather-set 3)
+(weather-set weather-id-rain)

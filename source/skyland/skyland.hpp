@@ -385,7 +385,7 @@ public:
     lisp::Value* invoke_script(
         const char* path,
         bool rom_fs_only = false,
-        Optional<Function<16, void(lisp::Value& err)>> err_handler = nullopt());
+        Optional<Function<4 * sizeof(void*), void(lisp::Value& err)>> err_handler = nullopt());
 
 
     bool load_file(const char* path, Vector<char>& result);
@@ -431,6 +431,12 @@ public:
     time_stream::TimeStream& time_stream()
     {
         return time_stream_;
+    }
+
+
+    template <typename T> void push_time_stream(T& elem)
+    {
+        time_stream_.push(level_timer(), elem);
     }
 
 

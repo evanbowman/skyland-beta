@@ -244,6 +244,9 @@ struct Context
     const char* external_symtab_contents_ = nullptr;
     u32 external_symtab_size_;
 
+    const char* external_constant_tab_ = nullptr;
+    u32 external_constant_tab_size_;
+
     NativeInterface native_interface_;
 
     int string_intern_pos_ = 0;
@@ -952,6 +955,7 @@ struct ArgBinding
 
     u8 replacement_;
     u8 type_;
+    bool referenced_in_closure_;
 };
 
 
@@ -1003,8 +1007,7 @@ ArgBindings make_arg_bindings(Value* arg_lat, ArgBindings* parent)
         } else {
             sym = val;
         }
-        if (not b.bindings_.push_back(
-                ArgBinding{&sym->symbol(), (u8)arg++, type})) {
+        if (not b.bindings_.push_back(ArgBinding{&sym->symbol(), (u8)arg++, type, false})) {
             PLATFORM.fatal("too many named arguments for function! Max 5");
         }
     });
@@ -1077,6 +1080,35 @@ static void arg_substitution_impl(Value* impl, ArgBindings& bindings)
                         val->cons().set_car(make_symbol("fn")); //
                         val->cons().set_cdr(fn_impl);           // very naughty!
 
+                        ListBuilder closure;
+                        bool arg_closure_exists = false;
+                        for (auto& binding : bindings.bindings_) {
+                            if (binding.referenced_in_closure_) {
+                                ListBuilder bind;
+                                bind.push_back((lisp::Value*)binding.sym_);
+                                bind.push_back(ctx->argument_symbols_[binding.replacement_]);
+                                closure.push_back(bind.result());
+                                arg_closure_exists = true;
+                            }
+                        }
+
+                        if (arg_closure_exists) {
+                            // Very naughty indeed... we need to inject
+                            // arguments into closures, but, we're implementing
+                            // function argument reference by replacing argument
+                            // names with stack slots. To preserve access into
+                            // stack slots in captured lambdas (funarg problem),
+                            // we're wrapping the enclosed function in a
+                            // synthetic let binding, which binds the values of
+                            // function arguments from stack slots to actual
+                            // variable names.
+                            val->cons().set_car(make_symbol("let"));
+                            val->cons().set_cdr(L_CONS(closure.result(),
+                                                       L_CONS(L_CONS(make_symbol("fn"),
+                                                                     fn_impl),
+                                                              L_NIL)));
+                        }
+
                     } else if (str_eq(first->symbol().name(), "fn")) {
                         // Do nothing... cannot substitute a function argument
                         // within a lambda implementation.
@@ -1113,10 +1145,8 @@ static void arg_substitution_impl(Value* impl, ArgBindings& bindings)
                 while (current and not replaced) {
                     for (auto& b : current->bindings_) {
                         if (b.sym_->unique_id() == val->symbol().unique_id()) {
-                            PLATFORM.fatal(::format("parent argument capture "
-                                                    "unsupported in closure, "
-                                                    "var: '%'",
-                                                    val->symbol().name()));
+                            b.referenced_in_closure_ = true;
+                            break;
                         }
                     }
                     current = current->parent_;
@@ -1949,6 +1979,8 @@ void lint(Value* expr, Value* variable_list)
                         return;
                     }
                     is_special_form = true;
+                } else if (str_eq(name, "defconstant")) {
+                    is_special_form = true;
                 }
 
                 auto fn = get_var(fn_sym);
@@ -2024,7 +2056,15 @@ void lint(Value* expr, Value* variable_list)
                                     }
                                 }
                             } else {
-                                // TODO: check return type of function call, if possible...
+                                // TODO: check return type of function call, if
+                                // possible...
+                                //
+                                // NOTE: this is the specific case where a
+                                // function is defined in the first position of
+                                // a list, like: ((lambda (x y) ...) args...)
+                                // But in this case, we're unlikely to know for
+                                // certain what the return type is,
+                                // unfortunately.
                                 return true;
                             }
                         }
@@ -2221,7 +2261,8 @@ Value* lint_code(CharSequence& code)
                                   }
                               });
                 } else if (str_eq(invoke->symbol().name(), "setfn") or
-                           str_eq(invoke->symbol().name(), "set-temp")) {
+                           str_eq(invoke->symbol().name(), "set-temp") or
+                           str_eq(invoke->symbol().name(), "defconstant")) {
                     auto pair = get_list(reader_result, 1);
                     if (pair->type() == Value::Type::cons) {
                         auto sym = pair->cons().cdr();
@@ -2253,8 +2294,10 @@ Value* lint_code(CharSequence& code)
 Value* dostring(const char* code)
 {
     BasicCharSequence cs(code);
-    return dostring(
-        cs, [](Value&) { Platform::fatal("fatal error in dostring..."); });
+    return dostring(cs, [](Value& err) {
+        Platform::fatal(::format("fatal error in dostring: %",
+                                 val_to_string<86>(&err).c_str()));
+    });
 }
 
 
@@ -2499,15 +2542,20 @@ void Symbol::set_name(const char* name)
         set_intern_name(name);
         break;
 
-    case ModeBits::small:
-        set_intern_name(0);
-        memset(data_.small_name_, '\0', sizeof data_.small_name_);
+    case ModeBits::small: {
+        char* ptr = &small_name_begin_;
+        memset(ptr, '\0', buffer_size + 1);
         for (u32 i = 0; i < buffer_size; ++i) {
             if (*name not_eq '\0') {
-                data_.small_name_[i] = *(name++);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+#pragma GCC diagnostic ignored "-Warray-bounds"
+                ptr[i] = *(name++);
+#pragma GCC diagnostic pop
             }
         }
         break;
+    }
     }
 }
 
@@ -3563,6 +3611,32 @@ static void eval_macro(Value* code)
 }
 
 
+static void eval_defconstant(Value* code)
+{
+    if (code->cons().car()->type() not_eq lisp::Value::Type::symbol) {
+        // FIXME!
+        PLATFORM.fatal("invalid defconstant syntax!");
+    }
+
+    if (bound_context->external_constant_tab_) {
+        // We will load the value from our constant table, so there's no need to
+        // do anything when we encounter a defconstant line.
+    } else {
+        // We don't have an external constant table defined. Instead, we'll need
+        // to load the variable into memory.
+        eval(code->cons().cdr()->cons().car()); // The constant value...
+
+        // TODO: load and check for a precomputed constant table, and don't
+        // store values in memory.
+        set_var(code->cons().car(), get_op0(), true);
+
+        pop_op(); // eval result.
+    }
+
+    push_op(get_nil());
+}
+
+
 static void eval_if(Value* code)
 {
     if (code->type() not_eq Value::Type::cons) {
@@ -3671,6 +3745,91 @@ static void eval_quasiquote(Value* code)
 }
 
 
+
+
+#if defined(__GBA__) or defined(__APPLE__)
+#define STANDARD_FORMS                                                      \
+    MAPBOX_ETERNAL_CONSTEXPR const auto standard_forms =                    \
+        mapbox::eternal::hash_map<mapbox::eternal::string, EvalCB>
+#else
+#define STANDARD_FORMS                                                  \
+    const auto standard_forms = std::unordered_map<std::string, EvalCB>
+#endif
+
+
+using EvalCB = void(*)(Value*);
+// clang-format off
+STANDARD_FORMS({
+        {"if", [](Value* code) {
+            eval_if(code->cons().cdr());
+            auto result = get_op0();
+            pop_op(); // result
+            pop_op(); // code
+            push_op(result);
+            --bound_context->interp_entry_count_;
+        }},
+        {"lambda", [](Value* code) {
+            eval_argumented_function(code->cons().cdr());
+            auto result = get_op0();
+            pop_op(); // result
+            pop_op(); // code
+            push_op(result);
+            --bound_context->interp_entry_count_;
+            return;
+        }},
+        {"fn", [](Value* code) {
+            eval_function(code->cons().cdr());
+            auto result = get_op0();
+            pop_op(); // result
+            pop_op(); // code
+            push_op(result);
+            --bound_context->interp_entry_count_;
+        }},
+        {"'", [](Value* code) {
+            pop_op(); // code
+            push_op(code->cons().cdr());
+            --bound_context->interp_entry_count_;
+        }},
+        {"`", [](Value* code) {
+            eval_quasiquote(code->cons().cdr());
+            auto result = get_op0();
+            pop_op(); // result
+            pop_op(); // code
+            push_op(result);
+            --bound_context->interp_entry_count_;
+        }},
+        {"let", [](Value* code) {
+            eval_let(code->cons().cdr());
+            auto result = get_op0();
+            pop_op();
+            pop_op();
+            push_op(result);
+            --bound_context->interp_entry_count_;
+        }},
+        {"macro", [](Value* code) {
+            eval_macro(code->cons().cdr());
+            pop_op();
+            // TODO: store macro!
+            --bound_context->interp_entry_count_;
+        }},
+        {"while", [](Value* code) {
+            eval_while(code->cons().cdr());
+            auto result = get_op0();
+            pop_op();
+            pop_op();
+            push_op(result);
+        }},
+        {"defconstant", [](Value* code) {
+            eval_defconstant(code->cons().cdr());
+            auto result = get_op0();
+            pop_op();
+            pop_op();
+            push_op(result);
+        }}
+    });
+
+
+
 void eval(Value* code)
 {
     ++bound_context->interp_entry_count_;
@@ -3685,63 +3844,9 @@ void eval(Value* code)
     } else if (code->type() == Value::Type::cons) {
         auto form = code->cons().car();
         if (form->type() == Value::Type::symbol) {
-            if (str_eq(form->symbol().name(), "if")) {
-                eval_if(code->cons().cdr());
-                auto result = get_op0();
-                pop_op(); // result
-                pop_op(); // code
-                push_op(result);
-                --bound_context->interp_entry_count_;
-                return;
-            } else if (str_eq(form->symbol().name(), "lambda")) {
-                eval_argumented_function(code->cons().cdr());
-                auto result = get_op0();
-                pop_op(); // result
-                pop_op(); // code
-                push_op(result);
-                --bound_context->interp_entry_count_;
-                return;
-            } else if (str_eq(form->symbol().name(), "fn")) {
-                eval_function(code->cons().cdr());
-                auto result = get_op0();
-                pop_op(); // result
-                pop_op(); // code
-                push_op(result);
-                --bound_context->interp_entry_count_;
-                return;
-            } else if (str_eq(form->symbol().name(), "'")) {
-                pop_op(); // code
-                push_op(code->cons().cdr());
-                --bound_context->interp_entry_count_;
-                return;
-            } else if (str_eq(form->symbol().name(), "`")) {
-                eval_quasiquote(code->cons().cdr());
-                auto result = get_op0();
-                pop_op(); // result
-                pop_op(); // code
-                push_op(result);
-                --bound_context->interp_entry_count_;
-                return;
-            } else if (str_eq(form->symbol().name(), "let")) {
-                eval_let(code->cons().cdr());
-                auto result = get_op0();
-                pop_op();
-                pop_op();
-                push_op(result);
-                --bound_context->interp_entry_count_;
-                return;
-            } else if (str_eq(form->symbol().name(), "macro")) {
-                eval_macro(code->cons().cdr());
-                pop_op();
-                // TODO: store macro!
-                --bound_context->interp_entry_count_;
-                return;
-            } else if (str_eq(form->symbol().name(), "while")) {
-                eval_while(code->cons().cdr());
-                auto result = get_op0();
-                pop_op();
-                pop_op();
-                push_op(result);
+            auto std_form = standard_forms.find(form->symbol().name());
+            if (std_form not_eq standard_forms.end()) {
+                std_form->second(code);
                 return;
             }
         }
@@ -3947,6 +4052,13 @@ Value* gensym()
 }
 
 
+struct ConstantTabEntryHeader
+{
+    u8 field_size_;
+    u8 value_size_;
+};
+
+
 void apropos(const char* match, Vector<const char*>& completion_strs)
 {
     StringBuffer<16> ident(match);
@@ -3976,6 +4088,18 @@ void apropos(const char* match, Vector<const char*>& completion_strs)
 
     get_env(handle_completion);
     get_interns(handle_completion);
+
+    if (bound_context->external_constant_tab_) {
+        u32 i = 0;
+        for (; i < bound_context->external_constant_tab_size_;) {
+            auto ptr = bound_context->external_constant_tab_ + i;
+            u8 field_size = ((ConstantTabEntryHeader*)ptr)->field_size_;
+            u8 value_size = ((ConstantTabEntryHeader*)ptr)->value_size_;
+            const char* name = ptr + sizeof(ConstantTabEntryHeader);
+            handle_completion(name);
+            i += sizeof(ConstantTabEntryHeader) + field_size + value_size;
+        }
+    }
 }
 
 
@@ -4274,6 +4398,14 @@ BUILTIN_TABLE(
      {"equal",
       {EMPTY_SIG(2),
        [](int argc) { return make_integer(is_equal(get_op0(), get_op1())); }}},
+     {"boolean?",
+      {EMPTY_SIG(1),
+       [](int argc) {
+           return make_boolean((get_op0()->type() == Value::Type::integer and
+                                (get_op0()->integer().value_ == 1 or
+                                 get_op0()->integer().value_ == 0)) or
+                               get_op0()->type() == Value::Type::nil);
+       }}},
      {"list?",
       {EMPTY_SIG(1),
        [](int argc) { return make_boolean(is_list(get_op0())); }}},
@@ -6035,14 +6167,24 @@ const char* intern(const char* string)
 
     if (ctx->external_symtab_contents_) {
         const char* search = ctx->external_symtab_contents_;
-        for (u32 i = 0; i < ctx->external_symtab_size_;) {
-            if (string[len - 1] == (search + i)[len - 1] and
-                str_eq(search + i, string)) {
-                return search + i;
+        u32 left = 0;
+        u32 right = ctx->external_symtab_size_ / 32;
+
+        while (left < right) {
+            u32 mid = left + (right - left) / 2;
+            const char* candidate = search + (mid * 32);
+
+            int cmp = str_cmp(candidate, string);
+            if (cmp == 0) {
+                return candidate;
+            } else if (cmp < 0) {
+                left = mid + 1;
             } else {
-                i += 32;
+                right = mid;
             }
         }
+
+        return nullptr; // not found
     }
 
     // Ok, no stable pointer to the string exists anywhere, so we'll have to
@@ -6225,6 +6367,23 @@ Value* get_var(Value* symbol)
         return fn;
     }
 
+    // Ok, and as a final step, let's look for any builtin constants, if the
+    // system is running with a precomputed constant table.
+    if (bound_context->external_constant_tab_) {
+        u32 i = 0;
+        for (; i < bound_context->external_constant_tab_size_;) {
+            auto ptr = bound_context->external_constant_tab_ + i;
+            u8 name_size = ((ConstantTabEntryHeader*)ptr)->field_size_;
+            u8 value_size = ((ConstantTabEntryHeader*)ptr)->value_size_;
+            const char* name = ptr + sizeof(ConstantTabEntryHeader);
+            if (str_eq(name, symbol->symbol().name())) {
+                return dostring(ptr + sizeof(ConstantTabEntryHeader) +
+                                name_size);
+            }
+            i += sizeof(ConstantTabEntryHeader) + name_size + value_size;
+        }
+    }
+
     StringBuffer<31> hint("[var: ");
     hint += symbol->symbol().name();
     hint += "]";
@@ -6316,7 +6475,8 @@ void gc()
 }
 
 
-void init(Optional<std::pair<const char*, u32>> external_symtab)
+void init(Optional<std::pair<const char*, u32>> external_symtab,
+          Optional<std::pair<const char*, u32>> external_constant_tab)
 {
     if (bound_context) {
         return;
@@ -6333,6 +6493,12 @@ void init(Optional<std::pair<const char*, u32>> external_symtab)
     if (external_symtab and external_symtab->second) {
         bound_context->external_symtab_contents_ = external_symtab->first;
         bound_context->external_symtab_size_ = external_symtab->second;
+    }
+
+    if (external_constant_tab and external_constant_tab->second) {
+        bound_context->external_constant_tab_ = external_constant_tab->first;
+        bound_context->external_constant_tab_size_ =
+            external_constant_tab->second;
     }
 
     auto& ctx = bound_context;
