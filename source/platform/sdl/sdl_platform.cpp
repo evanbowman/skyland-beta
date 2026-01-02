@@ -957,9 +957,15 @@ struct DynamicTextureMapping
 
 
 
-static inline bool is_dynamic_texture_index(u16 texture_index)
+static inline bool is_dynamic_texture_index(u16 texture_index, Sprite::Size size)
 {
-    return texture_index < (Platform::dynamic_texture_count * 2);
+    int scale = 2;
+    if (size == Sprite::Size::w32_h32) {
+        scale = 1;
+    } else if (size == Sprite::Size::w16_h16) {
+        scale = 4;
+    }
+    return texture_index < (Platform::dynamic_texture_count * scale);
 }
 
 
@@ -3644,7 +3650,7 @@ static SDL_Rect get_sprite_source_rect(u16 texture_index, Sprite::Size size)
     SDL_Rect src;
 
     // Check if this texture index is in the dynamic range and has been remapped
-    if (is_dynamic_texture_index(texture_index)) {
+    if (is_dynamic_texture_index(texture_index, size)) {
         u8 slot = get_dynamic_slot_for_index(texture_index, size);
         auto& mapping = dynamic_texture_mappings[slot];
 
