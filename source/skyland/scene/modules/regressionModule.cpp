@@ -18,13 +18,7 @@
 
 namespace skyland
 {
-// set a status byte (mgba test)
-#define REGRESSION_STATUS_ADDR ((volatile u8*)0x03007FFF)
-
-void set_regression_status(u8 status) {
-    *REGRESSION_STATUS_ADDR = status;
-}
-// end of that thing
+EXT_WORKRAM_DATA s8 status_byte = 0;
 
 EXT_WORKRAM_DATA s8 test_index = -1;
 
@@ -48,7 +42,7 @@ ScenePtr RegressionModule::update(Time delta)
     Character::__reset_ids();
     rng::critical_state = 5;
 
-    *REGRESSION_STATUS_ADDR = 0;
+    status_byte = 0;
 
     if (test_index == -1) {
         PLATFORM.screen().schedule_fade(0);
@@ -150,7 +144,7 @@ ScenePtr RegressionModule::update(Time delta)
                         {1, 5},
                         text_colors);
             Text::print("press any key to reset...", {1, 7}, text_colors);
-            set_regression_status(1); // regression passed
+            status_byte = 1; // regression passed
             while (1) {
                 PLATFORM.keyboard().poll();
                 PLATFORM_EXTENSION(feed_watchdog);
