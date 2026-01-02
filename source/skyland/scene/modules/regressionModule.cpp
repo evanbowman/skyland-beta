@@ -106,6 +106,7 @@ ScenePtr RegressionModule::update(Time delta)
             }
         }
 
+
         PLATFORM.sleep(120);
 
         test_index++;
@@ -152,6 +153,7 @@ ScenePtr RegressionModule::update(Time delta)
 
             if (auto match = PLATFORM.get_extensions().has_startup_opt) {
                 if (match("--regression")) {
+                    info("regression success!");
                     ::exit(EXIT_SUCCESS);
                 }
             }

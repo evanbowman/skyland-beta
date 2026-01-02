@@ -22,6 +22,14 @@
 #include <sstream>
 #include <thread>
 #include <unordered_set>
+#if defined(__APPLE__)
+#include <mach-o/dyld.h>  // for _NSGetExecutablePath
+#include <unistd.h>        // for fork, execl
+#elif defined(__linux__)
+#include <unistd.h>        // for fork, execl, readlink
+#elif defined(_WIN32)
+#include <windows.h>       // for GetModuleFileNameA, CreateProcessA
+#endif
 
 
 
@@ -294,8 +302,6 @@ static SDL_Texture* create_point_light_texture(int radius)
     SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_ADD);
 
     point_light_cache[radius] = {texture, radius};
-
-    info(format("Created point light texture with radius %", radius));
 
     return texture;
 }
@@ -660,10 +666,41 @@ int main(int argc, char** argv)
 
 void Platform::restart()
 {
-    // ...
-    while (1)
-        ;
+#if defined(__APPLE__) || defined(__linux__)
+    // Get the executable path
+    char path[1024];
+    #ifdef __APPLE__
+    uint32_t size = sizeof(path);
+    _NSGetExecutablePath(path, &size);
+    #else // Linux
+    ssize_t len = readlink("/proc/self/exe", path, sizeof(path) - 1);
+    if (len != -1) path[len] = '\0';
+    #endif
+
+    // Fork and exec
+    if (fork() == 0) {
+        execl(path, path, NULL);
+        exit(1); // If exec fails
+    }
+    exit(0);
+
+#elif defined(_WIN32)
+    char path[MAX_PATH];
+    GetModuleFileNameA(NULL, path, MAX_PATH);
+
+    STARTUPINFOA si = {sizeof(si)};
+    PROCESS_INFORMATION pi;
+
+    if (CreateProcessA(path, NULL, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
+        CloseHandle(pi.hProcess);
+        CloseHandle(pi.hThread);
+    }
+    exit(0);
+#else
+    exit(EXIT_SUCCESS);
+#endif
 }
+
 
 
 
@@ -724,6 +761,12 @@ bool is_glyph(TileDesc);
 
 void Platform::clear_layer(Layer layer)
 {
+    if (layer == Layer::map_0_ext) {
+        clear_layer(Layer::map_0);
+    } else if (layer == Layer::map_1_ext) {
+        clear_layer(Layer::map_1);
+    }
+
     if (auto found = tile_layers_.find(layer);
         found not_eq tile_layers_.end()) {
         tile_layers_.erase(found);
@@ -921,8 +964,13 @@ static inline bool is_dynamic_texture_index(u16 texture_index)
 
 
 
-static inline u8 get_dynamic_slot_for_index(u16 texture_index)
+static inline u8 get_dynamic_slot_for_index(u16 texture_index, Sprite::Size size)
 {
+    if (size == Sprite::Size::w32_h32) {
+        return texture_index;
+    } else if (size == Sprite::Size::w16_h16) {
+        return texture_index / 4;
+    }
     // Convert texture index to slot number
     // Indices 0-1 -> slot 0, indices 2-3 -> slot 1, etc.
     return texture_index / 2;
@@ -934,9 +982,6 @@ void Platform::DynamicTexture::remap(u16 spritesheet_offset)
 {
     auto& mapping = dynamic_texture_mappings[mapping_index_];
     mapping.spritesheet_offset_ = spritesheet_offset;
-
-    // info(format("Dynamic texture slot % remapped to spritesheet offset %",
-    //            mapping_index_, spritesheet_offset));
 }
 
 
@@ -1837,13 +1882,6 @@ void Platform::overwrite_t1_tile(u16 index, const EncodedTile& t)
         return;
     }
     SDL_SetTextureBlendMode(tile1_texture, SDL_BLENDMODE_BLEND);
-}
-
-
-
-void Platform::overwrite_sprite_tile(u16 index, const EncodedTile& t)
-{
-    // TODO...
 }
 
 
@@ -2876,8 +2914,62 @@ void Platform::clear_tile1_mappings()
 
 void Platform::fatal(const char* msg)
 {
-    std::cerr << msg << std::endl;
-    exit(1);
+    error(msg);
+
+    if (extensions.has_startup_opt("--regression")) {
+        exit(EXIT_FAILURE);
+    }
+
+    PLATFORM.speaker().stop_music();
+
+    const auto bkg_color = custom_color(0x007cbf);
+
+    PLATFORM.screen().fade(1.f, bkg_color);
+    PLATFORM.fill_overlay(0);
+    PLATFORM.load_overlay_texture("overlay");
+    PLATFORM.enable_glyph_mode(true);
+
+    static constexpr const Text::OptColors text_colors{
+        {custom_color(0xffffff), bkg_color}};
+
+    static constexpr const Text::OptColors text_colors_inv{
+        {text_colors->background_, text_colors->foreground_}};
+
+    Text text({1, 1});
+    text.append("fatal error:", text_colors_inv);
+
+    Optional<Text> text2;
+
+    Buffer<Text, 6> line_buffer;
+
+    Optional<TextView> verbose_error;
+
+    lisp::init(PLATFORM.load_file("", "/lisp_symtab.dat"),
+               PLATFORM.load_file("", "/lisp_constant_tab.dat"));
+
+    auto show_verbose_msg = [&] {
+
+        PLATFORM.keyboard().poll();
+        PLATFORM.screen().clear();
+
+        text2.reset();
+        line_buffer.clear();
+
+        PLATFORM.screen().display();
+        PLATFORM.screen().clear();
+
+        verbose_error.emplace();
+        verbose_error->assign(msg, {1, 3}, {28, 14}, 0, text_colors);
+
+        PLATFORM.screen().display();
+    };
+
+    while (true) {
+        show_verbose_msg();
+        if (PLATFORM.keyboard().down_transition<Key::action_2>()) {
+            PLATFORM.restart();
+        }
+    }
 }
 
 
@@ -2986,11 +3078,6 @@ void Platform::load_background_texture(const char* name)
 
     background_texture_width = background_surface->w;
     background_texture_height = background_surface->h;
-
-    info(format("Loaded background texture %: %x% pixels",
-                texture_name.c_str(),
-                background_texture_width,
-                background_texture_height));
 }
 
 
@@ -3126,6 +3213,8 @@ void Platform::on_unrecoverrable_error(UnrecoverrableErrorCallback callback)
 }
 
 
+Optional<std::chrono::microseconds> sleep_time;
+
 
 void Platform::sleep(u32 frames)
 {
@@ -3135,6 +3224,12 @@ void Platform::sleep(u32 frames)
                   60);
 
     std::this_thread::sleep_for(amount);
+
+    if (not sleep_time) {
+        sleep_time = amount;
+    } else {
+        *sleep_time += amount;
+    }
 }
 
 
@@ -3179,17 +3274,24 @@ Microseconds Platform::DeltaClock::last_delta() const
 
 Microseconds Platform::DeltaClock::reset()
 {
-    namespace chrono = std::chrono;
+    if (extensions.has_startup_opt("--validate-scripts") or
+        extensions.has_startup_opt("--regression")) {
+        return 16777;
+    }
 
+    namespace chrono = std::chrono;
     auto clk = chrono::high_resolution_clock::now();
     auto elapsed = chrono::duration_cast<chrono::microseconds>(clk - clk_prev);
-
     clk_prev = clk;
-
-    ::last_delta = elapsed.count();
-    return elapsed.count();
+    auto slept = std::chrono::microseconds(0);
+    if (sleep_time) {
+        slept = *sleep_time;
+        sleep_time.reset();
+    }
+    auto adjusted = elapsed - slept;  // duration arithmetic works here
+    ::last_delta = adjusted.count();
+    return adjusted.count();
 }
-
 
 
 Platform::DeltaClock::~DeltaClock()
@@ -3543,12 +3645,20 @@ static SDL_Rect get_sprite_source_rect(u16 texture_index, Sprite::Size size)
 
     // Check if this texture index is in the dynamic range and has been remapped
     if (is_dynamic_texture_index(texture_index)) {
-        u8 slot = get_dynamic_slot_for_index(texture_index);
+        u8 slot = get_dynamic_slot_for_index(texture_index, size);
         auto& mapping = dynamic_texture_mappings[slot];
 
         if (mapping.reserved_) {
+            auto input_idx = texture_index;
             // Use the remapped spritesheet offset instead of the texture_index
             texture_index = mapping.spritesheet_offset_;
+            if (size == Sprite::Size::w16_h16) {
+                texture_index *= 2;
+                texture_index += input_idx % 2;
+            }
+            if (size == Sprite::Size::w32_h32) {
+                texture_index /= 2;
+            }
         }
         // If not reserved, just use the original texture_index (shows default position)
     }
@@ -3684,7 +3794,8 @@ void Platform::Screen::clear()
     sprite_draw_list.clear();
     point_lights.clear();
 
-    if (extensions.has_startup_opt("--validate-scripts")) {
+    if (extensions.has_startup_opt("--validate-scripts") or
+        extensions.has_startup_opt("--regression")) {
         return;
     }
 
@@ -4238,7 +4349,8 @@ void draw_overlay_layer(int y_offset)
 
 void Platform::Screen::display()
 {
-    if (extensions.has_startup_opt("--validate-scripts")) {
+    if (extensions.has_startup_opt("--validate-scripts") or
+        extensions.has_startup_opt("--regression")) {
         return;
     }
 
@@ -4422,6 +4534,10 @@ struct AudioState
     Buffer<StringBuffer<48>, 32> completed_sounds;
     std::mutex completed_sounds_lock;
 
+    // Stash for temporarily storing sound effects
+    AudioChannel stashed_sounds[max_sound_channels];
+    bool has_stashed_sounds;
+
     AudioState()
     {
         music_data = nullptr;
@@ -4437,7 +4553,15 @@ struct AudioState
             sound_effects[i].position = 0;
             sound_effects[i].playing = false;
             sound_effects[i].volume = 1.0f;
+
+            stashed_sounds[i].data = nullptr;
+            stashed_sounds[i].length = 0;
+            stashed_sounds[i].position = 0;
+            stashed_sounds[i].playing = false;
+            stashed_sounds[i].volume = 1.0f;
         }
+
+        has_stashed_sounds = false;
     }
 };
 
@@ -4762,8 +4886,6 @@ StringBuffer<48> Platform::Speaker::current_music()
 
 bool Platform::Speaker::stream_music(const char* filename, Microseconds offset)
 {
-    info(format("stream music called for %", filename));
-
     std::string full_path = std::string("scripts") + PATH_DELIMITER + "data" +
                             PATH_DELIMITER + "music" + PATH_DELIMITER +
                             filename;
@@ -4877,12 +4999,63 @@ void Platform::Speaker::set_sounds_volume(u8 volume)
 
 void Platform::Speaker::stash_sounds()
 {
+    SDL_LockAudio();
+
+    // Copy all sound effect channels to the stash
+    for (int i = 0; i < AudioState::max_sound_channels; i++) {
+        auto& src = audio_state.sound_effects[i];
+        auto& dst = audio_state.stashed_sounds[i];
+
+        dst.data = src.data;
+        dst.name = src.name;
+        dst.length = src.length;
+        dst.position = src.position;
+        dst.volume = src.volume;
+        dst.priority = src.priority;
+        dst.playing = src.playing;
+
+        // Clear the active channel
+        src.playing = false;
+        src.data = nullptr;
+    }
+
+    audio_state.has_stashed_sounds = true;
+
+    SDL_UnlockAudio();
 }
 
 
 
 void Platform::Speaker::restore_sounds()
 {
+    SDL_LockAudio();
+
+    if (!audio_state.has_stashed_sounds) {
+        SDL_UnlockAudio();
+        return;
+    }
+
+    // Restore all sound effect channels from the stash
+    for (int i = 0; i < AudioState::max_sound_channels; i++) {
+        auto& src = audio_state.stashed_sounds[i];
+        auto& dst = audio_state.sound_effects[i];
+
+        dst.data = src.data;
+        dst.name = src.name;
+        dst.length = src.length;
+        dst.position = src.position;
+        dst.volume = src.volume;
+        dst.priority = src.priority;
+        dst.playing = src.playing;
+
+        // Clear the stash entry
+        src.playing = false;
+        src.data = nullptr;
+    }
+
+    audio_state.has_stashed_sounds = false;
+
+    SDL_UnlockAudio();
 }
 
 
@@ -5091,7 +5264,7 @@ void Platform::Speaker::stop_music()
 
 void initialize_audio()
 {
-    SDL_AudioSpec desired, obtained;
+    SDL_AudioSpec desired;
     desired.freq = 16000;
     desired.format = AUDIO_S8;
     desired.channels = 1;
@@ -5099,7 +5272,10 @@ void initialize_audio()
     desired.callback = audio_callback;
     desired.userdata = &audio_state;
 
-    if (SDL_OpenAudio(&desired, &obtained) < 0) {
+    if (SDL_OpenAudio(&desired, nullptr) < 0) {
+        // NOTE: nullptr in obtained paramter forces SDL to give us the audio
+        // encoding that we want. Otherwise, the sound on some systems will
+        // resemble a distorted electric guitar... wrong sample encoding.
         error(format("Failed to open audio: %", SDL_GetError()));
     }
 

@@ -121,8 +121,6 @@ public:
     void overwrite_t0_tile(u16 index, const EncodedTile& t);
     void overwrite_t1_tile(u16 index, const EncodedTile& t);
 
-    void overwrite_sprite_tile(u16 index, const EncodedTile& t);
-
 
     // Intended to allow usage of the t0 tile layer as a sort of RenderTexture
     // (frame buffer). Writes a 8x8 px tile block specified by from_index to
@@ -305,9 +303,6 @@ public:
 
     void set_palette(Layer layer, u16 x, u16 y, u16 palette);
     u16 get_palette(Layer layer, u16 x, u16 y);
-
-    void set_flip(Layer layer, u16 x, u16 y, bool xflip, bool yflip);
-
 
     void set_scroll(Layer layer, u16 x, u16 y);
     Vec2<u16> get_scroll(Layer layer);
@@ -933,7 +928,6 @@ public:
         void (*overlay_circle_effect)(int radius, int x, int y);
         void (*iris_wipe_effect)(int radius, int x, int y);
         void (*hibernate)();
-        void (*print_memory_diagnostics)();
         void (*console_write_buffer)(Vector<char>& input);
         void (*dlc_download)(Vector<char>& output);
         void (*watchdog_on)();

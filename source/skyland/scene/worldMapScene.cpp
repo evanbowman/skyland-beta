@@ -1408,6 +1408,8 @@ ScenePtr WorldMapScene::update(Time delta)
         if (timer_ > fade_duration) {
             timer_ = 0;
             state_ = State::storm_scroll_in;
+            PLATFORM.screen().schedule_fade(
+                0, {ColorConstant::rich_black, true, true});
             // PLATFORM.screen().fade(1.f, custom_color(0x6057b1), {}, false, false);
         } else {
             const auto amount = 1.f - smoothstep(0.f, fade_duration, timer_);

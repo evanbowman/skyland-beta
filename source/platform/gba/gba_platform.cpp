@@ -1905,13 +1905,13 @@ void Platform::overwrite_t1_tile(u16 index, const EncodedTile& t)
 
 
 
-void Platform::overwrite_sprite_tile(u16 index, const EncodedTile& t)
-{
-    // NOTE: Sprites occupy 16x32 pixels, i.e. 8 8x8 pixel tiles.
-    u8* p = ((u8*)&MEM_TILE[4][1]) + index * (vram_tile_size() * 8);
+// void Platform::overwrite_sprite_tile(u16 index, const EncodedTile& t)
+// {
+//     // NOTE: Sprites occupy 16x32 pixels, i.e. 8 8x8 pixel tiles.
+//     u8* p = ((u8*)&MEM_TILE[4][1]) + index * (vram_tile_size() * 8);
 
-    memcpy16(p, &t, (sizeof t) / 2);
-}
+//     memcpy16(p, &t, (sizeof t) / 2);
+// }
 
 
 
@@ -7123,7 +7123,6 @@ static const Platform::Extensions extensions{
             REG_KEYCNT = KEY_SELECT | KEY_START | KEY_R | KEY_L |
                          KEYIRQ_ENABLE | KEYIRQ_AND;
         },
-    .print_memory_diagnostics = [] { scratch_buffer_memory_diagnostics(); },
     .console_write_buffer =
         [](Vector<char>& input) {
             uart_blocking_output_mode();

@@ -158,7 +158,9 @@ inline void core_explosion(Island* parent,
     } else {
 
         if (conf.clear_effects_) {
+#ifdef __GBA__
             APP.clear_effects_lowpriority();
+#endif
         }
 
         int pitch = 360 / conf.arms_;

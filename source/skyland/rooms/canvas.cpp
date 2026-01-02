@@ -157,7 +157,7 @@ void Canvas::finalize()
 
 void Canvas::publish_tiles()
 {
-    if (not img_data_) {
+    if (not img_data_ or canvas_texture_slot_ < 0) {
         return;
     }
 
@@ -395,6 +395,7 @@ void Canvas::set_custom_name(const char* name)
 {
     if (name == nullptr or *name == '\0') {
         name_.reset();
+        return;
     }
 
     name_.emplace();
