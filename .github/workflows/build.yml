@@ -25,17 +25,23 @@ jobs:
       - name: Install prerequisites
         run: |
           sudo apt-get update
-          sudo apt-get install -y git wget tar bzip2 python3 python3-pip cmake
+          sudo apt-get install -y git wget tar bzip2 python3 python3-pip cmake mgba
           pip3 install --break-system-packages pillow
           
       - name: Build project
         run: |
           cd build
-          ./set-gameboy-advance-toolchain.sh
-          chmod +x build.sh && ./build.sh
+          cmake -DGBA_AUTOBUILD_IMG=ON -DGBA_AUTOBUILD_CONF=ON -DCMAKE_TOOLCHAIN_FILE=$(pwd)/devkitarm.cmake .
+          make -j && ./bundle.sh
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: Skyland-gba
           path: build/Skyland.gba
+          
+      - name: Test rom with mgba
+        run: |
+          cd build
+          mgba Skyland.gba
+
