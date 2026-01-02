@@ -218,7 +218,7 @@ void ParticleLance::display(Platform::Screen& screen)
         dist -= 16.0_fixed;
     }
 
-    if (auto fn = PLATFORM.get_extensions().draw_point_light) {
+    if (PLATFORM.get_extensions().draw_point_light) {
         dist = cached_dist;
         pos = cached_pos;
         while (dist >= 16.0_fixed) {
