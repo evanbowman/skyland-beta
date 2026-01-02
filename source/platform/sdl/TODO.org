@@ -1,4 +1,4 @@
-* Screen implementation [14/20]
+* Screen implementation [15/21]
 ** DONE fix dynamic texture mapping for certain texture sizes...
 ** DONE implement rendering for background layer
 ** DONE top left corner in textures loaded from files doesn't display...
@@ -13,6 +13,7 @@
 ** DONE add missing sound effects
 ** DONE fix broken flag designer
 ** DONE Fix load_overlay_chunk when part of the loaded tile is transparent
+** DONE color palette switches back to default after leaving glossary
 ** TODO figure out what to do about overapping transparency issues
 ** TODO Display charted course on sky map
 ** TODO display keyboard buttons in tutorial player for desktop version
