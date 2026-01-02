@@ -42,7 +42,7 @@ jobs:
           
       - name: Test rom with mgba
         run: |
-          sudo apt install mgba-qt
+          sudo apt install mgba-sdl
           cd build
           mgba-qt Skyland.gba
 
