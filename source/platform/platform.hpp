@@ -108,6 +108,16 @@ public:
     };
 
 
+    bool has_slow_cpu() const
+    {
+#ifdef __GBA__
+        return true;
+#else
+        return false;
+#endif
+    }
+
+
     EncodedTile encode_tile(u8 tile_data[16][16]);
 
 

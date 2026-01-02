@@ -12,10 +12,6 @@
 #pragma once
 
 
-#if defined(__GBA__) or defined(__NDS__)
-// If defined, the system will use fixed pools, and will never call malloc.
-#define UNHOSTED
-#endif
 #define UNHOSTED
 
 

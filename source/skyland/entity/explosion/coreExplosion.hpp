@@ -157,10 +157,8 @@ inline void core_explosion(Island* parent,
         // Don't create the explosion effect if way outside of the camera range.
     } else {
 
-        if (conf.clear_effects_) {
-#ifdef __GBA__
+        if (conf.clear_effects_ and PLATFORM.has_slow_cpu()) {
             APP.clear_effects_lowpriority();
-#endif
         }
 
         int pitch = 360 / conf.arms_;

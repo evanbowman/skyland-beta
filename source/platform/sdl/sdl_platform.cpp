@@ -1993,8 +1993,20 @@ void Platform::overwrite_overlay_tile(u16 index, const EncodedTile& t)
 
 
 
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wall"
+#pragma GCC diagnostic ignored "-Wextra"
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#pragma GCC diagnostic ignored "-Wdouble-promotion"
+#endif
+
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
 
 
 static Platform::Screen::Shader current_shader = passthrough_shader;
@@ -2016,7 +2028,7 @@ struct DynamicPalette
             return it->second; // Already in palette
         }
 
-        if (count >= 256) {
+        if (count >= 255) {
             warning("Palette overflow - reusing index 0");
             return 0;
         }
@@ -2102,6 +2114,14 @@ static PngPalette extract_png_palette(const std::string& path)
 }
 
 
+
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wall"
+#pragma GCC diagnostic ignored "-Wextra"
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#pragma GCC diagnostic ignored "-Wdouble-promotion"
+#endif
 
 static SDL_Surface* load_png_with_stb(const std::string& path,
                                       const char* name,
@@ -2304,6 +2324,10 @@ static SDL_Surface* load_png_with_stb(const std::string& path,
     }
 }
 
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
+
 
 
 void load_metatiled_chunk(SDL_Surface* source_surface,
@@ -2316,7 +2340,6 @@ void load_metatiled_chunk(SDL_Surface* source_surface,
                           TileDesc dst)
 {
     const int tile_size = 8;
-    const int tiles_per_row_src = source_surface->w / tile_size;
     const int meta_tiles_per_row = source_surface->w / meta_tile_size;
 
     int num_meta_tiles = copy_count / tiles_per_meta;
@@ -3010,7 +3033,6 @@ static void extract_text_colors_from_overlay()
     // Get the first two pixels (indices 0 and 1) which contain fg and bg color info
     Uint8* pixels = (Uint8*)overlay_surface->pixels;
     int pitch = overlay_surface->pitch;
-    Uint32 pixel_format = overlay_surface->format->format;
 
     // Get pixel at (pixel_x, pixel_y) - foreground color
     Uint8* fg_pixel = pixels + pixel_y * pitch +
@@ -3738,34 +3760,6 @@ void Platform::Screen::draw(const Sprite& spr)
     pos = pos - view_center;
     pos.y = wrap_y(pos.y);
 
-    ColorConstant color = ColorConstant::null;
-    switch (spr.get_texture_index() % 8) {
-    case 0:
-        color = custom_color(0xFF0000);
-        break;
-    case 1:
-        color = custom_color(0x00FF00);
-        break;
-    case 2:
-        color = custom_color(0x0000FF);
-        break;
-    case 3:
-        color = custom_color(0xFFFF00);
-        break;
-    case 4:
-        color = custom_color(0xFF00FF);
-        break;
-    case 5:
-        color = custom_color(0x00FFFF);
-        break;
-    case 6:
-        color = custom_color(0xFFFFFF);
-        break;
-    case 7:
-        color = custom_color(0x808080);
-        break;
-    }
-
     // Convert GBA scale to SDL scale
     // GBA: pa() = (1 << 8) - sx
     // The actual scale is 256 / pa()
@@ -4064,8 +4058,6 @@ static void draw_parallax_background(
     if (tiles.empty()) {
         return;
     }
-
-    auto view_center = view.int_center().cast<s32>();
 
     auto draw_strip = [&](const ParallaxStrip& strip) {
         const int tile_size = 8;
@@ -4987,9 +4979,6 @@ void Platform::Speaker::set_sounds_volume(u8 volume)
     // Volume ranges from 0 to 19 (music_volume_max)
     // Convert to 0.0 to 1.0 range
     float normalized_volume = volume / (float)music_volume_max;
-
-    // Scale down to prevent clipping
-    normalized_volume;
 
     SDL_LockAudio();
 
