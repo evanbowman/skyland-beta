@@ -2310,6 +2310,9 @@ void load_metatiled_chunk(SDL_Surface* source_surface,
                 dst_rect.w = tile_size;
                 dst_rect.h = tile_size;
 
+                Uint32 transparent = SDL_MapRGBA(overlay_surface->format, 255, 0, 255, 0);
+                SDL_FillRect(overlay_surface, &dst_rect, transparent);
+
                 if (SDL_BlitSurface(source_surface,
                                     &src_rect,
                                     overlay_surface,
@@ -2453,6 +2456,9 @@ void Platform::load_overlay_chunk(TileDesc dst,
             dst_rect.y = dst_tile_y * tile_size;
             dst_rect.w = tile_size;
             dst_rect.h = tile_size;
+
+            Uint32 transparent = SDL_MapRGBA(overlay_surface->format, 255, 0, 255, 0);
+            SDL_FillRect(overlay_surface, &dst_rect, transparent);
 
             // Blit the tile
             if (SDL_BlitSurface(
@@ -3667,8 +3673,13 @@ void Platform::Screen::draw(const Sprite& spr)
 
 void Platform::Screen::clear()
 {
+    rect_draw_queue.clear();
     sprite_draw_list.clear();
     point_lights.clear();
+
+    if (extensions.has_startup_opt("--validate-scripts")) {
+        return;
+    }
 
     // Clear entire screen to black first (for letterboxing)
     SDL_SetRenderDrawColor(renderer, 0, 0, 16, 255);
@@ -4220,6 +4231,10 @@ void draw_overlay_layer(int y_offset)
 
 void Platform::Screen::display()
 {
+    if (extensions.has_startup_opt("--validate-scripts")) {
+        return;
+    }
+
     if (background_texture) {
         if (parallax_clouds_enabled) {
             draw_parallax_background(background_texture,
