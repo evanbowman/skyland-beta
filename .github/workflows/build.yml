@@ -25,7 +25,7 @@ jobs:
       - name: Install prerequisites
         run: |
           sudo apt-get update
-          sudo apt-get install -y git wget tar bzip2 python3 python3-pip cmake snapd
+          sudo apt-get install -y git wget tar bzip2 python3 python3-pip cmake
           pip3 install --break-system-packages pillow
           
       - name: Build project
@@ -42,7 +42,7 @@ jobs:
           
       - name: Test rom with mgba
         run: |
-          sudo snap install mgba
+          sudo apt install mgba-qt
           cd build
-          mgba Skyland.gba
+          mgba-qt Skyland.gba
 
