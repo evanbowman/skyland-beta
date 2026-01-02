@@ -389,9 +389,10 @@ static const Platform::Extensions extensions{
                 }
             }
         },
-    .draw_rect = [](int x, int y, int w, int h, ColorConstant tint, int priority) {
-        rect_draw_queue.push_back({x, y, w, h, tint, priority});
-    },
+    .draw_rect =
+        [](int x, int y, int w, int h, ColorConstant tint, int priority) {
+            rect_draw_queue.push_back({x, y, w, h, tint, priority});
+        },
 };
 
 
@@ -587,8 +588,10 @@ int main(int argc, char** argv)
     for (int i = 0; i < argc; ++i) {
         if (str_eq(argv[i], "--help")) {
             std::cout << "usage: skyland [optional-flags] \n"
-                      << " --regression        Run test cases, regression tests, and then exit \n"
-                      << " --validate-scripts  Just run syntax checks on scripts, and then exit"
+                      << " --regression        Run test cases, regression "
+                         "tests, and then exit \n"
+                      << " --validate-scripts  Just run syntax checks on "
+                         "scripts, and then exit"
                       << std::endl;
             return EXIT_SUCCESS;
         }
@@ -973,8 +976,8 @@ Optional<Platform::DynamicTexturePtr> Platform::make_dynamic_texture()
 
 #ifdef __APPLE__
 #include <pwd.h>
-#include <unistd.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 std::string get_save_file_path()
 {
@@ -989,7 +992,8 @@ std::string get_save_file_path()
         }
 
         // Use Application Support directory (standard macOS location)
-        std::string app_support = std::string(home) + "/Library/Application Support/Skyland";
+        std::string app_support =
+            std::string(home) + "/Library/Application Support/Skyland";
 
         // Create directory if it doesn't exist
         mkdir(app_support.c_str(), 0755);
@@ -1004,7 +1008,7 @@ std::string get_save_file_path()
 #else
 std::string get_save_file_path()
 {
-    return "save.dat";  // Current directory for Linux/Windows
+    return "save.dat"; // Current directory for Linux/Windows
 }
 #endif
 
@@ -1050,7 +1054,8 @@ bool Platform::read_save_data(void* buffer, u32 data_length, u32 offset)
 {
     memcpy(buffer, save_buffer + offset, data_length);
 
-    std::ifstream in(get_save_file_path(), std::ios_base::in | std::ios_base::binary);
+    std::ifstream in(get_save_file_path(),
+                     std::ios_base::in | std::ios_base::binary);
 
     if (!in) {
         return true;
@@ -2310,7 +2315,8 @@ void load_metatiled_chunk(SDL_Surface* source_surface,
                 dst_rect.w = tile_size;
                 dst_rect.h = tile_size;
 
-                Uint32 transparent = SDL_MapRGBA(overlay_surface->format, 255, 0, 255, 0);
+                Uint32 transparent =
+                    SDL_MapRGBA(overlay_surface->format, 255, 0, 255, 0);
                 SDL_FillRect(overlay_surface, &dst_rect, transparent);
 
                 if (SDL_BlitSurface(source_surface,
@@ -2457,7 +2463,8 @@ void Platform::load_overlay_chunk(TileDesc dst,
             dst_rect.w = tile_size;
             dst_rect.h = tile_size;
 
-            Uint32 transparent = SDL_MapRGBA(overlay_surface->format, 255, 0, 255, 0);
+            Uint32 transparent =
+                SDL_MapRGBA(overlay_surface->format, 255, 0, 255, 0);
             SDL_FillRect(overlay_surface, &dst_rect, transparent);
 
             // Blit the tile
@@ -5114,7 +5121,8 @@ Platform::Platform()
 
     initialize_audio();
 
-    std::ifstream in(get_save_file_path(), std::ios_base::in | std::ios_base::binary);
+    std::ifstream in(get_save_file_path(),
+                     std::ios_base::in | std::ios_base::binary);
     if (in) {
         in.read((char*)save_buffer, ::save_capacity);
     }

@@ -223,7 +223,8 @@ void ParticleLance::display(Platform::Screen& screen)
         pos = cached_pos;
         while (dist >= 16.0_fixed) {
             spr.set_position(pos);
-            APP.environment().render_glow_effect({
+            APP.environment().render_glow_effect(
+                {
                     pos.x + 8.0_fixed,
                     pos.y + 8.0_fixed,
                 },

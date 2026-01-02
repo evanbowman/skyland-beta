@@ -24,8 +24,6 @@ template <std::size_t storage, typename R, typename... Args>
 class Function<storage, R(Args...)>
 {
 public:
-
-
     void* data()
     {
         return internal_storage_.data();
@@ -104,15 +102,13 @@ public:
     }
 
 
-    template<typename... CallArgs>
-    R operator()(CallArgs&&... args)
+    template <typename... CallArgs> R operator()(CallArgs&&... args)
     {
         return invoke_policy_(data(), std::forward<CallArgs>(args)...);
     }
 
 
 private:
-
     typedef R (*InvokePolicy)(void*, Args...);
     typedef void (*ConstructPolicy)(void*, const void*);
     typedef void (*MovePolicy)(void*, void*);
