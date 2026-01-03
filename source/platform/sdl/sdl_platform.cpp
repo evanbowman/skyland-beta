@@ -3460,74 +3460,238 @@ int Platform::NetworkPeer::send_queue_size() const
 
 
 
-std::mutex console_rcv_mutex;
-std::string console_rcv_string;
+#include <thread>
+#include <mutex>
+#include <string>
+#include <queue>
+#ifdef _WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#pragma comment(lib, "ws2_32.lib")
+typedef SOCKET socket_t;
+#define CLOSE_SOCKET closesocket
+#else
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+typedef int socket_t;
+#define CLOSE_SOCKET close
+#define INVALID_SOCKET -1
+#define SOCKET_ERROR -1
+#endif
 
-std::mutex console_send_mutex;
-std::queue<std::string> console_send_queue;
-
-
-
-void console_thread_main()
-{
-    while (sdl_running) {
-        std::string text;
-
-        if (std::getline(std::cin, text)) {
-            std::lock_guard<std::mutex> lock(console_rcv_mutex);
-            std::swap(console_rcv_string, text);
-        }
-    }
-    console_running = false;
+namespace {
+    std::thread server_thread;
+    std::thread client_thread;
+    socket_t server_socket = INVALID_SOCKET;
+    socket_t client_socket = INVALID_SOCKET;
+    std::mutex console_mutex;
+    std::queue<std::string> incoming_lines;
+    std::queue<std::string> outgoing_lines;
+    bool server_running = false;
+    constexpr int CONSOLE_PORT = 9999;
 }
 
+static void handle_client(socket_t sock)
+{
+    char buffer[1024];
+    std::string line_buffer;
 
+    // Set socket timeout for recv
+#ifdef _WIN32
+    DWORD timeout = 500; // 500ms
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
+    // Enable TCP keepalive
+    BOOL keepalive = TRUE;
+    setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, (const char*)&keepalive, sizeof(keepalive));
+#else
+    struct timeval timeout;
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 500000; // 500ms
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+    // Enable TCP keepalive
+    int keepalive = 1;
+    setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, &keepalive, sizeof(keepalive));
+#endif
+
+    const char* welcome = "Skyland Remote Console\n> ";
+    if (send(sock, welcome, strlen(welcome), 0) <= 0) {
+        CLOSE_SOCKET(sock);
+        client_socket = INVALID_SOCKET;
+        return;
+    }
+
+    while (server_running) {
+        // Check for output to send
+        bool has_output = false;
+        {
+            std::lock_guard<std::mutex> lock(console_mutex);
+            has_output = !outgoing_lines.empty();
+        }
+
+        if (has_output) {
+            std::lock_guard<std::mutex> lock(console_mutex);
+            while (!outgoing_lines.empty()) {
+                std::string msg = outgoing_lines.front() + "\n> ";
+                outgoing_lines.pop();
+                // Check if send fails (client disconnected)
+                if (send(sock, msg.c_str(), msg.length(), 0) <= 0) {
+                    printf("Client disconnected (send failed)\n");
+                    CLOSE_SOCKET(sock);
+                    client_socket = INVALID_SOCKET;
+                    return;
+                }
+            }
+        }
+
+        // Try to receive data
+        int received = recv(sock, buffer, sizeof(buffer) - 1, 0);
+
+        if (received > 0) {
+            buffer[received] = '\0';
+            for (int i = 0; i < received; i++) {
+                if (buffer[i] == '\n' || buffer[i] == '\r') {
+                    if (!line_buffer.empty()) {
+                        std::lock_guard<std::mutex> lock(console_mutex);
+                        incoming_lines.push(line_buffer);
+                        line_buffer.clear();
+                    }
+                } else {
+                    line_buffer += buffer[i];
+                }
+            }
+        } else if (received == 0) {
+            // Graceful disconnect
+            printf("Client disconnected gracefully\n");
+            break;
+        } else {
+            // Check for real errors vs timeout
+#ifdef _WIN32
+            int err = WSAGetLastError();
+            if (err != WSAETIMEDOUT && err != WSAEWOULDBLOCK) {
+                printf("Client disconnected (recv error: %d)\n", err);
+                break;
+            }
+#else
+            if (errno != EAGAIN && errno != EWOULDBLOCK) {
+                printf("Client disconnected (recv error: %d)\n", errno);
+                break;
+            }
+#endif
+        }
+    }
+
+    CLOSE_SOCKET(sock);
+    client_socket = INVALID_SOCKET;
+}
+
+void server_thread_main()
+{
+#ifdef _WIN32
+    WSADATA wsaData;
+    WSAStartup(MAKEWORD(2, 2), &wsaData);
+#endif
+
+    server_socket = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_socket == INVALID_SOCKET) {
+        return;
+    }
+
+    // Allow address reuse
+    int opt = 1;
+    setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, (const char*)&opt, sizeof(opt));
+
+    sockaddr_in addr = {};
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = inet_addr("127.0.0.1"); // localhost only
+    addr.sin_port = htons(CONSOLE_PORT);
+
+    if (bind(server_socket, (sockaddr*)&addr, sizeof(addr)) == SOCKET_ERROR) {
+        CLOSE_SOCKET(server_socket);
+        return;
+    }
+
+    if (listen(server_socket, 1) == SOCKET_ERROR) {
+        CLOSE_SOCKET(server_socket);
+        return;
+    }
+
+    // Set accept timeout
+#ifdef _WIN32
+    DWORD timeout = 1000; // 1 second
+    setsockopt(server_socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
+#else
+    struct timeval timeout;
+    timeout.tv_sec = 1;
+    timeout.tv_usec = 0;
+    setsockopt(server_socket, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+#endif
+
+    while (server_running) {
+        socket_t new_client = accept(server_socket, nullptr, nullptr);
+
+        if (new_client != INVALID_SOCKET) {
+            // Close existing client if any
+            if (client_socket != INVALID_SOCKET) {
+                CLOSE_SOCKET(client_socket);
+                if (client_thread.joinable()) {
+                    client_thread.join();
+                }
+            }
+
+            client_socket = new_client;
+            client_thread = std::thread(handle_client, new_client);
+        }
+        // If accept fails/times out, it just loops again
+    }
+
+    if (client_socket != INVALID_SOCKET) {
+        CLOSE_SOCKET(client_socket);
+    }
+    if (client_thread.joinable()) {
+        client_thread.join();
+    }
+
+    CLOSE_SOCKET(server_socket);
 
 #ifdef _WIN32
-#include <io.h>
-#define ISATTY _isatty
-#define FILENO _fileno
-#else
-#include <unistd.h>
-#define ISATTY isatty
-#define FILENO fileno
+    WSACleanup();
 #endif
+}
 
 void Platform::RemoteConsole::start()
 {
 #ifndef __EMSCRIPTEN__
-    // Only start console thread if we have an actual terminal
-    if (ISATTY(FILENO(stdin))) {
-        std::thread console_thread(console_thread_main);
-        console_running = true;
-        console_thread.detach();
-    } else {
-        console_running = false;
-    }
+    server_running = true;
+    server_thread = std::thread(server_thread_main);
+    server_thread.detach();
 #endif
 }
 
 
 auto Platform::RemoteConsole::readline() -> Optional<Line>
 {
-    std::lock_guard<std::mutex> lock(console_rcv_mutex);
-    if (not console_rcv_string.empty()) {
-        Line ret = console_rcv_string.c_str();
-        console_rcv_string.clear();
+    std::lock_guard<std::mutex> lock(console_mutex);
+    if (!incoming_lines.empty()) {
+        Line ret = incoming_lines.front().c_str();
+        incoming_lines.pop();
         return ret;
     }
-
     return {};
 }
 
-
-
 bool Platform::RemoteConsole::printline(const char* text, const char* prompt)
 {
-    std::cout << text << "\n" << prompt << std::flush;
-    return false;
+    std::lock_guard<std::mutex> lock(console_mutex);
+    outgoing_lines.push(std::string(text));
+    return client_socket != INVALID_SOCKET;
 }
 
+
+////////////////////////////////////////////////////////////////////////////////
+// Logger
+////////////////////////////////////////////////////////////////////////////////
 
 
 static const char* const logfile_name = "logfile.txt";
@@ -5319,6 +5483,7 @@ Platform::Platform()
 
 Platform::~Platform()
 {
+    server_running = false;
     cleanup_point_light_cache();
     cleanup_charset_surfaces();
 }

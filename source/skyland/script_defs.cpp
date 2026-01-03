@@ -1773,7 +1773,9 @@ BINDING_TABLE({
      {SIG0(nil),
       [](int argc) {
           info("__MEMORY_DIAGNOSTICS______");
-          scratch_buffer_memory_diagnostics();
+          scratch_buffer_memory_diagnostics([](const char* line) {
+              info(line);
+          });
           info(format("extension mem: used %", extension_stats().used));
 
           info("pool diagnostics:");
