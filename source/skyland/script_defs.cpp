@@ -1340,10 +1340,10 @@ BINDING_TABLE({
                   APP.environment().music()->c_str(), 0);
           }
 
-          APP.player_island().schedule_repaint();
+          show_island(&APP.player_island());
 
           if (APP.opponent_island()) {
-              APP.opponent_island()->schedule_repaint();
+              show_island(APP.opponent_island());
           }
 
           return L_NIL;
