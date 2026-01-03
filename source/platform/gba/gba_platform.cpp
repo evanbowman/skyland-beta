@@ -5649,43 +5649,6 @@ static void set_map_tile_16p_palette(u8 base, u16 x, u16 y, int palette)
 
 
 
-void Platform::set_flip(Layer layer, u16 x, u16 y, bool xflip, bool yflip)
-{
-    switch (layer) {
-    case Layer::map_1_ext:
-        // TODO...
-        break;
-
-    case Layer::map_0_ext:
-        // TODO...
-        break;
-
-    case Layer::overlay: {
-        auto c = overlay_back_buffer[x + y * 32];
-        if (xflip) {
-            c |= 1 << 10;
-        } else {
-            c &= ~(1 << 10);
-        }
-
-        if (yflip) {
-            c |= 1 << 11;
-        } else {
-            c &= ~(1 << 11);
-        }
-
-        overlay_back_buffer[x + y * 32] = c;
-        overlay_back_buffer_changed = true;
-        break;
-    }
-
-    default:
-        break;
-    }
-}
-
-
-
 void Platform::set_palette(Layer layer, u16 x, u16 y, u16 palette)
 {
     if (layer == Layer::map_1_ext) {
