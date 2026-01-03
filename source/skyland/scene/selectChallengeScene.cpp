@@ -166,6 +166,9 @@ void SelectChallengeScene::exit(Scene& next)
 
 void SelectChallengeScene::display()
 {
+    if (exit_) {
+        return;
+    }
     if (state_ not_eq State::idle) {
         return;
     }
