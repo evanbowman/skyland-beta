@@ -3483,13 +3483,29 @@ void console_thread_main()
 
 
 
+#ifdef _WIN32
+#include <io.h>
+#define ISATTY _isatty
+#define FILENO _fileno
+#else
+#include <unistd.h>
+#define ISATTY isatty
+#define FILENO fileno
+#endif
+
 void Platform::RemoteConsole::start()
 {
-    std::thread console_thread(console_thread_main);
-    console_running = true;
-    console_thread.detach();
+#ifndef __EMSCRIPTEN__
+    // Only start console thread if we have an actual terminal
+    if (ISATTY(FILENO(stdin))) {
+        std::thread console_thread(console_thread_main);
+        console_running = true;
+        console_thread.detach();
+    } else {
+        console_running = false;
+    }
+#endif
 }
-
 
 
 auto Platform::RemoteConsole::readline() -> Optional<Line>
