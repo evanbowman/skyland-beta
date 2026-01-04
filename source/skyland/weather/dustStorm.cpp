@@ -57,6 +57,7 @@ DustStorm::DustStorm()
 
     s.spr_ += 4;
 
+    PLATFORM_EXTENSION(force_vsync);
     // NOTE: this code intentionally exceeds 32 in the x unit, due to an
     // implementation issue in SDL platform! FIXME!!!
     for (int x = 0; x < 48; ++x) {
@@ -70,6 +71,7 @@ DustStorm::DustStorm()
 
 DustStorm::~DustStorm()
 {
+    PLATFORM_EXTENSION(force_vsync);
     PLATFORM.clear_layer(Layer::background);
     init_clouds();
 }
