@@ -2004,7 +2004,7 @@ void Platform::overwrite_overlay_tile(u16 index, const EncodedTile& t)
 #endif
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+#include "stb/stb_image.h"
 
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
