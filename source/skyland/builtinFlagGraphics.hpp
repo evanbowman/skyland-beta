@@ -16,7 +16,8 @@ namespace skyland
 
 
 
-enum class BuiltinFlagGraphics {
+enum class BuiltinFlagGraphics
+{
     null,
     marauder,
     second_empire,
