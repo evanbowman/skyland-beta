@@ -255,6 +255,8 @@ void TitleScreenScene::enter(Scene& prev)
 
     PLATFORM.load_overlay_texture("overlay");
     PLATFORM.load_tile1_texture("skyland_title_1_flattened");
+    // NOTE: preload one of the textures for desktop platforms so that it's cached.
+    PLATFORM.load_tile0_texture("skyland_title_3_flattened");
     PLATFORM.load_tile0_texture("skyland_title_0_flattened");
     PLATFORM.load_background_texture("background_title_screen");
 
