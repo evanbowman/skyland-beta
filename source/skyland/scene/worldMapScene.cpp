@@ -1011,6 +1011,7 @@ ScenePtr WorldMapScene::update(Time delta)
         }
         if (APP.player().key_down(Key::action_1)) {
             if (nav_mode_) {
+                discretized_range_cache_.reset();
                 for (int i = 0; i < 19; ++i) {
                     auto node = APP.world_graph().nodes_[i];
                     if (node.coord_ == movement_targets_[movement_cursor_]) {
