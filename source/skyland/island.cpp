@@ -722,6 +722,7 @@ void Island::FireState::display(Island& island)
                 auto fy = o.y + y * 16 - 16;
                 batch->push_back({fx, fy});
 
+#ifndef __GBA__
                 APP.environment().render_glow_effect(
                     {
                         Fixnum::from_integer(fx + 8),
@@ -730,6 +731,7 @@ void Island::FireState::display(Island& island)
                     50 + rng::choice<8>(rng::utility_state),
                     ColorConstant::aerospace_orange,
                     95);
+#endif
             }
         }
     }
