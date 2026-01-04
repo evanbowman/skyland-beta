@@ -192,8 +192,8 @@ void setup_pools()
 
 void TitleScreenScene::enter(Scene& prev)
 {
-    PLATFORM.clear_layer(Layer::map_0);
-    PLATFORM.clear_layer(Layer::map_1);
+    PLATFORM.clear_layer(Layer::map_0_ext);
+    PLATFORM.clear_layer(Layer::map_1_ext);
 
     PLATFORM.speaker().set_music_volume(Platform::Speaker::music_volume_max);
 
