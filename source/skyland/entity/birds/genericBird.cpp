@@ -82,8 +82,18 @@ void GenericBird::roost(Island* island, Time delta)
     // NOTE: modulo 128 due to how certain platforms handle dynamic tile
     // remapping. On the gba, we load higher addresses from the cart into vram
     // slots. For other platforms, we load the whole texture into vram.
-    auto t = PLATFORM.get_tile(layer, position_.x, position_.y) % 128;
-    auto below = PLATFORM.get_tile(layer, position_.x, position_.y + 1) % 128;
+    auto t = PLATFORM.get_tile(layer, position_.x, position_.y);
+    auto below = PLATFORM.get_tile(layer, position_.x, position_.y + 1);
+
+    if (PLATFORM.device_name() == "PC") {
+        // FIXME!!!
+        if (t > 127) {
+            t -= 127;
+        }
+        if (below > 127) {
+            below -= 127;
+        }
+    }
 
     if ((below == Tile::null or below == Tile::grass or
          below == Tile::liberty_1 or below == Tile::lava_top or
