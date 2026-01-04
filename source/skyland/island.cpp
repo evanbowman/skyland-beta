@@ -1990,6 +1990,8 @@ void Island::repaint_partial()
 
 void Island::repaint()
 {
+    clear_tiles(layer_);
+
     if (hidden_) {
         return;
     }

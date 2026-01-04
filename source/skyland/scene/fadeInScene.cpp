@@ -89,6 +89,8 @@ void FadeInScene::enter(Scene& prev)
 
     if (APP.opponent_island()) {
         APP.opponent_island()->schedule_repaint();
+    } else {
+        PLATFORM.clear_layer(Layer::map_1_ext);
     }
 }
 
