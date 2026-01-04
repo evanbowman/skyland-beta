@@ -1,4 +1,4 @@
-* SDL Platform implementation [19/24]
+* SDL Platform implementation [20/24]
 ** DONE fix dynamic texture mapping for certain texture sizes...
 ** DONE implement rendering for background layer
 ** DONE top left corner in textures loaded from files doesn't display...
@@ -18,8 +18,9 @@
 ** DONE dog sprite doesn't load correctly
 ** DONE figure out what to do about overapping transparency issues
 ** DONE weather change when encountering storm king doesn't reset palette effects
+** DONE fix junk tiles on title screen
 ** TODO Display charted course on sky map
 ** TODO display keyboard buttons in tutorial player for desktop version
 ** TODO fix missing tile in top left corner (again!?)
 ** TODO figure out why birds flee map upon level load (bad tile lookup?)
-** TODO fix junk tiles on title screen
+
