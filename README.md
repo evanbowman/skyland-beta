@@ -55,7 +55,7 @@ Skyland is jam-packed with stuff, some of the highlights:
 
 ### Other Platforms (Experimental)
 1) Make sure you have python3 and the PIP image library.
-2) Install cmake
+2) Install cmake and SDL2
 3) `cd build && ./set-desktop-toolchain.sh`
 4) run make
 
