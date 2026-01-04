@@ -558,7 +558,8 @@ void show_saved_indicator()
 
 
 
-void plot_navigation_path(const WorldMapScene::NavBuffer& nav)
+void plot_navigation_path(const WorldMapScene::NavBuffer& nav,
+                          int color_offset)
 {
     struct Tile16x16p
     {
@@ -634,11 +635,11 @@ void plot_navigation_path(const WorldMapScene::NavBuffer& nav)
         int cx2 = c2.x * 8 + 12;
         int cy1 = c1.y * 8 + 12;
         int cy2 = c2.y * 8 + 12;
-        plot_line(cx1, cy1, cx2, cy2, 0);
-        plot_line(cx1 - 1, cy1, cx2 - 1, cy2, 0);
-        plot_line(cx1 + 1, cy1, cx2 + 1, cy2, 0);
-        plot_line(cx1, cy1 - 1, cx2, cy2 - 1, 0);
-        plot_line(cx1, cy1 + 1, cx2, cy2 + 1, 0);
+        plot_line(cx1, cy1, cx2, cy2, color_offset);
+        plot_line(cx1 - 1, cy1, cx2 - 1, cy2, color_offset);
+        plot_line(cx1 + 1, cy1, cx2 + 1, cy2, color_offset);
+        plot_line(cx1, cy1 - 1, cx2, cy2 - 1, color_offset);
+        plot_line(cx1, cy1 + 1, cx2, cy2 + 1, color_offset);
         ++it;
         ++prev;
     }
@@ -1021,7 +1022,7 @@ ScenePtr WorldMapScene::update(Time delta)
                         if (node.type_ == WorldGraph::Node::Type::exit) {
                             state_ = State::save_plot;
                             navigation_buffer_.push_back(cursor_);
-                            plot_navigation_path(navigation_buffer_);
+                            plot_navigation_path(navigation_buffer_, 0);
                             return null_scene();
                         }
                         APP.world_graph().nodes_[cursor_].type_ =
@@ -1047,7 +1048,7 @@ ScenePtr WorldMapScene::update(Time delta)
                     }
                 }
                 navigation_buffer_.push_back(cursor_);
-                plot_navigation_path(navigation_buffer_);
+                plot_navigation_path(navigation_buffer_, 0);
                 to_move_state();
                 break;
             }
@@ -1933,6 +1934,20 @@ void WorldMapScene::display()
     if (++palette_cyc_counter_ == 7) {
         palette_cyc_counter_ = 0;
         PLATFORM_EXTENSION(rotate_palette, Layer::map_0_ext, 1, 8);
+        NavBuffer* nav_buffer = &navigation_buffer_;
+        if (not nav_mode_) {
+            nav_buffer = &render_backup_nav_buffer_;
+        }
+        if (not PLATFORM.get_extensions().rotate_palette and
+            not PLATFORM.has_slow_cpu() and
+            not nav_buffer->empty()) {
+            // We have a fast cpu, but no support for palette rotation. We'll
+            // have to fake it by manually redrawing the texture with different
+            // palette indices.
+            palette_cyc_simulation_++;
+            palette_cyc_simulation_ %= 8;
+            plot_navigation_path(*nav_buffer, 7 - palette_cyc_simulation_);
+        }
     }
 
     auto show_cursor = [&cursor, this](int cursor_) {
@@ -2137,7 +2152,8 @@ void WorldMapScene::enter(Scene& prev_scene)
     show_map(APP.world_graph(), -1);
     if (not navigation_path_.empty() and not nav_mode_) {
         navigation_path_.insert(navigation_path_.begin(), cursor_);
-        plot_navigation_path(navigation_path_);
+        render_backup_nav_buffer_ = navigation_path_;
+        plot_navigation_path(navigation_path_, 0);
         navigation_path_.erase(navigation_path_.begin());
     }
 
