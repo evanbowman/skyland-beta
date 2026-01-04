@@ -43,7 +43,7 @@ static const u32 string_intern_table_size = 2000;
 #elif defined(__GBA__)
 #define VALUE_POOL_SIZE 10000
 #else
-#define VALUE_POOL_SIZE 20000
+#define VALUE_POOL_SIZE 200000
 #endif
 
 union ValueMemory
@@ -1007,8 +1007,7 @@ ArgBindings make_arg_bindings(Value* arg_lat, ArgBindings* parent)
         } else {
             sym = val;
         }
-        if (not b.bindings_.push_back(
-                ArgBinding{&sym->symbol(), (u8)arg++, type, false})) {
+        if (not b.bindings_.push_back(ArgBinding{&sym->symbol(), (u8)arg++, type, false})) {
             PLATFORM.fatal("too many named arguments for function! Max 5");
         }
     });
@@ -1087,9 +1086,7 @@ static void arg_substitution_impl(Value* impl, ArgBindings& bindings)
                             if (binding.referenced_in_closure_) {
                                 ListBuilder bind;
                                 bind.push_back((lisp::Value*)binding.sym_);
-                                bind.push_back(
-                                    ctx->argument_symbols_[binding
-                                                               .replacement_]);
+                                bind.push_back(ctx->argument_symbols_[binding.replacement_]);
                                 closure.push_back(bind.result());
                                 arg_closure_exists = true;
                             }
@@ -1106,10 +1103,10 @@ static void arg_substitution_impl(Value* impl, ArgBindings& bindings)
                             // function arguments from stack slots to actual
                             // variable names.
                             val->cons().set_car(make_symbol("let"));
-                            val->cons().set_cdr(L_CONS(
-                                closure.result(),
-                                L_CONS(L_CONS(make_symbol("fn"), fn_impl),
-                                       L_NIL)));
+                            val->cons().set_cdr(L_CONS(closure.result(),
+                                                       L_CONS(L_CONS(make_symbol("fn"),
+                                                                     fn_impl),
+                                                              L_NIL)));
                         }
 
                     } else if (str_eq(first->symbol().name(), "fn")) {
@@ -2550,15 +2547,11 @@ void Symbol::set_name(const char* name)
         memset(ptr, '\0', buffer_size + 1);
         for (u32 i = 0; i < buffer_size; ++i) {
             if (*name not_eq '\0') {
-#ifdef __GBA__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstringop-overflow"
 #pragma GCC diagnostic ignored "-Warray-bounds"
-#endif
                 ptr[i] = *(name++);
-#ifdef __GBA__
 #pragma GCC diagnostic pop
-#endif
             }
         }
         break;
@@ -3753,17 +3746,18 @@ static void eval_quasiquote(Value* code)
 
 
 
+
 #if defined(__GBA__) or defined(__APPLE__)
-#define STANDARD_FORMS                                                         \
-    MAPBOX_ETERNAL_CONSTEXPR const auto standard_forms =                       \
+#define STANDARD_FORMS                                                      \
+    MAPBOX_ETERNAL_CONSTEXPR const auto standard_forms =                    \
         mapbox::eternal::hash_map<mapbox::eternal::string, EvalCB>
 #else
-#define STANDARD_FORMS                                                         \
+#define STANDARD_FORMS                                                  \
     const auto standard_forms = std::unordered_map<std::string, EvalCB>
 #endif
 
 
-using EvalCB = void (*)(Value*);
+using EvalCB = void(*)(Value*);
 // clang-format off
 STANDARD_FORMS({
         {"if", [](Value* code) {
@@ -4654,7 +4648,7 @@ BUILTIN_TABLE(
 
            lisp::ListBuilder result;
            for (int i = 0; i < len; ++i) {
-               result.push_back(L_INT((u8)sbr->data_[i + offset]));
+               result.push_back(L_INT(sbr->data_[i + offset]));
            }
 
            return result.result();
