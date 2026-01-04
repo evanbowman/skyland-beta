@@ -1754,7 +1754,7 @@ void Platform::overwrite_t0_tile(u16 index, const EncodedTile& t)
 
             // Look up the color in the palette
             SDL_Color color;
-            if (palette_index >= tile0_transformed_palette.count) {
+            if (palette_index >= tile0_transformed_palette.count or palette_index == 0) {
                 color = {0xFF, 0x00, 0xFF, 0x00};
             } else {
                 color = tile0_transformed_palette.colors[palette_index];
@@ -1856,7 +1856,7 @@ void Platform::overwrite_t1_tile(u16 index, const EncodedTile& t)
 
             // Look up the color in the palette
             SDL_Color color;
-            if (palette_index >= tile1_transformed_palette.count) {
+            if (palette_index >= tile1_transformed_palette.count or palette_index == 0) {
                 color = {0xFF, 0x00, 0xFF, 0x00};
             } else {
                 color = tile1_transformed_palette.colors[palette_index];
@@ -1954,7 +1954,7 @@ void Platform::overwrite_overlay_tile(u16 index, const EncodedTile& t)
 
             // Look up the color in the palette
             SDL_Color color;
-            if (palette_index >= overlay_transformed_palette.count) {
+            if (palette_index >= overlay_transformed_palette.count or palette_index == 0) {
                 // Out of bounds - use transparent magenta
                 color = {0xFF, 0x00, 0xFF, 0x00};
             } else {
@@ -2732,6 +2732,39 @@ static std::string extract_texture_name(const char* path_or_name)
 }
 
 
+SDL_Surface* expand_surface_to_width(SDL_Surface* loaded_surface, int width)
+{
+    if (loaded_surface->w < width) {
+        const auto source_width = loaded_surface->w;
+        const auto source_height = loaded_surface->h;
+        auto expanded_surface = SDL_CreateRGBSurface(0,
+                                                     width,
+                                                     source_height,
+                                                     loaded_surface->format->BitsPerPixel,
+                                                     loaded_surface->format->Rmask,
+                                                     loaded_surface->format->Gmask,
+                                                     loaded_surface->format->Bmask,
+                                                     loaded_surface->format->Amask);
+
+        if (!expanded_surface) {
+            error("Failed to expand tile0 surface!");
+        } else {
+            Uint32 transparent_magenta =
+                SDL_MapRGBA(expanded_surface->format, 0xFF, 0x00, 0xFF, 0x00);
+            SDL_FillRect(expanded_surface, nullptr, transparent_magenta);
+            SDL_Rect src_rect = {0, 0, source_width, source_height};
+            SDL_Rect dst_rect = {0, 0, source_width, source_height};
+            SDL_BlitSurface(loaded_surface, &src_rect, expanded_surface, &dst_rect);
+
+            SDL_FreeSurface(loaded_surface);
+
+            return expanded_surface;
+        }
+    }
+    return loaded_surface;
+}
+
+
 
 void Platform::load_tile0_texture(const char* name_or_path)
 {
@@ -2749,16 +2782,18 @@ void Platform::load_tile0_texture(const char* name_or_path)
     std::string full_path =
         resource_path() + "images" + PATH_DELIMITER + name + ".png";
 
-    SDL_Surface* surface =
+    SDL_Surface* loaded_surface =
         load_png_with_stb(full_path, name.c_str(), ShaderPalette::tile0);
-    if (!surface) {
+    if (!loaded_surface) {
         return;
     }
 
-    tile0_index_zero_is_transparent = is_tile_transparent(surface, 0, 0, 0);
+    tile0_index_zero_is_transparent = is_tile_transparent(loaded_surface, 0, 0, 0);
+
+    loaded_surface = expand_surface_to_width(loaded_surface, 2048);
 
     // Keep the surface for later modification
-    tile0_surface = surface;
+    tile0_surface = loaded_surface;
 
     tile0_texture = SDL_CreateTextureFromSurface(renderer, tile0_surface);
     if (!tile0_texture) {
@@ -2794,16 +2829,18 @@ void Platform::load_tile1_texture(const char* name_or_path)
     std::string full_path =
         resource_path() + "images" + PATH_DELIMITER + name + ".png";
 
-    SDL_Surface* surface =
+    SDL_Surface* loaded_surface =
         load_png_with_stb(full_path, name.c_str(), ShaderPalette::tile1);
-    if (!surface) {
+    if (!loaded_surface) {
         return;
     }
 
-    tile1_index_zero_is_transparent = is_tile_transparent(surface, 0, 0, 0);
+    tile1_index_zero_is_transparent = is_tile_transparent(loaded_surface, 0, 0, 0);
+
+    loaded_surface = expand_surface_to_width(loaded_surface, 2048);
 
     // Keep the surface for later modification
-    tile1_surface = surface;
+    tile1_surface = loaded_surface;
 
     tile1_texture = SDL_CreateTextureFromSurface(renderer, tile1_surface);
     if (!tile1_texture) {
