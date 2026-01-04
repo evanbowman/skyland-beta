@@ -46,12 +46,21 @@ Skyland is jam-packed with stuff, some of the highlights:
 
 ## Building
 
+### GBA
 1) Install all of the standard devkitpro libgba stuff.
 2) Make sure you have python3 and the PIP image library.
 3) Install cmake
 4) `cd build && ./set-gameboy-advance-toolchain.sh` (a shortcut for running cmake with the correct toolchain file)
 5) run ./build.sh
 
+### Other Platforms (Experimental)
+1) Make sure you have python3 and the PIP image library.
+2) Install cmake
+3) `cd build && ./set-desktop-toolchain.sh`
+4) run make
+
+NOTE: The game has only been tested to run natively on macOS. Linux is still a work in progress, but only due to some minor build errors. For Windows, the CMakeLists.txt in build/ may need to be adjusted a bit.
+   
 ## Releases
 [See here](https://github.com/evanbowman/skyland-beta/releases). Why so many releases? I like to have build artifacts in case something breaks. The program takes a few minutes to compile, so it's nice to have old builds when tracking down issues.
 
