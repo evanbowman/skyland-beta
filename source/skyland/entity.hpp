@@ -144,11 +144,6 @@ public:
     }
 
 
-    virtual void project_glow()
-    {
-    }
-
-
 protected:
     Sprite sprite_;
     HitBox hitbox_;

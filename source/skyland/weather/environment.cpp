@@ -62,28 +62,6 @@ Conf::String Environment::ambiance() const
 
 
 
-void Environment::render_glow_effect(const Vec2<Fixnum>& pos,
-                                     int radius,
-                                     ColorConstant color,
-                                     u8 intensity)
-{
-    PLATFORM_EXTENSION(draw_point_light,
-                       pos.x,
-                       pos.y,
-                       radius,
-                       color,
-                       intensity * modulate_glow_amount());
-}
-
-
-
-Float Environment::modulate_glow_amount()
-{
-    return 1.f;
-}
-
-
-
 } // namespace skyland::weather
 
 

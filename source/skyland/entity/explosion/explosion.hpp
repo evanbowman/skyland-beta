@@ -82,9 +82,6 @@ public:
     }
 
 
-    void project_glow() override;
-
-
 private:
     Time timer_ = 0;
 };

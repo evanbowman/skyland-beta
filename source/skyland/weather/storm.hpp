@@ -76,9 +76,6 @@ public:
     }
 
 
-    Float modulate_glow_amount() override;
-
-
     void update(Time delta) override;
 
 

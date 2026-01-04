@@ -109,15 +109,6 @@ public:
     }
 
 
-    void render_glow_effect(const Vec2<Fixnum>& pos,
-                            int radius,
-                            ColorConstant color,
-                            u8 intensity);
-
-
-    virtual Float modulate_glow_amount();
-
-
     Conf::String read_conf(const char* field) const;
     Conf::String music() const;
     Conf::String ambiance() const;
@@ -203,9 +194,6 @@ public:
 
 
     ColorConstant fadein_colorize_tone() const override;
-
-
-    Float modulate_glow_amount() override;
 
 
 private:

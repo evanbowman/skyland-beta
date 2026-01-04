@@ -43,9 +43,6 @@ public:
 
 
     void display() override;
-
-
-    Float modulate_glow_amount() override;
 };
 
 

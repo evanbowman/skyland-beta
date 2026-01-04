@@ -56,9 +56,6 @@ public:
     void on_collision(Entity&) override;
 
 
-    void project_glow() override;
-
-
 private:
     void destroy(bool explosion) override;
 

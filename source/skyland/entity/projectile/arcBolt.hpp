@@ -62,9 +62,6 @@ public:
     }
 
 
-    void project_glow() override;
-
-
 private:
     void record_destroyed();
     void destroy(bool explosion) override;
