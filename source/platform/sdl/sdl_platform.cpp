@@ -354,9 +354,11 @@ static const Platform::Extensions extensions{
             if (vertical_parallax_enabled) {
                 parallax_strip2.scroll.x = scroll + (center.x / 3);
                 parallax_strip2.scroll.y = center.y / 4 + 3;
+                parallax_strip1.scroll.y = center.y / 4 + 3;
             } else {
                 parallax_strip2.scroll.x = scroll + (center.x / 3);
                 parallax_strip2.scroll.y = center.y / 2;
+                parallax_strip1.scroll.y = 0;
             }
         },
     .update_parallax_r2 =
@@ -4021,7 +4023,7 @@ void Platform::Screen::clear()
     SDL_RenderClear(renderer);
 
     auto bkg_color =
-        current_shader(ShaderPalette::background, custom_color(0x63b2e0), 0, 1);
+        current_shader(ShaderPalette::background, custom_color(0x5fa8ea), 0, 4);
 
     auto clr = color_to_sdl(bkg_color);
     SDL_SetRenderDrawColor(renderer, clr.r, clr.g, clr.b, clr.a);
