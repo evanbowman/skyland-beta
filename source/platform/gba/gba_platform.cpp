@@ -6828,6 +6828,14 @@ void Platform::clear_layer(Layer layer)
         memset16(MEM_SCREENBLOCKS[sbb_t1_tiles], SE_PALBANK(2), 2048);
         break;
 
+    case Layer::background:
+        for (int x = 0; x < 32; ++x) {
+            for (int y = 0; y < 32; ++y) {
+                set_tile(Layer::background, x, y, 0);
+            }
+        }
+        break;
+
     default:
         fatal("clear layer for unsupported layer id");
         break;
@@ -7473,7 +7481,7 @@ void Platform::Speaker::start()
 {
     audio_start();
     clear_music();
-    play_music("unaccompanied_wind", 0);
+    stream_music("unaccompanied_wind.raw", 0);
 }
 
 
