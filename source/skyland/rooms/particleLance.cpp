@@ -105,11 +105,11 @@ void ParticleLance::finalize()
     if (health() == 0) {
         ExploSpawner::create(center());
         for (int i = 0; i < 3; ++i) {
-            if (auto e =
-                alloc_entity<ExploTrail>(center(),
-                                         rng::choice<360>(rng::utility_state),
-                                         1.25_fixed,
-                                         seconds(2))) {
+            if (auto e = alloc_entity<ExploTrail>(
+                    center(),
+                    rng::choice<360>(rng::utility_state),
+                    1.25_fixed,
+                    seconds(2))) {
                 APP.effects().push(std::move(e));
             }
         }
@@ -209,11 +209,31 @@ void ParticleLance::display(Platform::Screen& screen)
             Fixnum::from_integer(APP.opponent_island()->terrain().size() * 16);
     }
 
+    const auto cached_dist = dist;
+    const auto cached_pos = pos;
     while (dist >= 16.0_fixed) {
         spr.set_position(pos);
         screen.draw(spr);
         pos.x += 16.0_fixed;
         dist -= 16.0_fixed;
+    }
+
+    if (PLATFORM.get_extensions().draw_point_light) {
+        dist = cached_dist;
+        pos = cached_pos;
+        while (dist >= 16.0_fixed) {
+            spr.set_position(pos);
+            APP.environment().render_glow_effect(
+                {
+                    pos.x + 8.0_fixed,
+                    pos.y + 8.0_fixed,
+                },
+                50 + rng::choice<8>(rng::utility_state),
+                custom_color(0xafe3f2),
+                40);
+            pos.x += 16.0_fixed;
+            dist -= 16.0_fixed;
+        }
     }
 }
 

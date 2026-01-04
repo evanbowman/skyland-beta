@@ -9,6 +9,13 @@ namespace skyland::weather
 
 
 
+Float ClearSkies::modulate_glow_amount()
+{
+    return 0.2f;
+}
+
+
+
 ColorConstant ClearSkies::fadein_colorize_tone() const
 {
     return custom_color(0x071b2d);
@@ -100,7 +107,13 @@ void ClearSkies::display()
     }
 LENSFLARE_CHECK_DONE:
 
+    bool hardware_supports_spr_overlapping = false;
+    PLATFORM_EXTENSION(sprite_overlapping_supported,
+                       hardware_supports_spr_overlapping);
 
+    if (hardware_supports_spr_overlapping) {
+        disable_lensflare = false;
+    }
 
     struct LensFlare
     {

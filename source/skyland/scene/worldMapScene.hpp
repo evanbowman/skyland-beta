@@ -108,6 +108,7 @@ private:
     NavBuffer navigation_buffer_;
     NavBuffer cached_navigation_path_;
     static NavBuffer navigation_path_;
+    NavBuffer render_backup_nav_buffer_;
 
     Optional<Text> heading_;
     Optional<Text> warning_;
@@ -138,6 +139,7 @@ private:
     u8 save_opt_len_ = 0;
     bool nav_mode_ = false;
     u8 palette_cyc_counter_ = 0;
+    u8 palette_cyc_simulation_ = 0;
 
     void render_map_key();
 

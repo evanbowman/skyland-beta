@@ -21,7 +21,9 @@
 #include "skyland/player/coOpTeam.hpp"
 #include "skyland/scene/desktopOS.hpp"
 #include "skyland/scene/introCreditsScene.hpp"
+#include "skyland/scene/modules/regressionModule.hpp"
 #include "skyland/scene/modules/skylandForever.hpp"
+#include "skyland/scene/titleScreenScene.hpp"
 #include "skyland/scene_pool.hpp"
 #include "skyland/skyland.hpp"
 #include "version.hpp"
@@ -61,8 +63,7 @@ private:
     Buffer<Text, 8> text_opts_;
 
 public:
-    LanguageSelectScene()
-        : opts_(load_language_options())
+    LanguageSelectScene() : opts_(load_language_options())
     {
     }
 
@@ -168,6 +169,10 @@ private:
 
 
 
+void setup_pools();
+
+
+
 class BootScene : public Scene
 {
 public:
@@ -264,7 +269,12 @@ public:
         PLATFORM.screen().display();
 
         PLATFORM.speaker().start();
-        PLATFORM.speaker().play_sound("click_digital_1", 1);
+        if (PLATFORM.device_name() not_eq "PC") {
+            // NOTE: the pc port loads so much faster than the gba edition that
+            // the boot screen doesn't really even have time to display.
+            PLATFORM.speaker().play_sound("click_digital_1", 1);
+        }
+
 
 
         auto vn = format("version %.%.%.%",
@@ -491,6 +501,14 @@ public:
             }
 
             return make_scene<FadeInScene>();
+        }
+
+        if (auto match = PLATFORM.get_extensions().has_startup_opt) {
+            if (match("--regression") or match("--validate-scripts")) {
+                setup_pools();
+                TitleScreenScene::run_init_scripts(false);
+                return make_scene<RegressionModule>();
+            }
         }
 
         if (not flash_filesystem::file_exists(lang_file) or clean_boot_) {

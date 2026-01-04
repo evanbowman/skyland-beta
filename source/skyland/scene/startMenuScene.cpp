@@ -203,6 +203,8 @@ private:
 
 void restore_overworld_textures()
 {
+    PLATFORM.screen().set_shader(APP.environment().shader());
+
     auto& isle = APP.player_island();
     if (isle.interior_visible()) {
         auto t = APP.environment().player_island_interior_texture();
@@ -959,6 +961,12 @@ void StartMenuScene::display()
     cursor.set_texture_index(59);
 
     cursor.set_mix({ColorConstant::silver_white, 1});
+
+    // NOTE: for the gba platform, setting a custom mix color is sufficient to
+    // prevent screen fades from applying to the cursor sprite. For other
+    // non-paletted platforms, we do need to draw the cursor over the overlay to
+    // exclude it from screen fades...
+    cursor.set_priority(0);
 
     auto view = PLATFORM.screen().get_view().get_center();
 

@@ -748,16 +748,16 @@ const char* seek_filename(const char* path)
 
 
 
-lisp::Value*
-App::invoke_script(const char* path,
-                   bool rom_fs_only,
-                   Optional<Function<4 * sizeof(void*), void(lisp::Value& err)>> err_handler)
+lisp::Value* App::invoke_script(
+    const char* path,
+    bool rom_fs_only,
+    Optional<Function<4 * sizeof(void*), void(lisp::Value& err)>> err_handler)
 {
     auto on_err = [path](lisp::Value& err) {
         lisp::DefaultPrinter p;
         lisp::format(&err, p);
         auto file = seek_filename(path);
-        PLATFORM.fatal(format<256>("%: %", file, p.data_.c_str()));
+        PLATFORM.fatal(format<512>("%: %", file, p.data_.c_str()));
     };
 
     if (not err_handler) {
@@ -866,6 +866,14 @@ ScenePtr reject_if_friendly()
     }
 
     return null_scene();
+}
+
+
+
+void App::shutdown()
+{
+    player_island().clear_rooms();
+    with_opponent_island([&](auto& island) { island.clear_rooms(); });
 }
 
 

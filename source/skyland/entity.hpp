@@ -144,6 +144,11 @@ public:
     }
 
 
+    virtual void project_glow()
+    {
+    }
+
+
 protected:
     Sprite sprite_;
     HitBox hitbox_;
@@ -151,8 +156,11 @@ protected:
 };
 
 
-
+#if defined(__GBA__)
 static constexpr const int entity_pool_size = 84;
+#else
+static constexpr const int entity_pool_size = 200;
+#endif
 static constexpr const int entity_pool_align = 8;
 
 #if defined(__GBA__) or defined(__NDS__)

@@ -62,6 +62,7 @@ void SkylandForever::enter(Scene& prev)
 
     environment_init(parameters_[1]);
     PLATFORM.screen().set_shader(APP.environment().shader());
+    PLATFORM.load_background_texture(APP.environment().background_texture());
 
     for (u32 i = 0; i < settings_text_.capacity(); ++i) {
         settings_text_.emplace_back(
@@ -179,6 +180,8 @@ ScenePtr SkylandForever::update(Time delta)
 
         PLATFORM.screen().set_shader(APP.environment().shader());
         PLATFORM.screen().set_shader_argument(0);
+        PLATFORM.load_background_texture(
+            APP.environment().background_texture());
 
         PLATFORM.screen().schedule_fade(
             0.7f, {ColorConstant::rich_black, false, false});
@@ -244,6 +247,7 @@ void SkylandForever::display()
     Sprite spr;
     spr.set_size(Sprite::Size::w16_h32);
     spr.set_texture_index(59);
+    spr.set_priority(0);
     spr.set_position(
         {2.0_fixed,
          Fixnum::from_integer(((settings_start * 8) - 1.f) + cursor_ * 16)});
