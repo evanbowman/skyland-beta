@@ -1866,7 +1866,9 @@ void clear_tiles(Layer layer)
 bool Island::repaint_alloc_tiles(TileId buffer[16][16], bool retry)
 
 {
+#ifndef __GBA__
     clear_tiles(layer_);
+#endif
 
     for (int x = 0; x < 16; ++x) {
         // NOTE: only handle 15 rows because render_terrain() takes care of the
