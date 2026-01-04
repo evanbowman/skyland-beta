@@ -1868,6 +1868,12 @@ bool Island::repaint_alloc_tiles(TileId buffer[16][16], bool retry)
 {
 #ifndef __GBA__
     clear_tiles(layer_);
+#else
+    for (int x = 16; x < 32; ++x) {
+        for (int y = 0; y < 32; ++y) {
+            PLATFORM.set_tile(layer_, x, y, 0);
+        }
+    }
 #endif
 
     for (int x = 0; x < 16; ++x) {
@@ -1990,8 +1996,6 @@ void Island::repaint_partial()
 
 void Island::repaint()
 {
-    clear_tiles(layer_);
-
     if (hidden_) {
         return;
     }
