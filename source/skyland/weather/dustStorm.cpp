@@ -57,7 +57,9 @@ DustStorm::DustStorm()
 
     s.spr_ += 4;
 
-    for (int x = 0; x < 32; ++x) {
+    // NOTE: this code intentionally exceeds 32 in the x unit, due to an
+    // implementation issue in SDL platform! FIXME!!!
+    for (int x = 0; x < 48; ++x) {
         for (int y = 14; y < 32; ++y) {
             PLATFORM.set_tile(Layer::background, x, y, 4);
         }
@@ -68,6 +70,7 @@ DustStorm::DustStorm()
 
 DustStorm::~DustStorm()
 {
+    PLATFORM.clear_layer(Layer::background);
     init_clouds();
 }
 
