@@ -114,15 +114,10 @@ public:
             PLATFORM.screen().set_shader(APP.environment().shader());
             PLATFORM.screen().set_shader_argument(0);
 
-            PLATFORM.load_background_texture(
-                APP.environment().background_texture());
-
             APP.player_island().schedule_repaint();
-            show_island(&APP.player_island());
 
             if (APP.opponent_island()) {
                 APP.opponent_island()->schedule_repaint();
-                show_island(APP.opponent_island());
             }
 
             if (not PLATFORM.speaker().is_music_playing(

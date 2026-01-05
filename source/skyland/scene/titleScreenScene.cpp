@@ -192,9 +192,6 @@ void setup_pools()
 
 void TitleScreenScene::enter(Scene& prev)
 {
-    PLATFORM.clear_layer(Layer::map_0_ext);
-    PLATFORM.clear_layer(Layer::map_1_ext);
-
     PLATFORM.speaker().set_music_volume(Platform::Speaker::music_volume_max);
 
     PLATFORM.screen().schedule_fade(1.f);
@@ -255,8 +252,6 @@ void TitleScreenScene::enter(Scene& prev)
 
     PLATFORM.load_overlay_texture("overlay");
     PLATFORM.load_tile1_texture("skyland_title_1_flattened");
-    // NOTE: preload one of the textures for desktop platforms so that it's cached.
-    PLATFORM.load_tile0_texture("skyland_title_3_flattened");
     PLATFORM.load_tile0_texture("skyland_title_0_flattened");
     PLATFORM.load_background_texture("background_title_screen");
 
@@ -308,7 +303,6 @@ void TitleScreenScene::enter(Scene& prev)
 void TitleScreenScene::redraw_margins()
 {
     const auto screen_tiles = calc_screen_tiles();
-
     for (int i = 0; i < screen_tiles.x; ++i) {
 
         PLATFORM.set_tile(Layer::overlay, i, 0, 112);
@@ -399,10 +393,6 @@ void TitleScreenScene::exit(Scene& next)
 
     set_scroll(Layer::map_1_ext, 0, 8);
     set_scroll(Layer::map_0_ext, 0, 0);
-
-    PLATFORM.clear_layer(Layer::map_0);
-    PLATFORM.clear_layer(Layer::map_1);
-
 
     APP.birds().clear();
     APP.effects().clear();
@@ -985,8 +975,7 @@ ScenePtr TitleScreenScene::update(Time delta)
                 state_ = State::fade_modules_1;
             } else {
                 if (not repeat_action1_) {
-                    PLATFORM.speaker().stream_music("unaccompanied_wind.raw",
-                                                    0);
+                    PLATFORM.speaker().stream_music("unaccompanied_wind.raw", 0);
                     PLATFORM.speaker().play_sound("button_wooden", 3);
                 }
                 module_cursor_.reset();
@@ -1491,8 +1480,7 @@ ScenePtr TitleScreenScene::update(Time delta)
                              module_cursor_->y * modules_per_row;
                 if (auto f = detail::_Module::Factory::get(index, dev_)) {
                     PLATFORM.speaker().clear_sounds();
-                    PLATFORM.speaker().stream_music("unaccompanied_wind.raw",
-                                                    0);
+                    PLATFORM.speaker().stream_music("unaccompanied_wind.raw", 0);
                     PLATFORM.speaker().play_sound("button_wooden", 3);
 
                     if (f->name() == SystemString::module_cart_viewer) {

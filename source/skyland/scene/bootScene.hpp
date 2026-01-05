@@ -63,7 +63,8 @@ private:
     Buffer<Text, 8> text_opts_;
 
 public:
-    LanguageSelectScene() : opts_(load_language_options())
+    LanguageSelectScene()
+        : opts_(load_language_options())
     {
     }
 

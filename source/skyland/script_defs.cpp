@@ -1331,8 +1331,6 @@ BINDING_TABLE({
           environment_init(L_LOAD_INT(0));
           PLATFORM.screen().set_shader(APP.environment().shader());
           PLATFORM.screen().set_shader_argument(0);
-          PLATFORM.load_background_texture(
-              APP.environment().background_texture());
 
           if (not PLATFORM.speaker().is_music_playing(
                   APP.environment().music()->c_str())) {
@@ -1340,10 +1338,10 @@ BINDING_TABLE({
                   APP.environment().music()->c_str(), 0);
           }
 
-          show_island(&APP.player_island());
+          APP.player_island().schedule_repaint();
 
           if (APP.opponent_island()) {
-              show_island(APP.opponent_island());
+              APP.opponent_island()->schedule_repaint();
           }
 
           return L_NIL;

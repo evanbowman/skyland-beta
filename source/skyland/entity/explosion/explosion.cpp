@@ -91,7 +91,6 @@ void Explosion::update(Time delta)
 
 
 
-
 static const int exp_flash_index_seq[] = {52, 53, 54, 55, 56, 50, 24};
 
 

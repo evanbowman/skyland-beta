@@ -757,7 +757,7 @@ lisp::Value* App::invoke_script(
         lisp::DefaultPrinter p;
         lisp::format(&err, p);
         auto file = seek_filename(path);
-        PLATFORM.fatal(format<512>("%: %", file, p.data_.c_str()));
+        PLATFORM.fatal(format<256>("%: %", file, p.data_.c_str()));
     };
 
     if (not err_handler) {

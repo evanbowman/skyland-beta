@@ -718,9 +718,7 @@ void Island::FireState::display(Island& island)
     for (int x = 0; x < 16; ++x) {
         for (int y = 0; y < 16; ++y) {
             if (positions_.get(x, y)) {
-                auto fx = o.x + x * 16;
-                auto fy = o.y + y * 16 - 16;
-                batch->push_back({fx, fy});
+                batch->push_back({o.x + x * 16, o.y + y * 16 - 16});
             }
         }
     }
@@ -1840,7 +1838,6 @@ void Island::plot_construction_zones(bool matrix[16][16]) const
 
 
 bool Island::repaint_alloc_tiles(TileId buffer[16][16], bool retry)
-
 {
     for (int x = 0; x < 16; ++x) {
         // NOTE: only handle 15 rows because render_terrain() takes care of the

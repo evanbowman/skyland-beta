@@ -83,7 +83,6 @@ void FadeInScene::enter(Scene& prev)
     }
 
     PLATFORM.screen().set_shader(APP.environment().shader());
-    PLATFORM.load_background_texture(APP.environment().background_texture());
 
     APP.player_island().schedule_repaint();
 

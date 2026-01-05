@@ -1802,8 +1802,6 @@ ScenePtr RewindScene::update(Time)
             auto e = (time_stream::event::WeatherChanged*)end;
             environment_init(e->prev_weather_);
             PLATFORM.screen().set_shader(APP.environment().shader());
-            PLATFORM.load_background_texture(
-                APP.environment().background_texture());
             PLATFORM.speaker().stream_music(APP.environment().music()->c_str(),
                                             0);
             APP.time_stream().pop(sizeof *e);

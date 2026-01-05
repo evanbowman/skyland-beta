@@ -157,7 +157,7 @@ inline void core_explosion(Island* parent,
         // Don't create the explosion effect if way outside of the camera range.
     } else {
 
-        if (conf.clear_effects_ and PLATFORM.has_slow_cpu()) {
+        if (conf.clear_effects_) {
             APP.clear_effects_lowpriority();
         }
 

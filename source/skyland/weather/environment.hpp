@@ -26,7 +26,7 @@ class Platform;
 namespace skyland
 {
 class App;
-class Entity;
+
 
 
 using EnvironmentId = int;

@@ -148,8 +148,6 @@ void SandboxLoaderModule::enter(Scene& prev)
     } else {
         environment_init(parameters_[4]);
         PLATFORM.screen().set_shader(APP.environment().shader());
-        PLATFORM.load_background_texture(
-            APP.environment().background_texture());
 
         auto new_ambiance = APP.environment().ambiance();
         if (not PLATFORM.speaker().is_music_playing(new_ambiance->c_str())) {
@@ -271,8 +269,6 @@ ScenePtr SandboxLoaderModule::update(Time delta)
 
         PLATFORM.screen().set_shader(APP.environment().shader());
         PLATFORM.screen().set_shader_argument(0);
-        PLATFORM.load_background_texture(
-            APP.environment().background_texture());
 
         PLATFORM.screen().schedule_fade(
             0.7f, {ColorConstant::rich_black, false, false});
