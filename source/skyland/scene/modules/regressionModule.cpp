@@ -19,8 +19,6 @@
 namespace skyland
 {
 
-
-
 EXT_WORKRAM_DATA s8 test_index = -1;
 
 
@@ -143,7 +141,6 @@ ScenePtr RegressionModule::update(Time delta)
                         {1, 5},
                         text_colors);
             Text::print("press any key to reset...", {1, 7}, text_colors);
-
             while (1) {
                 PLATFORM.keyboard().poll();
                 PLATFORM_EXTENSION(feed_watchdog);
