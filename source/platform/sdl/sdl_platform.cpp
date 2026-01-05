@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Copyright (c) 2023 Evan Bowman
+// Copyright (c) 2026 Evan Bowman
 //
 // This Source Code Form is subject to the terms of the Mozilla Public License,
 // v. 2.0. If a copy of the MPL was not distributed with this file, You can
@@ -190,9 +190,13 @@ static std::vector<std::tuple<Fixnum, Fixnum, int, ColorConstant, u8>>
 
 static ColorConstant sdl_color_to_colorconstant(const SDL_Color& c)
 {
-    return (ColorConstant)((c.r << 16) | (c.g << 8) | c.b);
-}
+    // Quantize to 5-bit color like GBA hardware does
+    u8 r = (c.r >> 3) << 3;
+    u8 g = (c.g >> 3) << 3;
+    u8 b = (c.b >> 3) << 3;
 
+    return (ColorConstant)((r << 16) | (g << 8) | b);
+}
 
 
 SDL_Color color_to_sdl(ColorConstant k)
@@ -204,8 +208,26 @@ SDL_Color color_to_sdl(ColorConstant k)
     u8 g = (hex >> 8) & 0xFF;
     u8 b = hex & 0xFF;
 
+    r = (r >> 3) << 3;
+    g = (g >> 3) << 3;
+    b = (b >> 3) << 3;
+
     SDL_Color result = {r, g, b, 255};
     return result;
+}
+
+
+
+bool save_surface_to_bmp(SDL_Surface* surface, const char* filename)
+{
+    if (SDL_SaveBMP(surface, filename) != 0) {
+        std::cerr << "Failed to save BMP: " << SDL_GetError() << std::endl;
+        return false;
+    }
+
+    std::cout << "Saved surface to " << filename << " ("
+              << surface->w << "x" << surface->h << ")" << std::endl;
+    return true;
 }
 
 
@@ -783,22 +805,42 @@ void Platform::set_tile(Layer layer,
                         TileDesc val,
                         Optional<u16> palette)
 {
-    switch (layer) {
-    case Layer::map_0_ext:
-        set_raw_tile(Layer::map_0, x, y, 0);
-        set_raw_tile(Layer::map_0, x + 1, y, 0);
-        set_raw_tile(Layer::map_0, x, y + 1, 0);
-        set_raw_tile(Layer::map_0, x + 1, y + 1, 0);
-        tile_layers_[layer][{x, y}] = {val, palette.value_or(0)};
-        break;
+    auto erase_existing = [&](auto& layer, u16 x, u16 y) {
+        auto found_tile = layer.find({x, y});
+        if (found_tile not_eq layer.end()) {
+            layer.erase(found_tile);
+        }
+    };
 
-    case Layer::map_1_ext:
-        set_raw_tile(Layer::map_1, x, y, 0);
-        set_raw_tile(Layer::map_1, x + 1, y, 0);
-        set_raw_tile(Layer::map_1, x, y + 1, 0);
-        set_raw_tile(Layer::map_1, x + 1, y + 1, 0);
+    switch (layer) {
+    case Layer::map_0_ext: {
+        auto found_layer = tile_layers_.find(Layer::map_0);
+        if (found_layer not_eq tile_layers_.end()) {
+            // On GBA hardware, map_0_ext is just a special addressing mode that
+            // treats tiles in the map_0 layer as 16x16 blocks of 2x2
+            // metatiles. Therefore, when we write to map_0_ext, we erase the
+            // overlapping contents of map_0, because the game assumes that
+            // they're effectively the same tile layer.
+            erase_existing(found_layer->second, x * 2, y * 2);
+            erase_existing(found_layer->second, x * 2 + 1, y * 2);
+            erase_existing(found_layer->second, x * 2, y * 2 + 1);
+            erase_existing(found_layer->second, x * 2 + 1, y * 2 + 1);
+        }
         tile_layers_[layer][{x, y}] = {val, palette.value_or(0)};
         break;
+    }
+
+    case Layer::map_1_ext: {
+        auto found_layer = tile_layers_.find(Layer::map_1);
+        if (found_layer not_eq tile_layers_.end()) {
+            erase_existing(found_layer->second, x * 2, y * 2);
+            erase_existing(found_layer->second, x * 2 + 1, y * 2);
+            erase_existing(found_layer->second, x * 2, y * 2 + 1);
+            erase_existing(found_layer->second, x * 2 + 1, y * 2 + 1);
+        }
+        tile_layers_[layer][{x, y}] = {val, palette.value_or(0)};
+        break;
+    }
 
     case Layer::map_0:
     case Layer::map_1:
@@ -1341,9 +1383,28 @@ u16 Platform::get_palette(Layer layer, u16 x, u16 y)
 
 void Platform::set_raw_tile(Layer layer, u16 x, u16 y, TileDesc val)
 {
-    set_tile(layer, x, y, val);
-}
+    if (layer == Layer::map_0 and tile0_surface->h == 16) {
+        // We need to metatile...
+        // The tilesheet is arranged in 2x2 metatiles:
+        //   0 1 4 5 8 9 ...
+        //   2 3 6 7 10 11 ...
+        // So tile index 5 is at metatile 1, position top-right (x=3, y=0)
 
+        u16 metatile_index = val / 4;           // Which 2x2 metatile group
+        u16 within_metatile = val % 4;          // Position within the metatile (0-3)
+
+        u16 metatile_x = metatile_index * 2;    // Each metatile is 2 tiles wide
+        u16 tile_x = metatile_x + (within_metatile & 1);      // Add 0 or 1 for left/right
+        u16 tile_y = (within_metatile & 2) >> 1;               // 0 for top row, 1 for bottom row
+
+        TileDesc target = tile_y * (tile0_surface->w / 8) + tile_x;
+
+        set_tile(layer, x, y, target);
+
+    } else {
+        set_tile(layer, x, y, val);
+    }
+}
 
 
 void Platform::blit_t0_erase(u16 index)
@@ -2907,6 +2968,7 @@ void Platform::set_overlay_origin(Float x, Float y)
 
 
 static SDL_Texture* current_sprite_texture = nullptr;
+static SDL_Texture* sprite_mask_texture = nullptr;
 static int sprite_texture_width = 0;
 static int sprite_texture_height = 0;
 
@@ -2918,6 +2980,10 @@ void Platform::load_sprite_texture(const char* name)
     if (current_sprite_texture) {
         SDL_DestroyTexture(current_sprite_texture);
         current_sprite_texture = nullptr;
+    }
+    if (sprite_mask_texture) {
+        SDL_DestroyTexture(sprite_mask_texture);
+        sprite_mask_texture = nullptr;
     }
 
     std::string full_path =
@@ -2944,6 +3010,41 @@ void Platform::load_sprite_texture(const char* name)
         surface = converted;
     }
 
+// Create white mask version for color mixing
+    SDL_Surface* mask_surf = SDL_CreateRGBSurfaceWithFormat(0, surface->w, surface->h, 32, SDL_PIXELFORMAT_RGBA32);
+    if (mask_surf) {
+        // Lock both surfaces
+        if (SDL_MUSTLOCK(surface)) {
+            SDL_LockSurface(surface);
+        }
+        SDL_LockSurface(mask_surf);
+
+        Uint32* src_pixels = (Uint32*)surface->pixels;
+        Uint32* dst_pixels = (Uint32*)mask_surf->pixels;
+        int pixel_count = surface->w * surface->h;
+
+        for (int i = 0; i < pixel_count; i++) {
+            Uint8 r, g, b, a;
+            SDL_GetRGBA(src_pixels[i], surface->format, &r, &g, &b, &a);
+            if (r == 255 and g == 0 and b == 255) {  // Non-transparent pixel
+                dst_pixels[i] = 0;
+            } else {
+                dst_pixels[i] = SDL_MapRGBA(mask_surf->format, 255, 255, 255, a);
+            }
+        }
+
+        SDL_UnlockSurface(mask_surf);
+        if (SDL_MUSTLOCK(surface)) {
+            SDL_UnlockSurface(surface);
+        }
+    }
+
+    SDL_Texture* mask_texture = nullptr;
+    if (mask_surf) {
+        mask_texture = SDL_CreateTextureFromSurface(renderer, mask_surf);
+        SDL_FreeSurface(mask_surf);
+    }
+
     // Set magenta (0xFF00FF) as the transparent color key
     Uint32 color_key = SDL_MapRGB(surface->format, 0xFF, 0x00, 0xFF);
     SDL_SetColorKey(surface, SDL_TRUE, color_key);
@@ -2956,6 +3057,8 @@ void Platform::load_sprite_texture(const char* name)
         SDL_FreeSurface(surface);
         return;
     }
+
+    sprite_mask_texture = mask_texture;
 
     // Enable alpha blending on the texture
     SDL_SetTextureBlendMode(current_sprite_texture, SDL_BLENDMODE_BLEND);
@@ -3105,8 +3208,13 @@ static void extract_text_colors_from_overlay()
 
 
 
+std::string current_background_texture;
+
+
+
 void Platform::load_background_texture(const char* name)
 {
+    current_background_texture = name;
     auto texture_name = extract_texture_name(name);
 
     if (background_texture) {
@@ -3834,6 +3942,9 @@ void Platform::Screen::set_shader(Shader shader)
 void Platform::Screen::set_shader_argument(int arg)
 {
     current_shader_arg = arg;
+    if (not current_background_texture.empty()) {
+        PLATFORM.load_background_texture(current_background_texture.c_str());
+    }
 }
 
 
@@ -4209,7 +4320,8 @@ void draw_sprite_group(int prio)
             u8 base_alpha =
                 (sprite.alpha == Sprite::Alpha::translucent) ? 127 : 255;
 
-            if (sprite.color != ColorConstant::null && sprite.mix_amount > 0) {
+            if (sprite.color != ColorConstant::null && sprite.mix_amount > 0
+                and sprite_mask_texture) {
                 // Dual-pass rendering with scaling
                 float mix_ratio = sprite.mix_amount / 255.0f;
 
@@ -4225,20 +4337,22 @@ void draw_sprite_group(int prio)
                                  flip);
 
                 auto mix_color = color_to_sdl(sprite.color);
-                SDL_SetTextureColorMod(current_sprite_texture,
+                SDL_SetTextureColorMod(sprite_mask_texture,
                                        mix_color.r,
                                        mix_color.g,
                                        mix_color.b);
-                SDL_SetTextureAlphaMod(current_sprite_texture,
+                SDL_SetTextureAlphaMod(sprite_mask_texture,
                                        base_alpha * mix_ratio);
                 SDL_RenderCopyEx(renderer,
-                                 current_sprite_texture,
+                                 sprite_mask_texture,
                                  &src,
                                  &dst,
                                  sprite.rotation,
                                  nullptr,
                                  flip);
 
+                SDL_SetTextureColorMod(sprite_mask_texture, 255, 255, 255);
+                SDL_SetTextureAlphaMod(sprite_mask_texture, 255);
                 SDL_SetTextureColorMod(current_sprite_texture, 255, 255, 255);
                 SDL_SetTextureAlphaMod(current_sprite_texture, 255);
             } else {
