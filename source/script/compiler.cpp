@@ -12,6 +12,9 @@
 #include "bytecode.hpp"
 #include "lisp.hpp"
 #include "number/endian.hpp"
+#ifndef __GBA__
+#include <iostream>
+#endif
 
 
 namespace lisp
