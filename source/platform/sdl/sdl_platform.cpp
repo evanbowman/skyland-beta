@@ -4589,7 +4589,13 @@ static void draw_tile_layer(Layer layer,
             // Draw the recolored tile to screen
             SDL_RenderCopy(renderer, tile_recolor_buffer, &temp_dst, &dst);
         } else {
-            SDL_RenderCopy(renderer, texture, &src, &dst);
+            if (tile_info.palette == 9) {
+                SDL_SetTextureColorMod(texture, 127, 127, 127);
+                SDL_RenderCopy(renderer, texture, &src, &dst);
+                SDL_SetTextureColorMod(texture, 255, 255, 255);
+            } else {
+                SDL_RenderCopy(renderer, texture, &src, &dst);
+            }
         }
     }
 
