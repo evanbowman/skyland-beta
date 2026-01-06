@@ -74,6 +74,10 @@ public:
 
         const s16 shrink_amount = interpolate(-450, -24, interval);
 
+        if (interval > 1.f) {
+            interval = 1.f;
+        }
+
         sprite_.set_mix(
             {ColorConstant::silver_white, u8(255 - 255 * interval)});
 
