@@ -2853,7 +2853,12 @@ void Platform::load_tile0_texture(const char* name_or_path)
 
     tile0_index_zero_is_transparent = is_tile_transparent(loaded_surface, 0, 0, 0);
 
-    loaded_surface = expand_surface_to_width(loaded_surface, 2048);
+    // NOTE: don't do the expansion for externally loaded files, which are
+    // neither flattened nor metatiled, as expanding them messes up texture
+    // index mapping.
+    if (std::string(name_or_path).find('.') == std::string::npos) {
+        loaded_surface = expand_surface_to_width(loaded_surface, 2048);
+    }
 
     // Keep the surface for later modification
     tile0_surface = loaded_surface;
@@ -2900,7 +2905,9 @@ void Platform::load_tile1_texture(const char* name_or_path)
 
     tile1_index_zero_is_transparent = is_tile_transparent(loaded_surface, 0, 0, 0);
 
-    loaded_surface = expand_surface_to_width(loaded_surface, 2048);
+    if (std::string(name_or_path).find('.') == std::string::npos) {
+        loaded_surface = expand_surface_to_width(loaded_surface, 2048);
+    }
 
     // Keep the surface for later modification
     tile1_surface = loaded_surface;
