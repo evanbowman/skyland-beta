@@ -40,7 +40,10 @@ jobs:
         cd build
         ./skyland/bin/Skyland --regression 2>&1 | tee regression.log
         last=$(tail -n1 regression.log)
-        if [ "$last" != "regression success!" ]; then echo "regression failed — last line was: $last" exit 1 fi
+        if [ "$last" != "regression success!" ]; then
+          echo "regression failed — last line was: $last"
+          exit 1
+        fi
         
     
     - name: Upload build artifacts
