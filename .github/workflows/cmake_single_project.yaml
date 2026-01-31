@@ -31,13 +31,18 @@ jobs:
     - name: Set up toolchain
       run: |
         cd build
+        export CCACHE_DIR=$HOME/.ccache
+        export CCACHE_MAXSIZE=500M
+        ccache -z
         # Run cmake directly to avoid 'rm -rf CMakeFiles' inside 'set-desktop-toolchain.sh' to keep cache.
-        cmake . -DGAMEBOY_ADVANCE=OFF
-
+        cmake . -DGAMEBOY_ADVANCE=OFF -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+        
     - name: Build project
       run: |
         cd build
+        export CCACHE_DIR=$HOME/.ccache
         make -j$(nproc)
+        ccache -s
     
     - name: Package Linux build
       run: |
