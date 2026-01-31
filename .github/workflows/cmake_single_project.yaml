@@ -18,16 +18,25 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y build-essential libsdl2-dev libsdl2-image-dev cmake
+
+    - name: Cache Build Directory
+      uses: actions/cache@v4
+      with:
+        path: build
+        key: ${{ runner.os }}-build-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-build-
     
     - name: Set up toolchain
       run: |
         cd build
-        ./set-desktop-toolchain.sh
-    
+        # Run cmake directly to avoid 'rm -rf CMakeFiles' inside 'set-desktop-toolchain.sh' to keep cache.
+        cmake . -DGAMEBOY_ADVANCE=OFF
+
     - name: Build project
       run: |
         cd build
-        make -j8
+        make -j$(nproc)
     
     - name: Package Linux build
       run: |
