@@ -78,7 +78,7 @@
                 (string (* 400 (zone)))
                 "@. Accept offer?")
 
-        (dialog-await-y/n)
+        (dialog-setup-y/n)
         (setq on-converge nil)))
 
 

@@ -45,7 +45,7 @@
         (setq on-dialog-closed
               (lambda ()
                 (dialog "She seems harmless, invite her aboard?")
-                (dialog-await-binary-q-w/lore "Sure!" "No."
+                (dialog-setup-binary-q-w/lore "Sure!" "No."
                                               '(("Why let her aboard?" .
                                                  "<c:Girl:14>Hmm.. well let's see. I'm good at cooking, I can clean your ship, I'm pretty decent at crochet and... I don't know if this is even relevant, but I'm a blackbelt in karate! <B:0> Can I come along?")))
                 (setq on-dialog-closed '())))

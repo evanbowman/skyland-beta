@@ -35,7 +35,7 @@
         (lambda ()
             (dialog "He seems harmless, invite him aboard?")
 
-          (dialog-await-binary-q-w/lore "Welcome aboard!" "Not today."
+          (dialog-setup-binary-q-w/lore "Welcome aboard!" "Not today."
                                         '(("How'd you get here?" .
                                            "<c:Castaway:1>I was travelling on an airship that got boarded by goblins. I panicked and jumped in a transporter. I guess things could have turned out much worse, heh. <B:0> Wanna join up?")))
 

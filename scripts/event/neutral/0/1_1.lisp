@@ -31,7 +31,7 @@
   (dialog
    "<c:Anvil Annie:44>Unknown vessel! You're trespassing in MY airspace! <B:0> I've been keeping this stretch of sky clear for twenty years, and I don't plan on stopping now! <B:0> Don't even think about giving me that 'innocent trader' routine - I can smell goblin sympathizers from three leagues away! <B:0> Tell you what, spy - <B:0>you hand over 700@ right now, and maybe Sweet Bertha here won't blow a hole in your hull! (pats cannon)")
   (dialog-opts-reset)
-  (dialog-await-binary-q-w/lore "Pay 700@." "Refuse bribe."
+  (dialog-setup-binary-q-w/lore "Pay 700@." "Refuse bribe."
                                 '(("We aren't spies!" .
                                    "<c:Anvil Annie:44>Course you'd say that. Real spies always deny it. Innocent traders? They get confused, ask what I'm talking about. But you knew EXACTLY what I meant...")
                                   ("What's this debris field?" .

@@ -38,7 +38,7 @@
                   (if (< (coins) 1300)
                       "...but you don't seem to have enough. Do you want to salvage some stuff to come up with the funds? I'll check back in 15 seconds?"
                       "What do you say?"))
-          (dialog-await-y/n)
+          (dialog-setup-y/n)
           (setq on-converge nil)))
 
 
@@ -64,7 +64,7 @@
                       (on-timeout 15000 'fut))
                     (progn
                       (dialog "<c:Merchant:7>Sorry, that's not enough! Do you want to salvage some stuff to come up with the resources for payment? I'll check back in in 15 seconds?")
-                      (dialog-await-y/n)
+                      (dialog-setup-y/n)
                       (setq on-dialog-accepted (lambda () (on-timeout 15000 'fut)))
                       (setq on-dialog-declined (lambda () (unbind 'fut) (exit))))))
               (progn

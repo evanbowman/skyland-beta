@@ -60,7 +60,7 @@
 
                       (defn cb3 ()
                         (dialog "<c:Redbeard:12>Yaargh!! I'm just a simple marauder, trying to earn a decent living here! [via petty extortion, how else?] <B:0> So what's it gonna be? Last chance...")
-                        (dialog-await-binary-q "Pay 600@." "Fight back.")
+                        (dialog-setup-binary-q "Pay 600@." "Fight back.")
                         (unbind 'cb0 'cb1 'cb2 'cb3))
 
                       (on-timeout 400 'cb0)

@@ -55,7 +55,7 @@
       (lambda ()
         (dialog "The fortress appears to be empty, but you cannot be certain. Attempt to board?")
         (setq on-converge '())
-        (dialog-await-y/n)))
+        (dialog-setup-y/n)))
 
 
 (setq on-dialog-declined

@@ -71,10 +71,10 @@
 ;; options. This helper function exists for when only a simple yes/no choice is
 ;; needed, but the dialog-opts-reset and dialog-opts-push functions may be
 ;; called manually for more fine-grained control over dialog settings.
-(defn/c dialog-await-y/n ()
-  (dialog-await-binary-q "yes" "no"))
+(defn/c dialog-setup-y/n ()
+  (dialog-setup-binary-q "yes" "no"))
 
-(defn/c dialog-await-binary-q ((txt1 . string) (txt2 . string))
+(defn/c dialog-setup-binary-q ((txt1 . string) (txt2 . string))
   (dialog-opts-reset)
   (dialog-opts-push txt1 (lambda () (if on-dialog-accepted (on-dialog-accepted))))
   (dialog-opts-push txt2 (lambda () (if on-dialog-declined (on-dialog-declined)))))
@@ -85,7 +85,7 @@
 ;; be a bunch of worldbuilding questions. If you select a middle option, the
 ;; game will show the text, and then re-display the query box of options, with
 ;; the previously selected one removed.
-(defn/c dialog-await-binary-q-w/lore ((txty . string) (txtn . string) lore)
+(defn/c dialog-setup-binary-q-w/lore ((txty . string) (txtn . string) lore)
   (dialog-opts-reset)
   (dialog-opts-push txty (lambda () (if on-dialog-accepted (on-dialog-accepted))))
 

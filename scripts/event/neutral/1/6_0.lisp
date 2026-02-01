@@ -78,7 +78,7 @@
 
             (dialog
              "<c:Mayor:10>After a few years of use, our old power supply ran out of atomic fuel, and we're running on this weaker standby-core. Can you help our town by trading one of your own power-cores for our standby? We'll throw in two weapons and three of our crew members to sweeten the deal!")
-            (dialog-await-binary-q "OK, let's trade!" "Sorry, I can't…")
+            (dialog-setup-binary-q "OK, let's trade!" "Sorry, I can't…")
 
             (setq on-dialog-declined exit)
 

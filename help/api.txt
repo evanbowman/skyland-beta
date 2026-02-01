@@ -779,6 +779,17 @@ o----------------------------o
 
 o----------------------------o
 
+ (dialog* strings ...)
+
+ The new dialog function,
+ which returns a promise for
+ waiting on the result,
+ rather than invoking dialog
+ callbacks.
+
+
+o----------------------------o
+
  (has-dialog?)
 
  True if any dialog text has
@@ -1170,6 +1181,19 @@ o----------------------------o
         isle
         x
         y))))
+
+
+o----------------------------o
+
+ (sel-input* room-sym msg)
+
+ The new sel-input function.
+ Returns a promise object,
+ which can be passed to the
+ await keyword.
+
+ (let ((loc (await (sel-input ...))))
+   ...)
 
 
 o----------------------------o

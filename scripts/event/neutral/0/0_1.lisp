@@ -34,7 +34,7 @@
   (setq on-dialog-closed
         (lambda ()
             (dialog "He seems harmless, invite him aboard?")
-          (dialog-await-y/n)
+          (dialog-setup-y/n)
           (setq on-dialog-closed '())))
 
   (setq on-converge nil))

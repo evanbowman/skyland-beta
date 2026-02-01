@@ -59,7 +59,7 @@
      "The island seems thoroughly ransacked... but the pirates inexplicably "
      "left behind a weapon. Haul it aboard?")
 
-    (dialog-await-binary-q-w/lore "Yeah!" "No, leave it."
+    (dialog-setup-binary-q-w/lore "Yeah!" "No, leave it."
                                   '(("What's a goblin raid?" .
                                      "Looks like goblins from the surface world ransacked this island for scrap metal and fuel. It's unclear why they left a weapon lying around, perhaps they left in a hurry. <B:0> Anyway, pick up the weapon?")))
 

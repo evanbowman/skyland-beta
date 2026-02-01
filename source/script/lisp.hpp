@@ -708,7 +708,7 @@ Value* make_databuffer(const char* sbr_tag = "");
 Value* make_string(const char* str);
 Value* make_float(Float::ValueType v);
 Value* make_promise();
-void resolve_promise(Promise& promise, Value* result);
+void resolve_promise(Value* promise, Value* result);
 
 
 bool to_rational(Value* v, s32& num, s32& div);

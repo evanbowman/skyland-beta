@@ -1642,6 +1642,64 @@ const char* type_to_string(ValueHeader::Type tp)
 }
 
 
+struct EvalFrame
+{
+    Value* expr_;
+    enum State : u8 {
+        start,
+        funcall_apply,
+        if_check_branch,
+        while_check_condition,
+        while_body,
+        while_body_discard_result,
+        let_install_bindings,
+        let_body,
+        let_body_discard,
+        let_cleanup,
+        lisp_funcall_setup,
+        lisp_funcall_body,
+        lisp_funcall_body_discard,
+        lisp_funcall_cleanup,
+        await_check_result,
+        await_resume,
+    } state_;
+
+    struct FuncallApplyParams
+    {
+        int argc_;
+    };
+
+    struct InstallLetParams
+    {
+        int binding_count_;
+    };
+
+    struct LispFuncallCleanupParams
+    {
+        int argc_;
+        int saved_break_loc_;
+        u8 saved_argc_;
+    };
+
+    struct AwaitResumeParams
+    {
+        int saved_break_loc_;
+        u8 saved_argc_;
+    };
+
+    union
+    {
+        FuncallApplyParams funcall_apply_;
+        InstallLetParams install_let_;
+        LispFuncallCleanupParams lisp_funcall_cleanup_;
+        AwaitResumeParams await_resume_;
+    };
+};
+
+
+void eval_loop(Vector<EvalFrame>& eval_stack);
+
+
 // The function arguments should be sitting at the top of the operand stack
 // prior to calling funcall. The arguments will be consumed, and replaced with
 // the result of the function call.
@@ -1720,38 +1778,32 @@ void funcall(Value* obj, u8 argc)
 
         case Function::ModeBits::lisp_function: {
             PLATFORM_EXTENSION(stack_check);
+            pop_callstack(); // lisp_funcall_setup handles it
 
-            auto& ctx = *bound_context;
-            ctx.lexical_bindings_ =
-                dcompr(obj->function().lisp_impl_.lexical_bindings_);
-            const auto break_loc = ctx.operand_stack_->size() - 1;
-            ctx.arguments_break_loc_ = break_loc;
-            ctx.current_fn_argc_ = argc;
-            if (bound_context->strict_) {
-                CHECK_ARG_TYPES();
-            }
+            // State machine expects prev_bindings and the function itself on
+            // the stack above the args.
+            insert_op(argc, prev_bindings);
+            insert_op(argc, obj);
 
-            auto expression_list = dcompr(obj->function().lisp_impl_.code_);
-            auto result = get_nil();
-            push_op(result);
-            while (expression_list not_eq get_nil()) {
-                if (expression_list->type() not_eq Value::Type::cons) {
-                    break;
-                }
-                pop_op(); // result
-                ctx.arguments_break_loc_ = break_loc;
-                ctx.current_fn_argc_ = argc;
-                eval(expression_list->cons().car()); // new result
-                if (is_error(get_op0())) {
-                    break;
-                }
-                expression_list = expression_list->cons().cdr();
-            }
-            result = get_op0();
-            pop_op(); // result
-            pop_args();
-            push_op(result);
-            break;
+            Vector<EvalFrame> eval_stack;
+
+            eval_stack.push_back({
+                    .expr_ = obj,
+                    .state_ = EvalFrame::lisp_funcall_cleanup,
+                    .lisp_funcall_cleanup_ = {argc, prev_arguments_break_loc, prev_argc}
+                });
+
+            eval_stack.push_back({
+                    .expr_ = obj,
+                    .state_ = EvalFrame::lisp_funcall_setup,
+                    .funcall_apply_ = {argc}
+                });
+
+            eval_loop(eval_stack);
+
+            // lisp_funcall_cleanup handles all of the cleanup that would
+            // normally happen at the bottom of funcall.
+            return;
         }
 
         case Function::ModeBits::lisp_bytecode_function: {
@@ -2618,61 +2670,6 @@ void format(Value* value, Printer& p)
 {
     format_impl(value, p, 0, false);
 }
-
-
-struct EvalFrame
-{
-    Value* expr_;
-    enum State : u8 {
-        start,
-        funcall_apply,
-        if_check_branch,
-        while_check_condition,
-        while_body,
-        while_body_discard_result,
-        let_install_bindings,
-        let_body,
-        let_body_discard,
-        let_cleanup,
-        lisp_funcall_setup,
-        lisp_funcall_body,
-        lisp_funcall_body_discard,
-        lisp_funcall_cleanup,
-        await_check_result,
-        await_resume,
-    } state_;
-
-    struct FuncallApplyParams
-    {
-        int argc_;
-    };
-
-    struct InstallLetParams
-    {
-        int binding_count_;
-    };
-
-    struct LispFuncallCleanupParams
-    {
-        int argc_;
-        int saved_break_loc_;
-        u8 saved_argc_;
-    };
-
-    struct AwaitResumeParams
-    {
-        int saved_break_loc_;
-        u8 saved_argc_;
-    };
-
-    union
-    {
-        FuncallApplyParams funcall_apply_;
-        InstallLetParams install_let_;
-        LispFuncallCleanupParams lisp_funcall_cleanup_;
-        AwaitResumeParams await_resume_;
-    };
-};
 
 
 // Garbage Collection:
@@ -3850,7 +3847,8 @@ void Promise::store_eval_frame(int slot, const EvalFrame& frame)
 void setup_promise(Promise& pr, Vector<EvalFrame>& eval_stack)
 {
     static_assert(sizeof(Context::OperandStack) <= SCRATCH_BUFFER_SIZE);
-    static_assert(sizeof(EvalFrame) * 256 < SCRATCH_BUFFER_SIZE);
+    // NOTE: checked in can_suspend instead.
+    // static_assert(sizeof(EvalFrame) * 256 < SCRATCH_BUFFER_SIZE);
 
     pr.operand_stack_ = compr(make_databuffer("op-stack-copy"));
     pr.eval_stack_ = compr(make_databuffer("ev-stack-copy"));
@@ -3869,8 +3867,13 @@ void setup_promise(Promise& pr, Vector<EvalFrame>& eval_stack)
 void eval_loop(Vector<EvalFrame>& eval_stack);
 
 
-void resolve_promise(Promise& promise, Value* result)
+void resolve_promise(Value* pr, Value* result)
 {
+    if (pr->type() not_eq Value::Type::promise) {
+        error("invalid argument to resolve_promise");
+    }
+
+    auto& promise = pr->promise();
     if (promise.eval_stack_elems_ == 0) {
         info("broken promise!");
         // Uninitialized promise! Nowhere for the result to go!?
@@ -3900,7 +3903,10 @@ void resolve_promise(Promise& promise, Value* result)
 
 bool can_suspend(Vector<EvalFrame>& eval_stack)
 {
-    if (eval_stack.size() > 255 or bound_context->operand_stack_->size() > 255) {
+    static const u32 max_eval_suspend_stack = SCRATCH_BUFFER_SIZE / sizeof(EvalFrame);
+
+    if (eval_stack.size() > max_eval_suspend_stack or
+        bound_context->operand_stack_->size() > 255) {
         return false;
     }
 

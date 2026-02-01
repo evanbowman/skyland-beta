@@ -47,7 +47,7 @@
    "this automated vessel seems to still be functioning. <B:0>"
    "The station's computers demand a toll of 600@. Pay?")
   (dialog-opts-reset)
-  (dialog-await-y/n)
+  (dialog-setup-y/n)
   (setq on-converge nil))
 
 

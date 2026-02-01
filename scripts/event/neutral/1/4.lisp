@@ -48,7 +48,7 @@
 
 (defn on-converge ()
   (dialog "Upon closer inspection, you find that the castle may contain valuable cargo, but it's overgrown with mycelium. You can explore, although there's some risk of cross-contamination. Board anyway?")
-  (dialog-await-binary-q-w/lore
+  (dialog-setup-binary-q-w/lore
    "Let's explore!"
    "No way!"
    '(("What's mycelium?" .

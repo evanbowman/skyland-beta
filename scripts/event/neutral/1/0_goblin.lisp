@@ -73,7 +73,7 @@
         (dialog
          "<c:Goblin Monk:41>We are the Ashwalker Order. While other goblins chase mere plunder, we seek the ancient strength that let our ancestors survive the surface world. <B:0> Our training could serve your crew well... for the right price.")
 
-        (dialog-await-binary-q
+        (dialog-setup-binary-q
          (format "Recruit? %@" (* 400 (zone)))
          "No thanks.")
 

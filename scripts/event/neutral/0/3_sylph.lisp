@@ -95,7 +95,7 @@
                       (on-timeout 15000 'fut))
                     (progn
                       (dialog "<c:Sylph Quartermaster:53>Resources still insufficient. Do you require additional time to salvage equipment? I will check status again in 15 seconds.")
-                      (dialog-await-y/n)
+                      (dialog-setup-y/n)
                       (setq on-dialog-accepted (lambda () (on-timeout 15000 'fut)))
                       (setq on-dialog-declined (lambda () (unbind 'fut) (exit))))))
               (progn
