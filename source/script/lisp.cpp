@@ -3910,6 +3910,14 @@ bool can_suspend(Vector<EvalFrame>& eval_stack)
         return false;
     }
 
+    if (length(bound_context->callstack_) == 1) {
+        if (bound_context->callstack_->cons().car()->type() not_eq
+            lisp::Value::Type::function) {
+            // We're at the toplevel, and cannot suspend
+            return false;
+        }
+    }
+
     bool can_suspend = true;
     l_foreach(bound_context->callstack_, [&](Value* v) {
         if (v->type() == Value::Type::function) {
@@ -4179,7 +4187,7 @@ void eval_loop(Vector<EvalFrame>& eval_stack)
                     return;
                 } else {
                     pop_op(); // The promise
-                    push_op(make_error("suspend failed!?"));
+                    push_op(make_error("suspend failed!"));
                 }
             }
             break;
