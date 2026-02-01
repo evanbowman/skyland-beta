@@ -298,7 +298,7 @@
 (end-test)
 
 
-;(assert-eq 9 (lisp-mem-stack-used))
+(assert-eq 9 (lisp-mem-stack-used))
 
 (gc)
 (begin-test "string")
