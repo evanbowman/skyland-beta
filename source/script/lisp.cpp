@@ -1982,6 +1982,88 @@ void lint(Value* expr, Value* variable_list)
             } else if (fn_sym->type() == Value::Type::symbol) {
                 auto name = fn_sym->symbol().name();
 
+                auto type_check = [&](auto expected_type, int slot) {
+                    auto arg = get_list(expr, slot + 1);
+                    if (arg->type() == Value::Type::symbol) {
+                        // TODO: track types through variable reference.
+                        // For example, if the symbol refers to a function
+                        // argument of known type...
+                        return true;
+                    }
+                    if (expected_type == Value::Type::symbol) {
+                        // Special case: quoted symbol
+                        if (arg->type() == Value::Type::cons) {
+                            if (str_eq(arg->cons().car()->symbol().name(),
+                                       "'") and
+                                arg->cons().cdr()->type() ==
+                                Value::Type::symbol) {
+                                return true;
+                            }
+                        }
+                    }
+                    auto detected_type = arg->hdr_.type();
+                    if (is_list(arg)) {
+                        auto first = get_list(arg, 0);
+                        if (first->type() == Value::Type::symbol) {
+                            auto name = first->symbol().name();
+                            if (str_eq(name, "lambda") or
+                                str_eq(name, "fn")) {
+                                // The first element of the list indicates
+                                // that the list is a lambda function.
+                                detected_type = Value::Type::function;
+                            } else {
+                                auto builtin = __load_builtin(name);
+                                if (builtin.second) {
+                                    auto rt = builtin.first.ret_type_;
+                                    if (rt == Value::Type::nil) {
+                                        // The builtin does not have a
+                                        // concrete return type. Static
+                                        // analysis cannot be performed
+                                        // here.
+                                        return true;
+                                    } else {
+                                        detected_type = (Value::Type)rt;
+                                    }
+                                } else {
+                                    auto v = get_var(first);
+                                    if (v->type() ==
+                                        Value::Type::function) {
+                                        auto& fn = v->function();
+                                        if (fn.sig_.ret_type_ ==
+                                            Value::Type::nil) {
+                                            return true;
+                                        } else {
+                                            detected_type =
+                                                (Value::Type)
+                                                fn.sig_.ret_type_;
+                                        }
+                                    } else {
+                                        return true;
+                                    }
+                                }
+                            }
+                        } else {
+                            // TODO: check return type of function call, if
+                            // possible...
+                            //
+                            // NOTE: this is the specific case where a
+                            // function is defined in the first position of
+                            // a list, like: ((lambda (x y) ...) args...)
+                            // But in this case, we're unlikely to know for
+                            // certain what the return type is,
+                            // unfortunately.
+                            return true;
+                        }
+                    }
+                    if (expected_type == Value::Type::rational and
+                        (detected_type == Value::Type::integer or
+                         detected_type == Value::Type::ratio)) {
+                        // Special case: integers can be promoted to ratios.
+                        return true;
+                    }
+                    return detected_type == expected_type;
+                };
+
                 if (str_eq(name, "'") or str_eq(name, "`")) {
                     push_op(L_NIL);
                     return; // quoted list
@@ -2067,6 +2149,12 @@ void lint(Value* expr, Value* variable_list)
                     is_special_form = true;
                 } else if (str_eq(name, "defconstant")) {
                     is_special_form = true;
+                } else if (str_eq(name, "await")) {
+                    if (not type_check(Value::Type::promise, 0)) {
+                        push_op(make_error("await requires input of type promise!"));
+                        return;
+                    }
+                    is_special_form = true;
                 }
 
                 auto fn = L_NIL;
@@ -2083,88 +2171,6 @@ void lint(Value* expr, Value* variable_list)
                         return;
                     }
                     auto& fn_var = fn->function();
-
-                    auto type_check = [&](auto expected_type, int slot) {
-                        auto arg = get_list(expr, slot + 1);
-                        if (arg->type() == Value::Type::symbol) {
-                            // TODO: track types through variable reference.
-                            // For example, if the symbol refers to a function
-                            // argument of known type...
-                            return true;
-                        }
-                        if (expected_type == Value::Type::symbol) {
-                            // Special case: quoted symbol
-                            if (arg->type() == Value::Type::cons) {
-                                if (str_eq(arg->cons().car()->symbol().name(),
-                                           "'") and
-                                    arg->cons().cdr()->type() ==
-                                        Value::Type::symbol) {
-                                    return true;
-                                }
-                            }
-                        }
-                        auto detected_type = arg->hdr_.type();
-                        if (is_list(arg)) {
-                            auto first = get_list(arg, 0);
-                            if (first->type() == Value::Type::symbol) {
-                                auto name = first->symbol().name();
-                                if (str_eq(name, "lambda") or
-                                    str_eq(name, "fn")) {
-                                    // The first element of the list indicates
-                                    // that the list is a lambda function.
-                                    detected_type = Value::Type::function;
-                                } else {
-                                    auto builtin = __load_builtin(name);
-                                    if (builtin.second) {
-                                        auto rt = builtin.first.ret_type_;
-                                        if (rt == Value::Type::nil) {
-                                            // The builtin does not have a
-                                            // concrete return type. Static
-                                            // analysis cannot be performed
-                                            // here.
-                                            return true;
-                                        } else {
-                                            detected_type = (Value::Type)rt;
-                                        }
-                                    } else {
-                                        auto v = get_var(first);
-                                        if (v->type() ==
-                                            Value::Type::function) {
-                                            auto& fn = v->function();
-                                            if (fn.sig_.ret_type_ ==
-                                                Value::Type::nil) {
-                                                return true;
-                                            } else {
-                                                detected_type =
-                                                    (Value::Type)
-                                                        fn.sig_.ret_type_;
-                                            }
-                                        } else {
-                                            return true;
-                                        }
-                                    }
-                                }
-                            } else {
-                                // TODO: check return type of function call, if
-                                // possible...
-                                //
-                                // NOTE: this is the specific case where a
-                                // function is defined in the first position of
-                                // a list, like: ((lambda (x y) ...) args...)
-                                // But in this case, we're unlikely to know for
-                                // certain what the return type is,
-                                // unfortunately.
-                                return true;
-                            }
-                        }
-                        if (expected_type == Value::Type::rational and
-                            (detected_type == Value::Type::integer or
-                             detected_type == Value::Type::ratio)) {
-                            // Special case: integers can be promoted to ratios.
-                            return true;
-                        }
-                        return detected_type == expected_type;
-                    };
 
                     auto arg_error = [&](int arg, u8 expected) {
                         auto tp = (ValueHeader::Type)expected;
