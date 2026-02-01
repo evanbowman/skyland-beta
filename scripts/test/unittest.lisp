@@ -39,7 +39,7 @@
 ;; At the beginning, assert the expected operand stack size. We'll have another
 ;; assertion at the end of regression in apitest.lisp, to make sure that we
 ;; aren't forgetting to pop anything off the stack.
-(assert-eq 6 (lisp-mem-stack-used))
+(assert-eq 7 (lisp-mem-stack-used))
 
 (if (not (error? (assert-eq 1 2)))
     (error "Something is wrong with assert-eq..."))

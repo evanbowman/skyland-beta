@@ -3275,9 +3275,6 @@ FINAL:
 }
 
 
-static void eval_let(Value* code);
-
-
 static void macroexpand();
 
 
@@ -3317,6 +3314,9 @@ static void macroexpand_macro()
     pop_op();
     push_op(result.result());
 }
+
+
+static void eval_let_recursive(Value*);
 
 
 // Argument: list on operand stack
@@ -3395,7 +3395,7 @@ static void macroexpand()
                 synthetic_let.push_front(macro->cons().cdr()->cons().car());
                 synthetic_let.push_front(builder.result());
 
-                eval_let(synthetic_let.result());
+                eval_let_recursive(synthetic_let.result());
 
                 auto result = get_op0();
                 pop_op(); // result of eval_let()
@@ -3550,39 +3550,9 @@ u32 read(CharSequence& code, int offset)
 }
 
 
-static void eval_while(Value* code)
-{
-    Protected result(get_nil());
-
-    if (code->type() not_eq Value::Type::cons) {
-        push_op(lisp::make_error(Error::Code::mismatched_parentheses, L_NIL));
-        return;
-    }
-
-    auto cond = code->cons().car();
-
-    while (true) {
-
-        eval(cond);
-        auto test = get_op0();
-        pop_op();
-
-        if (not is_boolean_true(test)) {
-            break;
-        }
-
-        l_foreach(code->cons().cdr(), [&](Value* val) {
-            eval(val);
-            result.set(get_op0());
-            pop_op();
-        });
-    }
-
-    push_op(result);
-}
-
-
-static void eval_let(Value* code)
+// The old recursive implementation of eval_let. Our new eval implementation is
+// stack-based, but we still need this older implementation in some cases.
+static void eval_let_recursive(Value* code)
 {
     // Overview:
     // Push the previous values of all of the let binding vars onto the stack.
@@ -3676,78 +3646,9 @@ static void eval_macro(Value* code)
 }
 
 
-static void eval_defconstant(Value* code)
-{
-    if (code->cons().car()->type() not_eq lisp::Value::Type::symbol) {
-        // FIXME!
-        PLATFORM.fatal("invalid defconstant syntax!");
-    }
-
-    if (bound_context->external_constant_tab_) {
-        // We will load the value from our constant table, so there's no need to
-        // do anything when we encounter a defconstant line.
-    } else {
-        // We don't have an external constant table defined. Instead, we'll need
-        // to load the variable into memory.
-        eval(code->cons().cdr()->cons().car()); // The constant value...
-
-        // TODO: load and check for a precomputed constant table, and don't
-        // store values in memory.
-        set_var(code->cons().car(), get_op0(), true);
-
-        pop_op(); // eval result.
-    }
-
-    push_op(get_nil());
-}
-
-
-static void eval_if(Value* code)
-{
-    if (code->type() not_eq Value::Type::cons) {
-        push_op(lisp::make_error(Error::Code::mismatched_parentheses, L_NIL));
-        return;
-    }
-
-    auto cond = code->cons().car();
-
-    auto true_branch = get_nil();
-    auto false_branch = get_nil();
-
-    if (code->cons().cdr()->type() == Value::Type::cons) {
-        true_branch = code->cons().cdr()->cons().car();
-
-        if (code->cons().cdr()->cons().cdr()->type() == Value::Type::cons) {
-            false_branch = code->cons().cdr()->cons().cdr()->cons().car();
-        }
-    }
-
-    eval(cond);
-    if (is_boolean_true(get_op0())) {
-        eval(true_branch);
-    } else {
-        eval(false_branch);
-    }
-
-    auto result = get_op0();
-    pop_op(); // result
-    pop_op(); // cond
-    push_op(result);
-}
-
-
-static void eval_function(Value* code)
-{
-    push_op(make_lisp_function(code));
-}
-
-
-static void eval_argumented_function(Value* code)
-{
-    push_op(make_lisp_argumented_function(code));
-}
-
-
+// NOTE: eval_quasiquote is implemented recursively, unlike the rest of
+// eval(). Quasiquote is fairly complex, and typically there's no need to yield
+// execution or capture continuations within quasiquote expansion...
 static void eval_quasiquote(Value* code)
 {
     ListBuilder builder;
@@ -3810,157 +3711,334 @@ static void eval_quasiquote(Value* code)
 }
 
 
-
-#if defined(__GBA__) or defined(__APPLE__)
-#define STANDARD_FORMS                                                         \
-    MAPBOX_ETERNAL_CONSTEXPR const auto standard_forms =                       \
-        mapbox::eternal::hash_map<mapbox::eternal::string, EvalCB>
-#else
-#define STANDARD_FORMS                                                         \
-    const auto standard_forms = std::unordered_map<std::string, EvalCB>
-#endif
-
-
-using EvalCB = void (*)(Value*);
-// clang-format off
-STANDARD_FORMS({
-        {"if", [](Value* code) {
-            eval_if(code->cons().cdr());
-            auto result = get_op0();
-            pop_op(); // result
-            pop_op(); // code
-            push_op(result);
-        }},
-        {"lambda", [](Value* code) {
-            eval_argumented_function(code->cons().cdr());
-            // NOTE: evaluating an argumented function is destructive. Once
-            // we've evaluated an argumented function once, the function body is
-            // converted to an intermediate representation, and we adjust the
-            // head position in the list and splice out the argument list so
-            // that next time we reach the same function, we evaluate it in the
-            // lower level intermediate representation rather than performing
-            // argument substition again. In fact, re-substituting arguments in
-            // an already argument-substituted function creates re-entrancy
-            // bugs, and if it didn't, I wouldn't be fixing this, so it's not
-            // purely an optmization issue.
-            code->cons().set_car(make_symbol("fn"));
-            code->cons().set_cdr(code->cons().cdr()->cons().cdr());
-            auto result = get_op0();
-            pop_op(); // result
-            pop_op(); // code
-            push_op(result);
-            return;
-        }},
-        {"fn", [](Value* code) {
-            eval_function(code->cons().cdr());
-            auto result = get_op0();
-            pop_op(); // result
-            pop_op(); // code
-            push_op(result);
-        }},
-        {"'", [](Value* code) {
-            pop_op(); // code
-            push_op(code->cons().cdr());
-        }},
-        {"`", [](Value* code) {
-            eval_quasiquote(code->cons().cdr());
-            auto result = get_op0();
-            pop_op(); // result
-            pop_op(); // code
-            push_op(result);
-        }},
-        {"let", [](Value* code) {
-            eval_let(code->cons().cdr());
-            auto result = get_op0();
-            pop_op();
-            pop_op();
-            push_op(result);
-        }},
-        {"macro", [](Value* code) {
-            eval_macro(code->cons().cdr());
-            pop_op();
-        }},
-        {"while", [](Value* code) {
-            eval_while(code->cons().cdr());
-            auto result = get_op0();
-            pop_op();
-            pop_op();
-            push_op(result);
-        }},
-        {"defconstant", [](Value* code) {
-            eval_defconstant(code->cons().cdr());
-            auto result = get_op0();
-            pop_op();
-            pop_op();
-            push_op(result);
-        }}
-    });
-
-
-
-void eval(Value* code)
+struct EvalFrame
 {
-    // NOTE: just to protect this from the GC, in case the user didn't bother to
-    // do so.
-    push_op(code);
+    Value* expr_;
+    enum State : u8 {
+        start,
+        funcall_apply,
+        if_check_branch,
+        while_check_condition,
+        while_body,
+        while_body_discard_result,
+        let_install_bindings,
+        let_body,
+        let_body_discard,
+        let_cleanup,
+    } state_;
+    int param_;
+};
 
-    gc_safepoint();
 
-    if (code->type() == Value::Type::symbol) {
-        pop_op();
-        push_op(get_var(code));
-    } else if (code->type() == Value::Type::cons) {
-        auto form = code->cons().car();
-        if (form->type() == Value::Type::symbol) {
-            auto std_form = standard_forms.find(form->symbol().name());
-            if (std_form not_eq standard_forms.end()) {
-                std_form->second(code);
-                return;
+void eval(Value* code_root)
+{
+    push_op(code_root); // gc protect
+
+    Vector<EvalFrame> eval_stack;
+    eval_stack.push_back({code_root, EvalFrame::start});
+
+    while (eval_stack.size() not_eq 0) {
+        EvalFrame frame = eval_stack.back();
+        eval_stack.pop_back();
+
+        switch (frame.state_) {
+        case EvalFrame::State::start: {
+            gc_safepoint();
+
+            auto code = frame.expr_;
+            if (code->type() == Value::Type::symbol) {
+                push_op(get_var(code));
+            } else if (code->type() == Value::Type::cons) {
+                auto code = frame.expr_;
+                auto form = code->cons().car();
+                if (form->type() == Value::Type::symbol) {
+                    auto name = form->symbol().name();
+                    if (str_eq(name, "if")) {
+                        auto if_code = code->cons().cdr();
+
+                        if (if_code->type() != Value::Type::cons) {
+                            push_op(make_error(Error::Code::mismatched_parentheses, L_NIL));
+                            break;
+                        }
+
+                        auto cond = if_code->cons().car();
+                        eval_stack.push_back({code, EvalFrame::if_check_branch});
+                        eval_stack.push_back({cond, EvalFrame::start});
+                        break;
+
+                    } else if (str_eq(name, "while")) {
+                        auto while_code = code->cons().cdr();
+
+                        if (while_code->type() != Value::Type::cons) {
+                            push_op(make_error(Error::Code::mismatched_parentheses, L_NIL));
+                            break;
+                        }
+
+                        eval_stack.push_back({code, EvalFrame::while_check_condition});
+                        eval_stack.push_back({while_code->cons().car(), EvalFrame::start});
+                        break;
+
+                    } else if (str_eq(name, "let")) {
+                        auto let_code = code->cons().cdr();
+
+                        if (let_code->type() != Value::Type::cons) {
+                            push_op(make_error(Error::Code::mismatched_parentheses, L_NIL));
+                            break;
+                        }
+
+                        auto bindings = let_code->cons().car();
+                        int binding_count = length(bindings);
+
+                        eval_stack.push_back({code, EvalFrame::let_install_bindings, binding_count});
+
+                        Buffer<Value*, 32> binding_exprs;
+                        auto b = bindings;
+                        while (b != get_nil()) {
+                            auto binding = b->cons().car();
+                            auto value_expr = binding->cons().cdr()->cons().car();
+                            binding_exprs.push_back(value_expr);
+                            b = b->cons().cdr();
+                        }
+
+                        for (auto expr : reversed(binding_exprs)) {
+                            eval_stack.push_back({expr, EvalFrame::start});
+                        }
+                        break;
+                    } else if (str_eq(name, "lambda")) {
+                        push_op(make_lisp_argumented_function(code->cons().cdr()));
+                        // NOTE: evaluating an argumented function is
+                        // destructive. Once we've evaluated an argumented
+                        // function once, the function body is converted to an
+                        // intermediate representation, and we adjust the head
+                        // position in the list and splice out the argument list
+                        // so that next time we reach the same function, we
+                        // evaluate it in the lower level intermediate
+                        // representation rather than performing argument
+                        // substition again. In fact, re-substituting arguments
+                        // in an already argument-substituted function creates
+                        // re-entrancy bugs, and if it didn't, I wouldn't be
+                        // fixing this, so it's not purely an optmization issue.
+                        code->cons().set_car(make_symbol("fn"));
+                        code->cons().set_cdr(code->cons().cdr()->cons().cdr());
+                        break;
+                    } else if (str_eq(name, "fn")) {
+                        push_op(make_lisp_function(code->cons().cdr()));
+                        break;
+                    } else if (str_eq(name, "'")) {
+                        push_op(code->cons().cdr());
+                        break;
+                    } else if (str_eq(name, "`")) {
+                        eval_quasiquote(code->cons().cdr());
+                        break;
+                    } else if (str_eq(name, "macro")) {
+                        eval_macro(code->cons().cdr());
+                        break;
+                    } else if (str_eq(name, "defconstant")) {
+                        if (not bound_context->external_constant_tab_) {
+                            PLATFORM.fatal("missing constant tab!");
+                        }
+                        push_op(L_NIL);
+                        break;
+                    }
+                }
+                auto funcall_expr = code->cons().car();
+                auto arg_list = code->cons().cdr();
+                const int argc = length(arg_list);
+                eval_stack.push_back({code, EvalFrame::funcall_apply, argc});
+                Buffer<Value*, 32> tmp_buf;
+                while (true) {
+                    if (arg_list == get_nil()) {
+                        break;
+                    }
+                    if (arg_list->type() not_eq Value::Type::cons) {
+                        // TODO: raise error!!!!!!
+                    }
+                    tmp_buf.push_back(arg_list->cons().car()); // todo: check full
+                    arg_list = arg_list->cons().cdr();
+                }
+                for (auto arg : reversed(tmp_buf)) {
+                    eval_stack.push_back({arg, EvalFrame::start});
+                }
+                eval_stack.push_back({funcall_expr, EvalFrame::start});
+            } else {
+                // If the value is not a symbol or list, it must be a different literal
+                // type.
+                push_op(frame.expr_);
             }
+            break;
         }
 
-        eval(code->cons().car());
-        Protected function(get_op0());
-        pop_op();
+        case EvalFrame::State::if_check_branch: {
+            auto test_result = get_op0();
+            pop_op();
 
-        int argc = 0;
+            auto if_code = frame.expr_->cons().cdr();
 
-        auto clear_args = [&] {
-            while (argc) {
-                pop_op();
-                --argc;
+            Value* branch_to_eval;
+            if (is_boolean_true(test_result)) {
+                if (if_code->cons().cdr()->type() == Value::Type::cons) {
+                    branch_to_eval = if_code->cons().cdr()->cons().car();
+                } else {
+                    branch_to_eval = get_nil();
+                }
+            } else {
+                auto rest = if_code->cons().cdr();
+                if (rest->type() == Value::Type::cons &&
+                    rest->cons().cdr()->type() == Value::Type::cons) {
+                    branch_to_eval = rest->cons().cdr()->cons().car();
+                } else {
+                    branch_to_eval = get_nil();
+                }
             }
-        };
 
-        auto arg_list = code->cons().cdr();
-        while (true) {
-            if (arg_list == get_nil()) {
+            // Eval the chosen branch
+            eval_stack.push_back({branch_to_eval, EvalFrame::start});
+            break;
+        }
+
+        case EvalFrame::State::while_check_condition: {
+            // Condition result is on operand stack
+            auto test = get_op0();
+            pop_op();
+
+            if (!is_boolean_true(test)) {
+                push_op(get_nil());
                 break;
             }
-            if (arg_list->type() not_eq Value::Type::cons) {
-                clear_args();
-                pop_op();
-                push_op(make_error(Error::Code::value_not_callable, arg_list));
-                return;
+
+            // Condition is true, need to eval body then loop back
+            auto while_code = frame.expr_->cons().cdr();
+            auto body = while_code->cons().cdr();
+
+            // After body completes, loop back to test condition again
+            eval_stack.push_back({frame.expr_, EvalFrame::while_check_condition});
+            eval_stack.push_back({while_code->cons().car(), EvalFrame::start});
+
+            // Now eval all body expressions
+            // We need to eval them in sequence, keeping only the last result
+            eval_stack.push_back({body, EvalFrame::while_body});
+            break;
+        }
+
+        case EvalFrame::State::while_body: {
+            auto body = frame.expr_;
+
+            if (body == get_nil()) {
+                // No body!?
+                push_op(get_nil());
+                break;
             }
 
-            eval(arg_list->cons().car());
-            ++argc;
+            auto first_expr = body->cons().car();
+            auto rest = body->cons().cdr();
 
-            arg_list = arg_list->cons().cdr();
+            if (rest == get_nil()) {
+                eval_stack.push_back({first_expr, EvalFrame::start});
+            } else {
+                eval_stack.push_back({rest, EvalFrame::while_body});
+                eval_stack.push_back({first_expr, EvalFrame::while_body_discard_result});
+                eval_stack.push_back({first_expr, EvalFrame::start});
+            }
+            break;
         }
 
-        funcall(function, argc);
-        auto result = get_op0();
-        if (result->type() == Value::Type::error and
-            dcompr(result->error().context_) == L_NIL) {
-            result->error().context_ = compr(code);
+        case EvalFrame::State::while_body_discard_result: {
+            // Discard the result of this body expression (we only want the last one)
+            pop_op();
+            break;
         }
-        pop_op(); // result
-        pop_op(); // protected expr (see top)
-        push_op(result);
-        return;
+
+        case EvalFrame::State::let_install_bindings: {
+            // Operand stack now has: [value1 value2 value3 ...]
+            // Build the binding list
+
+            auto let_code = frame.expr_->cons().cdr();
+            auto bindings = let_code->cons().car();
+
+            ListBuilder binding_list_builder;
+
+            // Pop values in reverse order and pair with symbols
+            Buffer<Value*, 32> values;
+            for (int i = 0; i < frame.param_; i++) {
+                values.push_back(get_op0());
+                pop_op();
+            }
+
+            auto b = bindings;
+            for (int i = values.size() - 1; i >= 0; i--) {
+                auto binding = b->cons().car();
+                auto sym = binding->cons().car();
+                binding_list_builder.push_back(make_cons(sym, values[i]));
+                b = b->cons().cdr();
+            }
+
+            // Install bindings
+            auto new_binding_list = make_cons(binding_list_builder.result(),
+                                              bound_context->lexical_bindings_);
+            bound_context->lexical_bindings_ = new_binding_list;
+
+            // After body, cleanup bindings
+            eval_stack.push_back({frame.expr_, EvalFrame::let_cleanup});
+
+            // Eval body
+            auto body = let_code->cons().cdr();
+            eval_stack.push_back({body, EvalFrame::let_body});
+            break;
+        }
+
+        case EvalFrame::State::let_body: {
+            // Similar to while_body - eval each expression, keep last result
+            auto body = frame.expr_;
+
+            if (body == get_nil()) {
+                push_op(get_nil());
+                break;
+            }
+
+            auto first = body->cons().car();
+            auto rest = body->cons().cdr();
+
+            if (rest == get_nil()) {
+                eval_stack.push_back({first, EvalFrame::start});
+            } else {
+                eval_stack.push_back({rest, EvalFrame::let_body});
+                eval_stack.push_back({first, EvalFrame::let_body_discard});
+                eval_stack.push_back({first, EvalFrame::start});
+            }
+            break;
+        }
+
+        case EvalFrame::State::let_body_discard: {
+            pop_op();
+            break;
+        }
+
+        case EvalFrame::State::let_cleanup: {
+            // Restore previous bindings
+            bound_context->lexical_bindings_ =
+                bound_context->lexical_bindings_->cons().cdr();
+            // Result already on stack
+            break;
+        }
+
+        case EvalFrame::State::funcall_apply: {
+            int argc = frame.param_;
+            auto fn = get_op(argc); // Function is below arguments on stack
+            funcall(fn, argc);
+            auto result = get_op0();
+            pop_op(); // result
+            pop_op(); // function on stack
+            push_op(result);
+            break;
+        }
+
+        }
     }
+
+    auto result = get_op0();
+    pop_op(); // result
+    pop_op(); // code root
+    push_op(result);
 }
 
 
