@@ -948,7 +948,7 @@ BINDING_TABLE({
           return L_NIL;
       }}},
     {"dialog*",
-     {SIG1(nil, string),
+     {SIG1(promise, string),
       [](int argc) {
           if (APP.dialog_receiver_promise() and APP.is_developer_mode()) {
               PLATFORM.fatal("broken promise!");
@@ -1963,7 +1963,7 @@ BINDING_TABLE({
           return L_NIL;
       }}},
     {"sel-input*",
-     {SIG2(nil, nil, string),
+     {SIG2(promise, nil, string),
       [](int argc) {
           L_EXPECT_OP(0, string);
 

@@ -773,6 +773,7 @@ ScenePtr BoxedDialogScene::update(Time delta)
                 auto p = (lisp::Value*)*APP.dialog_receiver_promise();
                 APP.dialog_receiver_promise().reset();
                 lisp::resolve_promise(p, L_NIL);
+                lisp::pop_op();
             } else {
                 invoke_hook("on-dialog-closed");
             }
