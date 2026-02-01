@@ -2439,7 +2439,9 @@ Value* dostring(CharSequence& code,
 
     if (bound_context->strict_ and
         bound_context->operand_stack_->size() not_eq prev_stk) {
-        PLATFORM.fatal("stack spill!");
+        PLATFORM.fatal(::format("stack spill! % %",
+                                bound_context->operand_stack_->size(),
+                                prev_stk));
     }
 
     return result;
@@ -4164,6 +4166,13 @@ void eval_loop(Vector<EvalFrame>& eval_stack)
         }
 
         case EvalFrame::State::await_check_result: {
+            // Force the gc to run. Every await call allocates some databuffers,
+            // which accumulate in promises. We can accumulate a lot of memory
+            // in no-longer-referenced promise values, and we may not be
+            // allocating enough lisp values to force a collection, so other
+            // parts of the system could run low on memory if we don't do this.
+            run_gc();
+
             auto result = get_op0();
             if (result->type() not_eq Value::Type::promise) {
                 pop_op();
