@@ -3725,9 +3725,57 @@ struct EvalFrame
         let_body,
         let_body_discard,
         let_cleanup,
+        lisp_funcall_setup,
+        lisp_funcall_body,
+        lisp_funcall_body_discard,
+        lisp_funcall_cleanup,
     } state_;
-    int param_;
+
+    struct FuncallApplyParams
+    {
+        int argc_;
+    };
+
+    struct InstallLetParams
+    {
+        int binding_count_;
+    };
+
+    struct LispFuncallCleanupParams
+    {
+        int argc_;
+        int saved_break_loc_;
+        u8 saved_argc_;
+    };
+
+    union {
+        FuncallApplyParams funcall_apply_;
+        InstallLetParams install_let_;
+        LispFuncallCleanupParams lisp_funcall_cleanup_;
+    };
 };
+
+
+bool suspend(Vector<EvalFrame>& eval_stack)
+{
+    bool can_suspend = true;
+    l_foreach(bound_context->callstack_, [&](Value* v) {
+        if (v->type() == Value::Type::function) {
+            if (v->hdr_.mode_bits_ not_eq Function::ModeBits::lisp_function) {
+                can_suspend = false;
+            }
+        }
+    });
+    if (not can_suspend) {
+        return false;
+    }
+    // TODO:
+    // - copy eval stack
+    // - copy operand stack
+    // - copy callstack
+    // - copy lexical bindings, etc.
+    return true;
+}
 
 
 void eval(Value* code_root)
@@ -3789,7 +3837,11 @@ void eval(Value* code_root)
                         auto bindings = let_code->cons().car();
                         int binding_count = length(bindings);
 
-                        eval_stack.push_back({code, EvalFrame::let_install_bindings, binding_count});
+                        eval_stack.push_back({
+                                code,
+                                EvalFrame::let_install_bindings,
+                                .install_let_ = {binding_count}
+                            });
 
                         Buffer<Value*, 32> binding_exprs;
                         auto b = bindings;
@@ -3841,10 +3893,12 @@ void eval(Value* code_root)
                         break;
                     }
                 }
+                push_op(bound_context->lexical_bindings_);
                 auto funcall_expr = code->cons().car();
                 auto arg_list = code->cons().cdr();
                 const int argc = length(arg_list);
-                eval_stack.push_back({code, EvalFrame::funcall_apply, argc});
+                eval_stack.push_back({code, EvalFrame::funcall_apply,
+                        .funcall_apply_ = {argc}});
                 Buffer<Value*, 32> tmp_buf;
                 while (true) {
                     if (arg_list == get_nil()) {
@@ -3959,7 +4013,7 @@ void eval(Value* code_root)
 
             // Pop values in reverse order and pair with symbols
             Buffer<Value*, 32> values;
-            for (int i = 0; i < frame.param_; i++) {
+            for (int i = 0; i < frame.install_let_.binding_count_; i++) {
                 values.push_back(get_op0());
                 pop_op();
             }
@@ -4021,14 +4075,148 @@ void eval(Value* code_root)
             break;
         }
 
-        case EvalFrame::State::funcall_apply: {
-            int argc = frame.param_;
-            auto fn = get_op(argc); // Function is below arguments on stack
-            funcall(fn, argc);
+        case EvalFrame::State::lisp_funcall_body: {
+            auto expression_list = frame.expr_;
+
+            if (expression_list == get_nil()) {
+                push_op(get_nil());
+                break;
+            }
+
+            if (expression_list->type() != Value::Type::cons) {
+                push_op(make_error(Error::Code::mismatched_parentheses, L_NIL));
+                break;
+            }
+
+            auto first = expression_list->cons().car();
+            auto rest = expression_list->cons().cdr();
+
+            if (get_op0()->type() == Value::Type::error) {
+                // Stop parsing expressions
+            } else if (rest == get_nil()) {
+                // Last expression
+                eval_stack.push_back({first, EvalFrame::start});
+            } else {
+                // More expressions
+                eval_stack.push_back({rest, EvalFrame::lisp_funcall_body});
+                eval_stack.push_back({first, EvalFrame::lisp_funcall_body_discard});
+                eval_stack.push_back({first, EvalFrame::start});
+            }
+            break;
+        }
+
+        case EvalFrame::State::lisp_funcall_body_discard: {
             auto result = get_op0();
-            pop_op(); // result
-            pop_op(); // function on stack
+            if (is_error(result)) {
+                // Don't discard errors
+                break;
+            }
+            pop_op();
+            break;
+        }
+
+        case EvalFrame::State::lisp_funcall_setup: {
+            auto fn = frame.expr_;
+            int argc = frame.funcall_apply_.argc_;
+
+            PLATFORM_EXTENSION(stack_check);
+
+            // Stack is currently: [... saved_bindings function arg1 arg2 arg3]
+
+            bound_context->lexical_bindings_ =
+                dcompr(fn->function().lisp_impl_.lexical_bindings_);
+
+            const auto break_loc = bound_context->operand_stack_->size() - 1;
+            bound_context->arguments_break_loc_ = break_loc;
+            bound_context->current_fn_argc_ = argc;
+
+            push_callstack(fn);
+
+            auto expression_list = dcompr(fn->function().lisp_impl_.code_);
+
+            if (expression_list == get_nil()) {
+                push_op(get_nil());
+            } else {
+                eval_stack.push_back({expression_list, EvalFrame::lisp_funcall_body});
+            }
+            break;
+        }
+
+        case EvalFrame::State::lisp_funcall_cleanup: {
+            int argc = frame.lisp_funcall_cleanup_.argc_;
+
+            pop_callstack();
+
+            // Stack is: [... saved_bindings function arg1 arg2 ... argN result]
+
+            auto result = get_op0();
+            pop_op();
+
+            for (int i = 0; i < argc; ++i) {
+                pop_op();
+            }
+
+            pop_op();
+
+            auto saved_bindings = get_op0();
+            pop_op();
+            bound_context->lexical_bindings_ = saved_bindings;
+
+            bound_context->arguments_break_loc_ = frame.lisp_funcall_cleanup_.saved_break_loc_;
+            bound_context->current_fn_argc_ = frame.lisp_funcall_cleanup_.saved_argc_;
+
             push_op(result);
+            break;
+        }
+
+        case EvalFrame::State::funcall_apply: {
+            int argc = frame.funcall_apply_.argc_;
+            auto fn = get_op(argc); // Function is below arguments on stack
+
+            if (fn->type() == Value::Type::function &&
+                fn->hdr_.mode_bits_ == Function::ModeBits::lisp_function) {
+
+                if (fn->function().sig_.required_args_ > argc) {
+                    for (int i = 0; i < argc; ++i) {
+                        pop_op();
+                    }
+                    pop_op();
+                    auto saved_bindings = get_op0();
+                    pop_op(); // saved bindings
+                    bound_context->lexical_bindings_ = saved_bindings;
+                    push_op(make_error(Error::Code::invalid_argc, fn));
+                    break;
+                }
+
+                // Type checking if strict mode
+                if (bound_context->strict_) {
+                    // TODO: CHECK_ARG_TYPES
+                }
+
+                EvalFrame cleanup_frame = {
+                    fn,
+                    EvalFrame::lisp_funcall_cleanup,
+                    .lisp_funcall_cleanup_ = {
+                        argc,
+                        bound_context->arguments_break_loc_,
+                        bound_context->current_fn_argc_
+                    }
+                };
+                eval_stack.push_back(cleanup_frame);
+
+                eval_stack.push_back({fn,
+                        EvalFrame::lisp_funcall_setup,
+                        .funcall_apply_ = {argc}});
+
+            } else {
+                // Non-lisp function - use regular funcall
+                funcall(fn, argc);
+                auto result = get_op0();
+                pop_op(); // result
+                pop_op(); // function on stack
+                pop_op(); // lexical bindings, ignored
+                push_op(result);
+            }
             break;
         }
 

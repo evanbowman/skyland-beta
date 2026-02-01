@@ -383,7 +383,7 @@
          (range 5 10))
 
 
-(assert-eq 7 (lisp-mem-stack-used))
+(assert-eq 9 (lisp-mem-stack-used))
 
 (unbind 'ends-with
         'assert-v
