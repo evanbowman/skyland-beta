@@ -4236,6 +4236,8 @@ void eval_loop(Vector<EvalFrame>& eval_stack)
             auto rest = body->cons().cdr();
 
             if (rest == get_nil()) {
+                eval_stack.push_back(
+                    {first_expr, EvalFrame::while_body_discard_result});
                 eval_stack.push_back({first_expr, EvalFrame::start});
             } else {
                 eval_stack.push_back({rest, EvalFrame::while_body});
