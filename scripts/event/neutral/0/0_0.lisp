@@ -69,8 +69,8 @@
   (let ((xy (await (sel-input* 'ladder "Place ladder (1x2):"))))
     (sound "build0")
     (room-new (player) `(ladder ,(car xy) ,(cdr xy)))
-    (await (dialog* "<c:Castaway:1> Thanks for rescuing me! I'll try to help out however I can!"))
-    (join-crew xy "The castaway joined your crew!")
+    (join-crew xy "<c:Castaway:1> Thanks for rescuing me! I'll try to help out however I can!")
+    (await (dialog* "The castaway joined your crew!"))
     (exit-with-commentary "welcomes_castaway_1")))
 
 

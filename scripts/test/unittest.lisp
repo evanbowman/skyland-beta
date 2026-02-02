@@ -67,7 +67,7 @@
 
 (defn begin-test (name)
   (setq current-test name)
-  (let ((msg (string "running tests: " name "...")))
+  (let ((msg (string "Running tests: " name "...")))
     (when (bound? 'regr-print)
       (regr-print msg 1 3))
     (put msg)))

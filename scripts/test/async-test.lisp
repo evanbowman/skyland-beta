@@ -21,7 +21,7 @@
 
 (defn begin-test (name)
   (setq current-test name)
-  (let ((msg (string "Running tests: " name "...")))
+  (let ((msg (string "Async-test: " name "...")))
     (when (bound? 'regr-print)
       (regr-print msg 1 3))
     (put msg)))
@@ -52,7 +52,9 @@
      ;; based on the number of times it was called in subsequent tests. Add the
      ;; input arg and assert to check that the above scope is preserved.
      (assert-eq (+ val (await (test-delay 10000))) (+ (incr temp) val))
-     (setq async-done true))))
+     (setq async-done true)
+     (regr-print "" 1 3) ; clear
+     )))
 
 
 (defn async-test ()
@@ -98,6 +100,7 @@
       (assert-eq (list a b c d) '(1 2 3 1))))
   (end-test)
 
+  (begin-test "parallel")
   (exit-stress-gc-mode))
 
 

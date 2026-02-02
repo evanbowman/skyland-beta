@@ -83,7 +83,9 @@ ScenePtr RegressionModule::update(Time delta)
                               PLATFORM.set_tile(
                                   Layer::overlay, x, L_LOAD_INT(0), 0);
                           }
-                          Text::print(lisp::get_op(2)->string().value(),
+                          StringBuffer<30> truncated;
+                          truncated = lisp::get_op(2)->string().value();
+                          Text::print(truncated.c_str(),
                                       {(u8)L_LOAD_INT(1), (u8)L_LOAD_INT(0)},
                                       text_colors);
                           PLATFORM.screen().display();

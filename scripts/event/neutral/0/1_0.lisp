@@ -52,6 +52,7 @@
 
 
 (defn on-converge ()
+  (setq on-converge nil)
   (let ((sel (await (dialog-choice* "<c:Redbeard:12>Aarrrgh!! You're trespassing in my domain. Gimme 600@ or I'll blast your island to bits!"
                                     '("Here's 600@…"
                                       "You're bluffing!"
@@ -59,8 +60,7 @@
     (case sel
       (0 (on-dialog-accepted))
       (1 (handle-bluff))
-      (2 (on-dialog-declined))))
-  (setq on-converge nil))
+      (2 (on-dialog-declined)))))
 
 
 
