@@ -76,6 +76,46 @@ namespace skyland
 
 
 
+class TimedWaitEntity : public Entity
+{
+public:
+    TimedWaitEntity(Time delay, lisp::Value* promise)
+        : Entity({}), promise_(promise), delay_(delay)
+    {
+        sprite_.set_alpha(Sprite::Alpha::translucent);
+    }
+
+
+    void update(Time delta) override
+    {
+        delay_ -= delta;
+        if (delay_ <= 0) {
+            lisp::resolve_promise(promise_, L_NIL);
+            lisp::pop_op();
+            this->kill();
+        }
+    }
+
+
+    void rewind(Time delta) override
+    {
+        delay_ += delta;
+    }
+
+
+    bool entity_oom_deletable() const override
+    {
+        return false;
+    }
+
+
+private:
+    lisp::Protected promise_;
+    Time delay_;
+};
+
+
+
 extern Sound cannon_sound;
 extern Sound missile_sound;
 
@@ -1159,6 +1199,17 @@ BINDING_TABLE({
 
           return L_NIL;
       }}},
+    {"wait",
+     {SIG1(promise, rational),
+      [](int argc) {
+          L_EXPECT_RATIONAL(0);
+          Time delay = 1000 * L_LOAD_INT(0);
+          auto pr = lisp::make_promise();
+          if (auto ent = alloc_entity<TimedWaitEntity>(delay, pr)) {
+              APP.effects().push(std::move(ent));
+          }
+          return pr;
+      }}},
     {"on-timeout",
      {SIG2(nil, rational, symbol),
       [](int argc) {
@@ -1969,8 +2020,7 @@ BINDING_TABLE({
 
           lisp::Protected promise(lisp::make_promise());
 
-          lisp::Protected bundle(
-              lisp::make_cons(lisp::get_op(0), promise));
+          lisp::Protected bundle(lisp::make_cons(lisp::get_op(0), promise));
           bundle = lisp::make_cons(bundle, lisp::get_op(1));
           bundle = lisp::make_cons(L_INT(1), bundle);
           if (bundle->type() == lisp::Value::Type::cons) {

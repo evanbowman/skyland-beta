@@ -26,7 +26,63 @@
 (flag-show (opponent) flag-id-marauder)
 
 
+(defn/temp ready-fight (msg)
+  (await (dialog* msg))
+  (await (dialog* "<c:goblin:2>Yesss captain!"))
+  (await (dialog* "(the transmission was cut)"))
+  (opponent-mode 'hostile))
+
+
+(defn/temp handle-bluff ()
+  ;; You accused redbeard of bluffing. He fires a broadside off your bow.
+  (await (wait 400))
+  (emit (opponent) 0 12 (terrain (player)) 0)
+  (await (wait 200))
+  (emit (opponent) 0 13 (terrain (player)) 0)
+  (await (wait 200))
+  (emit (opponent) 0 14 (terrain (player)) 0)
+  (await (wait 1200))
+  (let ((sel (await (dialog-choice* "<c:Redbeard:12>Yaargh!! I'm just a simple marauder, trying to earn a decent living here! [via petty extortion, how else?] <B:0> So what's it gonna be? Last chance..."
+                                    '("Pay 600@."
+                                      "Fight back.")))))
+    (case sel
+      (0 (on-dialog-accepted))
+      (1 (on-dialog-declined)))))
+
+
+
+(defn on-converge ()
+  (let ((sel (await (dialog-choice* "<c:Redbeard:12>Aarrrgh!! You're trespassing in my domain. Gimme 600@ or I'll blast your island to bits!"
+                                    '("Here's 600@…"
+                                      "You're bluffing!"
+                                      "Never!")))))
+    (case sel
+      (0 (on-dialog-accepted))
+      (1 (handle-bluff))
+      (2 (on-dialog-declined))))
+  (setq on-converge nil))
+
+
+
+(defn on-dialog-accepted ()
+  (if (< (coins) 600)
+      (progn
+        (adventure-log-add 12 '())
+        (ready-fight "<c:redbeard:12>That's not enough, load the cannons!!!"))
+      (progn
+        (adventure-log-add 13 (list 600))
+        (coins-add -600)
+        (dialog "<c:redbeard:12>Heh. I think you made the smart decision.")
+        (exit))))
+
+
+(defn on-dialog-declined ()
+  (adventure-log-add 14 '())
+  (ready-fight "<c:redbeard:12>Whaatt!! Load the cannons!!!"))
+
+
 (defn on-room-destroyed (isle sym)
+  ;; TODO: rewrite this with new-style await pattern
   (if (and (equal isle (opponent))
            (equal 2 (+ (room-count (opponent) 'cannon)
                        (room-count (opponent) 'missile-silo))))
@@ -39,62 +95,3 @@
                      (lambda ()
                        (coins-add (coins-victory))
                        (exit 2))))))
-
-
-(defn on-converge ()
-  (dialog "<c:Redbeard:12>Aarrrgh!! You're trespassing in my domain. Gimme 600@ or I'll blast your island to bits!")
-  (dialog-opts-reset)
-  (dialog-opts-push "Here's 600@…" on-dialog-accepted)
-
-  (dialog-opts-push "You're bluffing!"
-                    (lambda ()
-
-                      (defn cb0 ()
-                        (emit (opponent) 0 12 (terrain (player)) 0))
-
-                      (defn cb1 ()
-                        (emit (opponent) 0 13 (terrain (player)) 0))
-
-                      (defn cb2 ()
-                        (emit (opponent) 0 14 (terrain (player)) 0))
-
-                      (defn cb3 ()
-                        (dialog "<c:Redbeard:12>Yaargh!! I'm just a simple marauder, trying to earn a decent living here! [via petty extortion, how else?] <B:0> So what's it gonna be? Last chance...")
-                        (dialog-setup-binary-q "Pay 600@." "Fight back.")
-                        (unbind 'cb0 'cb1 'cb2 'cb3))
-
-                      (on-timeout 400 'cb0)
-                      (on-timeout 600 'cb1)
-                      (on-timeout 800 'cb2)
-                      (on-timeout 2000 'cb3)))
-
-  (dialog-opts-push "Never!" on-dialog-declined)
-  (setq on-converge nil))
-
-
-(let ((scr
-       (lambda (txt)
-         (dialog txt)
-         (defn on-dialog-closed ()
-           (dialog "<c:goblin:2>Yesss captain!")
-           (defn on-dialog-closed ()
-             (dialog "(the transmission was cut)")
-             (setq on-dialog-closed nil)))
-         (opponent-mode 'hostile))))
-  (setq on-dialog-accepted
-        (lambda ()
-          (if (< (coins) 600)
-              (progn
-                (adventure-log-add 12 '())
-                (scr "<c:redbeard:12>That's not enough, load the cannons!!!"))
-            (progn
-              (adventure-log-add 13 (list 600))
-              (coins-add -600)
-              (dialog "<c:redbeard:12>Heh. I think you made the smart decision.")
-              (exit)))))
-
-
-  (setq on-dialog-declined
-        (lambda ()
-          (adventure-log-add 14 '())
-          (scr "<c:redbeard:12>Whaatt!! Load the cannons!!!"))))

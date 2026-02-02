@@ -64,6 +64,14 @@
 (defn/c dialog-opts-push ((name . string) (cb . lambda))
   (setq dialog-opts (cons (cons name cb) dialog-opts)))
 
+(defn dialog-choice* (text choices)
+  (dialog-opts-reset)
+  (foreach (lambda (c)
+             (dialog-opts-push c (lambda () nil)))
+           choices)
+  (dialog* text))
+
+
 ;; For backwards compatibility. The old dialog api had a function for setting up
 ;; a yes/no question box, and the engine would then invoke on-dialog-accepted
 ;; and on-dialog-declined callbacks. But, eventually, I wanted more control over

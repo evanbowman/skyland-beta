@@ -12,8 +12,8 @@
 #pragma once
 
 
-#include "skyland/scene/module.hpp"
 #include "script/lisp.hpp"
+#include "skyland/scene/module.hpp"
 
 
 
@@ -54,8 +54,8 @@ private:
         lisp::Protected promise_;
         Time time_remaining_;
 
-        AsyncTestData(lisp::Value* promise, Time remaining) :
-            promise_(promise), time_remaining_(remaining)
+        AsyncTestData(lisp::Value* promise, Time remaining)
+            : promise_(promise), time_remaining_(remaining)
         {
         }
     };

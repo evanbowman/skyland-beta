@@ -102,16 +102,18 @@ ScenePtr RegressionModule::update(Time delta)
 
         PLATFORM.sleep(30);
 
-        lisp::set_var("test-delay", lisp::make_function([](int argc) {
-            L_EXPECT_ARGC(argc, 1);
-            L_EXPECT_RATIONAL(0);
-            auto promise = lisp::make_promise();
-            auto time = L_LOAD_INT(0);
-            // Ok this is an unsafe cast, but the current scene better be the
-            // regression module, or else... how are we in the regression module?
-            ((RegressionModule&)APP.scene()).async_timers_.emplace_back(promise, time * 1000);
-            return promise;
-        }));
+        lisp::set_var(
+            "test-delay", lisp::make_function([](int argc) {
+                L_EXPECT_ARGC(argc, 1);
+                L_EXPECT_RATIONAL(0);
+                auto promise = lisp::make_promise();
+                auto time = L_LOAD_INT(0);
+                // Ok this is an unsafe cast, but the current scene better be the
+                // regression module, or else... how are we in the regression module?
+                ((RegressionModule&)APP.scene())
+                    .async_timers_.emplace_back(promise, time * 1000);
+                return promise;
+            }));
 
         APP.invoke_script("/scripts/test/async-test.lisp");
         auto v = lisp::get_var("async-test");
@@ -134,7 +136,8 @@ ScenePtr RegressionModule::update(Time delta)
                 if (result->type() == lisp::Value::Type::error) {
                     lisp::DefaultPrinter p;
                     lisp::format(result, p);
-                    PLATFORM.fatal(format<256>("async-test: %", p.data_.c_str()));
+                    PLATFORM.fatal(
+                        format<256>("async-test: %", p.data_.c_str()));
                 }
                 lisp::pop_op();
             }

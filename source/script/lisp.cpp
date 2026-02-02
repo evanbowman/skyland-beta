@@ -2696,6 +2696,8 @@ static void gc_mark_value(Value* value)
         return;
     }
 
+    value->hdr_.mark_bit_ = true;
+
     switch (value->type()) {
     case Value::Type::wrapped:
         if (value->hdr_.mode_bits_ == (u8)Wrapped::Variant::lisp_data) {
@@ -2765,8 +2767,6 @@ static void gc_mark_value(Value* value)
     default:
         break;
     }
-
-    value->hdr_.mark_bit_ = true;
 }
 
 

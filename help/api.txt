@@ -787,6 +787,11 @@ o----------------------------o
  rather than invoking dialog
  callbacks.
 
+ await on dialog* will return
+ the number of the dialog opt
+ selected, if the user was
+ presented with a dialog box.
+
 
 o----------------------------o
 
@@ -1407,6 +1412,19 @@ o----------------------------o
  as a list:
 
  '(major minor subminor patch)
+
+
+o----------------------------o
+
+ (wait milliseconds)
+
+ Returns a promise that
+ resolves after the specified
+ delay in milliseconds.
+ Must be used with await.
+
+ Example:
+   (await (wait 1000))
 
 
 o----------------------------o
