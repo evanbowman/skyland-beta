@@ -75,5 +75,6 @@
         dialog-sequence
         hostile-pickup-cart
         pickup-cart
+        pickup-cart-cb
         place-new-block
         repairman))

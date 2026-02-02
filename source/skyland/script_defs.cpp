@@ -82,7 +82,7 @@ public:
     TimedWaitEntity(Time delay, lisp::Value* promise)
         : Entity({}), promise_(promise), delay_(delay)
     {
-        sprite_.set_alpha(Sprite::Alpha::translucent);
+        sprite_.set_alpha(Sprite::Alpha::transparent);
     }
 
 

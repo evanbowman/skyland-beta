@@ -64,13 +64,6 @@
 (defn/c dialog-opts-push ((name . string) (cb . lambda))
   (setq dialog-opts (cons (cons name cb) dialog-opts)))
 
-(defn dialog-choice* (text choices)
-  (dialog-opts-reset)
-  (foreach (lambda (c)
-             (dialog-opts-push c (lambda () nil)))
-           choices)
-  (dialog* text))
-
 
 ;; For backwards compatibility. The old dialog api had a function for setting up
 ;; a yes/no question box, and the engine would then invoke on-dialog-accepted
@@ -82,10 +75,16 @@
 (defn/c dialog-setup-y/n ()
   (dialog-setup-binary-q "yes" "no"))
 
+;; NOTE: These two functions defined as non-bytecode-complied to allow nested
+;; functions on-dialog-accpted/declined to use await syntax.
+(defn --try-dialog-accept () (if on-dialog-accepted (on-dialog-accepted)))
+(defn --try-dialog-decline () (if on-dialog-declined (on-dialog-declined)))
+
+
 (defn/c dialog-setup-binary-q ((txt1 . string) (txt2 . string))
   (dialog-opts-reset)
-  (dialog-opts-push txt1 (lambda () (if on-dialog-accepted (on-dialog-accepted))))
-  (dialog-opts-push txt2 (lambda () (if on-dialog-declined (on-dialog-declined)))))
+  (dialog-opts-push txt1 --try-dialog-accept)
+  (dialog-opts-push txt2 --try-dialog-decline))
 
 
 ;; This fairly niche function opens a box of options. The first option being the
@@ -95,7 +94,7 @@
 ;; the previously selected one removed.
 (defn/c dialog-setup-binary-q-w/lore ((txty . string) (txtn . string) lore)
   (dialog-opts-reset)
-  (dialog-opts-push txty (lambda () (if on-dialog-accepted (on-dialog-accepted))))
+  (dialog-opts-push txty --try-dialog-accept)
 
   (let ((lr lore)
         (ty txty)
@@ -110,7 +109,23 @@
                                        (dialog str))))))
              lore))
 
-  (dialog-opts-push txtn (lambda () (if on-dialog-declined (on-dialog-declined)))))
+  (dialog-opts-push txtn --try-dialog-decline))
+
+
+
+(defn/c dialog-choice* ((text . string) choices)
+  (dialog-opts-reset)
+  (foreach (lambda (c)
+             (dialog-opts-push c (lambda () nil)))
+           choices)
+  (dialog* text))
+
+
+(defn/c dialog-choice-binary-q* ((text . string) y n)
+  (dialog-choice* text (list y n)))
+
+(defn/c dialog-choice-y/n* ((text . string))
+  (dialog-choice-binary-q* text "yes" "no"))
 
 
 ;; shortcut accessors for room metadata

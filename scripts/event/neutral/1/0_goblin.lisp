@@ -98,9 +98,9 @@
          (defn on-dialog-closed ()
            (setq on-dialog-closed nil)
            (dialog "The monk joined your crew!")
-           (pickup-cart 10
-                        "The Ashwalker Monk reluctantly hands over a datacart that he'd been keeping..."
-                        exit))))))
+           (pickup-cart-cb 10
+                           "The Ashwalker Monk reluctantly hands over a datacart that he'd been keeping..."
+                           exit))))))
 
 
 

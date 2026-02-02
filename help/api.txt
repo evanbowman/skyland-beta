@@ -792,6 +792,10 @@ o----------------------------o
  selected, if the user was
  presented with a dialog box.
 
+ NOTE: the callback pushed to
+ dialog-opts will still be
+ invoked as well.
+
 
 o----------------------------o
 
@@ -1197,7 +1201,11 @@ o----------------------------o
  which can be passed to the
  await keyword.
 
- (let ((loc (await (sel-input ...))))
+ Yields a pair containing xy
+ coords.
+
+ (let ((xy (await
+            (sel-input ...))))
    ...)
 
 

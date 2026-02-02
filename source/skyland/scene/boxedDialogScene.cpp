@@ -851,6 +851,10 @@ ScenePtr BoxedDialogScene::update(Time delta)
                 lisp::Value* cb = lisp::get_list(old_dialog_opts, choice_sel_);
 
                 if (APP.dialog_receiver_promise()) {
+                    // Invoke the callback anyway
+                    lisp::safecall(cb->cons().cdr(), 0);
+                    lisp::pop_op();
+
                     lisp::Protected p =
                         (lisp::Value*)*APP.dialog_receiver_promise();
                     APP.dialog_receiver_promise().reset();

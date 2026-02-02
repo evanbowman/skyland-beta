@@ -1787,17 +1787,15 @@ void funcall(Value* obj, u8 argc)
 
             Vector<EvalFrame> eval_stack;
 
-            eval_stack.push_back({
-                    .expr_ = obj,
-                    .state_ = EvalFrame::lisp_funcall_cleanup,
-                    .lisp_funcall_cleanup_ = {argc, prev_arguments_break_loc, prev_argc}
-                });
+            eval_stack.push_back(
+                {.expr_ = obj,
+                 .state_ = EvalFrame::lisp_funcall_cleanup,
+                 .lisp_funcall_cleanup_ = {
+                     argc, prev_arguments_break_loc, prev_argc}});
 
-            eval_stack.push_back({
-                    .expr_ = obj,
-                    .state_ = EvalFrame::lisp_funcall_setup,
-                    .funcall_apply_ = {argc}
-                });
+            eval_stack.push_back({.expr_ = obj,
+                                  .state_ = EvalFrame::lisp_funcall_setup,
+                                  .funcall_apply_ = {argc}});
 
             eval_loop(eval_stack);
 
@@ -1996,7 +1994,7 @@ void lint(Value* expr, Value* variable_list)
                             if (str_eq(arg->cons().car()->symbol().name(),
                                        "'") and
                                 arg->cons().cdr()->type() ==
-                                Value::Type::symbol) {
+                                    Value::Type::symbol) {
                                 return true;
                             }
                         }
@@ -2006,8 +2004,7 @@ void lint(Value* expr, Value* variable_list)
                         auto first = get_list(arg, 0);
                         if (first->type() == Value::Type::symbol) {
                             auto name = first->symbol().name();
-                            if (str_eq(name, "lambda") or
-                                str_eq(name, "fn")) {
+                            if (str_eq(name, "lambda") or str_eq(name, "fn")) {
                                 // The first element of the list indicates
                                 // that the list is a lambda function.
                                 detected_type = Value::Type::function;
@@ -2026,16 +2023,14 @@ void lint(Value* expr, Value* variable_list)
                                     }
                                 } else {
                                     auto v = get_var(first);
-                                    if (v->type() ==
-                                        Value::Type::function) {
+                                    if (v->type() == Value::Type::function) {
                                         auto& fn = v->function();
                                         if (fn.sig_.ret_type_ ==
                                             Value::Type::nil) {
                                             return true;
                                         } else {
                                             detected_type =
-                                                (Value::Type)
-                                                fn.sig_.ret_type_;
+                                                (Value::Type)fn.sig_.ret_type_;
                                         }
                                     } else {
                                         return true;
@@ -2151,7 +2146,8 @@ void lint(Value* expr, Value* variable_list)
                     is_special_form = true;
                 } else if (str_eq(name, "await")) {
                     if (not type_check(Value::Type::promise, 0)) {
-                        push_op(make_error("await requires input of type promise!"));
+                        push_op(make_error(
+                            "await requires input of type promise!"));
                         return;
                     }
                     is_special_form = true;
@@ -3898,29 +3894,33 @@ void resolve_promise(Value* pr, Value* result)
         eval_stack.push_back(promise.load_eval_frame(i));
     }
 
-    pop_op(); // pop the promise
+    pop_op();        // pop the promise
     push_op(result); // replace promise on stack with result
     eval_loop(eval_stack);
 
-    auto computation_result = get_op0();
-    pop_op(); // result
-    pop_op(); // code root
-    push_op(computation_result);
+    // info(stringify(bound_context->operand_stack_->size()));
 }
 
 
-bool can_suspend(Vector<EvalFrame>& eval_stack)
+bool can_suspend(Vector<EvalFrame>& eval_stack, StringBuffer<48>& agitant)
 {
-    static const u32 max_eval_suspend_stack = SCRATCH_BUFFER_SIZE / sizeof(EvalFrame);
+    static const u32 max_eval_suspend_stack =
+        SCRATCH_BUFFER_SIZE / sizeof(EvalFrame);
 
-    if (eval_stack.size() > max_eval_suspend_stack or
-        bound_context->operand_stack_->size() > 255) {
+    if (eval_stack.size() > max_eval_suspend_stack) {
+        agitant = "eval stack too deep";
+        return false;
+    }
+
+    if (bound_context->operand_stack_->size() > 255) {
+        agitant = "operand stack too deep";
         return false;
     }
 
     if (length(bound_context->callstack_) == 1) {
         if (bound_context->callstack_->cons().car()->type() not_eq
             lisp::Value::Type::function) {
+            agitant = "cannot suspend from toplevel";
             // We're at the toplevel, and cannot suspend
             return false;
         }
@@ -3931,6 +3931,7 @@ bool can_suspend(Vector<EvalFrame>& eval_stack)
         if (v->type() == Value::Type::function) {
             if (v->hdr_.mode_bits_ not_eq Function::ModeBits::lisp_function) {
                 can_suspend = false;
+                agitant = val_to_string<48>(v);
             }
         }
     });
@@ -3960,8 +3961,8 @@ void eval(Value* code_root)
 #ifdef __GBA__
 __attribute__((always_inline))
 #endif
-static inline void eval_iter_start(EvalFrame& frame,
-                                   Vector<EvalFrame>& eval_stack)
+static inline void
+eval_iter_start(EvalFrame& frame, Vector<EvalFrame>& eval_stack)
 {
     gc_safepoint();
 
@@ -4066,7 +4067,8 @@ static inline void eval_iter_start(EvalFrame& frame,
                 return;
             } else if (str_eq(name, "await")) {
                 eval_stack.push_back({code, EvalFrame::await_check_result});
-                eval_stack.push_back({code->cons().cdr()->cons().car(), EvalFrame::start});
+                eval_stack.push_back(
+                    {code->cons().cdr()->cons().car(), EvalFrame::start});
                 return;
             }
         }
@@ -4102,6 +4104,8 @@ static inline void eval_iter_start(EvalFrame& frame,
 
 void eval_loop(Vector<EvalFrame>& eval_stack)
 {
+    const u32 op_stack_init = bound_context->operand_stack_->size();
+
     while (eval_stack.size() not_eq 0) {
         EvalFrame frame = eval_stack.back();
         eval_stack.pop_back();
@@ -4178,31 +4182,31 @@ void eval_loop(Vector<EvalFrame>& eval_stack)
                 pop_op();
                 push_op(make_error("await expects a promise object!"));
             } else {
-                if (can_suspend(eval_stack)) {
+                StringBuffer<48> agitant;
+                if (can_suspend(eval_stack, agitant)) {
                     ListBuilder lat;
                     lat.push_back(bound_context->lexical_bindings_);
                     lat.push_back(bound_context->callstack_);
-                    eval_stack.push_back({
-                            .expr_ = lat.result(),
-                            .state_ = EvalFrame::await_resume,
-                            .await_resume_ = {
-                                bound_context->arguments_break_loc_,
-                                bound_context->current_fn_argc_
-                            }
-                        });
+                    eval_stack.push_back(
+                        {.expr_ = lat.result(),
+                         .state_ = EvalFrame::await_resume,
+                         .await_resume_ = {bound_context->arguments_break_loc_,
+                                           bound_context->current_fn_argc_}});
                     // Execution suspended. Prior to resume, the interpreter
                     // will expect the caller to pop the promise and push the
                     // result in the captured execution context.
                     setup_promise(result->promise(), eval_stack);
-                    reset_operand_stack();
-                    push_op(L_NIL); // we pushed code at the beginning of eval.
-                    push_op(L_NIL); // suspended state doesn't return any result from eval.
+                    while (bound_context->operand_stack_->size() > op_stack_init) {
+                        pop_op();
+                    }
+                    push_op(L_NIL);
                     bound_context->lexical_bindings_ = L_NIL;
                     reset_callstack();
                     return;
                 } else {
                     pop_op(); // The promise
-                    push_op(make_error("suspend failed!"));
+                    push_op(make_error(::format("suspend failed due to: %",
+                                                agitant.c_str()).c_str()));
                 }
             }
             break;
@@ -4213,7 +4217,8 @@ void eval_loop(Vector<EvalFrame>& eval_stack)
             auto saved_list = frame.expr_;
             bound_context->lexical_bindings_ = saved_list->cons().car();
             bound_context->callstack_ = saved_list->cons().cdr()->cons().car();
-            bound_context->arguments_break_loc_ = frame.await_resume_.saved_break_loc_;
+            bound_context->arguments_break_loc_ =
+                frame.await_resume_.saved_break_loc_;
             bound_context->current_fn_argc_ = frame.await_resume_.saved_argc_;
             break;
         }
