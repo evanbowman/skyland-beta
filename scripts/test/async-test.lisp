@@ -53,6 +53,16 @@
     (assert-eq x 4))
   (end-test)
 
+  (begin-test "param")
+  ;; NOTE: test-delay returns an incremented counter for each call
+  (assert-eq '(1 2 3 3) (list 1 2 3 (await (test-delay 2000))))
+  (assert-eq 6 ((lambda (a b)
+                  (a b))
+                (lambda (c)
+                  (+ c (await (test-delay 60))))
+                2))
+  (end-test)
+
   (begin-test "test loop")
   (let ((num 0))
     (while (< num 20)
@@ -66,6 +76,13 @@
                           (await (test-delay 90))
                           (range (/ n 2)))
                         10)))
+  (end-test)
+
+  (begin-test "lexical bindings")
+  (let ((a 2) (b 5) (c 6) (d 1))
+    (let ((a 1) (b 2) (c 3))
+      (await (test-delay 100))
+      (assert-eq (list a b c d) '(1 2 3 1))))
   (end-test)
 
   (exit-stress-gc-mode)

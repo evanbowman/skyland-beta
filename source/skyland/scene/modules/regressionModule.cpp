@@ -127,8 +127,9 @@ ScenePtr RegressionModule::update(Time delta)
             current.time_remaining_ -= delta;
             if (current.time_remaining_ <= 0) {
                 lisp::Value* promise = current.promise_;
+                auto ret = L_INT(resolve_counter_++);
                 async_timers_.pop_back();
-                lisp::resolve_promise(promise, L_NIL);
+                lisp::resolve_promise(promise, ret);
                 auto result = lisp::get_op0();
                 if (result->type() == lisp::Value::Type::error) {
                     lisp::DefaultPrinter p;

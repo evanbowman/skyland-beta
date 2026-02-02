@@ -60,6 +60,7 @@ private:
         }
     };
     Vector<AsyncTestData> async_timers_;
+    int resolve_counter_ = 0;
 };
 
 
