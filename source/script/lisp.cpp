@@ -1662,6 +1662,7 @@ struct EvalFrame
         lisp_funcall_cleanup,
         await_check_result,
         await_resume,
+        pop_root,
     } state_;
 
     struct FuncallApplyParams
@@ -3947,14 +3948,10 @@ void eval(Value* code_root)
     push_op(code_root); // gc protect
 
     Vector<EvalFrame> eval_stack;
+    eval_stack.push_back({code_root, EvalFrame::pop_root});
     eval_stack.push_back({code_root, EvalFrame::start});
 
     eval_loop(eval_stack);
-
-    auto result = get_op0();
-    pop_op(); // result
-    pop_op(); // code root
-    push_op(result);
 }
 
 
@@ -4111,6 +4108,14 @@ void eval_loop(Vector<EvalFrame>& eval_stack)
         eval_stack.pop_back();
 
         switch (frame.state_) {
+        case EvalFrame::State::pop_root: {
+            auto result = get_op0();
+            pop_op(); // result
+            pop_op(); // code_root, pushed by eval
+            push_op(result);
+            break;
+        }
+
         case EvalFrame::State::start: {
             eval_iter_start(frame, eval_stack);
             break;
