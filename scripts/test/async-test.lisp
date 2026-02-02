@@ -61,6 +61,7 @@
   (begin-test "basic...")
   (let ((x 0))
     (await (test-delay 5000))
+    (strict-mode 1) ; disabled previously at bottom of script
     (+= x 1)
     (await (test-delay 2000))
     (+= x 3)
@@ -105,3 +106,11 @@
 
 
 (async-test)
+
+;; The interpreter detects excess values on the stack when running this script,
+;; because we basically have two suspended functions that were started from the
+;; top level. In normal situations, this is not a concern, because the only
+;; thing that could resume execution in an idle state would be an async
+;; function, which replaces the old stack restores its own stack. Long story
+;; short, we need to turn off strict mode here.
+(strict-mode 0)
