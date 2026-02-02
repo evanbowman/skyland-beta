@@ -116,9 +116,6 @@ ScenePtr RegressionModule::update(Time delta)
             }));
 
         APP.invoke_script("/scripts/test/async-test.lisp");
-        auto v = lisp::get_var("async-test");
-        lisp::safecall(v, 0);
-        lisp::pop_op();
 
         test_index++;
 

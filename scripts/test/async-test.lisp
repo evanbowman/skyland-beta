@@ -42,6 +42,19 @@
 
 (enter-stress-gc-mode)
 
+(setq temp 9999)
+
+;; Launch and suspend a function, to be resumed upon completion of the other
+;; test cases.
+(let ((val 10))
+  ((lambda ()
+     ;; NOTE: test-delay increments a counter for each call. It results in 27,
+     ;; based on the number of times it was called in subsequent tests. Add the
+     ;; input arg and assert to check that the above scope is preserved.
+     (assert-eq (+ val (await (test-delay 10000))) (+ (incr temp) val))
+     (setq async-done true))))
+
+
 (defn async-test ()
   (begin-test "basic...")
   (let ((x 0))
@@ -81,9 +94,11 @@
   (begin-test "lexical bindings")
   (let ((a 2) (b 5) (c 6) (d 1))
     (let ((a 1) (b 2) (c 3))
-      (await (test-delay 100))
+      (setq temp (await (test-delay 100)))
       (assert-eq (list a b c d) '(1 2 3 1))))
   (end-test)
 
-  (exit-stress-gc-mode)
-  (setq async-done true))
+  (exit-stress-gc-mode))
+
+
+(async-test)
