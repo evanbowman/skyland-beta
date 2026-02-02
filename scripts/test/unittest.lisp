@@ -425,6 +425,16 @@
 (assert-v (not (error? cons))) ;; You may not delete a built-in.
 (assert-eq '(5 . 6) (cons 5 6)) ;; The built-in function is back.
 
+(assert-v (error? ((lambda ()
+                     (cons 1 2)
+                     (error "should exit here")
+                     5))))
+
+(assert-v (error? (let ()
+                    1
+                    (error "should exit here")
+                    3)))
+
 (end-test)
 
 

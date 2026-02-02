@@ -4297,7 +4297,9 @@ void eval_loop(Vector<EvalFrame>& eval_stack)
             auto first = body->cons().car();
             auto rest = body->cons().cdr();
 
-            if (rest == get_nil()) {
+            if (get_op0()->type() == Value::Type::error) {
+                // Stop parsing expressions
+            } else if (rest == get_nil()) {
                 eval_stack.push_back({first, EvalFrame::start});
             } else {
                 eval_stack.push_back({rest, EvalFrame::let_body});
@@ -4308,6 +4310,11 @@ void eval_loop(Vector<EvalFrame>& eval_stack)
         }
 
         case EvalFrame::State::let_body_discard: {
+            auto result = get_op0();
+            if (is_error(result)) {
+                // Don't discard errors
+                break;
+            }
             pop_op();
             break;
         }
