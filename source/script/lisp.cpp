@@ -1855,6 +1855,7 @@ void funcall(Value* obj, u8 argc)
     }
 
     default:
+        pop_args();
         push_op(make_error(Error::Code::value_not_callable, L_NIL));
         break;
     }

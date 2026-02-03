@@ -435,6 +435,16 @@
                     (error "should exit here")
                     3)))
 
+;; NOTE: this test came straight out of one of the game scripts.  We aren't
+;; asserting the result, just making sure that it doesn't spill excess values on
+;; the stack when it tries to invoke nil.
+(let ((reward 0))
+  (map
+   (lambda (xy)
+     ((groups-reset) (+= reward 1400)))
+   (range 4)))
+
+
 (end-test)
 
 
