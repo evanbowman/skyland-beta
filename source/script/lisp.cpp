@@ -1976,7 +1976,7 @@ long hexdec(unsigned const char* hex)
 
 // Checks for undefined variable access, checks to make sure enough function
 // params are supplied, checks the proper structure of special forms, etc...
-void lint(Value* expr, Value* variable_list)
+void lint(Value* expr, Value* variable_list, lisp::Protected& gvar_list)
 {
     Protected var_list(variable_list);
 
@@ -1987,13 +1987,25 @@ void lint(Value* expr, Value* variable_list)
         if (is_list(expr)) {
             auto fn_sym = get_list(expr, 0);
             if (fn_sym->type() == Value::Type::cons and is_list(fn_sym)) {
-                lint(fn_sym, variable_list);
+                lint(fn_sym, variable_list, gvar_list);
                 if (get_op0()->type() == Value::Type::error) {
                     return;
                 }
                 pop_op();
             } else if (fn_sym->type() == Value::Type::symbol) {
                 auto name = fn_sym->symbol().name();
+
+                if (str_eq(name, "setfn") or
+                    str_eq(name, "set-temp") or
+                    str_eq(name, "defconstant")) {
+                    auto pair = get_list(expr, 1);
+                    if (pair->type() == Value::Type::cons) {
+                        auto sym = pair->cons().cdr();
+                        if (sym->type() == Value::Type::symbol) {
+                            gvar_list = L_CONS(sym, gvar_list);
+                        }
+                    }
+                }
 
                 auto type_check = [&](auto expected_type, int slot) {
                     auto arg = get_list(expr, slot + 1);
@@ -2019,6 +2031,7 @@ void lint(Value* expr, Value* variable_list)
                         auto first = get_list(arg, 0);
                         if (first->type() == Value::Type::symbol) {
                             auto name = first->symbol().name();
+
                             if (str_eq(name, "lambda") or str_eq(name, "fn")) {
                                 // The first element of the list indicates
                                 // that the list is a lambda function.
@@ -2237,6 +2250,12 @@ void lint(Value* expr, Value* variable_list)
                             found = true;
                         }
                     });
+                    l_foreach(gvar_list, [cv, &found](Value* v) {
+                        if (cv->symbol().unique_id() ==
+                            v->symbol().unique_id()) {
+                            found = true;
+                        }
+                    });
 
                     if (not found) {
                         auto v = get_var(cv);
@@ -2299,7 +2318,7 @@ void lint(Value* expr, Value* variable_list)
                     return;
                 }
 
-                lint(cv, variable_list);
+                lint(cv, variable_list, gvar_list);
 
                 if (get_op0()->type() == Value::Type::error) {
                     return;
@@ -2350,6 +2369,7 @@ Value* lint_code(CharSequence& code)
     Protected result(get_nil());
 
     Protected varlist = L_NIL;
+    Protected gvar_list = L_NIL;
 
     while (true) {
         const auto last_i = i;
@@ -2385,7 +2405,7 @@ Value* lint_code(CharSequence& code)
                 }
             }
         }
-        lint(reader_result, varlist);
+        lint(reader_result, varlist, gvar_list);
         auto expr_result = get_op0();
         result.set(expr_result);
         pop_op(); // expression result
@@ -4170,7 +4190,12 @@ void eval_loop(Vector<EvalFrame>& eval_stack)
             auto test_result = get_op0();
             pop_op();
 
+
             auto if_code = frame.expr_->cons().cdr();
+            if (if_code->cons().cdr()->type() not_eq Value::Type::cons) {
+                push_op(make_error("if statement with no body!"));
+                break;
+            }
 
             Value* branch_to_eval;
             if (is_boolean_true(test_result)) {
@@ -5507,27 +5532,6 @@ BUILTIN_TABLE(
 
            return list.result();
        }}},
-     {"collect",
-      {SIG1(cons, function),
-       [](int argc) {
-           L_EXPECT_OP(0, function);
-
-           ListBuilder res;
-
-           funcall(get_op0(), 0);
-           Protected c = get_op0();
-           pop_op();
-
-           while (is_boolean_true(c)) {
-               res.push_back(c);
-
-               funcall(get_op0(), 0);
-               c = get_op0();
-               pop_op();
-           }
-
-           return res.result();
-       }}},
      {"length",
       {SIG1(integer, nil),
        [](int argc) {
@@ -6459,6 +6463,9 @@ BUILTIN_TABLE(
                result.push_back(fc_result);
                pop_op();
 
+               if (is_error(fc_result)) {
+                   return fc_result;
+               }
 
                ++index;
            }
@@ -6571,7 +6578,8 @@ BUILTIN_TABLE(
                return make_error("lint expects list parameter!");
            }
 
-           lint(get_op0(), L_NIL);
+           Protected gvar_list(L_NIL);
+           lint(get_op0(), L_NIL, gvar_list);
            auto result = get_op0();
            pop_op();
            return result;

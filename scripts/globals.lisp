@@ -62,6 +62,10 @@
 (defconstant faction-enable-goblin-mask (bit-shift-left 1 1))
 (defconstant faction-enable-sylph-mask (bit-shift-left 1 2))
 
+(defconstant wg-id-visited 2)
+(defconstant wg-id-neutral 2)
+(defconstant wg-id-shop 7)
+
 (defconstant default-early-gc-thresh 1000)
 
 

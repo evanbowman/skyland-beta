@@ -26,7 +26,7 @@
 (flag-show (opponent) flag-id-marauder)
 
 
-(defn/temp ready-fight (msg)
+(defn/temp attack-player (msg)
   (await (dialog* msg))
   (await (dialog* "<c:goblin:2>Yesss captain!"))
   (await (dialog* "(the transmission was cut)"))
@@ -51,9 +51,10 @@
 
 
 
-(defn on-converge ()
-  (setq on-converge nil)
-  (let ((sel (await (dialog-choice* "<c:Redbeard:12>Aarrrgh!! You're trespassing in my domain. Gimme 600@ or I'll blast your island to bits!"
+(defn/temp try-negotiate ()
+  (let ((sel (await (dialog-choice* (string "<c:Redbeard:12>Negotiate!? Ha. <d:1000> Hahahah! "
+                                            "<d:1000> The only negotiation will be how fast you "
+                                            "pay me!")
                                     '("Here's 600@…"
                                       "You're bluffing!"
                                       "Never!")))))
@@ -64,11 +65,26 @@
 
 
 
+(defn on-converge ()
+  (setq on-converge nil)
+  (let ((sel (await (dialog-choice* "<c:Redbeard:12>Aarrrgh!! You're trespassing in my domain. Gimme 600@ or I'll blast your island to bits!"
+                                    '("Here's 600@…"
+                                      "You're bluffing!"
+                                      "Let's negotiate!"
+                                      "Never!")))))
+    (case sel
+      (0 (on-dialog-accepted))
+      (1 (handle-bluff))
+      (2 (try-negotiate))
+      (3 (on-dialog-declined)))))
+
+
+
 (defn on-dialog-accepted ()
   (if (< (coins) 600)
       (progn
         (adventure-log-add 12 '())
-        (ready-fight "<c:redbeard:12>That's not enough, load the cannons!!!"))
+        (attack-player "<c:redbeard:12>That's not enough, load the cannons!!!"))
       (progn
         (adventure-log-add 13 (list 600))
         (coins-add -600)
@@ -78,7 +94,7 @@
 
 (defn on-dialog-declined ()
   (adventure-log-add 14 '())
-  (ready-fight "<c:redbeard:12>Whaatt!! Load the cannons!!!"))
+  (attack-player "<c:redbeard:12>Whaatt!! Load the cannons!!!"))
 
 
 (defn on-room-destroyed (isle sym)
