@@ -84,6 +84,6 @@
 
 
   (defn on-dialog-declined ()
-    (dialog "Huh!? Who doesn't want free stuff? Suit yourself...")
+    (await (dialog* "Huh!? Who doesn't want free stuff? Suit yourself..."))
     (adventure-log-add 8 '())
-    (setq on-dialog-closed exit)))
+    (exit)))

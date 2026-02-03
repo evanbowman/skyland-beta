@@ -48,7 +48,7 @@
 
   (defn/temp purchase-items ()
     (adventure-log-add 10 (list (rinfo 'name item) cost))
-    (coins-add (* -1 cost))
+    (coins-add (- cost))
     (let ((msgs (list (string "Place first "
                               (rinfo 'name item)
                               (format " (%x%):" (car (rinfo 'size item)) (cdr (rinfo 'size item))))
