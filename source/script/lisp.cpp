@@ -1663,6 +1663,7 @@ struct EvalFrame
         await_check_result,
         await_resume,
         pop_root,
+        apply_with_list,
     } state_;
 
     struct FuncallApplyParams
@@ -1856,7 +1857,7 @@ void funcall(Value* obj, u8 argc)
 
     default:
         pop_args();
-        push_op(make_error(Error::Code::value_not_callable, L_NIL));
+        push_op(make_error(Error::Code::value_not_callable, obj));
         break;
     }
 
@@ -4099,6 +4100,18 @@ eval_iter_start(EvalFrame& frame, Vector<EvalFrame>& eval_stack)
                 eval_stack.push_back(
                     {code->cons().cdr()->cons().car(), EvalFrame::start});
                 return;
+            } else if (str_eq(name, "apply")) {
+                if (length(code) < 3) {
+                    push_op(make_error("insufficent args to apply"));
+                    return;
+                }
+                auto fn_expr = code->cons().cdr()->cons().car();
+                auto args_list_expr = code->cons().cdr()->cons().cdr()->cons().car();
+
+                eval_stack.push_back({code, EvalFrame::apply_with_list});
+                eval_stack.push_back({args_list_expr, EvalFrame::start});
+                eval_stack.push_back({fn_expr, EvalFrame::start});
+                return;
             }
         }
         push_op(bound_context->lexical_bindings_);
@@ -4459,6 +4472,36 @@ void eval_loop(Vector<EvalFrame>& eval_stack)
                 frame.lisp_funcall_cleanup_.saved_argc_;
 
             push_op(result);
+            break;
+        }
+
+        case EvalFrame::State::apply_with_list: {
+            // args_list is on stack, function is below it
+            auto args_list = get_op0();
+            pop_op();
+            auto fn = get_op0();
+            pop_op();
+
+            if (not is_list(args_list)) {
+                push_op(make_error("parameter passed to apply is not list"));
+                break;
+            }
+
+            push_op(bound_context->lexical_bindings_);
+            push_op(fn);
+
+            int argc = 0;
+            while (args_list != get_nil()) {
+                push_op(args_list->cons().car());
+                argc++;
+                args_list = args_list->cons().cdr();
+            }
+
+            eval_stack.push_back({
+                    .expr_ = frame.expr_,
+                    .state_ = EvalFrame::funcall_apply,
+                    .funcall_apply_ = {argc}
+                });
             break;
         }
 

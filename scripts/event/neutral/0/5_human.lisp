@@ -51,9 +51,7 @@
   (chr-del (opponent) 1 12)
   (chr-new (player) (car xy) (cdr xy) 'neutral '((icon . 14)))
   (adventure-log-add 15 '())
-  (foreach (lambda (msg)
-             (await (dialog* msg)))
-           messages)
+  (apply dialog-sequence messages)
   (pickup-cart 2 "<c:Girl:14>.<d:500>.<d:500>.<d:500> Actually, I was wondering if you can do me one more small favor? I brought this data cartridge with an old photo of my village, can you hold onto it for me?")
   (exit-with-commentary "welcomes_girl"))
 
@@ -69,8 +67,10 @@
           (let ((xy (await (sel-input* 'cargo-bay "Place cargo bay (1x2):"))))
             (sound "build0")
             (room-new (player) `(cargo-bay ,(car xy) ,(cdr xy)))
-            (join-crew xy '("<c:Girl:14>Wait, you're serious! I guess I asked for it haha..."
-                            "The villager girl joined your crew!")))))))
+            (join-crew (cons (car xy)
+                             (incr (cdr xy))) ; slot in cargo bay is y+1
+                       '("<c:Girl:14>Wait, you're serious! I guess I asked for it haha..."
+                         "The villager girl joined your crew!")))))))
 
 
 (setq on-dialog-declined exit)
