@@ -121,11 +121,18 @@
   (dialog* text))
 
 
-(defn/c dialog-choice-binary-q* ((text . string) y n)
-  (dialog-choice* text (list y n)))
+(defn dialog-await-binary-q ((text . string) y n)
+  (equal 0 (await (dialog-choice* text (list y n)))))
 
-(defn/c dialog-choice-y/n* ((text . string))
-  (dialog-choice-binary-q* text "yes" "no"))
+(defn dialog-await-y/n ((text . string))
+  (dialog-await-binary-q text "yes" "no"))
+
+
+(defn foreach ((cb . lambda) (lat . pair))
+  (let ((l lat))
+    (while l
+      (cb (car l))
+      (setq l (cdr l)))))
 
 
 ;; shortcut accessors for room metadata

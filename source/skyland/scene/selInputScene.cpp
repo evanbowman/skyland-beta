@@ -233,7 +233,7 @@ ScenePtr SelInputScene::update(Time delta)
 
         auto receiver = parameters_->cons().car()->cons().cdr();
         if (receiver->type() == lisp::Value::Type::promise) {
-            lisp::resolve_promise(receiver, L_CONS(L_INT(x), L_INT(y)));
+            lisp::resolve_promise_safe(receiver, L_CONS(L_INT(x), L_INT(y)));
         } else if (receiver->type() == lisp::Value::Type::function) {
             lisp::push_op(wrap_island(isle));
             lisp::push_op(lisp::make_integer(x));

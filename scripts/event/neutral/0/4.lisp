@@ -69,18 +69,19 @@
   (defn on-dialog-accepted ()
     (alloc-space wpn)
     (room-del (opponent) (car pos) (cdr pos))
-    (sel-input wpn
-               (format "Pick a slot (%x%)" (car (rinfo 'size wpn)) (cdr (rinfo 'size wpn)))
-               (lambda (isle x y)
-                 (room-new (player) (list wpn x y))
-                 (sound "build0")
-                 (dialog (case wpn
-                           ('rocket-bomb "Like a missile-silo, but starts fires! A useful addition!")
-                           ('ballista "A special cannon that fires projectiles in a wide arc. How useful!")
-                           (else "Wow, a very powerful weapon! <B:0> You're lucky to have found this...")))
-                 (defn on-dialog-closed ()
-                   (exit-with-commentary "goblin_raid_weapon"))))
-    (adventure-log-add 9 (list wpn)))
+    (let ((xy (await (sel-input*
+                      wpn
+                      (format "Pick a slot (%x%)" (car (rinfo 'size wpn)) (cdr (rinfo 'size wpn)))))))
+      (room-new (player) (list wpn (car xy) (cdr xy)))
+      (sound "build0")
+      (await
+       (dialog* (case wpn
+                  ('rocket-bomb "Like a missile-silo, but starts fires! A useful addition!")
+                  ('ballista "A special cannon that fires projectiles in a wide arc. How useful!")
+                  (else "Wow, a very powerful weapon! <B:0> You're lucky to have found this..."))))
+      (adventure-log-add 9 (list wpn))
+      (exit-with-commentary "goblin_raid_weapon")))
+
 
   (defn on-dialog-declined ()
     (dialog "Huh!? Who doesn't want free stuff? Suit yourself...")

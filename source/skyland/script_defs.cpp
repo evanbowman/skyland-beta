@@ -90,7 +90,7 @@ public:
     {
         delay_ -= delta;
         if (delay_ <= 0) {
-            lisp::resolve_promise(promise_, L_NIL);
+            lisp::resolve_promise_safe(promise_, L_NIL);
             lisp::pop_op();
             this->kill();
         }

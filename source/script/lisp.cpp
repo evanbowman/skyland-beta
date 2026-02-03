@@ -1867,6 +1867,18 @@ void funcall(Value* obj, u8 argc)
 }
 
 
+void resolve_promise_safe(Value* pr, Value* val)
+{
+    resolve_promise(pr, val);
+    if (is_error(get_op0())) {
+        const char* tag = "lisp-fmt-buffer";
+        auto p = allocate<DefaultPrinter>(tag);
+        format(get_op0(), *p);
+        Platform::fatal(p->data_.c_str());
+    }
+}
+
+
 void safecall(Value* fn, u8 argc)
 {
     if (fn->type() not_eq Value::Type::function) {
@@ -2860,6 +2872,11 @@ void DataBuffer::finalizer(Value* buffer)
 
 int compact_string_memory()
 {
+    if (not scratch_buffers_remaining()) {
+        // We cannot allocate a databuffer to compact into if we're oom.
+        return 0;
+    }
+
     // The interpreter uses bump allocation when allocating strings. This can
     // cause fragmentation, and after collecting lisp objects, we should squeeze
     // the resulting gaps out of the memory region used for storing strings.
@@ -3880,7 +3897,10 @@ void resolve_promise(Value* pr, Value* result)
     }
 
     auto& promise = pr->promise();
-    if (promise.eval_stack_elems_ == 0) {
+    if (promise.eval_stack_elems_ == 0 or
+        promise.operand_stack_elems_ == 0 or
+        dcompr(promise.operand_stack_) == L_NIL or
+        dcompr(promise.eval_stack_) == L_NIL) {
         info("broken promise!");
         // Uninitialized promise! Nowhere for the result to go!?
         return;
@@ -3899,6 +3919,17 @@ void resolve_promise(Value* pr, Value* result)
     pop_op();        // pop the promise
     push_op(result); // replace promise on stack with result
     eval_loop(eval_stack);
+
+    // Because only this promise value retained references to these two
+    // databuffers, they can be collected prematurely to free up databuffer
+    // memory. Otherwise, scratch buffers will accumulate in discarded promise
+    // values until the gc runs, wasting a lot of memory.
+    collect_value(dcompr(promise.operand_stack_));
+    collect_value(dcompr(promise.eval_stack_));
+    promise.operand_stack_ = compr(L_NIL);
+    promise.eval_stack_ = compr(L_NIL);
+    promise.operand_stack_elems_ = 0;
+    promise.eval_stack_elems_ = 0;
 
     // info(stringify(bound_context->operand_stack_->size()));
 }
@@ -4176,13 +4207,6 @@ void eval_loop(Vector<EvalFrame>& eval_stack)
         }
 
         case EvalFrame::State::await_check_result: {
-            // Force the gc to run. Every await call allocates some databuffers,
-            // which accumulate in promises. We can accumulate a lot of memory
-            // in no-longer-referenced promise values, and we may not be
-            // allocating enough lisp values to force a collection, so other
-            // parts of the system could run low on memory if we don't do this.
-            run_gc();
-
             auto result = get_op0();
             if (result->type() not_eq Value::Type::promise) {
                 pop_op();
@@ -6336,22 +6360,6 @@ BUILTIN_TABLE(
            if (auto name = nameof(get_op0())) {
                return make_symbol(name);
            }
-           return L_NIL;
-       }}},
-     {"foreach",
-      {SIG2(nil, function, cons),
-       [](int argc) {
-           L_EXPECT_OP(1, function);
-           L_EXPECT_OP(0, cons);
-
-           auto fn = get_op1();
-
-           l_foreach(get_op0(), [&](Value* val) {
-               push_op(val);
-               funcall(fn, 1);
-               pop_op(); // result
-           });
-
            return L_NIL;
        }}},
      {"map",
