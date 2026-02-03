@@ -44,9 +44,9 @@
 (defn on-converge ()
   (setq on-converge nil)
   (if (dialog-await-y/n
-       "While the old empire is now fragmented and most of its weapons systems are offline, "
-       "this automated vessel seems to still be functioning. <B:0>"
-       "The station's computers demand a toll of 600@. Pay?")
+       (string "While the old empire is now fragmented and most of its weapons systems are offline, "
+               "this automated vessel seems to still be functioning. <B:0>"
+               "The station's computers demand a toll of 600@. Pay?"))
       (on-dialog-accepted)
       (on-dialog-declined)))
 
