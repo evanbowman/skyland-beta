@@ -1974,6 +1974,130 @@ long hexdec(unsigned const char* hex)
 }
 
 
+
+bool lint_type_check(Value* expr, u8 expected_type, int slot)
+{
+    auto arg = get_list(expr, slot + 1);
+    if (arg->type() == Value::Type::symbol) {
+        // TODO: track types through variable reference.
+        // For example, if the symbol refers to a function
+        // argument of known type...
+        return true;
+    }
+    if (expected_type == Value::Type::symbol) {
+        // Special case: quoted symbol
+        if (arg->type() == Value::Type::cons) {
+            if (str_eq(arg->cons().car()->symbol().name(), "'") and
+                arg->cons().cdr()->type() == Value::Type::symbol) {
+                return true;
+            }
+        }
+    }
+    auto detected_type = arg->hdr_.type();
+    if (is_list(arg)) {
+        auto first = get_list(arg, 0);
+        if (first->type() == Value::Type::symbol) {
+            auto name = first->symbol().name();
+
+            if (str_eq(name, "lambda") or str_eq(name, "fn")) {
+                // The first element of the list indicates
+                // that the list is a lambda function.
+                detected_type = Value::Type::function;
+            } else {
+                auto builtin = __load_builtin(name);
+                if (builtin.second) {
+                    auto rt = builtin.first.ret_type_;
+                    if (rt == Value::Type::nil) {
+                        // The builtin does not have a
+                        // concrete return type. Static
+                        // analysis cannot be performed
+                        // here.
+                        return true;
+                    } else {
+                        detected_type = (Value::Type)rt;
+                    }
+                } else {
+                    auto v = get_var(first);
+                    if (v->type() == Value::Type::function) {
+                        auto& fn = v->function();
+                        if (fn.sig_.ret_type_ == Value::Type::nil) {
+                            return true;
+                        } else {
+                            detected_type = (Value::Type)fn.sig_.ret_type_;
+                        }
+                    } else {
+                        return true;
+                    }
+                }
+            }
+        } else {
+            // TODO: check return type of function call, if
+            // possible...
+            //
+            // NOTE: this is the specific case where a
+            // function is defined in the first position of
+            // a list, like: ((lambda (x y) ...) args...)
+            // But in this case, we're unlikely to know for
+            // certain what the return type is,
+            // unfortunately.
+            return true;
+        }
+    }
+    if (expected_type == Value::Type::rational and
+        (detected_type == Value::Type::integer or
+         detected_type == Value::Type::ratio)) {
+        // Special case: integers can be promoted to ratios.
+        return true;
+    }
+    return detected_type == expected_type;
+}
+
+
+
+bool lint_find_variable(Value* cv, Value* variable_list, Protected& gvar_list)
+{
+    if (cv->type() == Value::Type::symbol) {
+        bool found = false;
+        l_foreach(variable_list, [cv, &found](Value* v) {
+            if (cv->symbol().unique_id() == v->symbol().unique_id()) {
+                found = true;
+            }
+        });
+        l_foreach(gvar_list, [cv, &found](Value* v) {
+            if (cv->symbol().unique_id() == v->symbol().unique_id()) {
+                found = true;
+            }
+        });
+
+        if (not found) {
+            auto v = get_var(cv);
+            if (v->type() == Value::Type::error) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+
+StringBuffer<128> lint_arg_error(Value* expr, Value* fn, int arg, u8 expected)
+{
+    auto tp = (ValueHeader::Type)expected;
+    return ::format("invalid arg % type for %! "
+                    "expected %, got %",
+                    arg,
+                    val_to_string<64>(fn).c_str(),
+                    type_to_string(tp),
+                    val_to_string<64>(get_list(expr, arg + 1)).c_str());
+}
+
+
+void lint_push_arg_error(Value* expr, Value* fn, int arg, u8 exp)
+{
+    push_op(make_error(lint_arg_error(expr, fn, arg, exp).c_str()));
+}
+
+
 // Checks for undefined variable access, checks to make sure enough function
 // params are supplied, checks the proper structure of special forms, etc...
 void lint(Value* expr, Value* variable_list, lisp::Protected& gvar_list)
@@ -1995,8 +2119,7 @@ void lint(Value* expr, Value* variable_list, lisp::Protected& gvar_list)
             } else if (fn_sym->type() == Value::Type::symbol) {
                 auto name = fn_sym->symbol().name();
 
-                if (str_eq(name, "setfn") or
-                    str_eq(name, "set-temp") or
+                if (str_eq(name, "setfn") or str_eq(name, "set-temp") or
                     str_eq(name, "defconstant")) {
                     auto pair = get_list(expr, 1);
                     if (pair->type() == Value::Type::cons) {
@@ -2006,86 +2129,6 @@ void lint(Value* expr, Value* variable_list, lisp::Protected& gvar_list)
                         }
                     }
                 }
-
-                auto type_check = [&](auto expected_type, int slot) {
-                    auto arg = get_list(expr, slot + 1);
-                    if (arg->type() == Value::Type::symbol) {
-                        // TODO: track types through variable reference.
-                        // For example, if the symbol refers to a function
-                        // argument of known type...
-                        return true;
-                    }
-                    if (expected_type == Value::Type::symbol) {
-                        // Special case: quoted symbol
-                        if (arg->type() == Value::Type::cons) {
-                            if (str_eq(arg->cons().car()->symbol().name(),
-                                       "'") and
-                                arg->cons().cdr()->type() ==
-                                    Value::Type::symbol) {
-                                return true;
-                            }
-                        }
-                    }
-                    auto detected_type = arg->hdr_.type();
-                    if (is_list(arg)) {
-                        auto first = get_list(arg, 0);
-                        if (first->type() == Value::Type::symbol) {
-                            auto name = first->symbol().name();
-
-                            if (str_eq(name, "lambda") or str_eq(name, "fn")) {
-                                // The first element of the list indicates
-                                // that the list is a lambda function.
-                                detected_type = Value::Type::function;
-                            } else {
-                                auto builtin = __load_builtin(name);
-                                if (builtin.second) {
-                                    auto rt = builtin.first.ret_type_;
-                                    if (rt == Value::Type::nil) {
-                                        // The builtin does not have a
-                                        // concrete return type. Static
-                                        // analysis cannot be performed
-                                        // here.
-                                        return true;
-                                    } else {
-                                        detected_type = (Value::Type)rt;
-                                    }
-                                } else {
-                                    auto v = get_var(first);
-                                    if (v->type() == Value::Type::function) {
-                                        auto& fn = v->function();
-                                        if (fn.sig_.ret_type_ ==
-                                            Value::Type::nil) {
-                                            return true;
-                                        } else {
-                                            detected_type =
-                                                (Value::Type)fn.sig_.ret_type_;
-                                        }
-                                    } else {
-                                        return true;
-                                    }
-                                }
-                            }
-                        } else {
-                            // TODO: check return type of function call, if
-                            // possible...
-                            //
-                            // NOTE: this is the specific case where a
-                            // function is defined in the first position of
-                            // a list, like: ((lambda (x y) ...) args...)
-                            // But in this case, we're unlikely to know for
-                            // certain what the return type is,
-                            // unfortunately.
-                            return true;
-                        }
-                    }
-                    if (expected_type == Value::Type::rational and
-                        (detected_type == Value::Type::integer or
-                         detected_type == Value::Type::ratio)) {
-                        // Special case: integers can be promoted to ratios.
-                        return true;
-                    }
-                    return detected_type == expected_type;
-                };
 
                 if (str_eq(name, "'") or str_eq(name, "`")) {
                     push_op(L_NIL);
@@ -2173,7 +2216,7 @@ void lint(Value* expr, Value* variable_list, lisp::Protected& gvar_list)
                 } else if (str_eq(name, "defconstant")) {
                     is_special_form = true;
                 } else if (str_eq(name, "await")) {
-                    if (not type_check(Value::Type::promise, 0)) {
+                    if (not lint_type_check(expr, Value::Type::promise, 0)) {
                         push_op(make_error(
                             "await requires input of type promise!"));
                         return;
@@ -2196,42 +2239,37 @@ void lint(Value* expr, Value* variable_list, lisp::Protected& gvar_list)
                     }
                     auto& fn_var = fn->function();
 
-                    auto arg_error = [&](int arg, u8 expected) {
-                        auto tp = (ValueHeader::Type)expected;
-                        return ::format(
-                            "invalid arg % type for %! "
-                            "expected %, got %",
-                            arg,
-                            val_to_string<64>(fn).c_str(),
-                            type_to_string(tp),
-                            val_to_string<64>(get_list(expr, arg + 1)).c_str());
-                    };
 
-                    auto push_arg_error = [&](int arg, u8 exp) {
-                        push_op(make_error(arg_error(arg, exp).c_str()));
-                    };
 
                     if (fn_var.sig_.arg0_type_ not_eq ValueHeader::Type::nil) {
-                        if (not type_check(fn_var.sig_.arg0_type_, 0)) {
-                            push_arg_error(0, fn_var.sig_.arg0_type_);
+                        if (not lint_type_check(
+                                expr, fn_var.sig_.arg0_type_, 0)) {
+                            lint_push_arg_error(
+                                expr, fn, 0, fn_var.sig_.arg0_type_);
                             return;
                         }
                     }
                     if (fn_var.sig_.arg1_type_ not_eq ValueHeader::Type::nil) {
-                        if (not type_check(fn_var.sig_.arg1_type_, 1)) {
-                            push_arg_error(1, fn_var.sig_.arg1_type_);
+                        if (not lint_type_check(
+                                expr, fn_var.sig_.arg1_type_, 1)) {
+                            lint_push_arg_error(
+                                expr, fn, 1, fn_var.sig_.arg1_type_);
                             return;
                         }
                     }
                     if (fn_var.sig_.arg2_type_ not_eq ValueHeader::Type::nil) {
-                        if (not type_check(fn_var.sig_.arg2_type_, 2)) {
-                            push_arg_error(2, fn_var.sig_.arg2_type_);
+                        if (not lint_type_check(
+                                expr, fn_var.sig_.arg2_type_, 2)) {
+                            lint_push_arg_error(
+                                expr, fn, 2, fn_var.sig_.arg2_type_);
                             return;
                         }
                     }
                     if (fn_var.sig_.arg3_type_ not_eq ValueHeader::Type::nil) {
-                        if (not type_check(fn_var.sig_.arg3_type_, 3)) {
-                            push_arg_error(3, fn_var.sig_.arg3_type_);
+                        if (not lint_type_check(
+                                expr, fn_var.sig_.arg3_type_, 3)) {
+                            lint_push_arg_error(
+                                expr, fn, 3, fn_var.sig_.arg3_type_);
                             return;
                         }
                     }
@@ -2241,35 +2279,11 @@ void lint(Value* expr, Value* variable_list, lisp::Protected& gvar_list)
                 }
             }
 
-            auto find_variable = [&](Value* cv) {
-                if (cv->type() == Value::Type::symbol) {
-                    bool found = false;
-                    l_foreach(variable_list, [cv, &found](Value* v) {
-                        if (cv->symbol().unique_id() ==
-                            v->symbol().unique_id()) {
-                            found = true;
-                        }
-                    });
-                    l_foreach(gvar_list, [cv, &found](Value* v) {
-                        if (cv->symbol().unique_id() ==
-                            v->symbol().unique_id()) {
-                            found = true;
-                        }
-                    });
 
-                    if (not found) {
-                        auto v = get_var(cv);
-                        if (v->type() == Value::Type::error) {
-                            return false;
-                        }
-                    }
-                }
-                return true;
-            };
 
             if (not is_special_form) {
                 auto cv = expr->cons().car();
-                if (not find_variable(cv)) {
+                if (not lint_find_variable(cv, variable_list, gvar_list)) {
                     push_op(make_error(::format("invalid variable access: %",
                                                 val_to_string<32>(cv).c_str())
                                            .c_str()));
@@ -2294,7 +2308,8 @@ void lint(Value* expr, Value* variable_list, lisp::Protected& gvar_list)
                                 return;
                             }
 
-                            if (not find_variable(set_sym)) {
+                            if (not lint_find_variable(
+                                    set_sym, variable_list, gvar_list)) {
                                 push_op(make_error(
                                     ::format("set for unknown variable %",
                                              set_sym->symbol().name())
@@ -2311,7 +2326,7 @@ void lint(Value* expr, Value* variable_list, lisp::Protected& gvar_list)
 
                 auto cv = current->cons().car();
 
-                if (not find_variable(cv)) {
+                if (not lint_find_variable(cv, variable_list, gvar_list)) {
                     push_op(make_error(::format("invalid variable access: %",
                                                 cv->symbol().name())
                                            .c_str()));
@@ -3918,8 +3933,7 @@ void resolve_promise(Value* pr, Value* result)
     }
 
     auto& promise = pr->promise();
-    if (promise.eval_stack_elems_ == 0 or
-        promise.operand_stack_elems_ == 0 or
+    if (promise.eval_stack_elems_ == 0 or promise.operand_stack_elems_ == 0 or
         dcompr(promise.operand_stack_) == L_NIL or
         dcompr(promise.eval_stack_) == L_NIL) {
         info("broken promise!");
@@ -4126,7 +4140,8 @@ eval_iter_start(EvalFrame& frame, Vector<EvalFrame>& eval_stack)
                     return;
                 }
                 auto fn_expr = code->cons().cdr()->cons().car();
-                auto args_list_expr = code->cons().cdr()->cons().cdr()->cons().car();
+                auto args_list_expr =
+                    code->cons().cdr()->cons().cdr()->cons().car();
 
                 eval_stack.push_back({code, EvalFrame::apply_with_list});
                 eval_stack.push_back({args_list_expr, EvalFrame::start});
@@ -4264,7 +4279,8 @@ void eval_loop(Vector<EvalFrame>& eval_stack)
                     // will expect the caller to pop the promise and push the
                     // result in the captured execution context.
                     setup_promise(result->promise(), eval_stack);
-                    while (bound_context->operand_stack_->size() > op_stack_init) {
+                    while (bound_context->operand_stack_->size() >
+                           op_stack_init) {
                         pop_op();
                     }
                     push_op(L_NIL);
@@ -4273,8 +4289,9 @@ void eval_loop(Vector<EvalFrame>& eval_stack)
                     return;
                 } else {
                     pop_op(); // The promise
-                    push_op(make_error(::format("suspend failed due to: %",
-                                                agitant.c_str()).c_str()));
+                    push_op(make_error(
+                        ::format("suspend failed due to: %", agitant.c_str())
+                            .c_str()));
                 }
             }
             break;
@@ -4522,11 +4539,9 @@ void eval_loop(Vector<EvalFrame>& eval_stack)
                 args_list = args_list->cons().cdr();
             }
 
-            eval_stack.push_back({
-                    .expr_ = frame.expr_,
-                    .state_ = EvalFrame::funcall_apply,
-                    .funcall_apply_ = {argc}
-                });
+            eval_stack.push_back({.expr_ = frame.expr_,
+                                  .state_ = EvalFrame::funcall_apply,
+                                  .funcall_apply_ = {argc}});
             break;
         }
 
