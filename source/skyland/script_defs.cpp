@@ -38,6 +38,8 @@
 #include "scene/startAdventureScene.hpp"
 #include "scene/textEntryScene.hpp"
 #include "scene/titleScreenScene.hpp"
+#include "script_debugger.hpp"
+#include "script/debug.hpp"
 #include "script/lisp.hpp"
 #include "script/listBuilder.hpp"
 #include "serial.hpp"
@@ -2868,6 +2870,7 @@ void App::init_scripts(Function<4 * sizeof(void*), void(const char*)> msg)
 
     log_cnt();
 
+    lisp::debug::register_debug_handler(onscreen_script_debug_handler);
 
     set_developer_mode(was_developer_mode);
 }
