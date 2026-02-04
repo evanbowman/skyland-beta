@@ -1923,7 +1923,7 @@ void safecall(Value* fn, u8 argc)
         if (breakpoints not_eq L_NIL and not bound_context->debug_break_) {
             if (auto detect_name = nameof(fn)) {
                 bool is_breakpoint = false;
-                Value* br_sym = L_NIL;;
+                Value* br_sym = L_NIL;
                 l_foreach(breakpoints, [&](Value* v) {
                     if (v->type() == Value::Type::symbol) {
                         if (str_eq(v->symbol().name(), detect_name)) {
