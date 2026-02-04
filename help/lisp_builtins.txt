@@ -1175,7 +1175,8 @@ o----------------------------o
  Note: When hitting a
  breakpoint, the game will
  display an onscreen
- debugger.
+ debugger. Press A to step,
+ B to resume.
 
 
 ##############################
@@ -1204,6 +1205,23 @@ o----------------------------o
 
  Halt execution and enter the
  debugger.
+
+
+o----------------------------o
+
+ (watchpoint-register symbol)
+
+ When a variable with a name
+ matching symbol is written,
+ halt the game and open the
+ debugger.
+
+
+o----------------------------o
+
+ (watchpoint-delete symbol)
+
+ Remove a watchpoint.
 
 
 o----------------------------o
