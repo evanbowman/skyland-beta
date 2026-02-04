@@ -1199,7 +1199,7 @@ BINDING_TABLE({
 
           return L_NIL;
       }}},
-    {"wait",
+    {"wait*",
      {SIG1(promise, rational),
       [](int argc) {
           L_EXPECT_RATIONAL(0);

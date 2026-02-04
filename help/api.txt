@@ -1424,7 +1424,7 @@ o----------------------------o
 
 o----------------------------o
 
- (wait milliseconds)
+ (wait* milliseconds)
 
  Returns a promise that
  resolves after the specified
@@ -1432,7 +1432,7 @@ o----------------------------o
  Must be used with await.
 
  Example:
-   (await (wait 1000))
+   (await (wait* 1000))
 
 
 o----------------------------o
