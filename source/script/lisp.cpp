@@ -4931,6 +4931,7 @@ void eval_loop(EvalStack& eval_stack)
                 break;
             }
             pop_op(); // funcall result
+            // intentional fallthrough to foreach_iter_start
 
         case EvalFrame::State::foreach_iter_start: {
             FOREACH_START:
