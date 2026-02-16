@@ -1702,6 +1702,9 @@ struct EvalFrame
         debug_enable_break,
         vm_resume,
         vm_cleanup,
+        foreach_iter,
+        foreach_iter_init,
+        foreach_iter_start,
     } state_;
 
     struct FuncallApplyParams
@@ -4354,6 +4357,25 @@ eval_iter_start(EvalFrame& frame, EvalStack& eval_stack)
                 eval_stack.push_back({args_list_expr, EvalFrame::start});
                 eval_stack.push_back({fn_expr, EvalFrame::start});
                 return;
+            } else if (id == L_CTX.foreach_symbol_id_) {
+                // Foreach is implemented in eval because the native C++ version
+                // of foreach cannot be suspended with the await keyword.
+
+                // We need to evaluate the function expression, evaluate the
+                // list expression.
+                if (length(code) < 3) {
+                    push_op(make_error("insufficent args to foreach"));
+                    return;
+                }
+
+                auto fn_expr = code->cons().cdr()->cons().car();
+                auto args_list_expr =
+                    code->cons().cdr()->cons().cdr()->cons().car();
+
+                eval_stack.push_back({L_NIL, EvalFrame::foreach_iter_init});
+                eval_stack.push_back({args_list_expr, EvalFrame::start});
+                eval_stack.push_back({fn_expr, EvalFrame::start});
+                return;
             }
         }
         push_op(L_CTX.lexical_bindings_);
@@ -4758,6 +4780,14 @@ static bool apply_tail_funcall(Value* fn, int argc, EvalStack& eval_stack)
 }
 
 
+void inline_foreach_cleanup()
+{
+    pop_op(); // list
+    pop_op(); // fn
+    pop_callstack();
+}
+
+
 void eval_loop(EvalStack& eval_stack)
 {
     const u32 op_stack_init = L_CTX.operand_stack_->size();
@@ -4882,6 +4912,47 @@ void eval_loop(EvalStack& eval_stack)
             // Now eval all body expressions
             // We need to eval them in sequence, keeping only the last result
             eval_stack.push_back({body, EvalFrame::while_body});
+            break;
+        }
+
+        case EvalFrame::State::foreach_iter_init:
+            // For cleaner stacktraces, the runtime loads an empty lisp function
+            // called --inline-foreach and pushes it to the callstack.
+            push_callstack(get_var("--inline-foreach"));
+            goto FOREACH_START;
+
+        case EvalFrame::State::foreach_iter:
+            if (is_error(get_op0())) {
+                // Short circuit on error to mirror old behavior.
+                auto err = get_op0();
+                pop_op(); // err
+                inline_foreach_cleanup();
+                push_op(err);
+                break;
+            }
+            pop_op(); // funcall result
+
+        case EvalFrame::State::foreach_iter_start: {
+            FOREACH_START:
+            auto fn = get_op1();
+            auto list = get_op0();
+            if (list->type() == Value::Type::nil) {
+                inline_foreach_cleanup();
+                push_op(L_NIL); // foreach result
+            } else {
+                auto car = list->cons().car();
+                list = list->cons().cdr();
+                pop_op(); // pop old list of stack
+                push_op(list); // push list remainder
+
+                push_op(L_CTX.lexical_bindings_);
+                push_op(fn);  // setup arguments for funcall on stack
+                push_op(car);
+                eval_stack.push_back({L_NIL, EvalFrame::foreach_iter});
+                eval_stack.push_back({.expr_ = fn,
+                        .state_ = EvalFrame::funcall_apply,
+                        .funcall_apply_ = {1}});
+            }
             break;
         }
 
@@ -5675,10 +5746,12 @@ BUILTIN_TABLE(
            return get_op0();
        }}},
      {"strict-mode",
-      {SIG1(nil, integer),
+      {SIG1(nil, nil),
        [](int argc) {
-           L_EXPECT_OP(0, integer);
-           L_CTX.strict_ = L_LOAD_INT(0);
+           if (is_error(get_op0())) {
+               return get_op0();
+           }
+           L_CTX.strict_ = is_boolean_true(get_op0());
            return L_NIL;
        }}},
      {"signature",
