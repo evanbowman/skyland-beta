@@ -721,7 +721,7 @@ lisp::debug::Action handle_error_occurred(lisp::Value* expr)
     Text::print("error:", {1, 1}, text_colors_inv);
     TextView tv;
     tv.assign(
-        lisp::val_to_string<128>(lisp::dcompr(expr->error().context_)).c_str(),
+        lisp::val_to_string<128>(expr).c_str(),
         {1, 3},
         {28, 8},
         0,

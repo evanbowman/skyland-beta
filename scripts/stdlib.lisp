@@ -183,4 +183,4 @@
 
 
 ;; Used by the runtime to put something on the callstack when inlining foreach.
-(defn --inline-foreach (n))
+(defn --inline-foreach ())
