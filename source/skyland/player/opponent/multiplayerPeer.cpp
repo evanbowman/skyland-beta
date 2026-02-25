@@ -41,7 +41,9 @@ void MultiplayerPeer::update(Time delta)
     if (heartbeat_send_counter_ > heartbeat_interval) {
         heartbeat_send_counter_ = 0;
 
-        network::packet::Heartbeat heartbeat;
+        network::packet::Ping heartbeat;
+        heartbeat.id_.set(ping_id_++);
+        ping_send_time_ = APP.level_timer().total();
         network::transmit(heartbeat);
     }
 
@@ -414,9 +416,27 @@ void MultiplayerPeer::receive(const network::packet::ProgramVersion& packet)
 }
 
 
-void MultiplayerPeer::receive(const network::packet::Heartbeat& packet)
+void MultiplayerPeer::receive(const network::packet::Ping& packet)
 {
     heartbeat_recv_counter_ = 0;
+
+    network::packet::Echo echo;
+    echo.id_.set(packet.id_.get());
+    network::transmit(echo);
+}
+
+
+
+void MultiplayerPeer::receive(const network::packet::Echo& packet)
+{
+    auto id = packet.id_.get();
+    if (id not_eq ping_id_ - 1) {
+        warning("lost ping!");
+    } else {
+        auto current_time = APP.level_timer().total();
+        auto ping = current_time - ping_send_time_;
+        APP.record_ping(ping);
+    }
 }
 
 
