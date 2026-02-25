@@ -26,6 +26,12 @@ namespace skyland
 
 
 
+CoOpTeam::CoOpTeam() : data_(allocate_small<Data>("data"))
+{
+}
+
+
+
 void CoOpTeam::update(Time delta)
 {
     PlayerP1::update(delta);
@@ -41,19 +47,19 @@ void CoOpTeam::update(Time delta)
         return;
     }
 
-    heartbeat_send_counter_ += delta;
-    heartbeat_recv_counter_ += delta;
+    data_->heartbeat_send_counter_ += delta;
+    data_->heartbeat_recv_counter_ += delta;
 
-    if (heartbeat_send_counter_ > heartbeat_interval) {
-        heartbeat_send_counter_ = 0;
+    if (data_->heartbeat_send_counter_ > data_->heartbeat_interval) {
+        data_->heartbeat_send_counter_ = 0;
 
         network::packet::Ping heartbeat;
-        heartbeat.id_.set(ping_id_++);
-        ping_send_time_ = APP.level_timer().total();
+        heartbeat.id_.set(data_->ping_id_++);
+        data_->ping_send_time_ = APP.level_timer().total();
         network::transmit(heartbeat);
     }
 
-    if (heartbeat_recv_counter_ > heartbeat_interval * 2) {
+    if (data_->heartbeat_recv_counter_ > data_->heartbeat_interval * 2) {
         PLATFORM.network_peer().disconnect();
     }
 }
@@ -62,7 +68,7 @@ void CoOpTeam::update(Time delta)
 
 void CoOpTeam::receive(const network::packet::Ping& packet)
 {
-    heartbeat_recv_counter_ = 0;
+    data_->heartbeat_recv_counter_ = 0;
 
     network::packet::Echo echo;
     echo.id_.set(packet.id_.get());
@@ -74,11 +80,11 @@ void CoOpTeam::receive(const network::packet::Ping& packet)
 void CoOpTeam::receive(const network::packet::Echo& packet)
 {
     auto id = packet.id_.get();
-    if (id not_eq ping_id_ - 1) {
+    if (id not_eq data_->ping_id_ - 1) {
         warning("lost ping!");
     } else {
         auto current_time = APP.level_timer().total();
-        auto ping = current_time - ping_send_time_;
+        auto ping = current_time - data_->ping_send_time_;
         APP.record_ping(ping);
     }
 }

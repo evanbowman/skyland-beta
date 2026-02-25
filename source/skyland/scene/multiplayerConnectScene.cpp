@@ -127,12 +127,14 @@ ScenePtr MultiplayerConnectScene::update(Time delta)
         case HostPeerState::select:
             Text::print(SYS_CSTR(multi_opt_host), {3, 4});
             Text::print(SYS_CSTR(multi_opt_client), {3, 6});
-            PLATFORM.set_tile(Layer::overlay, 1, 4 + internet_choice_sel_ * 2, 475);
+            PLATFORM.set_tile(
+                Layer::overlay, 1, 4 + internet_choice_sel_ * 2, 475);
             if (button_down<Button::down>() or button_down<Button::up>()) {
                 internet_choice_sel_ = not internet_choice_sel_;
             }
 
-            if (button_down<Button::action_1>() or button_down<Button::action_2>()) {
+            if (button_down<Button::action_1>() or
+                button_down<Button::action_2>()) {
                 internet_host_peer_state_ = (HostPeerState)internet_choice_sel_;
             }
             return null_scene();
@@ -151,12 +153,12 @@ ScenePtr MultiplayerConnectScene::update(Time delta)
         case HostPeerState::peer: {
             hosts_ = allocate<HostInfoList>("host-info");
             Text::print(SYS_CSTR(multi_listen_avail), {1, 4});
-            PLATFORM.network_peer().listen(seconds(2), [this](const char* host,
-                                                              int port,
-                                                              const char* username) {
-                (*hosts_)->push_back({host, port, username});
-            });
-            if (not (*hosts_)->empty()) {
+            PLATFORM.network_peer().listen(
+                seconds(2),
+                [this](const char* host, int port, const char* username) {
+                    (*hosts_)->push_back({host, port, username});
+                });
+            if (not(*hosts_)->empty()) {
                 internet_host_peer_state_ = HostPeerState::peer_select_host;
             }
             return null_scene();
@@ -167,8 +169,7 @@ ScenePtr MultiplayerConnectScene::update(Time delta)
             Text::print(SYS_CSTR(multi_found_hosts), {1, 4});
             for (u32 i = 0; i < (*hosts_)->size(); ++i) {
                 auto& host = (**hosts_)[i];
-                Text::print(host.username_.c_str(),
-                            {3, (u8)(6 + i * 2)});
+                Text::print(host.username_.c_str(), {3, (u8)(6 + i * 2)});
             }
             PLATFORM.set_tile(Layer::overlay, 1, 6 + host_choice_sel_ * 2, 475);
             if (button_down<Button::action_2>()) {
@@ -179,7 +180,8 @@ ScenePtr MultiplayerConnectScene::update(Time delta)
                 PLATFORM.network_peer().connect(host.ip_.c_str(), host.port_);
                 break;
             }
-            if (button_down<Button::down>() and host_choice_sel_ < (*hosts_)->size() - 1) {
+            if (button_down<Button::down>() and
+                host_choice_sel_ < (*hosts_)->size() - 1) {
                 ++host_choice_sel_;
             }
             if (button_down<Button::up>() and host_choice_sel_ > 0) {

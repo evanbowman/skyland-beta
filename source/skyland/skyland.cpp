@@ -14,7 +14,6 @@
 #include "globals.hpp"
 #include "graphics/overlay.hpp"
 #include "macrocosmEngine.hpp"
-#include "script/debug.hpp"
 #include "number/random.hpp"
 #include "platform/flash_filesystem.hpp"
 #include "platform/platform.hpp"
@@ -23,6 +22,7 @@
 #include "save.hpp"
 #include "scene/notificationScene.hpp"
 #include "scene/readyScene.hpp"
+#include "script/debug.hpp"
 #include "script/lisp.hpp"
 #include "serial.hpp"
 #include "sound.hpp"
@@ -163,8 +163,9 @@ void create_crash_report(const char* error_text)
     lisp::debug::get_locals(vars);
     lisp::debug::get_globals(vars);
     for (auto& b : vars) {
-        append(format("%: %", b.name_,
-                      lisp::val_to_string<96>(b.value_).c_str()).c_str());
+        append(
+            format("%: %", b.name_, lisp::val_to_string<96>(b.value_).c_str())
+                .c_str());
     }
 
     flash_filesystem::store_file_data("/crash/report.txt", text);

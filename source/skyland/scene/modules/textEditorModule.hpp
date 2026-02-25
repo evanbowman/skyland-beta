@@ -122,7 +122,9 @@ public:
     };
 
 
-    void handle_char(Vector<Glyph>::Iterator data, utf8::Codepoint c, ParserState& ps);
+    void handle_char(Vector<Glyph>::Iterator data,
+                     utf8::Codepoint c,
+                     ParserState& ps);
 
 
     void repaint();
@@ -164,7 +166,8 @@ private:
 
 
     Vector<Glyph>::Iterator insert_pos();
-    void insert_char(Glyph c, Optional<Vector<Glyph>::Iterator> insert_hint = {});
+    void insert_char(Glyph c,
+                     Optional<Vector<Glyph>::Iterator> insert_hint = {});
     void erase_char(Optional<Vector<Glyph>::Iterator> erase_hint = {});
 
 

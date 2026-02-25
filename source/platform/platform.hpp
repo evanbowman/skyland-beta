@@ -832,10 +832,10 @@ public:
 
         void connect(const char* peer_address, int port);
         void host(Time timeout);
-        void listen(Time timeout, Function<32, void(const char* ip,
-                                                    int port,
-                                                    const char* username)> callback =
-                    [](const char*, int, const char*) {});
+        void listen(
+            Time timeout,
+            Function<32, void(const char* ip, int port, const char* username)>
+                callback = [](const char*, int, const char*) {});
 
 
         void disconnect();

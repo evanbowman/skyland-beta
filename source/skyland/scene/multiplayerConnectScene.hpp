@@ -46,7 +46,8 @@ private:
     HostPeerState internet_host_peer_state_ = HostPeerState::select;
     Optional<Text> text_;
 
-    struct HostInfo {
+    struct HostInfo
+    {
         StringBuffer<32> ip_;
         int port_;
         StringBuffer<32> username_;

@@ -6381,13 +6381,21 @@ void Platform::NetworkPeer::connect(const char* peer, int port)
 }
 
 
-void Platform::NetworkPeer::listen(Time timeout, Function<32, void(const char*, int)> callback)
+void Platform::NetworkPeer::listen(
+    Time timeout,
+    Function<32, void(const char*, int, const char*)> callback)
 {
     if (get_gflag(GlobalFlag::gbp_unlocked)) {
         return;
     }
 
     multiplayer_init(timeout);
+}
+
+
+void Platform::NetworkPeer::host(Time timeout)
+{
+    // Does nothing...
 }
 
 
