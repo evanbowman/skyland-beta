@@ -922,6 +922,11 @@ void App::set_initialized()
 
 void App::record_ping(Time tm)
 {
+    if (tm == 0) {
+        // FIXME: because we're using the existing level_timer object for
+        // timestamps, the ping will read as zero when the game's paused.
+        return;
+    }
     ping_ms_ = tm / 1000; // Convert from microseconds to milliseconds
 }
 
