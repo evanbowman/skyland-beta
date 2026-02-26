@@ -4220,9 +4220,9 @@ Platform::NetworkPeer::NetworkPeer() : impl_(nullptr)
 
 void Platform::NetworkPeer::disconnect()
 {
-    info("disconnect called!");
     if (!impl_)
         return;
+    info("disconnect called!");
     auto impl = (NetworkPeerImpl*)impl_;
     impl->running = false;
     impl->stop_broadcast = true;
