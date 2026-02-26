@@ -31,11 +31,11 @@
 #include <thread>
 #include <unordered_set>
 #if defined(__APPLE__)
-#include <sys/resource.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <mach-o/dyld.h> // for _NSGetExecutablePath
 #include <pwd.h>
+#include <sys/resource.h>
 #include <unistd.h> // for fork, execl
 #elif defined(__linux__)
 #include <fcntl.h>

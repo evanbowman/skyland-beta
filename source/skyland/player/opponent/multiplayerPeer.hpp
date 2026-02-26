@@ -25,7 +25,6 @@ namespace skyland
 class MultiplayerPeer : public Opponent, public network::Listener
 {
 public:
-
     MultiplayerPeer();
 
 

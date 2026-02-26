@@ -28,7 +28,8 @@ namespace skyland
 
 CoOpTeam::CoOpTeam() : data_(allocate_small<Data>("data"))
 {
-    if (PLATFORM.network_peer().interface() == Platform::NetworkPeer::Interface::internet) {
+    if (PLATFORM.network_peer().interface() ==
+        Platform::NetworkPeer::Interface::internet) {
         data_->heartbeat_interval_ = seconds(1);
     }
 }

@@ -29,7 +29,8 @@ namespace skyland
 
 MultiplayerPeer::MultiplayerPeer()
 {
-    if (PLATFORM.network_peer().interface() == Platform::NetworkPeer::Interface::internet) {
+    if (PLATFORM.network_peer().interface() ==
+        Platform::NetworkPeer::Interface::internet) {
         heartbeat_interval_ = seconds(1);
     }
 }
