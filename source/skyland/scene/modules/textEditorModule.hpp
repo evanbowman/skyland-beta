@@ -48,6 +48,11 @@ public:
             return table_entry_ == other.table_entry_;
         }
 
+        bool operator not_eq(const Glyph& other) const
+        {
+            return table_entry_ not_eq other.table_entry_;
+        }
+
         utf8::Codepoint cp(TextEditorModule& te) const;
     };
 
