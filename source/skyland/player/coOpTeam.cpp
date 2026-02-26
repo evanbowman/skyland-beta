@@ -28,6 +28,9 @@ namespace skyland
 
 CoOpTeam::CoOpTeam() : data_(allocate_small<Data>("data"))
 {
+    if (PLATFORM.network_peer().interface() == Platform::NetworkPeer::Interface::internet) {
+        data_->heartbeat_interval_ = seconds(1);
+    }
 }
 
 
@@ -50,7 +53,7 @@ void CoOpTeam::update(Time delta)
     data_->heartbeat_send_counter_ += delta;
     data_->heartbeat_recv_counter_ += delta;
 
-    if (data_->heartbeat_send_counter_ > data_->heartbeat_interval) {
+    if (data_->heartbeat_send_counter_ > data_->heartbeat_interval_) {
         data_->heartbeat_send_counter_ = 0;
 
         network::packet::Ping heartbeat;
@@ -59,7 +62,7 @@ void CoOpTeam::update(Time delta)
         network::transmit(heartbeat);
     }
 
-    if (data_->heartbeat_recv_counter_ > data_->heartbeat_interval * 2) {
+    if (data_->heartbeat_recv_counter_ > data_->heartbeat_interval_ * 2) {
         PLATFORM.network_peer().disconnect();
     }
 }

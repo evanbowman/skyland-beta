@@ -149,6 +149,7 @@ public:
     ScenePtr update(Time delta) override;
 
 private:
+
     ScenePtr on_player_island_destroyed();
     ScenePtr try_surrender();
 };

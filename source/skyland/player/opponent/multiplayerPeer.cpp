@@ -27,6 +27,15 @@ namespace skyland
 
 
 
+MultiplayerPeer::MultiplayerPeer()
+{
+    if (PLATFORM.network_peer().interface() == Platform::NetworkPeer::Interface::internet) {
+        heartbeat_interval_ = seconds(1);
+    }
+}
+
+
+
 void MultiplayerPeer::update(Time delta)
 {
     if (PLATFORM.network_peer().is_connected()) {
@@ -38,7 +47,7 @@ void MultiplayerPeer::update(Time delta)
     heartbeat_send_counter_ += delta;
     heartbeat_recv_counter_ += delta;
 
-    if (heartbeat_send_counter_ > heartbeat_interval) {
+    if (heartbeat_send_counter_ > heartbeat_interval_) {
         heartbeat_send_counter_ = 0;
 
         network::packet::Ping heartbeat;
@@ -47,7 +56,7 @@ void MultiplayerPeer::update(Time delta)
         network::transmit(heartbeat);
     }
 
-    if (heartbeat_recv_counter_ > heartbeat_interval * 2) {
+    if (heartbeat_recv_counter_ > heartbeat_interval_ * 2) {
         PLATFORM.fatal("connection interrupted");
     }
 }

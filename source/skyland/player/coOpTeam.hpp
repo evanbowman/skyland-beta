@@ -129,8 +129,8 @@ protected:
 private:
     struct Data
     {
-        static const auto heartbeat_interval = seconds(5);
         u64 ping_send_time_ = 0;
+        Time heartbeat_interval_ = seconds(5);
         Time heartbeat_send_counter_ = 0;
         Time heartbeat_recv_counter_ = 0;
         u16 ping_id_ = 0;

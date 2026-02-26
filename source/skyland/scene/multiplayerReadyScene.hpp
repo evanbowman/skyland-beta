@@ -68,6 +68,7 @@ public:
 
 
 private:
+
     enum class State {
         fade_out,
         wait,

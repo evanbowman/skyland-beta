@@ -587,8 +587,7 @@ ScenePtr WorldScene::update(Time delta)
             Text::print(msg.c_str(), {0, 0});
         }
         if (mt_prep_seconds) {
-            if (APP.game_speed() not_eq GameSpeed::stopped and
-                not disable_ui_) {
+            if (APP.game_speed() not_eq GameSpeed::stopped) {
 
                 mt_prep_timer += delta;
                 if (mt_prep_timer > seconds(1)) {
@@ -611,9 +610,10 @@ ScenePtr WorldScene::update(Time delta)
 
                     const u8 margin = centered_text_margins(msg.length());
 
-
-                    g.multiplayer_prep_text_.emplace(msg.c_str(),
-                                                     OverlayCoord{margin, 4});
+                    if (not disable_ui_) {
+                        g.multiplayer_prep_text_.emplace(msg.c_str(),
+                                                         OverlayCoord{margin, 4});
+                    }
                 }
             }
         } else {
