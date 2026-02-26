@@ -929,9 +929,6 @@ void App::record_ping(Time tm)
         return;
     }
     ping_ms_ = tm / 1000; // Convert from microseconds to milliseconds
-    if (ping_ms_ > 200) {
-        info(format<64>("high ping! %ms", ping_ms_));
-    }
 }
 
 

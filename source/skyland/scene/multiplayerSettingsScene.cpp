@@ -40,9 +40,8 @@ const MultiplayerSettingsScene::ParameterInfo
          {SystemString::mt_unhide_prep, 1, 0, 1},
          {SystemString::mt_coins, 100, 1000, 10000000},
          {SystemString::mt_terrain_size, 1, 3, 13},
-         // {SystemString::mt_timeout_freq, 30, 0, 1000},
-         // {SystemString::mt_timeout_duration, 5, 10, 120}
-        };
+         {SystemString::mt_timeout_freq, 30, 0, 1000},
+         {SystemString::mt_timeout_duration, 5, 10, 120}};
 
 
 
@@ -96,8 +95,8 @@ void MultiplayerSettingsScene::enter(Scene& prev)
         vs_parameters_[2] = 0;
         vs_parameters_[3] = 17500;
         vs_parameters_[4] = 8;
-        // vs_parameters_[5] = 60;
-        // vs_parameters_[6] = 30;
+        vs_parameters_[5] = 60;
+        vs_parameters_[6] = 30;
     }
 
 
@@ -238,17 +237,17 @@ void MultiplayerSettingsScene::setup_co_op_game()
 
 
 
-// Time MultiplayerSettingsScene::timeout_frequency()
-// {
-//     return seconds(vs_parameters_[5]);
-// }
+Time MultiplayerSettingsScene::timeout_frequency()
+{
+    return seconds(vs_parameters_[5]);
+}
 
 
 
-// Time MultiplayerSettingsScene::timeout_duration()
-// {
-//     return seconds(vs_parameters_[6]);
-// }
+Time MultiplayerSettingsScene::timeout_duration()
+{
+    return seconds(vs_parameters_[6]);
+}
 
 
 
@@ -266,8 +265,8 @@ void MultiplayerSettingsScene::setup_vs_game()
     }
 
 
-    // globals().multiplayer_timeout_remaining_ = seconds(vs_parameters_[6]);
-    // globals().multiplayer_timeout_countdown_ = seconds(vs_parameters_[5]);
+    globals().multiplayer_timeout_remaining_ = seconds(vs_parameters_[6]);
+    globals().multiplayer_timeout_countdown_ = seconds(vs_parameters_[5]);
 
     globals().multiplayer_prep_seconds_ = vs_parameters_[1];
 

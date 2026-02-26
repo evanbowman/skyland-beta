@@ -471,67 +471,67 @@ ScenePtr WorldScene::make_dialog()
 
 
 
-// void WorldScene::multiplayer_vs_timeout_step(Time delta)
-// {
-//     if (MultiplayerSettingsScene::timeout_frequency() == 0) {
-//         return;
-//     }
+void WorldScene::multiplayer_vs_timeout_step(Time delta)
+{
+    if (MultiplayerSettingsScene::timeout_frequency() == 0) {
+        return;
+    }
 
-//     if (APP.game_speed() == GameSpeed::stopped) {
-//         auto& tm = globals().multiplayer_timeout_remaining_;
-//         tm -= delta;
-//         if (tm <= 0) {
-//             tm += MultiplayerSettingsScene::timeout_duration();
-//             set_gamespeed(GameSpeed::normal);
-//         }
+    if (APP.game_speed() == GameSpeed::stopped) {
+        auto& tm = globals().multiplayer_timeout_remaining_;
+        tm -= delta;
+        if (tm <= 0) {
+            tm += MultiplayerSettingsScene::timeout_duration();
+            set_gamespeed(GameSpeed::normal);
+        }
 
-//         if (not disable_ui_) {
-//             if (tm / (1 << 20) < globals().multiplayer_timeout_repaint_) {
-//                 StringBuffer<30> msg = "timeout! ";
-//                 const auto rem = tm / seconds(1);
-//                 msg += stringify(rem);
+        if (not disable_ui_) {
+            if (tm / (1 << 20) < globals().multiplayer_timeout_repaint_) {
+                StringBuffer<30> msg = "timeout! ";
+                const auto rem = tm / seconds(1);
+                msg += stringify(rem);
 
-//                 const u8 margin = centered_text_margins(msg.length());
+                const u8 margin = centered_text_margins(msg.length());
 
-//                 for (u32 x = margin - 2; x < msg.length() + 2; ++x) {
-//                     PLATFORM.set_tile(Layer::overlay, x, 4, 0);
-//                 }
+                for (u32 x = margin - 2; x < msg.length() + 2; ++x) {
+                    PLATFORM.set_tile(Layer::overlay, x, 4, 0);
+                }
 
-//                 globals().multiplayer_timeout_text_.emplace(
-//                     msg.c_str(), OverlayCoord{margin, 4});
-//             }
-//         }
-//         globals().multiplayer_timeout_repaint_ = tm / (1 << 20);
-//     } else {
-//         auto& tm = globals().multiplayer_timeout_countdown_;
-//         tm -= delta;
-//         if (tm <= 0) {
-//             tm += MultiplayerSettingsScene::timeout_frequency();
-//             set_gamespeed(GameSpeed::stopped);
-//         }
+                globals().multiplayer_timeout_text_.emplace(
+                    msg.c_str(), OverlayCoord{margin, 4});
+            }
+        }
+        globals().multiplayer_timeout_repaint_ = tm / (1 << 20);
+    } else {
+        auto& tm = globals().multiplayer_timeout_countdown_;
+        tm -= delta;
+        if (tm <= 0) {
+            tm += MultiplayerSettingsScene::timeout_frequency();
+            set_gamespeed(GameSpeed::stopped);
+        }
 
-//         if (tm < seconds(10)) {
-//             if (tm / (1 << 20) < globals().multiplayer_timeout_repaint_) {
-//                 StringBuffer<30> msg = "timeout in ";
-//                 const auto rem = tm / seconds(1);
-//                 msg += stringify(rem);
-//                 msg += "...";
+        if (tm < seconds(10)) {
+            if (tm / (1 << 20) < globals().multiplayer_timeout_repaint_) {
+                StringBuffer<30> msg = "timeout in ";
+                const auto rem = tm / seconds(1);
+                msg += stringify(rem);
+                msg += "...";
 
-//                 const u8 margin = centered_text_margins(msg.length());
+                const u8 margin = centered_text_margins(msg.length());
 
-//                 for (u32 x = margin - 2; x < msg.length() + 2; ++x) {
-//                     PLATFORM.set_tile(Layer::overlay, x, 4, 0);
-//                 }
+                for (u32 x = margin - 2; x < msg.length() + 2; ++x) {
+                    PLATFORM.set_tile(Layer::overlay, x, 4, 0);
+                }
 
-//                 globals().multiplayer_timeout_text_.emplace(
-//                     msg.c_str(), OverlayCoord{margin, 4});
-//             }
-//         } else {
-//             globals().multiplayer_timeout_text_.reset();
-//         }
-//         globals().multiplayer_timeout_repaint_ = tm / (1 << 20);
-//     }
-// }
+                globals().multiplayer_timeout_text_.emplace(
+                    msg.c_str(), OverlayCoord{margin, 4});
+            }
+        } else {
+            globals().multiplayer_timeout_text_.reset();
+        }
+        globals().multiplayer_timeout_repaint_ = tm / (1 << 20);
+    }
+}
 
 
 
@@ -618,6 +618,9 @@ ScenePtr WorldScene::update(Time delta)
             }
         } else {
             g.multiplayer_prep_text_.reset();
+            if (APP.game_mode() == App::GameMode::multiplayer) {
+                multiplayer_vs_timeout_step(delta);
+            }
         }
     } else {
         g.multiplayer_prep_text_.reset();
