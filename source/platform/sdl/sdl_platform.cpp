@@ -31,6 +31,7 @@
 #include <thread>
 #include <unordered_set>
 #if defined(__APPLE__)
+#include <sys/resource.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <mach-o/dyld.h> // for _NSGetExecutablePath
@@ -709,6 +710,10 @@ int main(int argc, char** argv)
 {
     process_argc = argc;
     process_argv = argv;
+
+#ifdef __APPLE__
+    setpriority(PRIO_PROCESS, 0, -10);
+#endif
 
     for (int i = 0; i < argc; ++i) {
         if (str_eq(argv[i], "--help")) {
@@ -4104,7 +4109,8 @@ struct NetworkPeerImpl
     bool is_host_ = false;
 
     std::mutex send_mutex;
-    std::queue<std::array<u8, 6>> send_queue;
+    using SendQueue = std::queue<std::array<u8, 6>>;
+    SendQueue send_queue;
 
     std::mutex recv_mutex;
     std::vector<u8> recv_buffer;
@@ -4135,9 +4141,11 @@ static void session_thread_main(NetworkPeerImpl* impl)
                     int err = WSAGetLastError();
                     if (err == WSAEWOULDBLOCK)
                         break;
+                    info(format("send error: %", err));
 #else
                     if (errno == EAGAIN || errno == EWOULDBLOCK)
                         break;
+                    info(format("session send error: %", strerror(errno)));
 #endif
                     impl->connected = false;
                     impl->running = false;
@@ -4162,6 +4170,11 @@ static void session_thread_main(NetworkPeerImpl* impl)
             select((int)impl->sock + 1, &read_fds, nullptr, nullptr, &tv);
 
         if (ready < 0) {
+#ifdef _WIN32
+            info(format("session select error: %", WSAGetLastError()));
+#else
+            info(format("session select error: %", strerror(errno)));
+#endif
             impl->connected = false;
             impl->running = false;
             break;
@@ -4207,6 +4220,7 @@ Platform::NetworkPeer::NetworkPeer() : impl_(nullptr)
 
 void Platform::NetworkPeer::disconnect()
 {
+    info("disconnect called!");
     if (!impl_)
         return;
     auto impl = (NetworkPeerImpl*)impl_;
