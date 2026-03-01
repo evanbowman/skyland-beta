@@ -705,7 +705,7 @@ void TextEditorModule::load_lisp_script(const char* data)
     bool in_index = false;
     u32 current_index = 0;
 
-    auto [symtab_contents, symtab_size] = PLATFORM.load_file("", "/lisp_symtab.dat");
+    auto symtab = PLATFORM.load_file("", "/lisp_symtab.dat");
 
     utf8::scan([&](const utf8::Codepoint& cp, const char*, int) {
                    if (in_index) {
@@ -716,8 +716,8 @@ void TextEditorModule::load_lisp_script(const char* data)
                            // Index is complete, expand the symbol
                            in_index = false;
                            u32 offset = 32 * current_index;
-                           if (auto tab = symtab_contents) {
-                               if (offset < symtab_size) {
+                           if (auto tab = symtab.first) {
+                               if (offset < symtab.second) {
                                    const char* sym = tab + offset;
                                    while (*sym != '\0' && *sym != '\n') {
                                        text_buffer_.push_back(load_glyph(*sym++));
