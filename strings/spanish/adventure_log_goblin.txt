@@ -1,0 +1,77 @@
+
+fought off a hossstile vesssel, -%@, +%@.
+
+% crewmembersss died in the fighting!
+__unused__
+defeated the king of the ssstorm, now goblinsss can pillage sssafely!
+ressscued a cassstaway!
+found an abandoned wreck, but did not explore.
+found an abandoned wreck, found %!
+bought two % from some ssscavengers for %@!
+explored abandoned ruinsss, found %@
+met ssstinker redbeard, failed to bribe.
+met ssstinker redbeard, paid %@ toll.
+met ssstinker redbeard, refusssed to pay bribe.
+ressscued a goblin raider! she joined the crew!
+accepted loot quessst from a raider waypoint!
+accepted banana man'sss mysteriousss tasssk!
+accepted farmer meyer'sss quessst! (deliver % treesss)
+accepted quest from ssscattered goblin clan!
+purchasssed artifactsss for resssale, cost %@.
+resssold tiles for %@!
+completed merchant quessst, earned %@.
+farmer meyer'sss brother paid %@ for delivery of % treesss.
+saved banana man'sss banana plantsss!
+completed chauffeur'sss quessst. (picked up three crew)
+reached zone %!
+hired a mercenary for %@!
+declined mercenariesss' offer...
+salvaged %@ from an abandoned cassstle.
+abandoned fortresss wasss a trap!?
+paid %@ to goblin king.
+goblin king rejected bribe and attacked!
+goblin king attacked after bribe refusssed.
+island contaminated by infesssted cassstle.
+sscavenged %@ from infesssted isssle.
+donated core to village, +2 % and +3 crew!
+upgraded all hull to ssstaked hull!
+collected %@ from forsssaken town!
+encountered drone carrier...
+ressscued sssurvivor from wrecked ship!
+feral sssurvivor from wrecked ship attacked!
+piratesss attack from ssstolen warship!
+piratesss in ssstolen warship move on after bribe...
+bought ssstolen decimator from runaway vessel!
+bought sssome mirror-hull!
+recovered incinerator from burning island!!
+collected %@ from abandoned isle.
+a masssive warship attacks...
+discovered a shop!
+purchasssed % for %@.
+accepting defeat, a goblin joined your crew!
+accepted sssurface keeper's quessst!
+invited a ssspotter aboard!
+accepted quessst from orphan boy!
+returned lost child to the sssylph...
+dropped below the cloudsss to avoid bad weather.
+accepted minersss' quessst! (deliver 7 explosivesss)
+completed minersss' quessst! (+%@)
+unable to make payment to imperial missile ssstation!
+made payment to imperial misssile ssstation!
+refusssed to pay imperial misssile ssstation!
+accepted goblin sssurrender, sssalvaged blocksss...
+accepted ancient weapon quessst from ashwalkersss!
+retrieved atomic arsssenal!
+encountered a sssolar ssstorm!
+encountered warrior monksss!
+bought two % from sssome ssscavengers for %@!
+unable to make payment to anvil annie!
+paid bribe to anvil annie. (-%@)
+refusssed to pay anvil annie.
+ssstole %s from some ssscavengers.
+ssscavengers extorted % in revenge.
+ssscavengers return and attack!
+vandalized imperial misssile ssstation!
+goblinsss try to sssteal decimator back!
+encountered sssylph sssentry!
+sabotaged imperial toll station!
