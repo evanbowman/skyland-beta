@@ -2375,6 +2375,29 @@ BINDING_TABLE({
               PLATFORM.fatal(err.c_str());
           }
       }}},
+    {"read-file",
+     {SIG1(nil, string),
+      [](int argc) {
+          L_EXPECT_OP(0, string);
+          Vector<char> contents;
+          APP.load_file(L_LOAD_STRING(0), contents);
+          lisp::ListBuilder result;
+          lisp::VectorCharSequence cs(contents);
+          if (contents.size()) {
+              int i = 0;
+              while (true) {
+                  i += lisp::read(cs, i);
+                  auto reader_result = lisp::get_op0();
+                  if (reader_result == L_NIL) {
+                      lisp::pop_op();
+                      break;
+                  }
+                  result.push_back(reader_result);
+                  lisp::pop_op(); // reader result
+              }
+          }
+          return result.result();
+      }}},
     {"eval-file",
      {SIG1(nil, string),
       [](int argc) {

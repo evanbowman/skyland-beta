@@ -13,7 +13,6 @@
   (when-let ((path (eval '--current-file (caller-environment)))
              (path-sep "/"))
     (let ((new (string-join (cons "" (cdr (split path path-sep))) path-sep)))
-      (log (string path ", " new))
       (tr-bind new))))
 
 (defn/c tr-reset ()

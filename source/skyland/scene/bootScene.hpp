@@ -475,6 +475,52 @@ public:
                 setup_pools();
                 TitleScreenScene::run_init_scripts(false);
                 return make_scene<RegressionModule>();
+            } else if (auto lang = match("--init-locale")) {
+                if (not match("--output")) {
+                    error("error: --init-locale is specified, "
+                          "but not --output=<dir>");
+                    PLATFORM_EXTENSION(quit);
+                    return null_scene();
+                }
+                lisp::Protected callback(L_NIL);
+                callback = APP.invoke_script("/strings/extract_strings.lisp");
+                lisp::push_op(lisp::make_function([](int argc) {
+                    L_EXPECT_ARGC(argc, 2);
+                    L_EXPECT_OP(0, cons);
+                    L_EXPECT_OP(1, string);
+                    auto match = PLATFORM.get_extensions().has_startup_opt;
+                    auto path_prefix = match("--output");
+                    Vector<char> result;
+                    result.push_back('\'');
+                    result.push_back('(');
+                    lisp::l_foreach(lisp::get_op0(), [&](lisp::Value* v) {
+                        lisp::_Printer<Vector<char>> p;
+                        lisp::format(v, p);
+                        auto it = p.data_.begin();
+                        if (p.data_.size() and p.data_[0] == '\'') {
+                            // Skip over the quote character appended by
+                            // lisp::format, as we're inserting into an already
+                            // quoted list.
+                            //
+                            // FIXME: if lisp::format could insert newlines, we
+                            // wouldn't need to do any of this...
+                            ++it;
+                        }
+                        for (; it not_eq p.data_.end(); ++it) {
+                            result.push_back(*it);
+                        }
+                        result.push_back('\n');
+                    });
+                    result.push_back(')');
+                    auto output_path = format<256>("%/%", path_prefix, L_LOAD_STRING(1));
+                    if (auto write = PLATFORM.get_extensions().write_external_file) {
+                        write(output_path.c_str(), result);
+                    }
+                    return L_NIL;
+                }));
+                lisp::safecall(callback, 1);
+                lisp::pop_op(); // result
+                PLATFORM_EXTENSION(quit);
             } else if (match("--compile-packages")) {
                 if (not match("--output")) {
                     error("error: --compile-packages=<dir> is specified, "
