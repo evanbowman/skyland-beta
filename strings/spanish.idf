@@ -510,19 +510,19 @@ normal
 difícil
 demente
 Configuración
-(pulsa A para empezar)
+(A para empezar)
 El modo más fácil, pero aún desafiante. Intentos extra si mueres.
 Los enemigos dan menos recursos. Puntuación x2. Patrones de nivel más difíciles.
 Los enemigos dan aún menos recursos. Puntuación x4. Patrones de nivel aún más difíciles.
 Sin pausas. Puntuación x6.
-muerte permanente
+permadeath
 Activada. ¡Las partidas guardadas actualmente solo se pueden cargar una vez!
-Desactivada. ¡Las partidas guardadas pueden cargarse repetidamente! PUNTUACIÓN REDUCIDA UN 50%.
+Desactivada. ¡Las partidas pueden cargarse varias veces! Puntuación -50%.
 facción
-Equilibrada. Innovadora, ingeniosa, capaz de construir tecnología interesante.
+Equilibrada. Innovadora, ingeniosa y con tecnología versátil.
 Enfocada en estrategia, con bloques de apoyo fuertes.
 Bloqueado: ¡completa el modo aventura primero!
-Bloques potentes con inconvenientes arriesgados, mayor eficiencia del transportador.
+Bloques potentes pero arriesgados, transportadores más eficaces.
 Seleccionar una facción al azar
 humano
 sylph

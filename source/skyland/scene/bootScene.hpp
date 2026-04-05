@@ -516,7 +516,6 @@ public:
             info("lang selection...");
             return make_scene<LanguageSelectScene>();
         } else {
-            message("bind strings file...");
             Vector<char> data;
             if (flash_filesystem::read_file_data(lang_file, data)) {
                 StringBuffer<48> path;
@@ -525,7 +524,6 @@ public:
                 }
                 systemstring_bind_file(path.c_str());
             }
-
             return make_scene<IntroCreditsScene>();
         }
     }

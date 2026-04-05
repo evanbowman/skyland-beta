@@ -12,7 +12,9 @@
 (defn/c tr-bind-current ()
   (when-let ((path (eval '--current-file (caller-environment)))
              (path-sep "/"))
-    (tr-bind (string-join (cons "" (cddr (split path path-sep))) path-sep))))
+    (let ((new (string-join (cons "" (cdr (split path path-sep))) path-sep)))
+      (log (string path ", " new))
+      (tr-bind new))))
 
 (defn/c tr-reset ()
   (setq tr-bindings nil))
