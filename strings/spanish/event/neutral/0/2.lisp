@@ -1,0 +1,5 @@
+'(("Just as you're turning to leave, you spot a data cartridge sitting on an unfinished game of checkers." . TODO)
+("You explore, and discover %@ amongst the ruins!" . TODO)
+("To the earth below, I will not go." . TODO)
+("The remains of an abandoned island emerge from the mist, floating towards you..." . TODO)
+)
