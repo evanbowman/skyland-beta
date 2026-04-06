@@ -57,6 +57,9 @@
 
 
 (lambda (output)
+  ;; NOTE: output is a special function passed in by the build system, because
+  ;; the scripting environment is sandboxed and doesn't have access to files
+  ;; outside of the skyland source tree.
   (visit-files "/scripts/autoload/" output)
   (visit-files "/scripts/challenges/" output)
   (visit-files "/scripts/event/" output)
