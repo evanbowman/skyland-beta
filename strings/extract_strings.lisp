@@ -24,6 +24,13 @@
      (when within-tr
        (callback expr)))))
 
+(defn merge-existing (old new)
+  (map (lambda (kvp)
+         (if-let ((existing (assoc (car kvp) old)))
+             existing
+           kvp))
+       new))
+
 (defn visit-file (path output)
   (let ((strings nil))
     (when-let ((exprs (read-file path)))
@@ -38,7 +45,8 @@
                               (cons k 'TODO))
                             strings)))
       (output (string-join (cddr (split path "/")) "/")
-              result))))
+              result
+              merge-existing))))
 
 (defn visit-files (subdir output)
   (filesystem-walk

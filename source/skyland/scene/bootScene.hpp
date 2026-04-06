@@ -485,15 +485,38 @@ public:
                 lisp::Protected callback(L_NIL);
                 callback = APP.invoke_script("/strings/extract_strings.lisp");
                 lisp::push_op(lisp::make_function([](int argc) {
-                    L_EXPECT_ARGC(argc, 2);
-                    L_EXPECT_OP(0, cons);
-                    L_EXPECT_OP(1, string);
+                    L_EXPECT_ARGC(argc, 3);
+                    L_EXPECT_OP(0, function);
+                    L_EXPECT_OP(1, cons);
+                    L_EXPECT_OP(2, string);
+                    lisp::Protected merge_fn(lisp::get_op0());
+                    lisp::Protected result_arg(lisp::get_op1());
                     auto match = PLATFORM.get_extensions().has_startup_opt;
                     auto path_prefix = match("--output");
+                    auto output_path = format<256>("%/%", path_prefix, L_LOAD_STRING(2));
+                    if (auto read = PLATFORM.get_extensions().read_external_file) {
+                        Vector<char> existing;
+                        read(output_path.c_str(), existing);
+                        if (existing.size()) {
+                            lisp::VectorCharSequence cs(existing);
+                            lisp::read(cs, 0);
+                            lisp::Protected result(lisp::get_op0());
+                            lisp::pop_op(); // read result
+                            lisp::eval(result);
+                            result = lisp::get_op0();
+                            lisp::pop_op(); // eval result
+
+                            lisp::push_op(result);
+                            lisp::push_op(result_arg);
+                            lisp::safecall(merge_fn, 2);
+                            result_arg = lisp::get_op0();
+                            lisp::pop_op();
+                        }
+                    }
                     Vector<char> result;
                     result.push_back('\'');
                     result.push_back('(');
-                    lisp::l_foreach(lisp::get_op0(), [&](lisp::Value* v) {
+                    lisp::l_foreach(result_arg, [&](lisp::Value* v) {
                         lisp::_Printer<Vector<char>> p;
                         lisp::format(v, p);
                         auto it = p.data_.begin();
@@ -512,7 +535,6 @@ public:
                         result.push_back('\n');
                     });
                     result.push_back(')');
-                    auto output_path = format<256>("%/%", path_prefix, L_LOAD_STRING(1));
                     if (auto write = PLATFORM.get_extensions().write_external_file) {
                         write(output_path.c_str(), result);
                     }
