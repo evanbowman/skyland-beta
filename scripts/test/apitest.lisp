@@ -216,7 +216,7 @@
 
 (begin-test "cart")
 
-(assert-eq "image" (read-ini "/scripts/data/cart/cart7.ini"
+(assert-eq "image" (read-ini "/strings/english/cart/cart7.ini"
                              "contents"
                              "type"))
 

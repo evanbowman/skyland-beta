@@ -746,6 +746,7 @@ enum class SystemString {
 
     dialog_datacarts_prompt,
     dialog_datacarts_return,
+    datacarts_found_at_str,
     dialog_tutorial_prompt,
     adventure_completed_message,
 

@@ -623,6 +623,7 @@ Modo principiante: rebobinado auto.:
 ¿Reiniciar el juego a valores de fábrica? Pulsa B para cancelar. Pulsa A cinco veces mientras mantienes SELECT para continuar.
 ¡Bienvenido! <j:datacarts_flattened> ¡Aquí encontrarás tu colección de cartuchos de datos de tus aventuras! ¡Los cartuchos son la forma principal de almacenar información en SKYLAND! Mira cuántos puedes encontrar...
 Bip... recopilando... ¡Bienvenido de nuevo! <B:0><j:datacarts_flattened> <B:0> ¿Has encontrado algún cartucho nuevo?
+ en: 
 <c:Milo:5>¡Eh! ¡Capitán! <s:3>. . . <s:0>¡Vamos, despierta!    . . . ¿¡Qué!? ¿No te acuerdas de mí? ¡Soy Milo, de tu tripulación! <d:1000>No pasa nada... en fin, ¡tenemos una tormenta a nuestras espaldas y nos empuja a territorio hostil! Ven a la ventana y te enseño<t:0>!
 La fortaleza del Rey de la Tormenta se desintegra... las nubes oscuras se disipan, devolviendo la calma a SKYLAND. <d:1000>F<d:1000>I<d:1000>N<d:500>.<d:500>.<d:500>.
 conectando sesión...
