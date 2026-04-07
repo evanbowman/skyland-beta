@@ -116,9 +116,7 @@ public:
                    button_down<Button::action_1>()) {
             if (opts_->size() > 1) {
                 auto path = (*opts_)[sel_].second.c_str();
-                systemstring_bind_file(path);
-                flash_filesystem::store_file_data(
-                    lang_file, path, strlen(path));
+                swap_language(path);
             }
 
             if (PLATFORM.device_name() == "MacroDesktopDemo") {
@@ -139,31 +137,25 @@ private:
     {
         auto result = allocate<LanguageOptions>("lang-table");
 
-        auto cp = PLATFORM.load_file_contents("strings", "lang.txt");
+        auto opts = APP.invoke_script("/strings/lang.lisp");
+        lisp::l_foreach(opts, [&](lisp::Value* kvp) {
+            if (kvp->type() not_eq lisp::Value::Type::cons) {
+                PLATFORM.fatal("lang.lisp: "
+                               "invalid language opt format, expected a-list");
+            }
+            std::pair<StringBuffer<48>, StringBuffer<48>> current;
+            auto ui_name = kvp->cons().car();
+            auto internal_name = kvp->cons().cdr();
+            if (ui_name->type() not_eq lisp::Value::Type::string or
+                internal_name->type() not_eq lisp::Value::Type::string) {
+                PLATFORM.fatal("lang.lisp: pair should contain strings!");
+            }
 
-        std::pair<StringBuffer<48>, StringBuffer<48>> current;
-        int parse_state = 0;
-        utf8::scan(
-            [&](utf8::Codepoint cp, const char* raw, int) {
-                if (cp == '=') {
-                    parse_state = 1;
-                } else if (cp == '\n') {
-                    parse_state = 0;
-                    result->emplace_back(current);
-                    current.first.clear();
-                    current.second.clear();
-                } else {
-                    if (parse_state == 0) {
-                        current.first += raw;
-                    } else {
-                        current.second += raw;
-                    }
-                }
-                return true;
-            },
-            cp,
-            strlen(cp));
-
+            result->push_back({
+                    ui_name->string().value(),
+                    internal_name->string().value()
+                });
+        });
         return result;
     }
 };

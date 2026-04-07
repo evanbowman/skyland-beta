@@ -17,97 +17,97 @@ duración desconexión (seg)
 aire
 amplificador
 aniquilador
-cañón de arco
+cañón-arco
 arco
-núcleo de reserva
+núcleo-reserva
 ballesta
 globo
 platanero
 barrera
 basalto
-ladrillo de basalto
-basalto tallado
-cañón láser
+ladrillo-basalto
+basalto-tallado
+cañón-láser
 campana
-casco grande
-motor de guerra
+casco-grande
+motor-de-guerra
 puente
-casco de bronce
+casco-bronce
 edificio
-hematita tallada
-piedra tallada
-núcleo del caos
+hematita-tallada
+piedra-tallada
+núcleo-caos
 camuflaje
 cacao
-módulo de mando
-cohete fragmentario
+módulo-mando
+cohete-racimo
 cesio
-brazo de salvamento
+brazo-salvamento
 cultivos (¡podridos! ¡recoge antes!)
-cristal tallado
+cristal-tallado
 cristal
-pilar de cristal
+pilar-cristal
 cúpula
 nieve
-casco apilado
-casco espejo
-puesto de mercado
-puerta blindada
+casco-apilado
+casco-espejo
+puesto-mercado
+puerta-blindada
 cañón
-bahía de carga
-lanza de partículas
+bahía-carga
+lanza-partículas
 desfasador
-núcleo de energía
+núcleo-energía
 portal
 diezmador
 deflector
-bahía de drones
-baliza de escape
+bahía-drones
+baliza-escape
 granja
-cañón antiaéreo
-cañón endeble
-carga incendiaria
+cañón-antiaéreo
+cañón-endeble
+carga-incendiaria
 comida
-campo de fuerza
-campo de fuerza*
+campo-fuerza
+campo-fuerza*
 fuente
-bloque de oro
+bloque-oro
 granero
 puerto
 hematita
-pilar de hematita
-misil teledirigido
+pilar-hematita
+misil-teledirigido
 miel
 casco
 hielo
 incinerador
 índigo
 enfermería
-cañón iónico
-disipador iónico
+cañón-iónico
+disipador-iónico
 escalera
 escalera+1
-dama de la libertad
+dama-de-la-libertad
 lava
 lava*
 limonero
-fuente de luz
+fuente-luz
 madera
-rojo madder
+rojo-madder
 manufactura
 mármol
 albañilería
-silo de misiles
+silo-misiles
 micelio
 némesis
 ocre
-núcleo acelerado
+núcleo-acelerado
 cocotero
 perlas
 pistón
-sala saqueada
+sala-saqueada
 patatas
-casco energizado
+casco-energizado
 código
 radar
 radiador
@@ -117,41 +117,41 @@ resonador
 arroz
 raíl-ns (decoración)
 raíl-eo (decoración)
-cruce de raíles
-cohete bomba
-cañón sylph
+cruce-raíles
+cohete-bomba
+cañón-sylph
 azafrán
 arena
 cercha
 mariscos
 arbusto
 singularidad
-celda solar
-cañón chispa
+celda-solar
+cañón-chispa
 altavoz
 escalinata
 escalinata+1
 escalinata+2
 estatua
-pilar de piedra
-pistón adhesivo
+pilar-piedra
+pistón-adhesivo
 girasol
 interruptor
 sintetizador
-computadora de guía
+computadora-guía
 infusión
 terreno
 tulipanes
-cristal de afinación
+cristal-afinación
 dinamita
 dinamita-ii
 antorcha
 transportador
 tierra
-misil atómico
+misil-atómico
 agua
 agua*
-motor climático
+motor-climático
 trigo
 molino
 lana
@@ -294,7 +294,7 @@ Un arma para atacar el techo de una fortaleza enemiga. Inflige % de daño cada %
 ¡Agua! Apaga el fuego en casillas adyacentes.
 Bloque fuente de agua.
 Reduce ligeramente el coste de construcción de todos los bloques.
-¡Muestra el interior de castillos hostiles! Los radares también mejoran la precisión de los transportadores, ¡así como el alcance de movimiento en el mapa!
+¡Muestra el interior de castillos hostiles! Los radares mejoran la precisión de transportadores y el alcance en el mapa.
 Anula todo el daño iónico al contacto. Útil para proteger estructuras vulnerables, como reactores o campos de fuerza, de los cañones iónicos.
 "Dadme a vuestros cansados, vuestros pobres, vuestras masas apiñadas anhelando respirar en libertad."
 Fluye a través de una isla, incendia los bloques no ignífugos.
@@ -346,7 +346,7 @@ Produce réplicas. Una réplica tiene el 75% de la salud del personaje original,
 ¡Despliega un dron! Al destruirse, el dron desplegado también será destruido.
 Un arma poderosa que solo funciona con las tormentas más fuertes. Gana una munición y sube un nivel por cada rayo.
 Texto escrito en un idioma extraño... ¿qué significará? (Si encuentras uno, haz clic para ampliar)
-¡Oculta bloques! La IA no puede ver bloques creados completamente bajo un camuflaje. La IA adivinará los bloques ocultos según su comportamiento. Recibe daño iónico.
+¡Oculta bloques! La IA no puede ver bloques creados completamente bajo un camuflaje. La IA adivinará los bloques ocultos según su comportamiento.
 Este bloque controlaba la IA de la tripulación, pero ya no es necesario.
 ...
 Un arma antigua del mundo de la superficie, ya nadie sabe fabricarlas... causa incendios devastadores... con suerte, quizá encuentres una...
@@ -361,11 +361,11 @@ Una pequeña nave unipersonal. Los aldeanos la usan para viajes largos entre isl
 Un arma bárbara de antaño. Crea una enorme explosión, esparciendo daño y fuego en un área grande. Un disparo bien colocado puede demoler fácilmente la mitad de un castillo. Un solo uso.
 ...
 ¿Qué será esto? Tendrás que probarlo en el editor de niveles sandbox y ver qué hace... (máx. % permitidos por nivel).
-Diseñado originalmente para proteger contra la radiación severa de la superficie. Emite un campo de energía defensivo: todos los bloques cercanos recibirán un % menos de daño.
-¡Permite a los tripulantes viajar instantáneamente a cualquier otro portal de tu isla! Consume más recursos que una escalinata, ¡pero permite diseñar castillos muy compactos!
+Diseñado para proteger contra la radiación de la superficie. Emite un campo defensivo: todos los bloques cercanos reciben un % menos de daño.
+¡Viaja instantáneamente a cualquier otro portal de tu isla! Consume más recursos que una escalinata, ¡pero permite diseñar castillos muy compactos!
 Una de las pocas tecnologías que los goblins han logrado inventar. ¡Genera % de energía por cada bloque único en tu castillo! Pero no dejes que explote...
 Acelera los tiempos de recarga de bloques cercanos. Raro, frágil e increíblemente valioso.
-Un arma de rayo especializada que inflige un %% de la salud máxima de un bloque en daño. Más eficaz contra casco que los cañones normales, débil contra bloques delicados.
+Rayo que inflige un %% de la salud máxima del bloque. Más eficaz contra casco que cañones normales, débil contra bloques delicados.
 Los goblins intentaron diseñar un cañón mejor; es potente, pero defectuoso: empieza con % de daño, baja a % a media salud, y a % a un cuarto de salud.
 Una antigua tecnología Sylph que desplaza brevemente la materia entre realidades. Mientras está activado, proporciona % segundos de invulnerabilidad, % segundos de recarga.
 Similar en concepto a las armas de asedio clásicas, este cañón de artillería es mucho más destructivo. Dispara proyectiles pesados en arco amplio, evitando las defensas estándar.
@@ -373,7 +373,7 @@ Similar en concepto a las armas de asedio clásicas, este cañón de artillería
 Un puente decorativo... ¡redimensiónalo desde el menú SELECT!
 Un núcleo de energía modificado para aumentar su producción. Las modificaciones improvisadas lo hacen delicado: se sobrecargará si su salud baja del %% (%).
 ¡Al activarse, hace que los cristales de tu reactor resuenen a una frecuencia coincidente, cambiando el color de su producción de energía!
-Construido por los Sylph para minar depósitos de mineral denso, este rayo de partículas quema todo a su paso horizontalmente. Debido a su antigüedad, se desintegrará tras un solo uso.
+Construido por los Sylph para minar mineral denso, este rayo de partículas quema todo a su paso horizontalmente. Debido a su antigüedad, se desintegrará tras un uso.
 Un suministro de energía Sylph avanzado. Cada resonador genera % de energía adicional por cada otro resonador en tu isla.
 pausado
 lento
@@ -440,7 +440,7 @@ automatizar reconstrucción:
 seleccionado %/%:
 -- puntuaciones --
 puntuación
-l + r: compartir mejor puntuación
+l + r: compartir puntuación
 SEL: clasificación
 ¡Escanea para ver la clasificación!
 Introduce tu token:
@@ -512,8 +512,8 @@ demente
 Configuración
 (A para empezar)
 El modo más fácil, pero aún desafiante. Intentos extra si mueres.
-Los enemigos dan menos recursos. Puntuación x2. Patrones de nivel más difíciles.
-Los enemigos dan aún menos recursos. Puntuación x4. Patrones de nivel aún más difíciles.
+Menos recursos del enemigo. Puntuación x2. Niveles más difíciles.
+Menos recursos del enemigo. Puntuación x4. Patrones de nivel aún más difíciles.
 Sin pausas. Puntuación x6.
 permadeath
 Activada. ¡Las partidas guardadas actualmente solo se pueden cargar una vez!
@@ -540,7 +540,7 @@ Explorador
 Estratega
 ¡Alcanza la zona 3!
 Fortaleza
-¡Construye un castillo con al menos cuatro núcleos de energía!
+¡Construye un castillo con al menos cuatro núcleos!
 dinamita
 ¡Completa cualquier nivel de desafío!
 Virtuoso (1)
@@ -558,7 +558,7 @@ Barco de Teseo
 ¡Limones rescatados!
 ¡Completa la misión del Granjero Meyer!
 El Nuevo Coloso
-¡Aloja al menos siete personas en tu castillo a la vez!
+¡Aloja al menos siete personas a la vez!!
 Fusión del núcleo
 ¡Destruye el reactor de un oponente con daño iónico!
 Completista
@@ -576,7 +576,7 @@ Abordaje
 Pacifista
 ¡Alcanza la zona 4 sin matar a ningún tripulante enemigo!
 Técnico de núcleos
-¡Compra un cristal de afinación a un técnico Sylph!
+¡Compra un cristal de afinación a un Sylph!
 opciones
 trucos y consejos
 ¡Mantén pulsado el botón de pausa para ajustar la velocidad! ¡Cámara lenta y avance rápido disponibles! ¡Incluso puedes rebobinar!
@@ -694,13 +694,13 @@ mostrar ping
 ocultar ping
 -- Registro del dron --
 notas del técnico:
--- Pasaporte de tripulante --
---  Informe de tripulante  --
+-- Pasaporte tripulante --
+--  Informe tripulante  --
 Batallas
 Derrotados
 Daño reparado
 Pasos dados
-Incendios sofocados
+Fuegos apagados
 Sala fav.:
 Fav.:
 configurar cola de objetivos (%/%):

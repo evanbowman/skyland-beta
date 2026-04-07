@@ -2,9 +2,10 @@
 ;;; sandbox.lisp
 ;;;
 
+(eval-file "/scripts/reset_hooks.lisp")
+
 (tr-bind-current)
 
-(eval-file "/scripts/reset_hooks.lisp")
 
 ;; NOTE: Engine binds config fields from the sandbox settings menu to a list
 ;; variable called conf.

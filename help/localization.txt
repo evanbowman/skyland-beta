@@ -62,4 +62,4 @@
  strings/english.idf for your
  language. Finally, add a
  mapping for your desired
- language to /strings/lang.txt
+ language to /strings/lang.lisp

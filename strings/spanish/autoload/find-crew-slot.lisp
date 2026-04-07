@@ -1,2 +1,2 @@
-'(("Sadly, there's no room..." . "TODO")
+'(("Sadly, there's no room..." . "Lamentablemente, no hay espacio...")
 )

@@ -1,2 +1,0 @@
-English=english
-Español=spanish

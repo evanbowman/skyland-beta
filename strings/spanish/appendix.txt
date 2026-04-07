@@ -1,24 +1,24 @@
-weather: Rain
-Despite the elevation, rainfall sometimes occurs in Skyland. Reduces solar cell output by 1/2, windmill output doubled! Stay dry out there!
-weather: Storm
-Reduces solar cell output by 1/2, windmill output doubled! The worst storms seem to follow patterns - almost as if driven by purpose...
-weather: Snow
-The temperature in these weather systems can drop dramatically. Reduces solar cell output by 1/2, windmill output doubled! Water blocks will freeze solid.
-weather: Ash
-Beneath the cloud layer lies the surface world, drowned in radioactive ash. It periodically deals \Vdust_storm_damage  damage to exposed areas of your castle... careful!
-weather: Night
-Solar cell output reduced to zero! The darkness reveals the true extent of the ruined world below - glowing with residual radiation.
-weather: Solar Storm
-Occurs in rare instances, when you pass under an ozone hole. Solar cell output doubled! Increased damage from fires. Periodic risk of spontaneous fires occurring across your isle...
+weather: Lluvia
+A pesar de la altitud, a veces llueve en Skyland. ¡Reduce la producción de células solares a 1/2, producción de molinos duplicada! ¡Mantente seco!
+weather: Tormenta
+¡Reduce la producción de células solares a 1/2, producción de molinos duplicada! Las peores tormentas parecen seguir patrones - casi como si tuvieran un propósito...
+weather: Nieve
+La temperatura en estos sistemas puede caer drásticamente. ¡Reduce la producción de células solares a 1/2, producción de molinos duplicada! Los bloques de agua se congelarán.
+weather: Ceniza
+Bajo la capa de nubes yace el mundo de la superficie, ahogado en ceniza radiactiva. Causa periódicamente \Vdust_storm_damage de daño a las zonas expuestas de tu castillo... ¡cuidado!
+weather: Noche
+¡Producción de células solares reducida a cero! La oscuridad revela la verdadera extensión del mundo arruinado abajo - brillando con radiación residual.
+weather: Tormenta Solar
+Ocurre en raras ocasiones, al pasar bajo un agujero de ozono. ¡Producción de células solares duplicada! Mayor daño por fuego. Riesgo periódico de incendios espontáneos en tu isla...
 faction: Colonial
-Independent settlements that broke away during the chaotic migration to the skies. Each colony governs itself, and maintain cautious neutrality...
-faction: Goblin Horde
-Humans who remained on the toxic surface too long, transformed by radiation and harsh conditions. Some retain their intelligence and can be reasoned with... carefully.
-faction: Old Empire
-Remnants of the pre-migration surface governments. Their automated defenses still patrol certain territories. Few living crew remain aboard these aging fortresses.
-faction: Second Empire
-Formed in the early years of sky civilization, attempting to reunify scattered humanity under a single banner. Their ambitions have faded as colonies developed distinct identities.
-faction: Marauder
-A generally unaligned faction of humans, goblins, etc., who, although violent, may ally themselves with you... for the right price.
+Asentamientos independientes que se separaron durante la caótica migración a los cielos. Cada colonia se gobierna a sí misma y mantiene una cautelosa neutralidad...
+faction: Horda Goblin
+Humanos que quedaron demasiado tiempo en la superficie tóxica, transformados por radiación. Algunos conservan su inteligencia y se puede razonar con ellos... con cuidado.
+faction: Viejo Imperio
+Restos de gobiernos de superficie pre-migración. Sus defensas automatizadas aún patrullan ciertos territorios. Poca tripulación viva queda a bordo de estas viejas fortalezas.
+faction: Segundo Imperio
+Formado tras la migración, intentando reunificar a la humanidad bajo una bandera. Sus ambiciones se han desvanecido a medida que las colonias forjaron identidades propias.
+faction: Merodeador
+Una facción generalmente no alineada de humanos, goblins, etc., que, aunque violentos, pueden aliarse contigo... por el precio adecuado.
 faction: Sylph
-Mountain dwellers who methodically lifted their entire cities skyward before the surface collapsed. They live at high altitudes, rarely interacting with others.
+Moradores de las montañas que elevaron metódicamente sus ciudades enteras al cielo antes de que la superficie colapsara. Viven a grandes altitudes, rara vez interactuando con otros.

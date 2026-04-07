@@ -2,6 +2,7 @@
 ;;; surrender/crew.lisp
 ;;;
 
+(tr-bind-current)
 
 (dialog
  (cond

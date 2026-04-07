@@ -71,9 +71,10 @@
   (visit-files "/scripts/autoload/" output)
   (visit-files "/scripts/surprise/" output)
   (visit-files "/scripts/surrender/" output)
+  (visit-files "/scripts/config/" output)
 
   (visit-file "/scripts/storm_king.lisp" output)
-  (visit-file "/scripts/surrentder.lisp" output)
+  (visit-file "/scripts/surrender.lisp" output)
 
   (let ((common nil))
     (push common (process-file "/scripts/init.lisp"))

@@ -1,2 +1,2 @@
-'(("Place cargo-bay:" . "TODO")
+'(("Place cargo-bay:" . "Colocar bahía de carga:")
 )

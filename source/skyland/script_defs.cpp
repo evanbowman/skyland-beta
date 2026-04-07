@@ -460,7 +460,7 @@ BINDING_TABLE({
      {SIG1(nil, string),
       [](int argc) {
           L_EXPECT_OP(0, string);
-          systemstring_bind_file(L_LOAD_STRING(0));
+          swap_language(L_LOAD_STRING(0));
           return L_NIL;
       }}},
     {"lang",
