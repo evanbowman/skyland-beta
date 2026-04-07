@@ -16,7 +16,8 @@
       (tr-bind new))))
 
 (defn/c tr-reset ()
-  (setq tr-bindings nil))
+  (setq tr-bindings nil)
+  (tr-bind "/common.lisp"))
 
 (defn/c tr-load (text)
   (cond
@@ -25,8 +26,10 @@
     ((pair? text)
      (cons (tr-load (car text))
            (tr-load (cdr text))))
-    (true
+    ((string? text)
      (let ((translation (lookup text tr-bindings)))
        (if (string? translation)
            translation
-           text)))))
+           text)))
+    (true
+     text)))

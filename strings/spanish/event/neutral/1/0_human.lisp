@@ -1,0 +1,8 @@
+'(("You discover a fortress inhabited by some mercenaries..." . "TODO")
+("One of the mercenaries offers to join you crew, for a cost of %@. Accept offer?" . "TODO")
+("You cannot afford to pay. The mercenaries become impatient, and cut the transmission." . "TODO")
+("<c:Mercenary:17> Ahoy! Ready to knock some heads!?" . "TODO")
+("The mercenary joined your crew!" . "TODO")
+("Sadly, there's no room..." . "TODO")
+("The mercenaries became angry, and cut the transmission." . "TODO")
+)

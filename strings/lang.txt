@@ -1,2 +1,2 @@
-english=english
-español=spanish
+English=english
+Español=spanish

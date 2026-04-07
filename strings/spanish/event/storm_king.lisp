@@ -1,0 +1,7 @@
+'(("The storm overtakes your castle... A massive fortress emerges from the tempest... " . "TODO")
+("There is little hope of survival..." . "TODO")
+("You probably aren't strong enough yet..." . "TODO")
+("You just might survive..." . "TODO")
+("Ready for the final showdown?" . "TODO")
+("<c:Storm King:4> . . ." . "TODO")
+)

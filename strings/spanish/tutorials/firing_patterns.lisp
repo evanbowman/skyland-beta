@@ -1,0 +1,5 @@
+'(("<c:Milo:5>Did you know that you can adjust the firing pattern of weapon groups? I'll begin by attaching our cannons to a group:" . "TODO")
+("<c:Milo:5>When I select a target, my weapons will fire, by default, as soon as they're reloaded. But in the target selection menu, I can actually change a weapon group's firing pattern by pressing the right shoulder button! One press will select barrage (B) mode. A second press will switch the weapon to salvo (S) mode." . "TODO")
+("<c:Milo:5>To change weapon targets without adjusting the firing mode, just select a target as usual:" . "TODO")
+("<c:Milo:5>Now, let's switch the firing pattern to salvo mode!" . "TODO")
+)

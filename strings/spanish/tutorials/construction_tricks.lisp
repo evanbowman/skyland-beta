@@ -1,0 +1,4 @@
+'(("<c:Milo:5>Having trouble navigating the construction menu? Did you know that the up and down buttons cycle through categories? The menu arranges blocks in order, based on category (wall, weapon, factory, power, misc, decor)." . "TODO")
+("<c:Milo:5>If you want to know more about what a block does, hover over it in the construction menu and press start. The game will open up the glossary to the correct page!" . "TODO")
+("<c:Milo:5>Of course, you can always reach the glossary normally from the start menu, but the jump-to-page feature is handy if you already have the construction menu open. Finally, you may still find that there are too many choices in the construction menu. You can hide blocks that you don't want to see from the construction menu by selecting 'hide blocks' from the start menu!" . "TODO")
+)

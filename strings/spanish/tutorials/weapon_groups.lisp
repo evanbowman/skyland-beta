@@ -1,0 +1,6 @@
+'(("<c:Milo:5>Hey again! Did you know that you can assign weapons to groups? Weapon groups allow you to select multiple weapons at once! To edit your weapon groups, hold the START button and press down. Then, you can press the A button to cycle through three groups: the UP group, the LEFT group, and the RIGHT group." . "TODO")
+("<c:Milo:5>OK, now, we've assigned our cannons to the UP group, and our missiles to the LEFT group. By holding the START button and pressing the up directional button, we can assign a target for the whole group of cannons! Same thing for the missile group!" . "TODO")
+("<c:Milo:5>By assigning weapon groups to hotkeys, you can quickly reassign a weapon target without needing to scroll to a weapon and click on it! Super useful!" . "TODO")
+("<c:Milo:5>Weapon groups have a few different button mappings to make it possible to use them with different GBA button layouts. Hold START during the game for hints." . "TODO")
+("<c:Milo:5>And, finally, you may hold the A button and drag to create a rectangular selection and set the target for batches of weapons. Any weapon targets set by rectangular selection will take priority over a weapon's group. How useful!" . "TODO")
+)

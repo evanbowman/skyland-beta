@@ -1,0 +1,2 @@
+'(("<c:Milo:5>We seem to only be able to build a small set of structures. By constructing a workshop, we unlock a large number of additional rooms. Workshops also reduce construction cost for all new rooms by a bit." . "TODO")
+)

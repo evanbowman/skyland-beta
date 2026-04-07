@@ -1,0 +1,7 @@
+'(("On a nearby island, an old engineer signals you from his workshop. He says he has designed something new and is excited to share it with someone!" . "TODO")
+("<c:Engineer:15>Hello there! I've designed a special type of hull resistant to missiles. I'll replace all of your old hull blocks with stacked-hull, for a price of %@, you interested?" . "TODO")
+("<c:Engineer:15>Sorry! You don't have enough resources, and I can't afford to upgrade your castle." . "TODO")
+("<c:Engineer:15> All finished! Your new hull blocks will take 75% less damage from missiles!" . "TODO")
+("<c:Engineer:15>Hello there! I've designed a special type of hull resistant to missiles. I could have upgraded your hull, but you don't have any! But I'm sure we'll meet again someday!" . "TODO")
+("<c:Engineer:15>That's OK, I understand! Personally, I feel very safe from missiles with all the stacked-hull that I've built up..." . "TODO")
+)

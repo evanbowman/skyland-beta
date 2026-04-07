@@ -475,7 +475,7 @@ public:
                 setup_pools();
                 TitleScreenScene::run_init_scripts(false);
                 return make_scene<RegressionModule>();
-            } else if (auto lang = match("--init-locale")) {
+            } else if (match("--init-locale")) {
                 if (not match("--output")) {
                     error("error: --init-locale is specified, "
                           "but not --output=<dir>");

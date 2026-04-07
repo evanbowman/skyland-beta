@@ -1,0 +1,7 @@
+'(("You discover the ruins of a forsaken town. I guess no one would mind if you scavenged some resources..." . "TODO")
+("Something else catches your attention. <d:500>.<d:500>.<d:500> a data cartridge!" . "TODO")
+("Looks like someone already got here first. You collect %@." . "TODO")
+("After boarding, you find a completely intact %. Your crew asks you where to install it..." . "TODO")
+("Pick a slot (%x%)" . "TODO")
+("All done!" . "TODO")
+)

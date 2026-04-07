@@ -1,0 +1,5 @@
+'(("<c:Milo:5>I almost forgot! I promised to explain boarding and combat a while back! We can defend ourselves by building cannons, but we can also create transporters, allowing us to raid other castles!" . "TODO")
+("<c:Milo:5>First, let's begin by moving our crew into the transporters. Transporters take some time to charge, but once the light on the room changes from red to blue, it's ready to go!" . "TODO")
+("<c:Milo:5>All aboard! Select the transporters to send our crew into the enemy fortress! Transporters pick a random destination by default, but you can build radars to enable more accurate transporting!" . "TODO")
+("<c:Milo:5>Alright, we've boarded! Your crew already knows what to do, just tell them where to go! They'll plunder any rooms (except for stairwells) for resources, and fight enemy goblins! Transporters can also return characters back to your island, but we have to wait for them to recharge..." . "TODO")
+)

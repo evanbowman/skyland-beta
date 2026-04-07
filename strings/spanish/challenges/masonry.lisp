@@ -1,0 +1,6 @@
+'(("<c:Goblin King:3>Masssonry! Masssonry! I hate it! Sssooo old fassshioned! " . "TODO")
+("Dessstroy all of it for me? Don't dessstroy anything else!" . "TODO")
+("Try upgrading your workshop to a manufactory, regular weapons will not be enough!" . "TODO")
+("<c:Goblin King:3>Gaahh, I sssaid only masssonry!" . "TODO")
+("<c:Goblin King:3>Wowowow! Beautiful! Ssspectacular!" . "TODO")
+)

@@ -1,0 +1,8 @@
+'(("Your sensors detect something tracking you. <B:0> " . "TODO")
+("The damaged toll station must have transmitted your signature to the network. <B:0> " . "TODO")
+("A patrol vessel approaches, flying an imperial flag... <B:0> " . "TODO")
+("But something seems off about it." . "TODO")
+("As the vessel draws closer, you see the crew through the viewports. <B:0> Not imperial officers. Goblins." . "TODO")
+("<c:Goblin Raider:32> You! You're the one who broke that sstation! <B:0> We sstripped it for partsss after you left! <B:0> Got lotsss of good salvage... but now we want YOUR sship too! <B:0> Thankss for the help! #cackle#" . "TODO")
+("The raiders begin charging weapons..." . "TODO")
+)

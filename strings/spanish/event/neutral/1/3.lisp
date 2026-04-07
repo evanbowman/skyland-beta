@@ -1,0 +1,8 @@
+'(("A goblin stronghold approaches... they seem to be willing to negotiate..." . "TODO")
+("<c:Goblin King:3>#cackle# You're tressspasssing in my territory! I demand a tribute of %@! Pay!" . "TODO")
+("I'll pay…" . "TODO")
+("No way!" . "TODO")
+("<c:Goblin King:3>Thatsss not enough! Letsss sssee if theresss anything we can take!!" . "TODO")
+("The Goblin King rejoices, having successfully extorted %@." . "TODO")
+("<c:Goblin King:3>YARRRGG!!! PREPARE FOR BOARDING!!!" . "TODO")
+)

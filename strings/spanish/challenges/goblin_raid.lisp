@@ -1,0 +1,5 @@
+'(("Are you sure you want a hint?" . "TODO")
+("Hint: Try using an arc-gun against the enemy hull, a repair drone could keep you alive." . "TODO")
+("<c:Goblin:2>Hey King, we've found a defenssselesss cassstle!" . "TODO")
+("<c:Goblin King:3>#cackle# Minionsss, prepare for boarding!" . "TODO")
+)

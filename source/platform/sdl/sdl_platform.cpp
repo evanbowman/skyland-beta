@@ -1271,7 +1271,6 @@ std::pair<const char*, u32> Platform::load_file(const char* folder,
     std::string full_path = resource_path() + path;
     std::ifstream file(full_path, std::ios::binary);
     if (!file) {
-        warning(format("missing file %", full_path.c_str()));
         return {nullptr, 0};
     }
 

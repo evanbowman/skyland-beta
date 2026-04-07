@@ -1,0 +1,7 @@
+'(("<c:Milo:5>Hi again! Did you know that, in addition to building new blocks, you can move around existing blocks? I'll show you!" . "TODO")
+("<c:Milo:5>Select an empty location on your island, and press and hold B until you see the island rearrangement prompt! Then, by spending some resources, you can rearrange the layout of your castle. When finished, press B again to exit!" . "TODO")
+("<c:Milo:5>In addition to moving single blocks, you can also press-and-hold A or START to pick and move whole regions of blocks! Let's make some terrain first to give us room to move stuff..." . "TODO")
+("<c:Milo:5>After opening the block movement menu like before, press and hold A to draw a rectangular selection, and release to begin moving regions!" . "TODO")
+("<c:Milo:5>Finally, in addition to holding the B button over an empty space, you can access the block movement system through the SELECT menu." . "TODO")
+("<c:Milo:5>And that's all there is to it! For the small fee of 800@, you can easily rearrange your entire castle!" . "TODO")
+)

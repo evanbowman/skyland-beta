@@ -1,0 +1,5 @@
+'(("Sandbox mode gives you nearly unlimited resources, and allows you to build on your opponent's island in addition to your own!<B:0> You may also reposition your opponent's characters!<B:0> Try out strategies, or just play around!<B:0> You can even build a couple of big fortresses, select spectate on the start menu, and let the AI control both castles!" . "TODO")
+("Welcome to the Battle Sandbox! Want any help?" . "TODO")
+("Sure!" . "TODO")
+("No thanks!" . "TODO")
+)

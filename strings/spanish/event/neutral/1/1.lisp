@@ -1,0 +1,7 @@
+'(("A castle lazily drifts across the horizon... possibly uninhabited?" . "TODO")
+("Did you know that Skyland's goblins were human once? But they remained on the ruined surface too long, and were left mutated and cruel..." . "TODO")
+("You explore, and salvage %@ from the ruins." . "TODO")
+("It's a trap!" . "TODO")
+("The fortress appears to be empty, but you cannot be certain. Attempt to board?" . "TODO")
+("The fortress sinks back into the clouds, its contents remain an unresolved mystery." . "TODO")
+)

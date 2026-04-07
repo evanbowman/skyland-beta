@@ -1,0 +1,6 @@
+'(("Are you sure you want a hint?" . "TODO")
+("Need another hint?" . "TODO")
+("Hint: Mycelium won't grow on forcefields, and is weak against arc-guns." . "TODO")
+("Hint: You can incapacitate the cannon by destroying the two forcefields in front of it, allowing the mycelium to grow over the cannon." . "TODO")
+("OK, one final hint: After building anything that you need from the manufactory, salvage it for resources." . "TODO")
+)

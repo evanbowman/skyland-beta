@@ -1,0 +1,8 @@
+'(("<c:Mayor:10>Nice to meet ya! We were having trouble earlier, but we worked it out on our own..." . "TODO")
+("A small village radios you... sounds like they're having trouble with their power-core..." . "TODO")
+("<c:Mayor:10>After a few years of use, our old power supply ran out of atomic fuel, and we're running on this weaker standby-core. Can you help our town by trading one of your own power-cores for our standby? We'll throw in two weapons and three of our crew members to sweeten the deal!" . "TODO")
+("OK, let's trade!" . "TODO")
+("Sorry, I can't…" . "TODO")
+("Place %" . "TODO")
+("<c:Mayor:10>Oh, I almost forgot! When removing the old core, we found some documents left by a mechanic from the last time we replaced a core. <B:0> We have no use for these records, why don't you take them!" . "TODO")
+)

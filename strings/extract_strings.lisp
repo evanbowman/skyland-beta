@@ -31,7 +31,7 @@
            kvp))
        new))
 
-(defn visit-file (path output)
+(defn process-file (path)
   (let ((strings nil))
     (when-let ((exprs (read-file path)))
       (foreach (lambda (expr)
@@ -41,12 +41,16 @@
                                     (setq strings (union new-l new-l))))
                                 false))
                exprs))
-    (when-let ((result (map (lambda (k)
-                              (cons k 'TODO))
-                            strings)))
-      (output (string-join (cddr (split path "/")) "/")
-              result
-              merge-existing))))
+    (map (lambda (k) (cons k "TODO")) strings)))
+
+(defn output-result (path output result)
+  (output (string-join (cddr (split path "/")) "/")
+          (reverse result)
+          merge-existing))
+
+(defn visit-file (path output)
+  (when-let ((result (process-file path)))
+    (output-result path output result)))
 
 (defn visit-files (subdir output)
   (filesystem-walk
@@ -60,8 +64,17 @@
   ;; NOTE: output is a special function passed in by the build system, because
   ;; the scripting environment is sandboxed and doesn't have access to files
   ;; outside of the skyland source tree.
-  (visit-files "/scripts/autoload/" output)
   (visit-files "/scripts/challenges/" output)
   (visit-files "/scripts/event/" output)
   (visit-files "/scripts/sandbox/" output)
-  (visit-files "/scripts/tutorials/" output))
+  (visit-files "/scripts/tutorials/" output)
+  (visit-files "/scripts/autoload/" output)
+  (visit-files "/scripts/surprise/" output)
+  (visit-files "/scripts/surrender/" output)
+
+  (visit-file "/scripts/storm_king.lisp" output)
+  (visit-file "/scripts/surrentder.lisp" output)
+
+  (let ((common nil))
+    (push common (process-file "/scripts/init.lisp"))
+    (output-result "/scripts/common.lisp" output (flatten common))))
