@@ -86,7 +86,10 @@ void BoxedDialogScene::process_command()
             if (*text_state_.current_word_ == '\0') {
                 PLATFORM.fatal("Unexpected null byte in command sequence!");
             }
-            str.push_back(*text_state_.current_word_);
+            utf8::Codepoint current = *text_state_.current_word_;
+            char encoded[5] = {};
+            memcpy(encoded, &current, 4);
+            str += encoded;
             ++text_state_.current_word_;
         }
         ++text_state_.current_word_;
@@ -121,8 +124,12 @@ void BoxedDialogScene::process_command()
     }
 
     case 'c': {
-        data_->character_.name_ = parse_command_str();
+        auto str = parse_command_str();
+        data_->character_.name_ = str;
         data_->character_.image_ = parse_command_int();
+
+        info("got ");
+        info(str);
 
         if (data_->character_.image_) {
             auto st = calc_screen_tiles();
@@ -735,11 +742,13 @@ ScenePtr BoxedDialogScene::update(Time delta)
                               st.y - (7 + i + y_start),
                               83);
 
+            const auto cname_len = utf8::len(data_->character_.name_.c_str());
+
             const bool overlap =
-                max_text_len + 4 + 1 + data_->character_.name_.length() >= 30;
+                max_text_len + 4 + 1 + cname_len >= 30;
 
             const bool overlap_edge =
-                max_text_len + 4 + 1 + data_->character_.name_.length() >= 29;
+                max_text_len + 4 + 1 + cname_len >= 29;
 
             u16 corner_tile = 90;
 
