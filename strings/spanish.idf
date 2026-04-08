@@ -19,7 +19,7 @@ amplificador
 aniquilador
 cañón-arco
 arco
-núcleo-reserva
+reserva
 ballesta
 globo
 platanero
@@ -30,7 +30,7 @@ basalto-tallado
 cañón-láser
 campana
 casco-grande
-motor-de-guerra
+núcleo-guerra
 puente
 casco-bronce
 edificio
@@ -57,16 +57,16 @@ cañón
 bahía-carga
 lanza-partículas
 desfasador
-núcleo-energía
+núcleo
 portal
 diezmador
 deflector
 bahía-drones
 baliza-escape
 granja
-cañón-antiaéreo
+cañón-metralla
 cañón-endeble
-carga-incendiaria
+carga-ígnea
 comida
 campo-fuerza
 campo-fuerza*
@@ -84,7 +84,7 @@ incinerador
 índigo
 enfermería
 cañón-iónico
-disipador-iónico
+disipador
 escalera
 escalera+1
 dama-de-la-libertad
@@ -107,7 +107,7 @@ perlas
 pistón
 sala-saqueada
 patatas
-casco-energizado
+casco-ión
 código
 radar
 radiador
@@ -138,11 +138,11 @@ pistón-adhesivo
 girasol
 interruptor
 sintetizador
-computadora-guía
+autoguía
 infusión
 terreno
 tulipanes
-cristal-afinación
+cristal-tono
 dinamita
 dinamita-ii
 antorcha
@@ -208,8 +208,8 @@ enero,febrero,marzo,abril,mayo,junio,julio,agosto,septiembre,octubre,noviembre,d
 carga: 
 ninguno
 trazar ruta (%/%):
-:construir
-:construir :añadir terreno 
+hacer
+hacer :añadir terreno 
 ¡recursos insuficientes @!
 ¡suministro de energía insuficiente!
 demasiados bloques
@@ -295,7 +295,7 @@ Un arma para atacar el techo de una fortaleza enemiga. Inflige % de daño cada %
 Bloque fuente de agua.
 Reduce ligeramente el coste de construcción de todos los bloques.
 ¡Muestra el interior de castillos hostiles! Los radares mejoran la precisión de transportadores y el alcance en el mapa.
-Anula todo el daño iónico al contacto. Útil para proteger estructuras vulnerables, como reactores o campos de fuerza, de los cañones iónicos.
+Anula todo el daño iónico al contacto. Util para proteger estructuras vulnerables, como reactores o campos de fuerza, de los cañones iónicos.
 "Dadme a vuestros cansados, vuestros pobres, vuestras masas apiñadas anhelando respirar en libertad."
 Fluye a través de una isla, incendia los bloques no ignífugos.
 Bloque fuente de lava.
@@ -411,7 +411,7 @@ generar terreno
 START: entrar
 espera por favor...
 ¿seguro que reciclas?  +
-A: sí 
+A:  sí 
 B:  no 
 ¡no se puede reciclar una sala ocupada!
 ¡este bloque no se puede reciclar!
