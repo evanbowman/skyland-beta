@@ -66,9 +66,9 @@
 
 (defn/temp more-info ()
   (let ((sel (await (dialog-choice*
-                     (tr "<c:Villager:5>That goblin harvester is slicing chunks off of our town! They just let the scrap fall to the ruined world below, where their friends collect the fallen resources. Anyway, can you help??"))
-                    (tr '("Of course!"
-                          "Sorry, but no.")))))
+                     (tr "<c:Villager:5>That goblin harvester is slicing chunks off of our town! They just let the scrap fall to the ruined world below, where their friends collect the fallen resources. Anyway, can you help??")
+                     (tr '("Of course!"
+                           "Sorry, but no."))))))
     (case sel
       (0 (defend-villagers))
       (1 (decline)))))
