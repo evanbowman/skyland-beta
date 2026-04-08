@@ -418,10 +418,11 @@
 (defn/temp verify-translation-linkage (locale path)
   (let* ((tr-data (eval-file path))
          (path-sep "/")
-         (script (string "/scripts/" (string-join (cdddr (split path path-sep)) path-sep)))
+         (path-suffix (string-join (cdddr (split path path-sep)) path-sep))
+         (script (string "/scripts/" path-suffix))
          (missing nil))
     (when (file-exists? script)
-      (regr-print path 2 7)
+      (regr-print path-suffix 2 7)
       (let ((script-data (read-file script)))
         (foreach (lambda (expr)
                    (visit-strings expr (lambda (str)
@@ -435,15 +436,28 @@
                      (car missing))))))
 
 
-(let ((lang-opts (map cdr (eval-file "/strings/lang.lisp"))))
+;; NOTE: these checks are too time-consuming to run on the gba. The nighly
+;; regression system, using the desktop build of the game, runs these
+;; localization string checks.
+(let ((skip-files nil)
+      (lang-opts (map cdr (eval-file "/strings/lang.lisp"))))
   (foreach (lambda (locale)
+             (when (equal (device-info 'name) "GameboyAdvance")
+               ;; NOTE: the code in this file is quite convoluted, and walking
+               ;; it recursively with visit-strings causes issues on gba
+               ;; builds. Nighly regression, which also leverages more powerful
+               ;; desktop builds, should catch issues in ignored files.
+               (push skip-files (format "/strings/%/event/surrender/crew.lisp"
+                                        locale)))
              (regr-print "                              " 0 5)
              (regr-print (string "verifying localization: " locale) 1 5)
              (filesystem-walk (string "/strings/" locale)
                               (lambda (path)
-                                (when (ends-with path ".lisp")
+                                (when (and (ends-with path ".lisp")
+                                           (not (int? (find path skip-files))))
                                   (verify-translation-linkage locale path)))))
            lang-opts))
+
 
 
 (foreach (lambda (y)
