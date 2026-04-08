@@ -396,6 +396,61 @@
          (range 5 10))
 
 
+(defn/temp cdddr (v)
+  (cdr (cddr v)))
+
+
+(defn visit-strings (expr callback within-tr)
+  (cond
+    ((list? expr)
+     (let ((is-tr (or within-tr (equal (car expr) 'tr))))
+       (foreach (lambda (sub-expr)
+                  (visit-strings sub-expr callback is-tr))
+                expr)))
+    ((pair? expr)
+     (visit-strings (car expr) callback within-tr)
+     (visit-strings (cdr expr) callback within-tr))
+    ((string? expr)
+     (when within-tr
+       (callback expr)))))
+
+
+(defn/temp verify-translation-linkage (locale path)
+  (let* ((tr-data (eval-file path))
+         (path-sep "/")
+         (script (string "/scripts/" (string-join (cdddr (split path path-sep)) path-sep)))
+         (missing nil))
+    (when (file-exists? script)
+      (regr-print path 2 7)
+      (let ((script-data (read-file script)))
+        (foreach (lambda (expr)
+                   (visit-strings expr (lambda (str)
+                                         (when (not (lookup str tr-data))
+                                           (push missing str)))
+                                  false))
+                 script-data)))
+    (when missing
+      (fatal (format "No % translation for text: %"
+                     locale
+                     (car missing))))))
+
+
+(let ((lang-opts (map cdr (eval-file "/strings/lang.lisp"))))
+  (foreach (lambda (locale)
+             (regr-print "                              " 0 5)
+             (regr-print (string "verifying localization: " locale) 1 5)
+             (filesystem-walk (string "/strings/" locale)
+                              (lambda (path)
+                                (when (ends-with path ".lisp")
+                                  (verify-translation-linkage locale path)))))
+           lang-opts))
+
+
+(foreach (lambda (y)
+           (regr-print "" 1 y))
+         (range 5 10))
+
+
 (assert-eq 9 (lisp-mem-stack-used))
 
 (unbind 'assert-v

@@ -7,7 +7,8 @@
 (dialog
  "<b:/scripts/data/img/wanderer_town.img.bin>"
  (tr "While out on reconnaissance, your crew discovers an overcrowded transit hub, full of refugees departing the storm... <B:0> ")
- (tr "<b:/scripts/data/img/wanderer.img.bin> In the local cantina, a mysterious traveller offers you a deal... <B:0> You change course to dock with the station..."))
+ "<b:/scripts/data/img/wanderer.img.bin> "
+ (tr "In the local cantina, a mysterious traveller offers you a deal... <B:0> You change course to dock with the station..."))
 
 
 (opponent-init 14 'neutral)

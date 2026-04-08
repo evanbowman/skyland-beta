@@ -1,7 +1,7 @@
 '(("You can't quite believe what you're seeing! A castle appears as if out of nowhere. Through the window, you see a man rushing about frantically, dressed in a banana suit!?" . "¡No puedes creer lo que estás viendo! Un castillo aparece como de la nada. ¡¿A través de la ventana, ves a un hombre corriendo frenéticamente, vestido con un traje de plátano!?")
 ("I'm not going crazy, I'm not going crazy, I'm not going crazy..." . "No me estoy volviendo loco, no me estoy volviendo loco, no me estoy volviendo loco...")
 ("BANANA! BANANAA!!! BANANA! BANANA?" . "¡PLÁTANO! ¡¡¡PLÁTANOOO!!! ¡PLÁTANO! ¿PLÁTANO?")
-("<c:Banana Man:8>Waaa! My precious b'nanas! Stolen! Why do I need them, you ask!? That's TOP SECRET! Help me teach those thieves a lesson?" . "<c:Hombre Plátano:8>¡¡Waaa!! ¡Mis preciados plátanos! ¡Robados! ¡¿Que por qué los necesito, preguntas!? ¡¡Eso es ULTRA SECRETO!! ¿Me ayudas a darles una lección a esos ladrones?")
+("<c:Banana Man:8>Waaa! My precious b'nanas! Stolen by goblins! Why do I need them, you ask!? That's TOP SECRET! Help me teach those goblins a lesson?" . "<c:Hombre Plátano:8>¡¡Waaa!! ¡Mis preciados plátanos! ¡Robados por goblins! ¿¡Que por qué los necesito, preguntas!? ¡¡Eso es ULTRA SECRETO!! ¿Me ayudas a darles una lección a esos goblins?")
 ("Of course!" . "¡Por supuesto!")
 ("I'm kind of busy…" . "Estoy un poco ocupado…")
 ("<c:Banana Man:8>No time to waste! I know exactly where they've taken my bananas, and I marked the location on your sky chart with an *!" . "<c:Hombre Plátano:8>¡No hay tiempo que perder! ¡Sé exactamente adónde se llevaron mis plátanos, y marqué la ubicación en tu carta del cielo con un *!")

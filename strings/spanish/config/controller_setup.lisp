@@ -1,7 +1,7 @@
 '(("View Controls" . "Ver Controles")
 ("Edit Controls" . "Editar Controles")
 ("Save new controls?" . "¿Guardar nuevos controles?")
-("Restore Defaults" . "Restaurar Valores Predeterminados")
+("Restore Defaults" . "Restaurar Valores")
 ("What would you like to do?" . "¿Qué deseas hacer?")
 ("Change Language" . "Cambiar Idioma")
 ("Really change language to '%'?" . "¿Cambiar idioma a '%'?")

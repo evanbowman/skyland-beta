@@ -527,6 +527,7 @@ public:
                         result.push_back('\n');
                     });
                     result.push_back(')');
+                    result.push_back('\n');
                     if (auto write = PLATFORM.get_extensions().write_external_file) {
                         write(output_path.c_str(), result);
                     }

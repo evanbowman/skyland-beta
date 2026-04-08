@@ -4,7 +4,8 @@
 
 (tr-bind-current)
 
-(dialog (tr "<b:/scripts/data/img/farm_colony.img.bin>A nearby farming colony requests assistance..."))
+(dialog "<b:/scripts/data/img/farm_colony.img.bin>"
+        (tr "A nearby farming colony requests assistance..."))
 
 
 (opponent-init 9 'neutral)
