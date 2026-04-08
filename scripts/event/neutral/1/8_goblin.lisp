@@ -37,10 +37,36 @@
 (chr-new (opponent) 1 14 'neutral '((icon . 45) (race . 1)))
 
 
+(defn/temp find-goblin-crewmember ()
+;  (breakpoint)
+  (let ((choices (filter (lambda (chr)
+                           (let* ((plist (cddr chr))
+                                  (icon (lookup 'icon plist)))
+                             (and icon
+                                  (not (equal icon 45))
+                                  (equal 1 (lookup 'race plist)))))
+                         (chrs (player)))))
+    (if choices
+        (sample choices)
+        '(nil nil (race . 1) (icon . 2)))))
+
+
+(defn/temp join-crew (message)
+  (adventure-log-add 53 '())
+  (await (dialog* message))
+  (when (not (cart-found? 13))
+    (let ((speaker (find-goblin-crewmember)))
+      (pickup-cart 13
+                   (format (tr "<c:Crew:%> Captain! Thisss one hasss been hiding sssomething! Found thisss cart sssstashed in his bunk. Could be sssecret codes, maybe he'sss a double agent! It saysss 'do NOT read'!!")
+                           (lookup 'icon (cddr speaker))))
+      (await (dialog* (tr "<c:Spotter:45> That wasss PRIVATE!")))
+      (await (dialog* (tr "(The spotter hisses something unprintable and climbs to his lookout post, although one of your crew thinks he saw him carrying a pen and a few sheets of paper...)"))))))
+
+
 (defn on-dialog-accepted ()
   (let ((temp (chr-slots (player)))
         (join (lambda (txt)
-                (adventure-log-add 53 '())
+
                 (dialog txt))))
     (if temp
         (progn
@@ -48,10 +74,10 @@
           (chr-new (player) (car temp) (cdr temp) 'neutral '((icon . 45) (race . 1)))
           (chr-del (opponent) 1 14)
           (if (or (chance 2) (< (coins) 600))
-              (join (tr "The spotter joined your crew!"))
+              (join-crew (tr "The spotter joined your crew!"))
               (progn
                 (coins-set (- (coins) 600))
-                (join (tr "The spotter joined your crew. Hungry, he ate 600@ of your food supplies!")))))
+                (join-crew (tr "The spotter joined your crew. Hungry, he ate 600@ of your food supplies!")))))
         (progn
           (dialog (tr "Sadly, there's no room..."))
           (defn on-dialog-closed ()
@@ -67,8 +93,8 @@
                            (chr-new (player) x (+ 1 y) 'neutral '((icon . 45) (race . 1)))
                            (dialog (tr "<c:Spotter:45>Thanks! I'll try to help out however I can!"))
                            (defn on-dialog-closed ()
-                             (join (tr "The spotter joined your crew!"))
                              (setq on-dialog-closed nil)
+                             (join-crew (tr "The spotter joined your crew!"))
                              (exit)))))))))
   (exit))
 
