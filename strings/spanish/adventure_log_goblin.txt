@@ -1,77 +1,77 @@
 
-fought off a hossstile vesssel, -%@, +%@.
+rechazada nave hossstil, -%@, +%@.
 
-% crewmembersss died in the fighting!
+¡% tripulantesss murieron en combate!
 __unused__
-defeated the king of the ssstorm, now goblinsss can pillage sssafely!
-ressscued a cassstaway!
-found an abandoned wreck, but did not explore.
-found an abandoned wreck, found %!
-bought two % from some ssscavengers for %@!
-explored abandoned ruinsss, found %@
-met ssstinker redbeard, failed to bribe.
-met ssstinker redbeard, paid %@ toll.
-met ssstinker redbeard, refusssed to pay bribe.
-ressscued a goblin raider! she joined the crew!
-accepted loot quessst from a raider waypoint!
-accepted banana man'sss mysteriousss tasssk!
-accepted farmer meyer'sss quessst! (deliver % treesss)
-accepted quest from ssscattered goblin clan!
-purchasssed artifactsss for resssale, cost %@.
-resssold tiles for %@!
-completed merchant quessst, earned %@.
-farmer meyer'sss brother paid %@ for delivery of % treesss.
-saved banana man'sss banana plantsss!
-completed chauffeur'sss quessst. (picked up three crew)
-reached zone %!
-hired a mercenary for %@!
-declined mercenariesss' offer...
-salvaged %@ from an abandoned cassstle.
-abandoned fortresss wasss a trap!?
-paid %@ to goblin king.
-goblin king rejected bribe and attacked!
-goblin king attacked after bribe refusssed.
-island contaminated by infesssted cassstle.
-sscavenged %@ from infesssted isssle.
-donated core to village, +2 % and +3 crew!
-upgraded all hull to ssstaked hull!
-collected %@ from forsssaken town!
-encountered drone carrier...
-ressscued sssurvivor from wrecked ship!
-feral sssurvivor from wrecked ship attacked!
-piratesss attack from ssstolen warship!
-piratesss in ssstolen warship move on after bribe...
-bought ssstolen decimator from runaway vessel!
-bought sssome mirror-hull!
-recovered incinerator from burning island!!
-collected %@ from abandoned isle.
-a masssive warship attacks...
-discovered a shop!
-purchasssed % for %@.
-accepting defeat, a goblin joined your crew!
-accepted sssurface keeper's quessst!
-invited a ssspotter aboard!
-accepted quessst from orphan boy!
-returned lost child to the sssylph...
-dropped below the cloudsss to avoid bad weather.
-accepted minersss' quessst! (deliver 7 explosivesss)
-completed minersss' quessst! (+%@)
-unable to make payment to imperial missile ssstation!
-made payment to imperial misssile ssstation!
-refusssed to pay imperial misssile ssstation!
-accepted goblin sssurrender, sssalvaged blocksss...
-accepted ancient weapon quessst from ashwalkersss!
-retrieved atomic arsssenal!
-encountered a sssolar ssstorm!
-encountered warrior monksss!
-bought two % from sssome ssscavengers for %@!
-unable to make payment to anvil annie!
-paid bribe to anvil annie. (-%@)
-refusssed to pay anvil annie.
-ssstole %s from some ssscavengers.
-ssscavengers extorted % in revenge.
-ssscavengers return and attack!
-vandalized imperial misssile ssstation!
-goblinsss try to sssteal decimator back!
-encountered sssylph sssentry!
-sabotaged imperial toll station!
+¡derrotado el rey de la tormenta, losss goblinsss pueden saquear tranquilosss!
+¡ressscatado un náufrago!
+hallado pecio abandonado, no ssse exploró.
+hallado pecio abandonado, ¡encontrado %!
+¡compradosss dos % a carroñerosss por %@!
+exploradasss ruinasss abandonadas, halladosss %@
+encuentro con el apessstoso barbarroja, ssoborno fallido.
+encuentro con el apessstoso barbarroja, pagadosss %@.
+encuentro con el apessstoso barbarroja, ssoborno rechazado.
+¡ressscatada asaltante goblin! ¡ssse unió a la tripulación!
+¡aceptada misssión de botín dessde punto de asalto!
+¡aceptada misssteriosa tarea del hombre plátano!
+¡aceptada misssión del granjero meyer! (entregar % árbolesss)
+¡aceptada misssión del clan goblin disperssso!
+compradosss artefactosss para reventa, cosste %@.
+¡azulejosss revendidosss por %@!
+misssión mercante completada, ganadosss %@.
+hermano de meyer pagó %@ por entrega de % árbolesss.
+¡sssalvadosss los plátanos del hombre plátano!
+misssión del chófer completada. (+3 tripulantes)
+¡alcanzada zona %!
+¡contratado mercenario por %@!
+oferta de mercenarioss rechazada...
+recuperadosss %@ de un cassstillo abandonado.
+¡¿el cassstillo abandonado era una trampa!?
+pagadosss %@ al rey goblin.
+¡rey goblin rechazó ssoborno y atacó!
+rey goblin atacó trasss rechazar ssoborno.
+isssla contaminada por cassstillo infessstado.
+recuperadosss %@ de isssla infessstada.
+núcleo donado a aldea, +2 % y +3 tripulantesss!
+¡todo el cassco mejorado a cassco apilado!
+recogidosss %@ de pueblo abandonado!
+encontrado portadronesss...
+¡ressscatado sssuperviviente de nave desstruida!
+¡sssuperviviente feral de nave atacó!
+¡piratasss atacan dessde buque robado!
+piratasss en buque robado sssiguen trasss ssoborno...
+¡comprado diezmador robado de nave fugitiva!
+¡comprado cassco-essspejo!
+¡¡recuperado incinerador de isssla en llamasss!!
+recogidosss %@ de isssla abandonada.
+un buque de guerra massivo ataca...
+¡dessscubierta una tienda!
+comprado % por %@.
+aceptando derrota, ¡un goblin ssse unió a la tripulación!
+¡aceptada misssión del guardián de la sssuperficie!
+¡invitado un vigía a bordo!
+¡aceptada misssión del niño huérfano!
+niño perdido devuelto a losss sssylph...
+dessscendido bajo lasss nubesss por mal tiempo.
+¡aceptada misssión de minerosss! (entregar 7 explosssivosss)
+¡misssión de minerosss completada! (+%@)
+¡pago insssuficiente a essstación de misssiles imperial!
+¡pago realizado a essstación de misssiles imperial!
+¡pago rechazado a essstación de misssiles imperial!
+aceptada rendición goblin, bloquesss dessguazadosss...
+¡aceptada misssión de arma ancestral ashwalker!
+¡arsssenal atómico recuperado!
+¡encontrada tormenta sssolar!
+¡encontradosss monjesss guerrerosss!
+¡compradosss dos % a carroñerosss por %@!
+¡pago insssuficiente a annie yunque!
+ssoborno pagado a annie yunque. (-%@)
+pago rechazado a annie yunque.
+robadosss %s a unosss carroñerosss.
+carroñerosss extorsssionan % en venganza.
+¡carroñerosss vuelven y atacan!
+¡vandalizada essstación de misssiles imperial!
+¡goblinsss intentan recuperar el diezmador!
+¡encontrado centinela sssylph!
+¡sssaboteada essstación de peaje imperial!

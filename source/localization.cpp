@@ -199,6 +199,9 @@ standard_charset_map(const utf8::Codepoint& cp)
         case UTF8_GETCHR(u8"R"): return 56;
         case UTF8_GETCHR(u8"S"): return 57;
         case UTF8_GETCHR(u8"T"): return 58;
+        case UTF8_GETCHR(u8"Ú"): // NOTE: use the normal U character until I can
+                                 // figure out how to fit an accent into an
+                                 // uppercase U within an 8x8 pixel tile.
         case UTF8_GETCHR(u8"U"): return 59;
         case UTF8_GETCHR(u8"V"): return 60;
         case UTF8_GETCHR(u8"W"): return 61;

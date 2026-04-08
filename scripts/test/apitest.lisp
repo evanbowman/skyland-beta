@@ -160,15 +160,22 @@
 ;; While some of these fields come from configuration files, and changing them
 ;; could break regression, in practice, cannon health, cost, and power usage are
 ;; unlikely to change frequently.
-(assert-eq (room-meta 'cannon)
-           '((name . "cannon")
-             (size 1 . 1)
-             (ico1 . 552)
-             (ico2 . 536)
-             (pwr . 34)
-             (cost . 1000)
-             (max-hp . 200)
-             (category . weapon)))
+(let ((prev-lang (lang)))
+  ;; NOTE: the room name string returned by room-meta is dependent on which
+  ;; language is currently configured in game settings.
+  (lang-set "english")
+  (let ((info (room-meta 'cannon)))
+    (lang-set prev-lang)
+    (assert-eq info
+               '((name . "cannon")
+                 (size 1 . 1)
+                 (ico1 . 552)
+                 (ico2 . 536)
+                 (pwr . 34)
+                 (cost . 1000)
+                 (max-hp . 200)
+                 (category . weapon)))))
+
 
 (end-test)
 
@@ -447,6 +454,7 @@
                ;; it recursively with visit-strings causes issues on gba
                ;; builds. Nighly regression, which also leverages more powerful
                ;; desktop builds, should catch issues in ignored files.
+               ;; FIXME...
                (push skip-files (format "/strings/%/event/surrender/crew.lisp"
                                         locale)))
              (regr-print "                              " 0 5)

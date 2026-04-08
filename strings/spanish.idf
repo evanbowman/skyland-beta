@@ -203,7 +203,7 @@ Ejecutar regresión
 Perfiles de color
 Editar ajustes
 enero,febrero,marzo,abril,mayo,junio,julio,agosto,septiembre,octubre,noviembre,diciembre,
-¿Activar modo desarrollador? Permite ejecutar código personalizado, pero las puntuaciones no se registrarán mientras esté activado.
+¿Activar modo desarrollador? Permite ejecutar código propio, pero no se registrarán puntuaciones...
 ¡Modo desarrollador desactivado!
 carga: 
 ninguno
@@ -726,3 +726,4 @@ bandera %
 ¿Salir de Skyland?
 Salir
 Quedarse
+Seleccione un idioma:

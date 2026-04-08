@@ -72,32 +72,42 @@ public:
     void enter(Scene& prev) override
     {
         if (opts_->size() > 1) {
-            u8 row = 3;
+            u8 row = 4;
             for (auto& opt : *opts_) {
                 text_opts_.emplace_back(opt.first.c_str(),
                                         OverlayCoord{3, row});
                 row += 2;
             }
         }
+        show_prompt();
     }
 
 
     void exit(Scene& prev) override
     {
         text_opts_.clear();
-        for (int y = 0; y < 20; ++y) {
-            PLATFORM.set_tile(Layer::overlay, 1, y, 0);
+        PLATFORM.fill_overlay(0);
+    }
+
+
+    void show_prompt()
+    {
+        auto path = (*opts_)[sel_].second.c_str();
+        systemstring_bind_file(path);
+        for (u8 x = 0; x < 30; ++x) {
+            PLATFORM.set_tile(Layer::overlay, x, 1, 0);
         }
+        Text::print(SYS_CSTR(choose_language), {1, 1});
     }
 
 
     ScenePtr update(Time delta) override
     {
         auto show_cursor = [&] {
-            for (int y = 0; y < 20; ++y) {
+            for (int y = 3; y < 20; ++y) {
                 PLATFORM.set_tile(Layer::overlay, 1, y, 0);
             }
-            PLATFORM.set_tile(Layer::overlay, 1, 3 + sel_ * 2, 396);
+            PLATFORM.set_tile(Layer::overlay, 1, 4 + sel_ * 2, 396);
         };
 
         show_cursor();
@@ -105,11 +115,13 @@ public:
         if (button_down<Button::up>()) {
             if (sel_ > 0) {
                 --sel_;
+                show_prompt();
                 PLATFORM.speaker().play_sound("click_wooden", 2);
             }
         } else if (button_down<Button::down>()) {
             if (sel_ < (int)opts_->size() - 1) {
                 ++sel_;
+                show_prompt();
                 PLATFORM.speaker().play_sound("click_wooden", 2);
             }
         } else if (opts_->empty() or opts_->size() == 1 or

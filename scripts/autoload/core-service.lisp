@@ -10,7 +10,11 @@
         (text nil)
         (skip (list)))
 
-    (setq text (tr "<c:Sylph:46>Ah! A sky-dweller with a… <S:1>harmonic matrix<S:0> …what is your word… ah yes, 'power-core'! <B:0> Fascinating construction, though the harmonic resonance is quite… <S:1>limited<S:0> … limited? <B:0> Your crystal vibrates at such a… <S:1>pedestrian tone<S:0> …forgive me, your language lacks precision.<B:0> Perhaps I could… <S:1>retune<S:0> … retune? Yes, retune your matrix to sing in different frequencies? I have studied many resonance patterns from the ancient archives…"))
+    (setq text (format (tr "<c:Sylph:46>Ah! A sky-dweller with a… % …what is your word… ah yes, 'power-core'! <B:0> Fascinating construction, though the harmonic resonance is quite… % … limited? <B:0> Your crystal vibrates at such a… % …forgive me, your language lacks precision.<B:0> Perhaps I could… % … retune? Yes, retune your matrix to sing in different frequencies? I have studied many resonance patterns from the ancient archives…")
+                       "<S:1>harmonic matrix<S:0>"
+                       "<S:1>limited<S:0>"
+                       "<S:1>pedestrian tone<S:0>"
+                       "<S:1>retune<S:0>"))
 
     (lambda ()
 
@@ -46,7 +50,8 @@
                               (map (lambda (info)
                                      (dialog-opts-push (car info)
                                                        (apply update-color (cdr info))))
-                                   (eval-file "/scripts/data/tuning-crystal.lisp"))
+                                   (eval-file (format "/strings/%/tuning-crystal.lisp"
+                                                      (lang))))
 
                               (dialog-opts-push (tr "Done.") done)))))
 

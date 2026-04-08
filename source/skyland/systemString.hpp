@@ -874,6 +874,8 @@ enum class SystemString {
     title_exit_yes,
     title_exit_no,
 
+    choose_language,
+
     count,
 };
 

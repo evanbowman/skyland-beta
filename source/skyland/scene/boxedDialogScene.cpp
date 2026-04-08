@@ -128,9 +128,6 @@ void BoxedDialogScene::process_command()
         data_->character_.name_ = str;
         data_->character_.image_ = parse_command_int();
 
-        info("got ");
-        info(str);
-
         if (data_->character_.image_) {
             auto st = calc_screen_tiles();
 

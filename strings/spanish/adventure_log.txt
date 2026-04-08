@@ -1,77 +1,77 @@
 
-fought off a hostile vessel, -%@, +%@.
+rechazada nave hostil, -%@, +%@.
 
-% crewmembers died in the fighting!
+¡% tripulantes murieron en combate!
 __unused__
-defeated the storm king!
-rescued a castaway!
-found an abandoned wreck, but did not explore.
-found an abandoned wreck, found %!
-bought two % from some merchants for %@!
-explored abandoned ruins, found %@.
-met pirate redbeard, failed to bribe.
-met pirate redbeard, paid %@ toll.
-met pirate redbeard, refused to pay bribe.
-rescued an orphan girl! she joined the crew!
-accepted delivery quest from a merchant outpost!
-accepted banana man's mysterious task!
-accepted farmer meyer's quest! (deliver % trees)
-accepted chauffeur's quest!
-purchased tiles for resale, cost %@.
-resold tiles for %@!
-completed merchant quest, earned %@.
-farmer meyer's brother paid %@ for delivery of % trees.
-saved banana man's banana plants!
-completed chauffeur's quest. (picked up three crew)
-reached zone %!
-hired a mercenary for %@!
-declined mercenaries' offer...
-salvaged %@ from an abandoned castle.
-abandoned fortress was a trap!?
-paid %@ to goblin king.
-goblin king rejected bribe and attacked!
-goblin king attacked after bribe refused.
-island contaminated by infested castle.
-scavenged %@ from infested isle.
-donated core to village, +2 % and +3 crew!
-upgraded all hull to staked hull!
-collected %@ from forsaken town!
-encountered drone carrier...
-rescued survivor from wrecked ship!
-feral survivor from wrecked ship attacked!
-pirates attack from stolen warship!
-pirates in stolen warship move on after bribe...
-bought stolen decimator from runaway vessel!
-bought some mirror-hull!
-recovered incinerator from burning island!!
-collected %@ from abandoned isle.
-a massive warship attacks...
-discovered a shop!
-purchased % for %@.
-accepting defeat, a goblin joined your crew!
-accepted mysterious traveller's quest!
-invited an explorer aboard!
-accepted quest from orphan boy!
-returned lost child to the sylph...
-dropped below the clouds to avoid bad weather.
-accepted miners' quest! (deliver 7 explosives)
-completed miners' quest! (+%@)
-unable to make payment to imperial missile station!
-made payment to imperial missile station!
-refused to pay imperial missile station!
-accepted goblin surrender, salvaged blocks...
-accepted atomic arsenal quest!
-retrieved atomic arsenal!
-encountered a solar storm!
-encountered warrior monks!
-bought two % from some scavengers for %@!
-unable to make payment to anvil annie!
-paid bribe to anvil annie. (-%@)
-refused to pay anvil annie.
-stole %s from some scavengers.
-scavengers extorted % in revenge.
-scavengers return and attack!
-vandalized imperial missile station!
-goblins try to steal decimator back!
-encountered sylph sentry!
-sabotaged imperial toll station!
+¡derrotado el rey de la tormenta!
+¡rescatado un náufrago!
+hallado pecio abandonado, no se exploró.
+hallado pecio abandonado, ¡encontrado %!
+¡comprados dos % a comerciantes por %@!
+exploradas ruinas abandonadas, hallados %@.
+encuentro con pirata barbarroja, soborno fallido.
+encuentro con pirata barbarroja, pagados %@.
+encuentro con pirata barbarroja, soborno rechazado.
+¡rescatada una huérfana! ¡se unió a la tripulación!
+¡aceptada misión de entrega del puesto mercante!
+¡aceptada misteriosa tarea del hombre plátano!
+¡aceptada misión del granjero meyer! (entregar % árboles)
+¡aceptada misión del chófer!
+comprados azulejos para reventa, coste %@.
+¡azulejos revendidos por %@!
+misión mercante completada, ganados %@.
+hermano de meyer pagó %@ por entrega de % árboles.
+¡salvados los plátanos del hombre plátano!
+misión del chófer completada. (+3 tripulantes)
+¡alcanzada zona %!
+¡contratado mercenario por %@!
+oferta de mercenarios rechazada...
+recuperados %@ de un castillo abandonado.
+¡¿el castillo abandonado era una trampa!?
+pagados %@ al rey goblin.
+¡rey goblin rechazó soborno y atacó!
+rey goblin atacó tras rechazar soborno.
+isla contaminada por castillo infestado.
+recuperados %@ de isla infestada.
+núcleo donado a aldea, +2 % y +3 tripulantes!
+¡todo el casco mejorado a casco apilado!
+recogidos %@ de pueblo abandonado!
+encontrado portadrones...
+¡rescatado superviviente de nave destruida!
+¡superviviente feral de nave atacó!
+¡piratas atacan desde buque de guerra robado!
+piratas en buque robado siguen tras soborno...
+¡comprado diezmador robado de nave fugitiva!
+¡comprado casco-espejo!
+¡¡recuperado incinerador de isla en llamas!!
+recogidos %@ de isla abandonada.
+un buque de guerra masivo ataca...
+¡descubierta una tienda!
+comprado % por %@.
+aceptando derrota, ¡un goblin se unió a la tripulación!
+¡aceptada misión del misterioso viajero!
+¡invitado un explorador a bordo!
+¡aceptada misión del niño huérfano!
+niño perdido devuelto a los sylph...
+descendido bajo las nubes por mal tiempo.
+¡aceptada misión de mineros! (entregar 7 explosivos)
+¡misión de mineros completada! (+%@)
+¡pago insuficiente a estación de misiles imperial!
+¡pago realizado a estación de misiles imperial!
+¡pago rechazado a estación de misiles imperial!
+aceptada rendición goblin, bloques desguazados...
+¡aceptada misión del arsenal atómico!
+¡arsenal atómico recuperado!
+¡encontrada tormenta solar!
+¡encontrados monjes guerreros!
+¡comprados dos % a carroñeros por %@!
+¡pago insuficiente a annie yunque!
+soborno pagado a annie yunque. (-%@)
+pago rechazado a annie yunque.
+robados %s a unos carroñeros.
+carroñeros extorsionan % en venganza.
+¡carroñeros vuelven y atacan!
+¡vandalizada estación de misiles imperial!
+¡goblins intentan recuperar el diezmador!
+¡encontrado centinela sylph!
+¡saboteada estación de peaje imperial!
