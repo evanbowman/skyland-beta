@@ -3,7 +3,7 @@ A pesar de la altitud, a veces llueve en Skyland. ¡Reduce la producción de cé
 weather: Tormenta
 ¡Reduce la producción de células solares a 1/2, producción de molinos duplicada! Las peores tormentas parecen seguir patrones - casi como si tuvieran un propósito...
 weather: Nieve
-La temperatura en estos sistemas puede caer drásticamente. ¡Reduce la producción de células solares a 1/2, producción de molinos duplicada! Los bloques de agua se congelarán.
+La temperatura en estos sistemas puede caer drásticamente. ¡Reduce la producción de células solares a 1/2, producción de molinos duplicada! Los bloques de agua se helan. 
 weather: Ceniza
 Bajo la capa de nubes yace el mundo de la superficie, ahogado en ceniza radiactiva. Causa periódicamente \Vdust_storm_damage de daño a las zonas expuestas de tu castillo... ¡cuidado!
 weather: Noche
@@ -13,9 +13,9 @@ Ocurre en raras ocasiones, al pasar bajo un agujero de ozono. ¡Producción de c
 faction: Colonial
 Asentamientos independientes que se separaron durante la caótica migración a los cielos. Cada colonia se gobierna a sí misma y mantiene una cautelosa neutralidad...
 faction: Horda Goblin
-Humanos que quedaron demasiado tiempo en la superficie tóxica, transformados por radiación. Algunos conservan su inteligencia y se puede razonar con ellos... con cuidado.
+Humanos que quedaron demasiado tiempo en la superficie tóxica, transformados por radiación. Algunos conservan su inteligencia y se puede razonar... con cuidado.
 faction: Viejo Imperio
-Restos de gobiernos de superficie pre-migración. Sus defensas automatizadas aún patrullan ciertos territorios. Poca tripulación viva queda a bordo de estas viejas fortalezas.
+Restos de gobiernos de superficie pre-migración. Sus defensas automatizadas aún patrullan ciertos territorios. Poca tripulación viva queda a bordo de estas fortalezas.
 faction: Segundo Imperio
 Formado tras la migración, intentando reunificar a la humanidad bajo una bandera. Sus ambiciones se han desvanecido a medida que las colonias forjaron identidades propias.
 faction: Merodeador
