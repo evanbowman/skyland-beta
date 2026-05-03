@@ -1040,14 +1040,37 @@ elseif(APPLE)
   target_link_libraries(${EXECUTABLE_NAME} PRIVATE
     "-framework Cocoa -framework SDL2")
 
+  find_package(Git QUIET)
+
+  if(NOT GIT_EXECUTABLE)
+    message(WARNING "git not found, falling back to default version")
+    set(PROJECT_VERSION_STRING "0.0.0")
+  else()
+    execute_process(
+      COMMAND ${GIT_EXECUTABLE} describe --tags --abbrev=0
+      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+      OUTPUT_VARIABLE GIT_TAG
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+      ERROR_QUIET
+      RESULT_VARIABLE GIT_RESULT
+    )
+    if(NOT GIT_RESULT EQUAL 0)
+      set(GIT_TAG "0.0.0")
+    endif()
+    string(REGEX REPLACE "^v" "" PROJECT_VERSION_STRING "${GIT_TAG}")
+  endif()
+
+  # Strip a leading "v" if you tag like v1.2.3
+  string(REGEX REPLACE "^v" "" PROJECT_VERSION_STRING "${GIT_TAG}")
+
   set_target_properties(${EXECUTABLE_NAME}
     PROPERTIES
     LINK_FLAGS "-Wl,-F/Library/Frameworks"
     MACOSX_BUNDLE TRUE
     MACOSX_BUNDLE_BUNDLE_NAME "Skyland"
     MACOSX_BUNDLE_GUI_IDENTIFIER "com.evanbowman.skyland"
-    MACOSX_BUNDLE_BUNDLE_VERSION "1.0"
-    MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0")
+    MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION_STRING}"
+    MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION_STRING}")
 
   include_directories("/usr/local/include/")
 
