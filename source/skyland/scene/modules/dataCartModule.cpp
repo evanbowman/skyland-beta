@@ -478,6 +478,45 @@ private:
 
 
 
+class MiningMinigame : public Scene
+{
+private:
+    EntityList<Entity> entities_;
+
+public:
+
+    class MiningProbe : public Entity
+    {
+    public:
+        MiningProbe() : Entity({{}, {}})
+        {
+        }
+
+        void update(Time delta) override
+        {
+            // ...
+        }
+    };
+
+
+    void enter(Scene& prev) override
+    {
+        if (auto e = APP.alloc_entity<MiningProbe>()) {
+            entities_.push(std::move(e));
+        }
+
+        PLATFORM.screen().schedule_fade(0);
+    }
+
+
+    ScenePtr update(Time delta) override
+    {
+        return null_scene();
+    }
+};
+
+
+
 ScenePtr DataCartModule::boot_cart(int cart_index)
 {
     DataCart cart(cart_index);
@@ -521,6 +560,8 @@ ScenePtr DataCartModule::boot_cart(int cart_index)
             return ret;
         };
         return tv;
+    } else if (*type == "mining") {
+        return make_scene<MiningMinigame>();
     }
 
     return make_scene<TitleScreenScene>(3);
