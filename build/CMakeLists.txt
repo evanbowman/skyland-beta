@@ -483,6 +483,7 @@ if(NINTENDO_DS OR GAMEBOY_ADVANCE)
     ${DATA_DIR}/background_macro.s
     ${DATA_DIR}/background_macro_night.s
     ${DATA_DIR}/background_title_screen.s
+    ${DATA_DIR}/spritesheet_mining.s
     ${DATA_DIR}/spritesheet_title_screen.s
     ${DATA_DIR}/spritesheet_intro.s
     ${DATA_DIR}/spritesheet_macro.s
@@ -762,6 +763,7 @@ if(GAMEBOY_ADVANCE OR NINTENDO_DS)
     add_spritesheet(spritesheet_macro 2 4 NO)
     add_spritesheet(spritesheet_macroverse 2 4 NO)
     add_spritesheet(spritesheet_os 2 4 NO)
+    add_spritesheet(spritesheet_mining 2 4 NO)
     add_tilesheet(tilesheet 2 2 NO NO)
     add_tilesheet(tilesheet_enemy_0 2 2 NO NO)
     add_tilesheet(tilesheet_enemy_0_interior 2 2 NO NO)

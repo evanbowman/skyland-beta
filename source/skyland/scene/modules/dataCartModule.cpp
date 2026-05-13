@@ -490,11 +490,13 @@ public:
     public:
         MiningProbe() : Entity({{}, {}})
         {
+            sprite_.set_size(Sprite::Size::w32_h32);
+            sprite_.set_texture_index(6);
+            sprite_.set_position({120.0_fixed, 120.0_fixed});
         }
 
         void update(Time delta) override
         {
-            // ...
         }
     };
 
@@ -506,12 +508,24 @@ public:
         }
 
         PLATFORM.screen().schedule_fade(0);
+        PLATFORM.load_sprite_texture("spritesheet_mining");
     }
 
 
     ScenePtr update(Time delta) override
     {
+        for (auto& e : entities_) {
+            e->update(delta);
+        }
         return null_scene();
+    }
+
+
+    void display() override
+    {
+        for (auto& e : entities_) {
+            PLATFORM.screen().draw(e->sprite());
+        }
     }
 };
 
