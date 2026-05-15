@@ -11,11 +11,14 @@
 (defn/c tr-bind-current ()
   (when-let ((path (eval '--current-file (caller-environment)))
              (path-sep "/"))
-    (let ((new (string-join (cons "" (cdr (split path path-sep))) path-sep)))
-      (tr-bind new))))
+    (when (not (contains tr-files path))
+      (push tr-files path)
+      (let ((new (string-join (cons "" (cdr (split path path-sep))) path-sep)))
+        (tr-bind new)))))
 
 (defn/c tr-reset ()
   (setq tr-bindings nil)
+  (setq tr-files nil)
   (tr-bind "/common.lisp"))
 
 (defn/c tr-load (text)

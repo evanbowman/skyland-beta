@@ -695,6 +695,7 @@ resize bridge
 describe flag
 show ping
 hide ping
+inspect
 -- Drone Service Log --
 technician's notes:
 -- Crewmember Passport --

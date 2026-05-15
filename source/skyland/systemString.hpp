@@ -834,6 +834,8 @@ enum class SystemString {
     sel_menu_show_ping,
     sel_menu_hide_ping,
 
+    sel_menu_inspect,
+
     drone_info_heading,
     drone_info_notes,
 
