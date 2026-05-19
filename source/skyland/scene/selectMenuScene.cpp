@@ -557,17 +557,19 @@ void SelectMenuScene::enter(Scene& scene)
             });
         }
 
-        add_line(SystemString::sel_menu_inspect, "", true, [this, cursor] {
-            auto cb = APP.invoke_script("/scripts/inspect/inspect.lisp");
-            if (cb->type() == lisp::Value::Type::function) {
-                lisp::push_op(wrap_island(this->island()));
-                lisp::push_op(L_INT(cursor.x));
-                lisp::push_op(L_INT(cursor.y));
-                lisp::safecall(cb, 3);
-                lisp::pop_op();
-            }
-            return null_scene();
-        });
+        if (island()->interior_visible()) {
+            add_line(SystemString::sel_menu_inspect, "", true, [this, cursor] {
+                auto cb = APP.invoke_script("/scripts/inspect/inspect.lisp");
+                if (cb->type() == lisp::Value::Type::function) {
+                    lisp::push_op(wrap_island(this->island()));
+                    lisp::push_op(L_INT(cursor.x));
+                    lisp::push_op(L_INT(cursor.y));
+                    lisp::safecall(cb, 3);
+                    lisp::pop_op();
+                }
+                return null_scene();
+            });
+        }
 
         if (state_bit_load(StateBit::minimap_on)) {
             add_line(SystemString::sel_menu_hide_minimap, "", false, []() {
