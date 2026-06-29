@@ -126,12 +126,11 @@
   (assert-eq 156 ((compile (lambda (n)
                              (* n (await (test-delay 50)))))
                   6))
-  ;; Await used in a compiled lambda invoked by a different compiled lambda
-  ;; should fail.
-  (assert-v (error? ((compile (lambda (foo)
-                                (foo)))
-                     (compile (lambda ()
-                                (await (wait* 12)))))))
+  ;; Await is allowed in compiled bytecode invoked by other compiled bytecode.
+  (assert-eq 157 ((compile (lambda (foo)
+                             (foo)))
+                  (compile (lambda ()
+                             (await (wait* 12))))))
   (end-test)
 
   (begin-test "lexical bindings")

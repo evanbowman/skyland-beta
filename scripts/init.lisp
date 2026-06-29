@@ -40,14 +40,6 @@
 (defn --try-dialog-decline () (if on-dialog-declined (on-dialog-declined)))
 
 
-;; NOTE: a bytecode compiled function cannot call another compiled function that
-;; calls await, so dialog-await-y/n is currently interpreted. I will fix this
-;; someday. If you aren't an expert in the scripting language, just avoid defn/c
-;; and you should be fine.
-(defn dialog-await-y/n ((text . string))
-  (dialog-await-binary-q text (tr "yes") (tr "no")))
-
-
 (engine-set "enabled_factions_bitfield"
             (bit-or faction-enable-human-mask
                     faction-enable-goblin-mask

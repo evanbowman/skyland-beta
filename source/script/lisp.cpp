@@ -81,7 +81,7 @@ static EXT_WORKRAM_DATA ValueMemory value_pool_data[VALUE_POOL_SIZE];
 static Value* value_pool = nullptr;
 
 
-static inline void gc_safepoint()
+void gc_safepoint()
 {
     if (value_remaining_count < early_gc_threshold) {
         gc();
@@ -309,6 +309,12 @@ static Optional<Context> bound_context;
 #define L_CTX (*bound_context)
 
 
+bool is_strict_mode()
+{
+    return L_CTX.strict_;
+}
+
+
 const char* decode_symbol_name(Symbol::UniqueId id)
 {
     if (L_CTX.external_symtab_contents_) {
@@ -372,7 +378,7 @@ void collect_value(Value* value)
 }
 
 
-static void push_callstack(Value* function)
+void push_callstack(Value* function)
 {
     push_op(function); // GC protect
     L_CTX.callstack_ = make_cons(function, L_CTX.callstack_);
@@ -389,7 +395,7 @@ static void reset_callstack()
 }
 
 
-static void pop_callstack()
+void pop_callstack()
 {
     auto old = L_CTX.callstack_;
 
@@ -2047,6 +2053,26 @@ template <typename... Args> void push_error(const char* msg, Args&&... args)
 }
 
 
+
+Value*& lexical_bindings_ref()
+{
+    return L_CTX.lexical_bindings_;
+}
+
+
+u16& arguments_break_loc_ref()
+{
+    return L_CTX.arguments_break_loc_;
+}
+
+
+u8& argc_ref()
+{
+    return L_CTX.current_fn_argc_;
+}
+
+
+
 // The function arguments should be sitting at the top of the operand stack
 // prior to calling funcall. The arguments will be consumed, and replaced with
 // the result of the function call.
@@ -3313,6 +3339,14 @@ static void gc_mark_value(Value* value)
         for (int i = 0; i < value->promise().eval_stack_elems_; ++i) {
             auto frame = value->promise().load_eval_frame(i);
             gc_mark_value(frame.expr_);
+            switch (frame.state_) {
+            case EvalFrame::vm_resume:
+                gc_mark_value(frame.vm_resume_.code_buffer_);
+                break;
+
+            default:
+                break;
+            }
         }
         for (int i = 0; i < value->promise().operand_stack_elems_; ++i) {
             gc_mark_value(value->promise().load_operand(i));
@@ -5884,12 +5918,11 @@ void eval_loop(EvalStack& eval_stack)
                         {.expr_ = fn,
                          .state_ = EvalFrame::vm_resume,
                          .vm_resume_ = {
+                             .code_buffer_ = fn->function().bytecode_impl_.databuffer(),
                              .program_counter_ =
-                                 fn->function()
-                                     .bytecode_impl_.bytecode_offset()
+                             fn->function().bytecode_impl_.bytecode_offset()
                                      ->integer()
-                                     .value_,
-                             .nested_scope_ = 0}});
+                                     .value_}});
                 } else {
                     LOGIC_ERROR();
                 }
@@ -5909,12 +5942,7 @@ void eval_loop(EvalStack& eval_stack)
         case EvalFrame::vm_resume: {
             gc_safepoint();
             auto fn = frame.expr_;
-            auto suspend = vm_resume(fn->function().bytecode_impl_.databuffer(),
-                                     fn->function()
-                                         .bytecode_impl_.bytecode_offset()
-                                         ->integer()
-                                         .value_,
-                                     frame.vm_resume_);
+            auto suspend = vm_resume(frame.vm_resume_);
 
             if (suspend) {
                 eval_stack.push_back({.expr_ = fn,

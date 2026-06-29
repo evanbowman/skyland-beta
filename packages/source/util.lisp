@@ -54,6 +54,10 @@
   (dialog-opts-push txt2 --try-dialog-decline))
 
 
+(defn/c dialog-await-y/n ((text . string))
+  (dialog-await-binary-q text (tr "yes") (tr "no")))
+
+
 (defn/c dialog-await ()
   (await (apply dialog* $V)))
 

@@ -41,9 +41,20 @@ void lexical_frame_push();
 void lexical_frame_pop();
 void lexical_frame_store(Value* kvp);
 
+Value*& lexical_bindings_ref();
+u16& arguments_break_loc_ref();
+u8& argc_ref();
 
 NativeInterface::LookupResult __load_builtin(const char* name);
 const char* nameof(Function::CPP_Impl impl);
+
+
+void gc_safepoint();
+void push_callstack(Value* function);
+void pop_callstack();
+
+
+bool is_strict_mode();
 
 
 const char* repr_arg_type(u8 sig_type);
