@@ -10,7 +10,7 @@
 
 (defn assert-v (v)
   (when (not v)
-    (error (format "In test %: assert failed! %" current-test v))))
+    (fatal (format "In test %: assert failed! %" current-test v))))
 
 (defn assert-error-status (v str)
   (let ((msg (error-info v)))
@@ -18,7 +18,7 @@
 
 (defn assert-eq (lhs rhs)
   (when (not (equal lhs rhs))
-    (error (format "In test %: expected % not equal %"
+    (fatal (format "In test %: expected % not equal %"
                    current-test
                    lhs
                    rhs))))
@@ -126,11 +126,13 @@
   (assert-eq 156 ((compile (lambda (n)
                              (* n (await (test-delay 50)))))
                   6))
+
   ;; Await is allowed in compiled bytecode invoked by other compiled bytecode.
-  (assert-eq 157 ((compile (lambda (foo)
-                             (foo)))
-                  (compile (lambda ()
-                             (await (wait* 12))))))
+  (assert-eq 27 ((compile (lambda (foo)
+                            (foo)))
+                 (compile (lambda ()
+                            (await (test-delay 90))))))
+
   (end-test)
 
   (begin-test "lexical bindings")
