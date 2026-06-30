@@ -133,6 +133,15 @@
                  (compile (lambda ()
                             (await (test-delay 90))))))
 
+  (let ((inner (compile (lambda () (await (test-delay 5))))))
+    (assert-eq 38
+               ((compile (lambda (n)
+                           (let ((a (* n 5)))
+                             (let ((f (lambda () a)))   ; a is captured => lexical frame
+                               (let ((r (inner)))
+                                 (+ r (f)))))))          ; (f) reads a after resume
+                2)))
+
   (end-test)
 
   (begin-test "lexical bindings")
