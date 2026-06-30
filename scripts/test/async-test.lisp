@@ -60,6 +60,17 @@
 (assert-error-status ((compile (lambda (cb) (cb))) (lambda () (await (wait* 1))))
                      "await failed: compiled caller <lambda:1> cannot call functions that await")
 
+(defn indirect-call (f)
+  (f))
+
+(assert-error-status ((compile (lambda (cb) (cb)))
+                      (lambda ()
+                        (indirect-call (lambda ()
+                                         (await (wait* 1))))))
+                     "await failed: compiled caller <lambda:1> cannot call functions that await")
+(unbind 'indirect-call)
+
+
 (assert-error-status (map (compile (lambda (n) (await (wait* 1)))) '(1 2 3))
                      "await failed: compiled caller <fn:map:2> cannot call functions that await")
 (end-test)
