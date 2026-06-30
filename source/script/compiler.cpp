@@ -232,16 +232,8 @@ int compile_let(CompilerContext& ctx,
         if (val->type() == Value::Type::cons) {
             auto sym = val->cons().car();
             auto bind = val->cons().cdr();
-            if (sym->type() == Value::Type::symbol and
-                bind->type() == Value::Type::cons) {
 
-                write_pos = compile_impl(ctx,
-                                         buffer,
-                                         write_pos,
-                                         bind->cons().car(),
-                                         jump_offset,
-                                         false);
-
+            auto binding_def_sym = [&](Value* sym) {
                 if (sym->hdr_.mode_bits_ == (u8)Symbol::ModeBits::small) {
                     auto inst = append<instruction::LexicalDefSmall>(
                         ctx, buffer, write_pos);
@@ -258,9 +250,74 @@ int compile_let(CompilerContext& ctx,
                         inst->ptr_.set(sym->symbol().name());
                     }
                 }
-            } else if (sym->type() == Value::Type::cons) {
-                PLATFORM.fatal("destructuring let unimplemented for compiled "
-                               "bytecode!");
+            };
+
+            if (sym->type() == Value::Type::symbol and
+                bind->type() == Value::Type::cons) {
+
+                write_pos = compile_impl(ctx,
+                                         buffer,
+                                         write_pos,
+                                         bind->cons().car(),
+                                         jump_offset,
+                                         false);
+
+                binding_def_sym(sym);
+
+            } else if (sym->type() == Value::Type::cons and
+                       bind->type() == Value::Type::cons) {
+
+                write_pos = compile_impl(ctx,
+                                         buffer,
+                                         write_pos,
+                                         bind->cons().car(),
+                                         jump_offset,
+                                         false);
+
+                auto car = sym->cons().car();
+                auto cdr = sym->cons().cdr();
+                if (car->type() == Value::Type::symbol and
+                    cdr->type() == Value::Type::symbol) {
+
+                    append<instruction::Dup>(ctx, buffer, write_pos);
+                    append<instruction::First>(ctx, buffer, write_pos);
+                    binding_def_sym(car);
+                    append<instruction::Rest>(ctx, buffer, write_pos);
+                    binding_def_sym(cdr);
+
+                } else if (car->type() == Value::Type::symbol and
+                           (is_list(cdr) or cdr->type() == Value::Type::cons)) {
+                    auto syms = sym;
+                    while (true) {
+                        auto head = syms->cons().car();
+                        auto tail = syms->cons().cdr();
+
+                        if (tail->type() == Value::Type::cons) {
+                            // another named slot follows
+                            append<instruction::Dup>(ctx, buffer, write_pos);
+                            append<instruction::First>(ctx, buffer, write_pos);
+                            binding_def_sym(head);
+                            append<instruction::Rest>(ctx, buffer, write_pos);
+                            syms = tail;
+                        } else if (tail->type() == Value::Type::symbol) {
+                            // improper terminator: head takes car, tail symbol takes rest
+                            append<instruction::Dup>(ctx, buffer, write_pos);
+                            append<instruction::First>(ctx, buffer, write_pos);
+                            binding_def_sym(head);
+                            append<instruction::Rest>(ctx, buffer, write_pos);
+                            binding_def_sym(tail);
+                            break;
+                        } else {
+                            // proper terminator (nil): last slot takes car, drop tail
+                            append<instruction::First>(ctx, buffer, write_pos);
+                            binding_def_sym(head);
+                            break;
+                        }
+                    }
+                } else {
+                    PLATFORM.fatal("destructuring let unimplemented for compiled "
+                                   "bytecode!");
+                }
             }
         }
     });

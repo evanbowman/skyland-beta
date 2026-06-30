@@ -1165,6 +1165,9 @@
 (let (((a b c) '(1 2 3)))
   (assert-eq 6 (+ a b c)))
 
+(assert-eq 6 ((compile (lambda () (let (((a b c) '(1 2 3))) (+ a b c))))))
+(assert-eq 42 ((compile (lambda () (let (((a b c . n) (range 10))) (apply + n))))))
+
 (end-test)
 
 
