@@ -164,6 +164,15 @@ void vm_deserialize_context(Vector<VMFrame>& ctx, Value* saved_ctx)
 
 
 
+template <typename... Args> void push_error(const char* msg, Args&&... args)
+{
+    auto buf = allocate_small<StringBuffer<238>>({"error-msg"});
+    make_format(*buf, msg, std::forward<Args>(args)...);
+    push_op(make_error(buf->c_str()));
+}
+
+
+
 Optional<SuspendedExecutionContext>
 vm_resume(const ExecutionContext& ctx)
 {
@@ -1392,6 +1401,27 @@ TOP:
             pop_op();
             pop_op();
             push_op(result);
+            break;
+        }
+
+        case DestructureAssertPair::op(): {
+            read<DestructureAssertPair>(*vm_ctx->code_, vm_ctx->pc_);
+            Protected top = get_op0();
+            if (top->type() not_eq Value::Type::cons) {
+                pop_op();
+                push_error("cannot destructure % into dotted pair", top);
+            }
+            break;
+        }
+
+        case DestructureAssertList::op(): {
+            auto inst = read<DestructureAssertList>(*vm_ctx->code_, vm_ctx->pc_);
+            Protected top = get_op0();
+            auto len = length(top);
+            if (not is_list(top) or len not_eq inst->len_) {
+                pop_op();
+                push_error("cannot destructure % into into symbol list of length %", top, inst->len_);
+            }
             break;
         }
 

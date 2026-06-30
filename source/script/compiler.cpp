@@ -279,6 +279,7 @@ int compile_let(CompilerContext& ctx,
                 if (car->type() == Value::Type::symbol and
                     cdr->type() == Value::Type::symbol) {
 
+                    append<instruction::DestructureAssertPair>(ctx, buffer, write_pos);
                     append<instruction::Dup>(ctx, buffer, write_pos);
                     append<instruction::First>(ctx, buffer, write_pos);
                     binding_def_sym(car);
@@ -288,6 +289,9 @@ int compile_let(CompilerContext& ctx,
                 } else if (car->type() == Value::Type::symbol and
                            (is_list(cdr) or cdr->type() == Value::Type::cons)) {
                     auto syms = sym;
+                    if (is_list(cdr)) {
+                        append<instruction::DestructureAssertList>(ctx, buffer, write_pos)->len_ = length(syms);
+                    }
                     while (true) {
                         auto head = syms->cons().car();
                         auto tail = syms->cons().cdr();

@@ -144,6 +144,19 @@ void disassemble(ScratchBuffer* data,
             i += sizeof(BitShiftRight);
             break;
 
+        case DestructureAssertPair::op():
+            out += DestructureAssertPair::name();
+            i += sizeof(DestructureAssertPair);
+            break;
+
+        case DestructureAssertList::op():
+            out += DestructureAssertList::name();
+            out += "(";
+            out += stringify((u32)*(data->data_ + i + 1));
+            out += ")";
+            i += sizeof(DestructureAssertList);
+            break;
+
         case LoadVarRT::op():
             out += LoadVarRT::name();
             out += "(";
@@ -966,6 +979,8 @@ u32 instruction_size(Header header)
         MATCH(BitNot)
         MATCH(BitShiftLeft)
         MATCH(BitShiftRight)
+        MATCH(DestructureAssertPair)
+        MATCH(DestructureAssertList)
     }
     return 0;
 }
