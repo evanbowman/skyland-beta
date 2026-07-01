@@ -461,8 +461,8 @@
  compiled function behaves
  identically but runs faster.
  Note: compiled functions
- cannot call other functions
- that use await.
+ cannot call interpreted
+ functions that use await.
 
 
  MACROS:
@@ -1135,10 +1135,12 @@
  * Await may be used in any
    interpreted function.
  * Bytecode-compiled functions
-   can themselves use await.
+   can themselves use await and
+   invoke other compiled
+   functions that call await.
  * However, compiled functions
-   cannot call other functions
-   that use await.
+   cannot call interpreted
+   functions that use await.
  * Built-in functions like
    map may not call functions
    that use await:

@@ -22,8 +22,8 @@ namespace lisp
 
 struct ExecutionContext
 {
+    Value* code_buffer_;
     int program_counter_;
-    int nested_scope_;
 };
 
 
@@ -31,7 +31,7 @@ using SuspendedExecutionContext = ExecutionContext;
 
 
 Optional<SuspendedExecutionContext>
-vm_resume(Value* code_buffer, int start_offset, const ExecutionContext& ctx);
+vm_resume(const ExecutionContext& ctx);
 
 
 

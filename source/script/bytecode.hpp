@@ -1720,6 +1720,40 @@ struct BitShiftRight
 };
 
 
+struct DestructureAssertPair
+{
+    Header header_;
+
+    static const char* name()
+    {
+        return "DESTRUCTURE_ASSRT_PAIR";
+    }
+
+    static constexpr Opcode op()
+    {
+        return 113;
+    }
+};
+
+
+struct DestructureAssertList
+{
+    Header header_;
+    u8 len_;
+
+    static const char* name()
+    {
+        return "DESTRUCTURE_ASSRT_LIST";
+    }
+
+    static constexpr Opcode op()
+    {
+        return 114;
+    }
+};
+
+
+
 void disassemble(ScratchBuffer* code_buffer,
                  s32 start_offset,
                  ::Function<2 * sizeof(void*), void(const char*)> callback);

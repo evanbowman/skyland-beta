@@ -10,7 +10,7 @@
 
 (defn assert-v (v)
   (when (not v)
-    (error (format "In test %: assert failed! %" current-test v))))
+    (fatal (format "In test %: assert failed! %" current-test v))))
 
 (defn assert-error-status (v str)
   (let ((msg (error-info v)))
@@ -18,7 +18,7 @@
 
 (defn assert-eq (lhs rhs)
   (when (not (equal lhs rhs))
-    (error (format "In test %: expected % not equal %"
+    (fatal (format "In test %: expected % not equal %"
                    current-test
                    lhs
                    rhs))))
@@ -59,6 +59,17 @@
 
 (assert-error-status ((compile (lambda (cb) (cb))) (lambda () (await (wait* 1))))
                      "await failed: compiled caller <lambda:1> cannot call functions that await")
+
+(defn indirect-call (f)
+  (f))
+
+(assert-error-status ((compile (lambda (cb) (cb)))
+                      (lambda ()
+                        (indirect-call (lambda ()
+                                         (await (wait* 1))))))
+                     "await failed: compiled caller <lambda:1> cannot call functions that await")
+(unbind 'indirect-call)
+
 
 (assert-error-status (map (compile (lambda (n) (await (wait* 1)))) '(1 2 3))
                      "await failed: compiled caller <fn:map:2> cannot call functions that await")
@@ -126,12 +137,22 @@
   (assert-eq 156 ((compile (lambda (n)
                              (* n (await (test-delay 50)))))
                   6))
-  ;; Await used in a compiled lambda invoked by a different compiled lambda
-  ;; should fail.
-  (assert-v (error? ((compile (lambda (foo)
-                                (foo)))
-                     (compile (lambda ()
-                                (await (wait* 12)))))))
+
+  ;; Await is allowed in compiled bytecode invoked by other compiled bytecode.
+  (assert-eq 27 ((compile (lambda (foo)
+                            (foo)))
+                 (compile (lambda ()
+                            (await (test-delay 90))))))
+
+  (let ((inner (compile (lambda () (await (test-delay 5))))))
+    (assert-eq 38
+               ((compile (lambda (n)
+                           (let ((a (* n 5)))
+                             (let ((f (lambda () a)))   ; a is captured => lexical frame
+                               (let ((r (inner)))
+                                 (+ r (f)))))))          ; (f) reads a after resume
+                2)))
+
   (end-test)
 
   (begin-test "lexical bindings")

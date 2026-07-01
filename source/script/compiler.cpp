@@ -228,20 +228,22 @@ int compile_let(CompilerContext& ctx,
         append<instruction::LexicalFramePush>(ctx, buffer, write_pos);
     }
 
+    struct DestructuringError {
+        enum {
+            pair,
+            list
+        } reason_;
+        u8 arity_;
+        instruction::JumpIfFalse* branch_target_;
+    };
+    Buffer<DestructuringError, 32> destructuring_error_branches;
+
     l_foreach(code->cons().car(), [&](Value* val) {
         if (val->type() == Value::Type::cons) {
             auto sym = val->cons().car();
             auto bind = val->cons().cdr();
-            if (sym->type() == Value::Type::symbol and
-                bind->type() == Value::Type::cons) {
 
-                write_pos = compile_impl(ctx,
-                                         buffer,
-                                         write_pos,
-                                         bind->cons().car(),
-                                         jump_offset,
-                                         false);
-
+            auto binding_def_sym = [&](Value* sym) {
                 if (sym->hdr_.mode_bits_ == (u8)Symbol::ModeBits::small) {
                     auto inst = append<instruction::LexicalDefSmall>(
                         ctx, buffer, write_pos);
@@ -258,9 +260,94 @@ int compile_let(CompilerContext& ctx,
                         inst->ptr_.set(sym->symbol().name());
                     }
                 }
-            } else if (sym->type() == Value::Type::cons) {
-                PLATFORM.fatal("destructuring let unimplemented for compiled "
-                               "bytecode!");
+            };
+
+            if (sym->type() == Value::Type::symbol and
+                bind->type() == Value::Type::cons) {
+
+                write_pos = compile_impl(ctx,
+                                         buffer,
+                                         write_pos,
+                                         bind->cons().car(),
+                                         jump_offset,
+                                         false);
+
+                binding_def_sym(sym);
+
+            } else if (sym->type() == Value::Type::cons and
+                       bind->type() == Value::Type::cons) {
+
+                write_pos = compile_impl(ctx,
+                                         buffer,
+                                         write_pos,
+                                         bind->cons().car(),
+                                         jump_offset,
+                                         false);
+
+                auto car = sym->cons().car();
+                auto cdr = sym->cons().cdr();
+                if (car->type() == Value::Type::symbol and
+                    cdr->type() == Value::Type::symbol) {
+
+                    append<instruction::Dup>(ctx, buffer, write_pos);
+                    append<instruction::DestructureAssertPair>(ctx, buffer, write_pos);
+                    auto jif = append<instruction::JumpIfFalse>(ctx, buffer, write_pos);
+                    if (destructuring_error_branches.full()) {
+                        PLATFORM.fatal("too many destructuring let bindings in one expression!");
+                    }
+                    destructuring_error_branches.push_back({
+                            .reason_ = DestructuringError::pair,
+                            .branch_target_ = jif
+                        });
+                    append<instruction::Dup>(ctx, buffer, write_pos);
+                    append<instruction::First>(ctx, buffer, write_pos);
+                    binding_def_sym(car);
+                    append<instruction::Rest>(ctx, buffer, write_pos);
+                    binding_def_sym(cdr);
+
+                } else if (car->type() == Value::Type::symbol and
+                           (is_list(cdr) or cdr->type() == Value::Type::cons)) {
+                    auto syms = sym;
+                    if (is_list(cdr)) {
+                        append<instruction::Dup>(ctx, buffer, write_pos);
+                        append<instruction::DestructureAssertList>(ctx, buffer, write_pos)->len_ = length(syms);
+                        auto jif = append<instruction::JumpIfFalse>(ctx, buffer, write_pos);
+                        destructuring_error_branches.push_back({
+                            .reason_ = DestructuringError::list,
+                            .arity_ = (u8)length(syms),
+                            .branch_target_ = jif
+                        });
+                    }
+                    while (true) {
+                        auto head = syms->cons().car();
+                        auto tail = syms->cons().cdr();
+
+                        if (tail->type() == Value::Type::cons) {
+                            // another named slot follows
+                            append<instruction::Dup>(ctx, buffer, write_pos);
+                            append<instruction::First>(ctx, buffer, write_pos);
+                            binding_def_sym(head);
+                            append<instruction::Rest>(ctx, buffer, write_pos);
+                            syms = tail;
+                        } else if (tail->type() == Value::Type::symbol) {
+                            // improper terminator: head takes car, tail symbol takes rest
+                            append<instruction::Dup>(ctx, buffer, write_pos);
+                            append<instruction::First>(ctx, buffer, write_pos);
+                            binding_def_sym(head);
+                            append<instruction::Rest>(ctx, buffer, write_pos);
+                            binding_def_sym(tail);
+                            break;
+                        } else {
+                            // proper terminator (nil): last slot takes car, drop tail
+                            append<instruction::First>(ctx, buffer, write_pos);
+                            binding_def_sym(head);
+                            break;
+                        }
+                    }
+                } else {
+                    PLATFORM.fatal("destructuring let unimplemented for compiled "
+                                   "bytecode!");
+                }
             }
         }
     });
@@ -291,6 +378,44 @@ int compile_let(CompilerContext& ctx,
 
     if (binding_count not_eq 0) {
         append<instruction::LexicalFramePop>(ctx, buffer, write_pos);
+    }
+
+    if (not destructuring_error_branches.empty()) {
+        Buffer<instruction::Jump*, 32> end_jumps;
+        auto skip = append<instruction::Jump>(ctx, buffer, write_pos);
+        for (auto& err : destructuring_error_branches) {
+            err.branch_target_->offset_.set(write_pos - jump_offset);
+            switch (err.reason_) {
+            case DestructuringError::pair: {
+                if (auto s = get_symtab_index("--destructure-pair-failure")) {
+                    auto inst = append<instruction::LoadCall1>(ctx, buffer, write_pos);
+                    inst->symtab_index_.set(*s);
+                } else {
+                    append<instruction::Pop>(ctx, buffer, write_pos);
+                    append<instruction::PushNil>(ctx, buffer, write_pos);
+                }
+                break;
+            }
+
+            case DestructuringError::list: {
+                if (auto s = get_symtab_index("--destructure-list-failure")) {
+                    append<instruction::PushSmallInteger>(ctx, buffer, write_pos)->value_ = err.arity_;
+                    auto inst = append<instruction::LoadCall2>(ctx, buffer, write_pos);
+                    inst->symtab_index_.set(*s);
+                } else {
+                    append<instruction::Pop>(ctx, buffer, write_pos);
+                    append<instruction::PushNil>(ctx, buffer, write_pos);
+                }
+                break;
+            }
+            }
+            auto exit_let = append<instruction::Jump>(ctx, buffer, write_pos);
+            end_jumps.push_back(exit_let);
+        }
+        for (auto& ej : end_jumps) {
+            ej->offset_.set(write_pos - jump_offset);
+        }
+        skip->offset_.set(write_pos - jump_offset);
     }
 
     return write_pos;

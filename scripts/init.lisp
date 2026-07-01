@@ -7,7 +7,8 @@
 (load-library "/packages/lib/locale.slb")
 
 
-;; Convenience alias for translating text.
+;; Convenience alias for translating text. Also used as an extraction marker for
+;; the localization scripts.
 (defn/c tr (thing)
   (if tr-bindings
       (tr-load thing)
@@ -37,14 +38,6 @@
 ;; functions on-dialog-accpted/declined to use await syntax.
 (defn --try-dialog-accept () (if on-dialog-accepted (on-dialog-accepted)))
 (defn --try-dialog-decline () (if on-dialog-declined (on-dialog-declined)))
-
-
-;; NOTE: a bytecode compiled function cannot call another compiled function that
-;; calls await, so dialog-await-y/n is currently interpreted. I will fix this
-;; someday. If you aren't an expert in the scripting language, just avoid defn/c
-;; and you should be fine.
-(defn dialog-await-y/n ((text . string))
-  (dialog-await-binary-q text (tr "yes") (tr "no")))
 
 
 (engine-set "enabled_factions_bitfield"

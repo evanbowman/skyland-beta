@@ -34,12 +34,18 @@ Instruction* read(ScratchBuffer& buffer, int& pc)
 bool vm_can_suspend(Value*& agitant)
 {
     bool can_suspend = true;
+    bool seen_interpreted_context = false;
     // NOTE: stacktrace includes frames up-to, but not including, the current
     // executing function.
     auto strace = lisp::stacktrace();
     l_foreach(strace, [&](Value* v) {
         if (v->type() == Value::Type::function) {
-            if (v->hdr_.mode_bits_ not_eq Function::ModeBits::lisp_function) {
+            if (v->hdr_.mode_bits_ == Function::ModeBits::lisp_function) {
+                seen_interpreted_context = true;
+            }
+            if ((seen_interpreted_context and
+                 v->hdr_.mode_bits_ == Function::ModeBits::lisp_bytecode_function) or
+                v->hdr_.mode_bits_ == Function::ModeBits::cpp_function) {
                 agitant = v;
                 can_suspend = false;
             }
@@ -52,112 +58,313 @@ bool vm_can_suspend(Value*& agitant)
 Optional<SuspendedExecutionContext> vm_execute(Value* code_buffer,
                                                int start_offset)
 {
-    return vm_resume(code_buffer,
-                     start_offset,
-                     {.program_counter_ = start_offset, .nested_scope_ = 0});
+    return vm_resume({ .code_buffer_ = code_buffer,
+                       .program_counter_ = start_offset});
 }
 
 
-// NOTE: when suspending execution, we need a place to save our register set if
-// we've run the stack optimizer on the bytecode. We could push registers to the
-// stack, but doing so is a bit tricky to get right. Save them to a temporary
-// local binding instead, using the small symbol REG, which does not require an
-// allocation due to the interpreter's small symbol optimization. Because we
-// open a dedicated lexical scope for this symbol, we don't need to worry about
-// it colliding with user let bindings.
-const char* const reg_save_sym = "REG";
+// NOTE: when suspending execution, we need to place the vm stack
+// somewhere. Rather than manipulating the operand stack while suspending
+// execution, we create a hiden variable in the environment that we're saving.
+const char* const vm_stack_save_sym = "STK";
+
+
+
+struct VMFrame
+{
+    Value* code_buffer_;
+    ScratchBufferPtr code_;
+    Optional<ListBuilder> registers_;
+    Protected saved_lexical_bindings_;
+    int start_offset_;
+    int nested_scope_;
+    int pc_;
+    u16 arguments_break_loc_;
+    bool discard_flag_;
+    u8 argc_;
+
+    VMFrame(Value* code_buffer,
+            ScratchBufferPtr code,
+            int start_offset,
+            int nested_scope,
+            int pc) :
+        code_buffer_(code_buffer),
+        code_(code),
+        saved_lexical_bindings_(L_NIL),
+        start_offset_(start_offset),
+        nested_scope_(nested_scope),
+        pc_(pc),
+        arguments_break_loc_(0),
+        discard_flag_(false),
+        argc_(0)
+    {
+    }
+};
+
+
+
+lisp::Value* vm_serialize_context(Vector<VMFrame>& ctx)
+{
+    ListBuilder result;
+
+    for (auto& frame : ctx) {
+        Protected contents(make_array(9));
+        Array& mem = contents->array();
+        mem.set(0, frame.code_buffer_);
+        if (frame.registers_) {
+            mem.set(1, (*frame.registers_).result());
+        }
+        mem.set(2, frame.saved_lexical_bindings_);
+        mem.set(3, L_INT(frame.start_offset_));
+        mem.set(4, L_INT(frame.nested_scope_));
+        mem.set(5, L_INT(frame.pc_));
+        mem.set(6, L_INT(frame.arguments_break_loc_));
+        mem.set(7, make_boolean(frame.discard_flag_));
+        mem.set(8, L_INT(frame.argc_));
+        result.push_back(contents);
+    }
+    // info(stringify(result.result()));
+    return result.result();
+}
+
+
+
+void vm_deserialize_context(Vector<VMFrame>& ctx, Value* saved_ctx)
+{
+    ctx.clear();
+    // info(stringify(saved_ctx));
+    l_foreach(saved_ctx, [&ctx](Value* data) {
+        Array& mem = data->array();
+        auto code_buffer = mem.get(0);
+        auto start_offset = mem.get(3)->integer().value_;
+        auto nested_scope = mem.get(4)->integer().value_;
+        auto program_counter = mem.get(5)->integer().value_;
+
+        ctx.emplace_back(code_buffer,
+                         code_buffer->databuffer().value(),
+                         start_offset,
+                         nested_scope,
+                         program_counter);
+
+        auto& frame = ctx.back();
+        auto reg_file = mem.get(1);
+        if (reg_file not_eq L_NIL) {
+            frame.registers_.emplace();
+            while (reg_file->type() == Value::Type::cons) {
+                frame.registers_->push_back(reg_file->cons().car());
+                reg_file = reg_file->cons().cdr();
+            }
+        }
+        frame.arguments_break_loc_ = mem.get(6)->integer().value_;
+        frame.discard_flag_ = is_boolean_true(mem.get(7));
+        frame.argc_ = mem.get(8)->integer().value_;
+        frame.saved_lexical_bindings_ = mem.get(2);
+    });
+}
+
+
+
+template <typename... Args> void push_error(const char* msg, Args&&... args)
+{
+    auto buf = allocate_small<StringBuffer<238>>({"error-msg"});
+    make_format(*buf, msg, std::forward<Args>(args)...);
+    push_op(make_error(buf->c_str()));
+}
+
 
 
 Optional<SuspendedExecutionContext>
-vm_resume(Value* code_buffer, int start_offset, const ExecutionContext& ctx)
+vm_resume(const ExecutionContext& ctx)
 {
-    int pc = ctx.program_counter_;
+    Value* code_buffer = ctx.code_buffer_;
 
-    auto& code = *code_buffer->databuffer().value();
+    Vector<VMFrame> vm_stack(make_scratch_buffer("vm-stack-buffer"));
+    vm_stack.emplace_back(code_buffer,
+                          code_buffer->databuffer().value(),
+                          ctx.program_counter_,
+                          0,
+                          ctx.program_counter_);
 
-    int nested_scope = ctx.nested_scope_;
+    VMFrame* vm_ctx = &vm_stack.back();
 
     // If we are within a let expression, and we want to optimize out a
     // recursive tail call, we need to unwind all frames of the lexical scope,
     // because we will never return from the optimized out function call and hit
     // the LEXICAL_FRAME_POP instruction after the tailcall instruciton.
-    auto unwind_lexical_scope = [&nested_scope] {
-        while (nested_scope) {
+    auto unwind_lexical_scope = [&vm_ctx] {
+        while (vm_ctx->nested_scope_) {
             lexical_frame_pop();
-            --nested_scope;
+            --vm_ctx->nested_scope_;
+        }
+    };
+
+    auto check_discard_flag = [&] {
+        if (vm_ctx->discard_flag_) {
+            pop_op();
+            vm_ctx->discard_flag_ = false;
         }
     };
 
     using namespace instruction;
 
-    Optional<ListBuilder> registers;
+    Protected invoke_target(L_NIL);
+    int invoke_argc = 0;
+
+#define INVOKE(FUNCTION, ARGC)        \
+    invoke_target = (Value*)FUNCTION; \
+    invoke_argc = ARGC;               \
+    goto INVOKE_FN;                   \
+
+    goto TOP;
+
+INVOKE_FN:
+    if (invoke_target->type() == Value::Type::function and
+        invoke_target->hdr_.mode_bits_ == Function::ModeBits::lisp_bytecode_function) {
+
+        auto obj = (Value*)invoke_target;
+
+        if (obj->function().sig_.required_args_ > invoke_argc) {
+            Protected err(make_error(Error::Code::invalid_argc, obj));
+            for (int i = 0; i < invoke_argc; ++i) {
+                pop_op();
+            }
+            push_op(err);
+            check_discard_flag();
+            goto TOP;
+        }
+
+        if (is_strict_mode()) {
+            const auto& sig = obj->function().sig_;
+            const Value::Type want[4] = {(Value::Type)sig.arg0_type_,
+                                         (Value::Type)sig.arg1_type_,
+                                         (Value::Type)sig.arg2_type_,
+                                         (Value::Type)sig.arg3_type_};
+            const int n = invoke_argc < 4 ? invoke_argc : 4;
+            for (int i = 0; i < n; ++i) {
+                // arg i is at operand-stack offset (invoke_argc - 1 - i)
+                auto got = get_op(invoke_argc - 1 - i);
+                const auto gt = got->type();
+                const auto w = want[i];
+                const bool ok =
+                    w == Value::Type::nil or gt == w or
+                    (gt == Value::Type::nil and w == Value::Type::cons) or
+                    (w == Value::Type::rational and
+                     (gt == Value::Type::integer or gt == Value::Type::ratio));
+                if (not ok) {
+                    Protected err(
+                        make_error(Error::Code::invalid_argument_type, got));
+                    for (int j = 0; j < invoke_argc; ++j) {
+                        pop_op();
+                    }
+                    push_op(err);
+                    check_discard_flag();
+                    goto TOP;
+                }
+            }
+        }
+
+        vm_ctx->saved_lexical_bindings_ = lexical_bindings_ref();
+        vm_ctx->arguments_break_loc_ = arguments_break_loc_ref();
+        vm_ctx->argc_ = argc_ref();
+
+        push_callstack(obj);
+
+        gc_safepoint();
+
+        const auto break_loc = get_op_count() - 1;
+        arguments_break_loc_ref() = break_loc;
+        argc_ref() = invoke_argc;
+
+        lexical_bindings_ref() =
+            dcompr(obj->function().lisp_impl_.lexical_bindings_);
+
+        auto buf = obj->function().bytecode_impl_.databuffer();
+        auto so = obj->function().bytecode_impl_.bytecode_offset()
+            ->integer().value_;
+
+        vm_stack.emplace_back(buf,
+                              buf->databuffer().value(),
+                              so,
+                              0,
+                              so);
+
+        vm_ctx = &vm_stack.back();
+        vm_ctx->argc_ = invoke_argc;
+
+        goto TOP;
+
+    } else {
+        funcall(invoke_target, invoke_argc);
+    }
+
+    check_discard_flag();
 
 TOP:
     while (true) {
 
-        switch ((Opcode)code.data_[pc]) {
+        switch ((Opcode)vm_ctx->code_->data_[vm_ctx->pc_]) {
         case LoadReg0::op(): {
-            if (not registers) {
-                registers.emplace();
+            if (not vm_ctx->registers_) {
+                vm_ctx->registers_.emplace();
             }
-            read<LoadReg0>(code, pc);
-            push_op(get_list(registers->result(), 0));
+            read<LoadReg0>(*vm_ctx->code_, vm_ctx->pc_);
+            push_op(get_list(vm_ctx->registers_->result(), 0));
             break;
         }
 
         case LoadReg1::op(): {
-            if (not registers) {
-                registers.emplace();
+            if (not vm_ctx->registers_) {
+                vm_ctx->registers_.emplace();
             }
-            read<LoadReg1>(code, pc);
-            push_op(get_list(registers->result(), 1));
+            read<LoadReg1>(*vm_ctx->code_, vm_ctx->pc_);
+            push_op(get_list(vm_ctx->registers_->result(), 1));
             break;
         }
 
         case LoadReg2::op(): {
-            if (not registers) {
-                registers.emplace();
+            if (not vm_ctx->registers_) {
+                vm_ctx->registers_.emplace();
             }
-            read<LoadReg2>(code, pc);
-            push_op(get_list(registers->result(), 2));
+            read<LoadReg2>(*vm_ctx->code_, vm_ctx->pc_);
+            push_op(get_list(vm_ctx->registers_->result(), 2));
             break;
         }
 
         case LoadReg::op(): {
-            if (not registers) {
-                registers.emplace();
+            if (not vm_ctx->registers_) {
+                vm_ctx->registers_.emplace();
             }
-            auto inst = read<LoadReg>(code, pc);
-            auto v = get_list(registers->result(), inst->reg_);
+            auto inst = read<LoadReg>(*vm_ctx->code_, vm_ctx->pc_);
+            auto v = get_list(vm_ctx->registers_->result(), inst->reg_);
             // info(::format("load % from reg %", v, inst->reg_));
             push_op(v);
             break;
         }
 
         case StoreReg0::op(): {
-            if (not registers) {
-                registers.emplace();
+            if (not vm_ctx->registers_) {
+                vm_ctx->registers_.emplace();
             }
-            read<StoreReg0>(code, pc);
-            while (registers->length() <= 0) {
-                registers->push_back(L_NIL);
+            read<StoreReg0>(*vm_ctx->code_, vm_ctx->pc_);
+            while (vm_ctx->registers_->length() <= 0) {
+                vm_ctx->registers_->push_back(L_NIL);
             }
-            auto iter = registers->result();
+            auto iter = vm_ctx->registers_->result();
             iter->cons().set_car(get_op0());
             pop_op();
             break;
         }
 
         case StoreReg1::op(): {
-            if (not registers) {
-                registers.emplace();
+            if (not vm_ctx->registers_) {
+                vm_ctx->registers_.emplace();
             }
-            read<StoreReg1>(code, pc);
-            while (registers->length() <= 1) {
-                registers->push_back(L_NIL);
+            read<StoreReg1>(*vm_ctx->code_, vm_ctx->pc_);
+            while (vm_ctx->registers_->length() <= 1) {
+                vm_ctx->registers_->push_back(L_NIL);
             }
             u8 reg = 1;
-            auto iter = registers->result();
+            auto iter = vm_ctx->registers_->result();
             while (reg) {
                 --reg;
                 iter = iter->cons().cdr();
@@ -168,15 +375,15 @@ TOP:
         }
 
         case StoreReg2::op(): {
-            if (not registers) {
-                registers.emplace();
+            if (not vm_ctx->registers_) {
+                vm_ctx->registers_.emplace();
             }
-            read<StoreReg2>(code, pc);
-            while (registers->length() <= 2) {
-                registers->push_back(L_NIL);
+            read<StoreReg2>(*vm_ctx->code_, vm_ctx->pc_);
+            while (vm_ctx->registers_->length() <= 2) {
+                vm_ctx->registers_->push_back(L_NIL);
             }
             u8 reg = 2;
-            auto iter = registers->result();
+            auto iter = vm_ctx->registers_->result();
             while (reg) {
                 --reg;
                 iter = iter->cons().cdr();
@@ -187,15 +394,15 @@ TOP:
         }
 
         case StoreReg::op(): {
-            if (not registers) {
-                registers.emplace();
+            if (not vm_ctx->registers_) {
+                vm_ctx->registers_.emplace();
             }
-            auto inst = read<StoreReg>(code, pc);
-            while (registers->length() <= inst->reg_) {
-                registers->push_back(L_NIL);
+            auto inst = read<StoreReg>(*vm_ctx->code_, vm_ctx->pc_);
+            while (vm_ctx->registers_->length() <= inst->reg_) {
+                vm_ctx->registers_->push_back(L_NIL);
             }
             u8 reg = inst->reg_;
-            auto iter = registers->result();
+            auto iter = vm_ctx->registers_->result();
             while (reg) {
                 --reg;
                 iter = iter->cons().cdr();
@@ -207,15 +414,15 @@ TOP:
         }
 
         case StoreRegKeep::op(): {
-            if (not registers) {
-                registers.emplace();
+            if (not vm_ctx->registers_) {
+                vm_ctx->registers_.emplace();
             }
-            auto inst = read<StoreReg>(code, pc);
-            while (registers->length() <= inst->reg_) {
-                registers->push_back(L_NIL);
+            auto inst = read<StoreReg>(*vm_ctx->code_, vm_ctx->pc_);
+            while (vm_ctx->registers_->length() <= inst->reg_) {
+                vm_ctx->registers_->push_back(L_NIL);
             }
             u8 reg = inst->reg_;
-            auto iter = registers->result();
+            auto iter = vm_ctx->registers_->result();
             while (reg) {
                 --reg;
                 iter = iter->cons().cdr();
@@ -225,15 +432,15 @@ TOP:
         }
 
         case StoreReg0Keep::op(): {
-            if (not registers) {
-                registers.emplace();
+            if (not vm_ctx->registers_) {
+                vm_ctx->registers_.emplace();
             }
-            read<StoreReg0Keep>(code, pc);
-            while (registers->length() <= 0) {
-                registers->push_back(L_NIL);
+            read<StoreReg0Keep>(*vm_ctx->code_, vm_ctx->pc_);
+            while (vm_ctx->registers_->length() <= 0) {
+                vm_ctx->registers_->push_back(L_NIL);
             }
             u8 reg = 0;
-            auto iter = registers->result();
+            auto iter = vm_ctx->registers_->result();
             while (reg) {
                 --reg;
                 iter = iter->cons().cdr();
@@ -243,15 +450,15 @@ TOP:
         }
 
         case StoreReg1Keep::op(): {
-            if (not registers) {
-                registers.emplace();
+            if (not vm_ctx->registers_) {
+                vm_ctx->registers_.emplace();
             }
-            read<StoreReg1Keep>(code, pc);
-            while (registers->length() <= 1) {
-                registers->push_back(L_NIL);
+            read<StoreReg1Keep>(*vm_ctx->code_, vm_ctx->pc_);
+            while (vm_ctx->registers_->length() <= 1) {
+                vm_ctx->registers_->push_back(L_NIL);
             }
             u8 reg = 1;
-            auto iter = registers->result();
+            auto iter = vm_ctx->registers_->result();
             while (reg) {
                 --reg;
                 iter = iter->cons().cdr();
@@ -261,15 +468,15 @@ TOP:
         }
 
         case StoreReg2Keep::op(): {
-            if (not registers) {
-                registers.emplace();
+            if (not vm_ctx->registers_) {
+                vm_ctx->registers_.emplace();
             }
-            read<StoreReg2Keep>(code, pc);
-            while (registers->length() <= 2) {
-                registers->push_back(L_NIL);
+            read<StoreReg2Keep>(*vm_ctx->code_, vm_ctx->pc_);
+            while (vm_ctx->registers_->length() <= 2) {
+                vm_ctx->registers_->push_back(L_NIL);
             }
             u8 reg = 2;
-            auto iter = registers->result();
+            auto iter = vm_ctx->registers_->result();
             while (reg) {
                 --reg;
                 iter = iter->cons().cdr();
@@ -279,58 +486,58 @@ TOP:
         }
 
         case JumpIfFalse::op(): {
-            auto inst = read<JumpIfFalse>(code, pc);
+            auto inst = read<JumpIfFalse>(*vm_ctx->code_, vm_ctx->pc_);
             if (not is_boolean_true(get_op0())) {
-                pc = start_offset + inst->offset_.get();
+                vm_ctx->pc_ = vm_ctx->start_offset_ + inst->offset_.get();
             }
             pop_op();
             break;
         }
 
         case Jump::op(): {
-            auto inst = read<Jump>(code, pc);
-            pc = start_offset + inst->offset_.get();
+            auto inst = read<Jump>(*vm_ctx->code_, vm_ctx->pc_);
+            vm_ctx->pc_ = vm_ctx->start_offset_ + inst->offset_.get();
             break;
         }
 
         case SmallJumpIfFalse::op(): {
-            auto inst = read<SmallJumpIfFalse>(code, pc);
+            auto inst = read<SmallJumpIfFalse>(*vm_ctx->code_, vm_ctx->pc_);
             if (not is_boolean_true(get_op0())) {
-                pc = start_offset + inst->offset_;
+                vm_ctx->pc_ = vm_ctx->start_offset_ + inst->offset_;
             }
             pop_op();
             break;
         }
 
         case SmallJumpIfTrue::op(): {
-            auto inst = read<SmallJumpIfTrue>(code, pc);
+            auto inst = read<SmallJumpIfTrue>(*vm_ctx->code_, vm_ctx->pc_);
             if (is_boolean_true(get_op0())) {
-                pc = start_offset + inst->offset_;
+                vm_ctx->pc_ = vm_ctx->start_offset_ + inst->offset_;
             }
             pop_op();
             break;
         }
 
         case SmallJumpNotEqual::op(): {
-            auto inst = read<SmallJumpNotEqual>(code, pc);
+            auto inst = read<SmallJumpNotEqual>(*vm_ctx->code_, vm_ctx->pc_);
             auto result = builtin_comp_equal(2);
             pop_op();
             pop_op(); // args
             if (not is_boolean_true(result)) {
-                pc = start_offset + inst->offset_;
+                vm_ctx->pc_ = vm_ctx->start_offset_ + inst->offset_;
             }
             break;
         }
 
         case SmallJump::op(): {
-            auto inst = read<SmallJump>(code, pc);
-            pc = start_offset + inst->offset_;
+            auto inst = read<SmallJump>(*vm_ctx->code_, vm_ctx->pc_);
+            vm_ctx->pc_ = vm_ctx->start_offset_ + inst->offset_;
             break;
         }
 
 
         case Set::op(): {
-            read<Set>(code, pc);
+            read<Set>(*vm_ctx->code_, vm_ctx->pc_);
             auto sym = get_op1();
             auto v = get_op0();
             pop_op();
@@ -346,7 +553,7 @@ TOP:
 
 
         case LoadSymtab::op(): {
-            auto inst = read<LoadSymtab>(code, pc);
+            auto inst = read<LoadSymtab>(*vm_ctx->code_, vm_ctx->pc_);
             auto index = inst->symtab_index_.get();
             push_op(make_symtab_symbol(index));
             break;
@@ -354,23 +561,22 @@ TOP:
 
 
         case Resume::op(): {
-            read<Resume>(code, pc);
-            if (auto reg_loc = __find_local(reg_save_sym)) {
-                if (auto it = __get_local(*reg_loc)) {
-                    registers.emplace();
-                    while (it->type() == Value::Type::cons) {
-                        registers->push_back(it->cons().car());
-                        it = it->cons().cdr();
-                    }
-                }
+            if (auto stk_loc = __find_local(vm_stack_save_sym)) {
+                if (auto data = __get_local(*stk_loc)) {
+                    vm_deserialize_context(vm_stack, data);
+                    vm_ctx = &vm_stack.back();
+                 }
+            } else {
+                PLATFORM.fatal("resume failed: missing STK");
             }
+            read<Resume>(*vm_ctx->code_, vm_ctx->pc_);
             lexical_frame_pop();
             break;
         }
 
 
         case Await::op(): {
-            read<Await>(code, pc);
+            read<Await>(*vm_ctx->code_, vm_ctx->pc_);
             if (get_op0()->type() not_eq lisp::Value::Type::promise) {
                 pop_op();
                 push_op(make_error("await expects a promise value!"));
@@ -378,12 +584,11 @@ TOP:
                 Value* agitant = L_NIL;
                 if (vm_can_suspend(agitant)) {
                     lexical_frame_push();
-                    if (registers) {
-                        lexical_frame_store(L_CONS(make_symbol(reg_save_sym),
-                                                   registers->result()));
-                    }
+                    lexical_frame_store(L_CONS(make_symbol(vm_stack_save_sym),
+                                               vm_serialize_context(vm_stack)));
                     SuspendedExecutionContext suspend{
-                        .program_counter_ = pc, .nested_scope_ = nested_scope};
+                        .code_buffer_ = vm_ctx->code_buffer_,
+                        .program_counter_ = vm_ctx->pc_};
                     return suspend;
                 } else {
                     pop_op(); // the promise value
@@ -402,7 +607,7 @@ TOP:
         }
 
         case SetVar::op(): {
-            auto inst = read<SetVar>(code, pc);
+            auto inst = read<SetVar>(*vm_ctx->code_, vm_ctx->pc_);
             auto index = inst->symtab_index_.get();
             auto v = get_op0();
             Protected sym(make_symtab_symbol(index));
@@ -413,7 +618,7 @@ TOP:
         }
 
         case ConsVar::op(): {
-            auto inst = read<SetVar>(code, pc);
+            auto inst = read<SetVar>(*vm_ctx->code_, vm_ctx->pc_);
             auto index = inst->symtab_index_.get();
             auto v = get_op0();
             Protected sym(make_symtab_symbol(index));
@@ -426,7 +631,7 @@ TOP:
         }
 
         case SetVarRT::op(): {
-            auto inst = read<SetVarRT>(code, pc);
+            auto inst = read<SetVarRT>(*vm_ctx->code_, vm_ctx->pc_);
             auto v = get_op0();
             Protected sym(make_symbol(inst->ptr_.get(),
                                       Symbol::ModeBits::stable_pointer));
@@ -437,7 +642,7 @@ TOP:
         }
 
         case SetVarSmall::op(): {
-            auto inst = read<SetVarSmall>(code, pc);
+            auto inst = read<SetVarSmall>(*vm_ctx->code_, vm_ctx->pc_);
             StringBuffer<3> name;
             for (int i = 0; i < 3; ++i) {
                 name.__push_unsafe(inst->name_[i]);
@@ -452,7 +657,7 @@ TOP:
         }
 
         case LoadVarS::op(): {
-            auto inst = read<LoadVarS>(code, pc);
+            auto inst = read<LoadVarS>(*vm_ctx->code_, vm_ctx->pc_);
             auto index = inst->symtab_index_.get();
             auto sym = make_symtab_symbol(index);
             push_op(get_var(sym));
@@ -461,13 +666,13 @@ TOP:
         }
 
         case LoadVarRT::op(): {
-            auto inst = read<LoadVarRT>(code, pc);
+            auto inst = read<LoadVarRT>(*vm_ctx->code_, vm_ctx->pc_);
             push_op(get_var_stable(inst->ptr_.get()));
             break;
         }
 
         case LoadVarSmall::op(): {
-            auto inst = read<LoadVarSmall>(code, pc);
+            auto inst = read<LoadVarSmall>(*vm_ctx->code_, vm_ctx->pc_);
             StringBuffer<3> name;
             for (int i = 0; i < 3; ++i) {
                 name.__push_unsafe(inst->name_[i]);
@@ -477,13 +682,13 @@ TOP:
         }
 
         case Dup::op(): {
-            read<Dup>(code, pc);
+            read<Dup>(*vm_ctx->code_, vm_ctx->pc_);
             push_op(get_op0());
             break;
         }
 
         case Not::op(): {
-            read<Not>(code, pc);
+            read<Not>(*vm_ctx->code_, vm_ctx->pc_);
             auto input = get_op0();
             pop_op();
             push_op(make_integer(not is_boolean_true(input)));
@@ -491,51 +696,51 @@ TOP:
         }
 
         case PushNil::op():
-            read<PushNil>(code, pc);
+            read<PushNil>(*vm_ctx->code_, vm_ctx->pc_);
             push_op(get_nil());
             break;
 
         case PushFloat::op(): {
-            auto inst = read<PushFloat>(code, pc);
+            auto inst = read<PushFloat>(*vm_ctx->code_, vm_ctx->pc_);
             push_op(make_float(inst->f_.get()));
             break;
         }
 
         case PushRatio::op(): {
-            auto inst = read<PushRatio>(code, pc);
+            auto inst = read<PushRatio>(*vm_ctx->code_, vm_ctx->pc_);
             push_op(make_ratio(inst->num_.get(), inst->div_.get()));
             break;
         }
 
         case PushInteger::op(): {
-            auto inst = read<PushInteger>(code, pc);
+            auto inst = read<PushInteger>(*vm_ctx->code_, vm_ctx->pc_);
             push_op(make_integer(inst->value_.get()));
             break;
         }
 
         case Push0::op():
-            read<Push0>(code, pc);
+            read<Push0>(*vm_ctx->code_, vm_ctx->pc_);
             push_op(make_integer(0));
             break;
 
         case Push1::op():
-            read<Push1>(code, pc);
+            read<Push1>(*vm_ctx->code_, vm_ctx->pc_);
             push_op(make_integer(1));
             break;
 
         case Push2::op():
-            read<Push2>(code, pc);
+            read<Push2>(*vm_ctx->code_, vm_ctx->pc_);
             push_op(make_integer(2));
             break;
 
         case PushSmallInteger::op(): {
-            auto inst = read<PushSmallInteger>(code, pc);
+            auto inst = read<PushSmallInteger>(*vm_ctx->code_, vm_ctx->pc_);
             push_op(make_integer(inst->value_));
             break;
         }
 
         case PushSmallSymbol::op(): {
-            auto inst = read<PushSmallSymbol>(code, pc);
+            auto inst = read<PushSmallSymbol>(*vm_ctx->code_, vm_ctx->pc_);
             StringBuffer<3> str;
             auto name = inst->name_;
             for (int i = 0; i < 3; ++i) {
@@ -546,16 +751,16 @@ TOP:
         }
 
         case PushSymbolRT::op(): {
-            auto inst = read<PushSymbolRT>(code, pc);
+            auto inst = read<PushSymbolRT>(*vm_ctx->code_, vm_ctx->pc_);
             push_op(make_symbol(inst->ptr_.get(),
                                 Symbol::ModeBits::stable_pointer));
             break;
         }
 
         case PushString::op(): {
-            auto inst = read<PushString>(code, pc);
-            push_op(make_string(code.data_ + pc));
-            pc += inst->length_;
+            auto inst = read<PushString>(*vm_ctx->code_, vm_ctx->pc_);
+            push_op(make_string(vm_ctx->code_->data_ + vm_ctx->pc_));
+            vm_ctx->pc_ += inst->length_;
             break;
         }
 
@@ -563,7 +768,7 @@ TOP:
 
             Protected fn(get_op0());
 
-            auto argc = read<TailCall>(code, pc)->argc_;
+            auto argc = read<TailCall>(*vm_ctx->code_, vm_ctx->pc_)->argc_;
 
 
             if (fn == get_this()) {
@@ -582,25 +787,25 @@ TOP:
 
                 if (argc == 0) {
                     unwind_lexical_scope();
-                    pc = start_offset;
-                    registers.reset();
+                    vm_ctx->pc_ = vm_ctx->start_offset_;
+                    vm_ctx->registers_.reset();
                     goto TOP;
                 } else {
                     // TODO: perform TCO for N-arg function
-                    funcall(fn, argc);
+                    INVOKE(fn, argc);
                 }
 
             } else {
 
                 pop_op();
-                funcall(fn, argc);
+                INVOKE(fn, argc);
             }
 
             break;
         }
 
         case LoadTCall1::op(): {
-            auto inst = read<LoadTCall1>(code, pc);
+            auto inst = read<LoadTCall1>(*vm_ctx->code_, vm_ctx->pc_);
             auto index = inst->symtab_index_.get();
             Protected sym(make_symtab_symbol(index));
             Protected fn(get_var(sym));
@@ -621,18 +826,18 @@ TOP:
                 push_op(arg);
 
                 unwind_lexical_scope();
-                pc = start_offset;
-                registers.reset();
+                vm_ctx->pc_ = vm_ctx->start_offset_;
+                vm_ctx->registers_.reset();
                 goto TOP;
 
             } else {
-                funcall(fn, 1);
+                INVOKE(fn, 1);
             }
             break;
         }
 
         case LoadTCall2::op(): {
-            auto inst = read<LoadTCall2>(code, pc);
+            auto inst = read<LoadTCall2>(*vm_ctx->code_, vm_ctx->pc_);
             auto index = inst->symtab_index_.get();
             Protected sym(make_symtab_symbol(index));
             Protected fn(get_var(sym));
@@ -657,18 +862,18 @@ TOP:
                 push_op(arg0);
 
                 unwind_lexical_scope();
-                pc = start_offset;
-                registers.reset();
+                vm_ctx->pc_ = vm_ctx->start_offset_;
+                vm_ctx->registers_.reset();
                 goto TOP;
 
             } else {
-                funcall(fn, 2);
+                INVOKE(fn, 2);
             }
             break;
         }
 
         case LoadTCall3::op(): {
-            auto inst = read<LoadTCall3>(code, pc);
+            auto inst = read<LoadTCall3>(*vm_ctx->code_, vm_ctx->pc_);
             auto index = inst->symtab_index_.get();
             Protected sym(make_symtab_symbol(index));
             Protected fn(get_var(sym));
@@ -695,18 +900,18 @@ TOP:
                 push_op(arg0);
 
                 unwind_lexical_scope();
-                pc = start_offset;
-                registers.reset();
+                vm_ctx->pc_ = vm_ctx->start_offset_;
+                vm_ctx->registers_.reset();
                 goto TOP;
 
             } else {
-                funcall(fn, 3);
+                INVOKE(fn, 3);
             }
             break;
         }
 
         case TailCall1::op(): {
-            read<TailCall1>(code, pc);
+            read<TailCall1>(*vm_ctx->code_, vm_ctx->pc_);
             Protected fn(get_op0());
 
             if (fn == get_this()) {
@@ -726,19 +931,19 @@ TOP:
                 push_op(arg);
 
                 unwind_lexical_scope();
-                pc = start_offset;
-                registers.reset();
+                vm_ctx->pc_ = vm_ctx->start_offset_;
+                vm_ctx->registers_.reset();
                 goto TOP;
 
             } else {
                 pop_op();
-                funcall(fn, 1);
+                INVOKE(fn, 1);
             }
             break;
         }
 
         case TailCall2::op(): {
-            read<TailCall2>(code, pc);
+            read<TailCall2>(*vm_ctx->code_, vm_ctx->pc_);
             Protected fn(get_op0());
 
             if (fn == get_this()) {
@@ -762,19 +967,19 @@ TOP:
                 push_op(arg0);
 
                 unwind_lexical_scope();
-                pc = start_offset;
-                registers.reset();
+                vm_ctx->pc_ = vm_ctx->start_offset_;
+                vm_ctx->registers_.reset();
                 goto TOP;
 
             } else {
                 pop_op();
-                funcall(fn, 2);
+                INVOKE(fn, 2);
             }
             break;
         }
 
         case TailCall3::op(): {
-            read<TailCall3>(code, pc);
+            read<TailCall3>(*vm_ctx->code_, vm_ctx->pc_);
             Protected fn(get_op0());
 
             if (fn == get_this()) {
@@ -800,135 +1005,135 @@ TOP:
                 push_op(arg0);
 
                 unwind_lexical_scope();
-                pc = start_offset;
-                registers.reset();
+                vm_ctx->pc_ = vm_ctx->start_offset_;
+                vm_ctx->registers_.reset();
                 goto TOP;
 
             } else {
                 pop_op();
-                funcall(fn, 3);
+                INVOKE(fn, 3);
             }
             break;
         }
 
         case LoadCall0::op(): {
-            auto inst = read<LoadCall0>(code, pc);
+            auto inst = read<LoadCall0>(*vm_ctx->code_, vm_ctx->pc_);
             auto index = inst->symtab_index_.get();
             Protected sym(make_symtab_symbol(index));
-            Protected fn(get_var(sym));
-            funcall(fn, 0);
+            auto fn = get_var(sym);
             collect_value(sym);
+            INVOKE(fn, 0);
             break;
         }
 
         case LoadCall1::op(): {
-            auto inst = read<LoadCall1>(code, pc);
+            auto inst = read<LoadCall1>(*vm_ctx->code_, vm_ctx->pc_);
             auto index = inst->symtab_index_.get();
             Protected sym(make_symtab_symbol(index));
-            Protected fn(get_var(sym));
-            funcall(fn, 1);
+            auto fn = get_var(sym);
             collect_value(sym);
+            INVOKE(fn, 1);
             break;
         }
 
         case LoadCall2::op(): {
-            auto inst = read<LoadCall2>(code, pc);
+            auto inst = read<LoadCall2>(*vm_ctx->code_, vm_ctx->pc_);
             auto index = inst->symtab_index_.get();
             Protected sym(make_symtab_symbol(index));
-            Protected fn(get_var(sym));
-            funcall(fn, 2);
+            auto fn = get_var(sym);
             collect_value(sym);
+            INVOKE(fn, 2);
             break;
         }
 
         case LoadCall3::op(): {
-            auto inst = read<LoadCall3>(code, pc);
+            auto inst = read<LoadCall3>(*vm_ctx->code_, vm_ctx->pc_);
             auto index = inst->symtab_index_.get();
             Protected sym(make_symtab_symbol(index));
-            Protected fn(get_var(sym));
-            funcall(fn, 3);
+            auto fn = get_var(sym);
             collect_value(sym);
+            INVOKE(fn, 3);
             break;
         }
 
         case LoadCall0Discard::op(): {
-            auto inst = read<LoadCall0Discard>(code, pc);
+            auto inst = read<LoadCall0Discard>(*vm_ctx->code_, vm_ctx->pc_);
             auto index = inst->symtab_index_.get();
             Protected sym(make_symtab_symbol(index));
             Protected fn(get_var(sym));
-            funcall(fn, 0);
             collect_value(sym);
-            pop_op();
+            vm_ctx->discard_flag_ = true;
+            INVOKE(fn, 0);
             break;
         }
 
         case LoadCall1Discard::op(): {
-            auto inst = read<LoadCall1Discard>(code, pc);
+            auto inst = read<LoadCall1Discard>(*vm_ctx->code_, vm_ctx->pc_);
             auto index = inst->symtab_index_.get();
             Protected sym(make_symtab_symbol(index));
             Protected fn(get_var(sym));
-            funcall(fn, 1);
             collect_value(sym);
-            pop_op();
+            vm_ctx->discard_flag_ = true;
+            INVOKE(fn, 1);
             break;
         }
 
         case LoadCall2Discard::op(): {
-            auto inst = read<LoadCall2Discard>(code, pc);
+            auto inst = read<LoadCall2Discard>(*vm_ctx->code_, vm_ctx->pc_);
             auto index = inst->symtab_index_.get();
             Protected sym(make_symtab_symbol(index));
             Protected fn(get_var(sym));
-            funcall(fn, 2);
             collect_value(sym);
-            pop_op();
+            vm_ctx->discard_flag_ = true;
+            INVOKE(fn, 2);
             break;
         }
 
         case LoadCall3Discard::op(): {
-            auto inst = read<LoadCall3Discard>(code, pc);
+            auto inst = read<LoadCall3Discard>(*vm_ctx->code_, vm_ctx->pc_);
             auto index = inst->symtab_index_.get();
             Protected sym(make_symtab_symbol(index));
             Protected fn(get_var(sym));
-            funcall(fn, 3);
             collect_value(sym);
-            pop_op();
+            vm_ctx->discard_flag_ = true;
+            INVOKE(fn, 3);
             break;
         }
 
         case Funcall::op(): {
-            Protected fn(get_op0());
-            auto argc = read<Funcall>(code, pc)->argc_;
+            auto fn = get_op0();
+            auto argc = read<Funcall>(*vm_ctx->code_, vm_ctx->pc_)->argc_;
             pop_op();
-            funcall(fn, argc);
+            INVOKE(fn, argc);
             break;
         }
 
         case Funcall1::op(): {
-            read<Funcall1>(code, pc);
-            Protected fn(get_op0());
+            read<Funcall1>(*vm_ctx->code_, vm_ctx->pc_);
+            auto fn = get_op0();
             pop_op();
-            funcall(fn, 1);
+            INVOKE(fn, 1);
             break;
         }
 
         case Funcall2::op(): {
-            read<Funcall2>(code, pc);
-            Protected fn(get_op0());
+            read<Funcall2>(*vm_ctx->code_, vm_ctx->pc_);
+            auto fn = get_op0();
             pop_op();
-            funcall(fn, 2);
+            INVOKE(fn, 2);
             break;
         }
 
         case Funcall3::op(): {
-            read<Funcall3>(code, pc);
-            Protected fn(get_op0());
+            read<Funcall3>(*vm_ctx->code_, vm_ctx->pc_);
+            auto fn = get_op0();
             pop_op();
-            funcall(fn, 3);
+            INVOKE(fn, 3);
             break;
         }
 
         case Arg::op(): {
-            read<Arg>(code, pc);
+            read<Arg>(*vm_ctx->code_, vm_ctx->pc_);
             auto arg_num = get_op0();
             auto arg = get_arg(arg_num->integer().value_);
             pop_op();
@@ -937,25 +1142,25 @@ TOP:
         }
 
         case Arg0::op(): {
-            read<Arg0>(code, pc);
+            read<Arg0>(*vm_ctx->code_, vm_ctx->pc_);
             push_op(get_arg(0));
             break;
         }
 
         case Arg1::op(): {
-            read<Arg1>(code, pc);
+            read<Arg1>(*vm_ctx->code_, vm_ctx->pc_);
             push_op(get_arg(1));
             break;
         }
 
         case Arg2::op(): {
-            read<Arg2>(code, pc);
+            read<Arg2>(*vm_ctx->code_, vm_ctx->pc_);
             push_op(get_arg(2));
             break;
         }
 
         case MakePair::op(): {
-            read<MakePair>(code, pc);
+            read<MakePair>(*vm_ctx->code_, vm_ctx->pc_);
             auto car = get_op1();
             auto cdr = get_op0();
             auto cons = make_cons(car, cdr);
@@ -966,7 +1171,7 @@ TOP:
         }
 
         case First::op(): {
-            read<First>(code, pc);
+            read<First>(*vm_ctx->code_, vm_ctx->pc_);
             auto arg = get_op0();
             pop_op();
             if (arg->type() == Value::Type::cons) {
@@ -978,7 +1183,7 @@ TOP:
         }
 
         case Rest::op(): {
-            read<Rest>(code, pc);
+            read<Rest>(*vm_ctx->code_, vm_ctx->pc_);
             auto arg = get_op0();
             pop_op();
             if (arg->type() == Value::Type::cons) {
@@ -990,12 +1195,12 @@ TOP:
         }
 
         case Pop::op():
-            read<Pop>(code, pc);
+            read<Pop>(*vm_ctx->code_, vm_ctx->pc_);
             pop_op();
             break;
 
         case RetNilIfFalseKeep::op(): {
-            read<RetNilIfFalseKeep>(code, pc);
+            read<RetNilIfFalseKeep>(*vm_ctx->code_, vm_ctx->pc_);
             auto cond = get_op0();
             if (is_boolean_true(cond)) {
                 break;
@@ -1005,7 +1210,7 @@ TOP:
         }
 
         case RetNilIfTrue::op(): {
-            read<RetNilIfTrue>(code, pc);
+            read<RetNilIfTrue>(*vm_ctx->code_, vm_ctx->pc_);
             auto cond = get_op0();
             pop_op();
             if (not is_boolean_true(cond)) {
@@ -1015,7 +1220,7 @@ TOP:
         }
 
         case RetNilIfFalse::op(): {
-            read<RetNilIfFalse>(code, pc);
+            read<RetNilIfFalse>(*vm_ctx->code_, vm_ctx->pc_);
             auto cond = get_op0();
             pop_op();
             if (is_boolean_true(cond)) {
@@ -1033,8 +1238,8 @@ TOP:
         case EarlyRet::op():
         case Ret::op():
         RETURN:
-            if (registers) {
-                Value* lat = registers->result();
+            if (vm_ctx->registers_) {
+                Value* lat = vm_ctx->registers_->result();
                 while (lat->type() == Value::Type::cons) {
                     auto next = lat->cons().cdr();
                     collect_value(lat);
@@ -1042,13 +1247,32 @@ TOP:
                 }
             }
             unwind_lexical_scope();
+            if (vm_stack.size() > 1) {
+                auto result = get_op0();
+                pop_op();
+                for (int i = 0; i < vm_ctx->argc_; ++i) {
+                    pop_op();
+                }
+                push_op(result);
+                vm_stack.pop_back();
+                vm_ctx = &vm_stack.back();
+                pop_callstack();
+                lexical_bindings_ref() = vm_ctx->saved_lexical_bindings_;
+                argc_ref() = vm_ctx->argc_;
+                arguments_break_loc_ref() = vm_ctx->arguments_break_loc_;
+                if (vm_ctx->discard_flag_) {
+                    pop_op();
+                    vm_ctx->discard_flag_ = false;
+                }
+                goto TOP;
+            }
             return nullopt();
 
         case PushLambda::op(): {
-            auto inst = read<PushLambda>(code, pc);
-            auto offset = make_integer(pc);
+            auto inst = read<PushLambda>(*vm_ctx->code_, vm_ctx->pc_);
+            auto offset = make_integer(vm_ctx->pc_);
             if (offset->type() == lisp::Value::Type::integer) {
-                auto bytecode = make_cons(offset, code_buffer);
+                auto bytecode = make_cons(offset, vm_ctx->code_buffer_);
                 if (bytecode->type() == lisp::Value::Type::cons) {
                     auto fn = make_bytecode_function(bytecode);
                     push_op(fn);
@@ -1058,12 +1282,12 @@ TOP:
             } else {
                 push_op(offset);
             }
-            pc = start_offset + inst->lambda_end_.get();
+            vm_ctx->pc_ = vm_ctx->start_offset_ + inst->lambda_end_.get();
             break;
         }
 
         case PushList::op(): {
-            auto list_size = read<PushList>(code, pc)->element_count_;
+            auto list_size = read<PushList>(*vm_ctx->code_, vm_ctx->pc_)->element_count_;
             ListBuilder lat;
             for (int i = 0; i < list_size; ++i) {
                 lat.push_back(get_op((list_size - 1) - i));
@@ -1077,12 +1301,12 @@ TOP:
 
         case PushThis::op(): {
             push_op(get_this());
-            read<PushThis>(code, pc);
+            read<PushThis>(*vm_ctx->code_, vm_ctx->pc_);
             break;
         }
 
         case LexicalDef::op(): {
-            auto inst = read<LexicalDef>(code, pc);
+            auto inst = read<LexicalDef>(*vm_ctx->code_, vm_ctx->pc_);
             auto index = inst->symtab_index_.get();
             Protected sym(make_symtab_symbol(index));
 
@@ -1097,7 +1321,7 @@ TOP:
         }
 
         case LexicalDefRT::op(): {
-            auto inst = read<LexicalDefRT>(code, pc);
+            auto inst = read<LexicalDefRT>(*vm_ctx->code_, vm_ctx->pc_);
             Protected sym(make_symbol(inst->ptr_.get(),
                                       Symbol::ModeBits::stable_pointer));
 
@@ -1112,7 +1336,7 @@ TOP:
         }
 
         case LexicalDefSmall::op(): {
-            auto inst = read<LexicalDefSmall>(code, pc);
+            auto inst = read<LexicalDefSmall>(*vm_ctx->code_, vm_ctx->pc_);
 
             StringBuffer<3> name;
             for (int i = 0; i < 3; ++i) {
@@ -1132,21 +1356,21 @@ TOP:
         }
 
         case LexicalFramePush::op(): {
-            read<LexicalFramePush>(code, pc);
+            read<LexicalFramePush>(*vm_ctx->code_, vm_ctx->pc_);
             lexical_frame_push();
-            ++nested_scope;
+            ++vm_ctx->nested_scope_;
             break;
         }
 
         case LexicalFramePop::op(): {
-            read<LexicalFramePop>(code, pc);
+            read<LexicalFramePop>(*vm_ctx->code_, vm_ctx->pc_);
             lexical_frame_pop();
-            --nested_scope;
+            --vm_ctx->nested_scope_;
             break;
         }
 
         case BitAnd::op(): {
-            read<BitAnd>(code, pc);
+            read<BitAnd>(*vm_ctx->code_, vm_ctx->pc_);
             auto result = builtin_bit_and(2);
             pop_op();
             pop_op();
@@ -1155,7 +1379,7 @@ TOP:
         }
 
         case BitOr::op(): {
-            read<BitOr>(code, pc);
+            read<BitOr>(*vm_ctx->code_, vm_ctx->pc_);
             auto result = builtin_bit_or(2);
             pop_op();
             pop_op();
@@ -1164,7 +1388,7 @@ TOP:
         }
 
         case BitNot::op(): {
-            read<BitNot>(code, pc);
+            read<BitNot>(*vm_ctx->code_, vm_ctx->pc_);
             auto result = builtin_bit_not(1);
             pop_op();
             push_op(result);
@@ -1172,7 +1396,7 @@ TOP:
         }
 
         case BitShiftLeft::op(): {
-            read<BitShiftLeft>(code, pc);
+            read<BitShiftLeft>(*vm_ctx->code_, vm_ctx->pc_);
             auto result = builtin_bit_shift_left(2);
             pop_op();
             pop_op();
@@ -1180,8 +1404,25 @@ TOP:
             break;
         }
 
+        case DestructureAssertPair::op(): {
+            read<DestructureAssertPair>(*vm_ctx->code_, vm_ctx->pc_);
+            auto top = get_op0();
+            pop_op();
+            push_op(make_boolean(top->type() == Value::Type::cons and not is_list(top)));
+            break;
+        }
+
+        case DestructureAssertList::op(): {
+            auto inst = read<DestructureAssertList>(*vm_ctx->code_, vm_ctx->pc_);
+            auto top = get_op0();
+            auto len = length(top);
+            pop_op();
+            push_op(make_boolean(is_list(top) and len == inst->len_));
+            break;
+        }
+
         case BitShiftRight::op(): {
-            read<BitShiftRight>(code, pc);
+            read<BitShiftRight>(*vm_ctx->code_, vm_ctx->pc_);
             auto result = builtin_bit_shift_right(2);
             pop_op();
             pop_op();
@@ -1190,7 +1431,7 @@ TOP:
         }
 
         case Add::op(): {
-            auto add = read<Add>(code, pc);
+            auto add = read<Add>(*vm_ctx->code_, vm_ctx->pc_);
             auto result = builtin_add(add->operands_);
             for (int i = 0; i < add->operands_; ++i) {
                 pop_op();
@@ -1200,7 +1441,7 @@ TOP:
         }
 
         case Subtract::op(): {
-            read<Subtract>(code, pc);
+            read<Subtract>(*vm_ctx->code_, vm_ctx->pc_);
             auto result = builtin_subtract(2);
             pop_op();
             pop_op();
@@ -1209,7 +1450,7 @@ TOP:
         }
 
         case Divide::op(): {
-            read<Divide>(code, pc);
+            read<Divide>(*vm_ctx->code_, vm_ctx->pc_);
             auto result = builtin_divide(2);
             pop_op();
             pop_op();
@@ -1218,7 +1459,7 @@ TOP:
         }
 
         case Multiply::op(): {
-            auto multiply = read<Multiply>(code, pc);
+            auto multiply = read<Multiply>(*vm_ctx->code_, vm_ctx->pc_);
             auto result = builtin_multiply(multiply->operands_);
             for (int i = 0; i < multiply->operands_; ++i) {
                 pop_op();
@@ -1228,7 +1469,7 @@ TOP:
         }
 
         case Incr::op(): {
-            read<Incr>(code, pc);
+            read<Incr>(*vm_ctx->code_, vm_ctx->pc_);
             auto result = builtin_incr(1);
             pop_op();
             push_op(result);
@@ -1236,7 +1477,7 @@ TOP:
         }
 
         case Decr::op(): {
-            read<Decr>(code, pc);
+            read<Decr>(*vm_ctx->code_, vm_ctx->pc_);
             auto result = builtin_decr(1);
             pop_op();
             push_op(result);
@@ -1244,7 +1485,7 @@ TOP:
         }
 
         case Length::op(): {
-            read<Length>(code, pc);
+            read<Length>(*vm_ctx->code_, vm_ctx->pc_);
             auto result = builtin_length(1);
             pop_op();
             push_op(result);
@@ -1252,7 +1493,7 @@ TOP:
         }
 
         case Get::op(): {
-            read<Get>(code, pc);
+            read<Get>(*vm_ctx->code_, vm_ctx->pc_);
             auto result = builtin_get(2);
             pop_op();
             pop_op();
@@ -1261,7 +1502,7 @@ TOP:
         }
 
         case IsEqual::op(): {
-            read<IsEqual>(code, pc);
+            read<IsEqual>(*vm_ctx->code_, vm_ctx->pc_);
             auto result = builtin_comp_equal(2);
             pop_op();
             pop_op(); // args
@@ -1270,7 +1511,7 @@ TOP:
         }
 
         case CmpLess::op(): {
-            read<CmpLess>(code, pc);
+            read<CmpLess>(*vm_ctx->code_, vm_ctx->pc_);
             auto result = builtin_comp_less_than(2);
             pop_op();
             pop_op(); // args
@@ -1279,7 +1520,7 @@ TOP:
         }
 
         case CmpGreater::op(): {
-            read<CmpGreater>(code, pc);
+            read<CmpGreater>(*vm_ctx->code_, vm_ctx->pc_);
             auto result = builtin_comp_greater_than(2);
             pop_op();
             pop_op(); // args

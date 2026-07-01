@@ -46,9 +46,13 @@
   (append (slice lat 0 pos) (cons elem (slice lat pos))))
 
 
+(defn/c make-set (val)
+  (union val val))
+
+
 (defn/c push-set (sym val)
   (let ((tmp (cons val (eval sym))))
-    (set sym (union tmp tmp))))
+    (set sym (make-set tmp))))
 
 
 (defn/c replace (lat pred newv)
@@ -126,3 +130,11 @@
                    ((< b-i a-i)  1)
                    (true ((this) a b (incr i)))))))
      a b 0)))
+
+
+;; Runtime functions used for failed let destructuring when executing bytecode.
+(defn/c --destructure-pair-failure (v)
+  (error (format "failed to destructure % into pair!" v)))
+
+(defn/c --destructure-list-failure (v len)
+  (error (format "failed to destructure % into list of len %!" v len)))
