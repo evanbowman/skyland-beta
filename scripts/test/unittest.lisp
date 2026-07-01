@@ -1167,6 +1167,13 @@
 
 (assert-eq 6 ((compile (lambda () (let (((a b c) '(1 2 3))) (+ a b c))))))
 (assert-eq 42 ((compile (lambda () (let (((a b c . n) (range 10))) (apply + n))))))
+(assert-error-status
+ ((compile (lambda () (let (((a . b) '(1 . 2)) ((c d e) '(4 5 6 7))) (+ a b c)))))
+ "failed to destructure '(4 5 6 7) into list of len 3!")
+(assert-error-status
+ ((compile (lambda () (let (((a . b) '(1 2 3)) ((c d e) '(4 5 6))) (+ a b c)))))
+ "failed to destructure '(1 2 3) into pair!")
+
 
 (end-test)
 

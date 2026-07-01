@@ -228,6 +228,16 @@ int compile_let(CompilerContext& ctx,
         append<instruction::LexicalFramePush>(ctx, buffer, write_pos);
     }
 
+    struct DestructuringError {
+        enum {
+            pair,
+            list
+        } reason_;
+        u8 arity_;
+        instruction::JumpIfFalse* branch_target_;
+    };
+    Buffer<DestructuringError, 32> destructuring_error_branches;
+
     l_foreach(code->cons().car(), [&](Value* val) {
         if (val->type() == Value::Type::cons) {
             auto sym = val->cons().car();
@@ -279,7 +289,16 @@ int compile_let(CompilerContext& ctx,
                 if (car->type() == Value::Type::symbol and
                     cdr->type() == Value::Type::symbol) {
 
+                    append<instruction::Dup>(ctx, buffer, write_pos);
                     append<instruction::DestructureAssertPair>(ctx, buffer, write_pos);
+                    auto jif = append<instruction::JumpIfFalse>(ctx, buffer, write_pos);
+                    if (destructuring_error_branches.full()) {
+                        PLATFORM.fatal("too many destructuring let bindings in one expression!");
+                    }
+                    destructuring_error_branches.push_back({
+                            .reason_ = DestructuringError::pair,
+                            .branch_target_ = jif
+                        });
                     append<instruction::Dup>(ctx, buffer, write_pos);
                     append<instruction::First>(ctx, buffer, write_pos);
                     binding_def_sym(car);
@@ -290,7 +309,14 @@ int compile_let(CompilerContext& ctx,
                            (is_list(cdr) or cdr->type() == Value::Type::cons)) {
                     auto syms = sym;
                     if (is_list(cdr)) {
+                        append<instruction::Dup>(ctx, buffer, write_pos);
                         append<instruction::DestructureAssertList>(ctx, buffer, write_pos)->len_ = length(syms);
+                        auto jif = append<instruction::JumpIfFalse>(ctx, buffer, write_pos);
+                        destructuring_error_branches.push_back({
+                            .reason_ = DestructuringError::list,
+                            .arity_ = (u8)length(syms),
+                            .branch_target_ = jif
+                        });
                     }
                     while (true) {
                         auto head = syms->cons().car();
@@ -352,6 +378,44 @@ int compile_let(CompilerContext& ctx,
 
     if (binding_count not_eq 0) {
         append<instruction::LexicalFramePop>(ctx, buffer, write_pos);
+    }
+
+    if (not destructuring_error_branches.empty()) {
+        Buffer<instruction::Jump*, 32> end_jumps;
+        auto skip = append<instruction::Jump>(ctx, buffer, write_pos);
+        for (auto& err : destructuring_error_branches) {
+            err.branch_target_->offset_.set(write_pos - jump_offset);
+            switch (err.reason_) {
+            case DestructuringError::pair: {
+                if (auto s = get_symtab_index("--destructure-pair-failure")) {
+                    auto inst = append<instruction::LoadCall1>(ctx, buffer, write_pos);
+                    inst->symtab_index_.set(*s);
+                } else {
+                    append<instruction::Pop>(ctx, buffer, write_pos);
+                    append<instruction::PushNil>(ctx, buffer, write_pos);
+                }
+                break;
+            }
+
+            case DestructuringError::list: {
+                if (auto s = get_symtab_index("--destructure-list-failure")) {
+                    append<instruction::PushSmallInteger>(ctx, buffer, write_pos)->value_ = err.arity_;
+                    auto inst = append<instruction::LoadCall2>(ctx, buffer, write_pos);
+                    inst->symtab_index_.set(*s);
+                } else {
+                    append<instruction::Pop>(ctx, buffer, write_pos);
+                    append<instruction::PushNil>(ctx, buffer, write_pos);
+                }
+                break;
+            }
+            }
+            auto exit_let = append<instruction::Jump>(ctx, buffer, write_pos);
+            end_jumps.push_back(exit_let);
+        }
+        for (auto& ej : end_jumps) {
+            ej->offset_.set(write_pos - jump_offset);
+        }
+        skip->offset_.set(write_pos - jump_offset);
     }
 
     return write_pos;

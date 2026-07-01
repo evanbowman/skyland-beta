@@ -1406,20 +1406,18 @@ TOP:
 
         case DestructureAssertPair::op(): {
             read<DestructureAssertPair>(*vm_ctx->code_, vm_ctx->pc_);
-            Protected top = get_op0();
-            if (top->type() not_eq Value::Type::cons) {
-                PLATFORM.fatal(::format("cannot destructure % into dotted pair", top));
-            }
+            auto top = get_op0();
+            pop_op();
+            push_op(make_boolean(top->type() == Value::Type::cons and not is_list(top)));
             break;
         }
 
         case DestructureAssertList::op(): {
             auto inst = read<DestructureAssertList>(*vm_ctx->code_, vm_ctx->pc_);
-            Protected top = get_op0();
+            auto top = get_op0();
             auto len = length(top);
-            if (not is_list(top) or len not_eq inst->len_) {
-                PLATFORM.fatal(::format("cannot destructure % into into symbol list of length %", top, inst->len_));
-            }
+            pop_op();
+            push_op(make_boolean(is_list(top) and len == inst->len_));
             break;
         }
 
