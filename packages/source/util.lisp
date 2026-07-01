@@ -220,11 +220,3 @@
 (defn/c --on-autoload (sym)
   (if (contains --autoload-symbols sym)
       (set-temp sym (eval-file (string "/scripts/autoload/" sym ".lisp")))))
-
-
-;; Runtime functions used for failed let destructuring when executing bytecode.
-(defn/c --destructure-pair-failure (v)
-  (error (format "failed to destructure % into pair!" v)))
-
-(defn/c --destructure-list-failure (v len)
-  (error (format "failed to destructure % into list of len %!" v len)))

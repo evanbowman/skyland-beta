@@ -130,3 +130,11 @@
                    ((< b-i a-i)  1)
                    (true ((this) a b (incr i)))))))
      a b 0)))
+
+
+;; Runtime functions used for failed let destructuring when executing bytecode.
+(defn/c --destructure-pair-failure (v)
+  (error (format "failed to destructure % into pair!" v)))
+
+(defn/c --destructure-list-failure (v len)
+  (error (format "failed to destructure % into list of len %!" v len)))
