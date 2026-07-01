@@ -1408,8 +1408,7 @@ TOP:
             read<DestructureAssertPair>(*vm_ctx->code_, vm_ctx->pc_);
             Protected top = get_op0();
             if (top->type() not_eq Value::Type::cons) {
-                pop_op();
-                push_error("cannot destructure % into dotted pair", top);
+                PLATFORM.fatal(::format("cannot destructure % into dotted pair", top));
             }
             break;
         }
@@ -1419,8 +1418,7 @@ TOP:
             Protected top = get_op0();
             auto len = length(top);
             if (not is_list(top) or len not_eq inst->len_) {
-                pop_op();
-                push_error("cannot destructure % into into symbol list of length %", top, inst->len_);
+                PLATFORM.fatal(::format("cannot destructure % into into symbol list of length %", top, inst->len_));
             }
             break;
         }
