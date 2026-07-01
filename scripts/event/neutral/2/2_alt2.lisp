@@ -17,17 +17,6 @@
 (flag-show (opponent) flag-id-old-empire)
 
 
-(defn/temp find-chr (x y)
-  (let ((opts (chrs (player)))
-        (xy (cons x y)))
-    (if-let ((match (filter (lambda (info)
-                              (equal xy (cons (get info 0)
-                                              (get info 1))))
-                            opts)))
-        (car match)
-      nil)))
-
-
 (global 'donate-crew) ;; For the linter
 
 
@@ -99,7 +88,7 @@
 
 (defn/temp donate-crew ()
   (let* (((x . y) (await (sel-input* nil (tr "Pick a crewmember:"))))
-         (chr (find-chr x y)))
+         (chr (chr-find x y)))
     (if chr
         (let ((icon (lookup 'icon (cddr chr))))
           (case (dialog-await-choice (tr (string (if icon

@@ -5,4 +5,4 @@
 (tr-bind-current)
 
 (lambda (isle x y)
-  (dialog (tr "The stairwell is quiet, light streams down from a hatch at the top...")))
+  (dialog (tr "The stairwell is quiet...")))

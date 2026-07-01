@@ -213,6 +213,17 @@
         (map (curry read-word vf) (range 0 16 4))))))
 
 
+(defn/c chr-find (x y)
+  (let ((opts (chrs (player)))
+        (xy (cons x y)))
+    (if-let ((match (filter (lambda (info)
+                              (equal xy (cons (get info 0)
+                                              (get info 1))))
+                            opts)))
+        (car match)
+      nil)))
+
+
 ;; The autoload mechanism provides a way to lazy-load infrequently used
 ;; symbols. As a final step before raising an undefined variable error, the
 ;; interpreter calls on-autoload for a symbol, to attempt to lazy-bind a value

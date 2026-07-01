@@ -557,8 +557,7 @@ void SelectMenuScene::enter(Scene& scene)
             });
         }
 
-        auto room = island()->get_room(cursor);
-        if (not room or (room and room->description_visible())) {
+        if (not is_far_camera()) {
             add_line(SystemString::sel_menu_inspect, "", true, [this, cursor] {
                 auto cb = APP.invoke_script("/scripts/inspect/inspect.lisp");
                 if (cb->type() == lisp::Value::Type::function) {
