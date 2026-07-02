@@ -1,6 +1,6 @@
-(empty line 1)
+
 fought off a hostile vessel, -%@, +%@.
-(empty line 3)
+
 % crewmembers died in the fighting!
 __unused__
 defeated the storm king!
