@@ -193,7 +193,10 @@ void BoxedDialogScene::process_command()
     }
 
     case 'B': {
-        parse_command_int();
+        bool hard_break = parse_command_int();
+        if (hard_break) {
+            data_->character_ = {};
+        }
         halt_text_ = true;
         break;
     }
@@ -539,6 +542,15 @@ void BoxedDialogScene::clear_textbox()
                           1 + data_->character_name_text_->len(),
                           st.y - 7,
                           112);
+    } else if (data_->character_name_text_) {
+        auto loc = data_->character_name_text_->coord();
+        auto len = data_->character_name_text_->len();
+        for (int y = loc.y - 1; y < loc.y + 1; ++y) {
+            for (int x = loc.x - 1; x < loc.x + len + 1; ++x) {
+                PLATFORM.set_tile(Layer::overlay, x, y, 0);
+            }
+        }
+        data_->character_name_text_.reset();
     }
     data_->anim_text_.clear();
     data_->anim_style_.clear();
