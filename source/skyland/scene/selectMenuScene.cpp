@@ -294,6 +294,21 @@ void SelectMenuScene::enter(Scene& scene)
         }
 
         if (not PLATFORM.network_peer().is_connected()) {
+
+            if (not is_far_camera()) {
+                add_line(SystemString::sel_menu_inspect, "", true, [this, cursor] {
+                    auto cb = APP.invoke_script("/scripts/inspect/inspect.lisp");
+                    if (cb->type() == lisp::Value::Type::function) {
+                        lisp::push_op(wrap_island(this->island()));
+                        lisp::push_op(L_INT(cursor.x));
+                        lisp::push_op(L_INT(cursor.y));
+                        lisp::safecall(cb, 3);
+                        lisp::pop_op();
+                    }
+                    return null_scene();
+                });
+            }
+
             Character* chr = nullptr;
             if (auto room = isle->get_room(cursor)) {
                 for (auto& c : room->characters()) {
@@ -426,19 +441,6 @@ void SelectMenuScene::enter(Scene& scene)
                         }
                         return null_scene();
                     });
-            }
-            if (not is_far_camera()) {
-                add_line(SystemString::sel_menu_inspect, "", true, [this, cursor] {
-                    auto cb = APP.invoke_script("/scripts/inspect/inspect.lisp");
-                    if (cb->type() == lisp::Value::Type::function) {
-                        lisp::push_op(wrap_island(this->island()));
-                        lisp::push_op(L_INT(cursor.x));
-                        lisp::push_op(L_INT(cursor.y));
-                        lisp::safecall(cb, 3);
-                        lisp::pop_op();
-                    }
-                    return null_scene();
-                });
             }
 
             if (powerdown_allowed and room and room->power_usage() < 0) {
