@@ -1,5 +1,5 @@
-'(("The hull gleams brightly in the warm sun..." . "El casco reluce bajo el cálido sol...")
-("The hull gleams brightly in the warm sun. Light rain beads on the hull and rolls off..." . "El casco reluce bajo el cálido sol. Una lluvia ligera se acumula en gotas sobre el casco y resbala...")
+'(("The hull gleams brightly in the cold air..." . "El casco reluce en el aire frío...")
+("The hull gleams brightly in the cold air. Light rain beads on the hull and rolls off..." . "El casco reluce en el aire frío. Una lluvia ligera se acumula en gotas sobre el casco y resbala...")
 ("The hull sheds sheets of water as rain falls on its gleaming surface..." . "El casco desprende cortinas de agua mientras la lluvia cae sobre su reluciente superficie...")
 ("A fine dusting of frost coats the unblemished metal. The hull is cold and quiet..." . "Una fina capa de escarcha cubre el metal impecable. El casco está frío y silencioso...")
 ("Radioactive particles bombard the hull, ash and dust settle in every crevice..." . "Partículas radiactivas bombardean el casco; ceniza y polvo se asientan en cada grieta...")

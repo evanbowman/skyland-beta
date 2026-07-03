@@ -14,7 +14,7 @@
                (ladder+ . stairwell))))
     (let ((match (lookup room-sym sub)))
       (if match
-          ((eval-file (format "scripts/inspect/%.lisp" match) isle x y))
+          ((eval-file (format "scripts/inspect/%.lisp" match)) isle x y)
           (case (rinfo 'category room-sym)
             ('weapon
              (if (room-target-get isle x y)

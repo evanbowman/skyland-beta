@@ -7,13 +7,13 @@
 (lambda (isle x y)
   (let ((hp (room-hp isle x y)))
     (cond
-      ((> hp 200)
+      ((> hp 190)
        (case (weather)
          (weather-id-clear
-          (dialog (tr "The hull gleams brightly in the warm sun...")))
+          (dialog (tr "The hull gleams brightly in the cold air...")))
 
          (weather-id-sunshower
-          (dialog (tr "The hull gleams brightly in the warm sun. Light rain beads on the hull and rolls off...")))
+          (dialog (tr "The hull gleams brightly in the cold air. Light rain beads on the hull and rolls off...")))
 
          (weather-id-storm)
 
