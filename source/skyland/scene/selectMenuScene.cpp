@@ -295,7 +295,7 @@ void SelectMenuScene::enter(Scene& scene)
 
         if (not PLATFORM.network_peer().is_connected()) {
 
-            if (not is_far_camera()) {
+            if (not is_far_camera() and APP.game_mode() not_eq App::GameMode::tutorial) {
                 add_line(SystemString::sel_menu_inspect, "", false, [this, cursor] {
                     auto cb = APP.invoke_script("/scripts/inspect/inspect.lisp");
                     if (cb->type() == lisp::Value::Type::function) {

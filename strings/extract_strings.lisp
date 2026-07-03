@@ -72,6 +72,7 @@
   (visit-files "/scripts/surprise/" output)
   (visit-files "/scripts/surrender/" output)
   (visit-files "/scripts/config/" output)
+  (visit-files "/scripts/inspect/" output)
 
   (visit-file "/scripts/storm_king.lisp" output)
   (visit-file "/scripts/surrender.lisp" output)
