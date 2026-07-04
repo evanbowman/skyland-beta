@@ -31,6 +31,7 @@
 #include "skyland/scene_pool.hpp"
 #include "skyland/sharedVariable.hpp"
 #include "skyland/skyland.hpp"
+#include "script/lisp.hpp"
 
 
 
@@ -40,6 +41,10 @@ namespace skyland
 
 
 SHARED_VARIABLE(powerdown_allowed);
+
+
+
+lisp::Value* wrap_island(Island* isle);
 
 
 
@@ -289,6 +294,21 @@ void SelectMenuScene::enter(Scene& scene)
         }
 
         if (not PLATFORM.network_peer().is_connected()) {
+
+            if (not is_far_camera() and APP.game_mode() not_eq App::GameMode::tutorial) {
+                add_line(SystemString::sel_menu_inspect, "", false, [this, cursor] {
+                    auto cb = APP.invoke_script("/scripts/inspect/inspect.lisp");
+                    if (cb->type() == lisp::Value::Type::function) {
+                        lisp::push_op(wrap_island(this->island()));
+                        lisp::push_op(L_INT(cursor.x));
+                        lisp::push_op(L_INT(cursor.y));
+                        lisp::safecall(cb, 3);
+                        lisp::pop_op();
+                    }
+                    return null_scene();
+                });
+            }
+
             Character* chr = nullptr;
             if (auto room = isle->get_room(cursor)) {
                 for (auto& c : room->characters()) {
@@ -422,6 +442,7 @@ void SelectMenuScene::enter(Scene& scene)
                         return null_scene();
                     });
             }
+
             if (powerdown_allowed and room and room->power_usage() < 0) {
                 if (is_player_island(island())) {
                     add_line(SystemString::sel_menu_adjust_power,

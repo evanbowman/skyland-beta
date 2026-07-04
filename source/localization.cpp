@@ -481,6 +481,7 @@ standard_charset_map(const utf8::Codepoint& cp)
         case UTF8_GETCHR(u8"ẞ"): return 315;
         case UTF8_GETCHR(u8"ã"): return 338;
         case UTF8_GETCHR(u8"õ"): return 337;
+        case UTF8_GETCHR(u8"ō"): return 339;
 
         case UTF8_GETCHR(u8"&"): return 316;
         case UTF8_GETCHR(u8"┌"): return 319;
@@ -500,6 +501,7 @@ standard_charset_map(const utf8::Codepoint& cp)
         case UTF8_GETCHR(u8"▒"): return 332;
         case UTF8_GETCHR(u8"░"): return 333;
         case UTF8_GETCHR(u8"μ"): return 334;
+        case UTF8_GETCHR(u8"🔎"): return 340;
             // clang-format on
 
         default:

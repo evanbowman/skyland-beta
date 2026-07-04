@@ -2430,6 +2430,13 @@ BINDING_TABLE({
           s32 num;
           s32 div;
           if (lisp::to_rational(lisp::get_op0(), num, div)) {
+              if (num == 0) {
+                  // FIXME: return a division by zero error. This return
+                  // statement makes the old, problematic behavior explicit, but
+                  // really we ought to return an error if we can determine that
+                  // nothing relies on this statement.
+                  return lisp::make_integer(0);
+              }
               return lisp::make_integer(rng::choice(num, rng::critical_state));
           }
           return L_NIL;

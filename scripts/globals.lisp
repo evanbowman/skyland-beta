@@ -33,7 +33,8 @@
  'debrief-strs
  'adv-var-set
  'adv-var-list
- 'tr-bindings)
+ 'tr-bindings
+ 'tr-files)
 
 
 (defconstant difficulty-beginner 0)

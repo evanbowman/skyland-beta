@@ -17,7 +17,10 @@
 
 ;; Choose a random element of a list.
 (defn/c sample ((lat . pair))
-  (get lat (choice (length lat))))
+  (if (nil? lat)
+      nil
+      (get lat (choice (length lat)))))
+
 
 (defn/c secret ((x . int) (y . int) (text . string))
   (room-mut (opponent) x y 'code)
@@ -211,6 +214,17 @@
     (when (file-exists? path)
       (when-let ((vf (file-open path)))
         (map (curry read-word vf) (range 0 16 4))))))
+
+
+(defn/c chr-find (x y)
+  (let ((opts (chrs (player)))
+        (xy (cons x y)))
+    (if-let ((match (filter (lambda (info)
+                              (equal xy (cons (get info 0)
+                                              (get info 1))))
+                            opts)))
+        (car match)
+      nil)))
 
 
 ;; The autoload mechanism provides a way to lazy-load infrequently used
