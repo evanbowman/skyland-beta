@@ -2410,8 +2410,8 @@ void Platform::Screen::display()
     }
 
     if (not get_gflag(GlobalFlag::parallax_clouds)) {
-        BG1_X_SCROLL = view_offset.x * 0.3f;
-        BG1_Y_SCROLL = view_offset.y * 0.3f;
+        BG1_X_SCROLL = view_offset.x;
+        BG1_Y_SCROLL = view_offset.y;
     } else {
         if (not get_gflag(GlobalFlag::v_parallax)) {
             BG1_Y_SCROLL = view_offset.y / 2;
@@ -6972,6 +6972,9 @@ static const Platform::Extensions extensions{
     .feed_watchdog = []() { ::watchdog_counter = 0; },
     .update_parallax_r1 =
         [](u8 scroll) {
+            if (not get_gflag(GlobalFlag::parallax_clouds)) {
+                return;
+            }
             auto& screen = PLATFORM.screen();
             auto center = screen.get_view().int_center().cast<s32>();
             if (not get_gflag(GlobalFlag::v_parallax)) {
@@ -7034,6 +7037,9 @@ static const Platform::Extensions extensions{
         },
     .update_parallax_r2 =
         [](u8 scroll) {
+            if (not get_gflag(GlobalFlag::parallax_clouds)) {
+                return;
+            }
             auto& screen = PLATFORM.screen();
             auto center = screen.get_view().int_center().cast<s32>();
             if (not get_gflag(GlobalFlag::v_parallax)) {
@@ -7101,6 +7107,12 @@ static const Platform::Extensions extensions{
                         vertical_parallax_table[i] = 0;
                     }
                 }
+            } else {
+                int temp;
+                DMA_TRANSFER((volatile short*)0x4000014, &temp, 1, 0, 0);
+                DMA_TRANSFER((volatile short*)0x4000016, &temp, 1, 3, 0);
+                DMA_TRANSFER(&REG_WIN0H, &vertical_parallax_table[1], 1, 2, 0);
+                vblank_dma_callback = [] {};
             }
         },
     .vertical_parallax_enable =

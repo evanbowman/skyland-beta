@@ -479,10 +479,12 @@ if(NINTENDO_DS OR GAMEBOY_ADVANCE)
     ${DATA_DIR}/glossary_misc_cg_flattened.s
     ${DATA_DIR}/glossary_decoration_cg_flattened.s
     ${DATA_DIR}/spritesheet.s
+    ${DATA_DIR}/spritesheet_sailboat.s
     ${DATA_DIR}/background.s
     ${DATA_DIR}/background_macro.s
     ${DATA_DIR}/background_macro_night.s
     ${DATA_DIR}/background_title_screen.s
+    ${DATA_DIR}/background_sailing.s
     ${DATA_DIR}/spritesheet_title_screen.s
     ${DATA_DIR}/spritesheet_intro.s
     ${DATA_DIR}/spritesheet_macro.s
@@ -757,6 +759,7 @@ endif()
 if(GAMEBOY_ADVANCE OR NINTENDO_DS)
   if(GBA_AUTOBUILD_IMG)
     add_spritesheet(spritesheet 2 4 NO)
+    add_spritesheet(spritesheet_sailboat 2 4 NO)
     add_spritesheet(spritesheet_title_screen 2 4 NO)
     add_spritesheet(spritesheet_intro 2 4 NO)
     add_spritesheet(spritesheet_macro 2 4 NO)
@@ -799,6 +802,7 @@ if(GAMEBOY_ADVANCE OR NINTENDO_DS)
     add_background(background_macro 0 0 NO YES)
     add_background(background_macro_night 0 0 NO YES)
     add_background(background_title_screen 0 0 NO YES)
+    add_background(background_sailing 0 0 NO YES)
     add_overlay(colorProfiles 12 7 NO NO)
     add_overlay(flags 2 2 NO NO)
     add_overlay(character_art 4 4 NO NO)

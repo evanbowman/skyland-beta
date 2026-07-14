@@ -3,6 +3,7 @@
 #include "fileBrowserModule.hpp"
 #include "skyland/scene/boxedDialogScene.hpp"
 #include "skyland/scene/introCreditsScene.hpp"
+#include "skyland/scene/sailingSimulatorScene.hpp"
 #include "skyland/scene/textviewScene.hpp"
 #include "skyland/scene/titleScreenScene.hpp"
 #include "skyland/skyland.hpp"
@@ -489,6 +490,8 @@ ScenePtr DataCartModule::boot_cart(int cart_index)
         return make_scene<IntroCreditsScene>();
     } else if (*type == "checkers") {
         return make_scene<CheckersModule>();
+    } else if (*type == "sailing") {
+        return make_scene<SailingSimulatorScene>();
     } else if (*type == "image") {
         PLATFORM.speaker().play_sound("tw_bell", 2);
         return make_scene<CartPhotoViewScene>(cart_index);
