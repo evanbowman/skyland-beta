@@ -446,7 +446,7 @@
 ;; NOTE: these checks are too time-consuming to run on the gba. The nighly
 ;; regression system, using the desktop build of the game, runs these
 ;; localization string checks.
-(when (not (equal (device-info 'name)) "GameboyAdvance")
+(when (not (equal (device-info 'name) "GameboyAdvance"))
   (let ((lang-opts (map cdr (eval-file "/strings/lang.lisp"))))
     (foreach (lambda (locale)
                (regr-print "                              " 0 5)
