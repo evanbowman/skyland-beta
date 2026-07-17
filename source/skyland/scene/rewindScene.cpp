@@ -724,6 +724,13 @@ ScenePtr RewindScene::update(Time)
             // original room, and the easiest way is to destroy everything and
             // re-create it.
 
+            // NOTE: the above statement later proved problematic due to the
+            // sequencing of when things are created and destroyed and plundered
+            // room sentinal structure creation, so we're manually serializing
+            // and de-serializing plundered room info to preserve across the
+            // complex logic below...
+            lisp::Protected room_info = L_NIL;
+
             // First, we want to remove all characters inhabiting the
             // plundered-room structures that comprise the room. Cache them in
             // buffer chrs.
@@ -737,6 +744,9 @@ ScenePtr RewindScene::update(Time)
                     for (auto& room : island->rooms()) {
                         if (room->position().x == x and
                             room->position().y == y) {
+                            if (room->metaclass_index() == e->type_) {
+                                room_info = room->serialize();
+                            }
                             for (auto& chr : room->characters()) {
                                 chrs.push_back(std::move(chr));
                                 room->edit_characters().clear();
@@ -761,6 +771,9 @@ ScenePtr RewindScene::update(Time)
 
             // Add characters back.
             if (auto room = island->get_room({e->x_, e->y_})) {
+                if (room_info not_eq L_NIL) {
+                    room->deserialize(room_info);
+                }
                 for (auto& chr : chrs) {
                     room->edit_characters().push(std::move(chr));
                 }
