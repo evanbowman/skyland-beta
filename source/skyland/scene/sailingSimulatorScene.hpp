@@ -157,34 +157,6 @@ class SailingSimulatorScene : public Scene
 public:
 
 
-    class Cannonball : public Entity
-    {
-    public:
-        Cannonball(Vec2<Fixnum> pos, Vec2<Fixnum> vector) : Entity({}), vector_(vector)
-        {
-            sprite_.set_size(Sprite::Size::w8_h8);
-            sprite_.set_tidx_8x8(34, 0);
-            sprite_.set_position(pos);
-            sprite_.set_origin({4, 4});
-        }
-
-        void update(Time delta) override
-        {
-            timeout_ -= delta;
-            if (timeout_ <= 0) {
-                kill();
-            }
-            auto pos = sprite_.get_position();
-            pos = pos + vector_;
-            sprite_.set_position(pos);
-        }
-
-    private:
-        Vec2<Fixnum> vector_;
-        Time timeout_ = milliseconds(600);
-    };
-
-
     class WakeRipple : public Entity
     {
     public:
@@ -375,49 +347,6 @@ public:
         }
 
 
-        void starboard_cannon()
-        {
-            auto pos = position_;
-            auto dir = rotation_.as_integer();
-            dir += 90;
-            dir %= 360;
-            pos.x += 4.0_fixed * rotation_lut[dir].x;
-            pos.y += 4.0_fixed * rotation_lut[dir].y;
-            auto vector = 3.0_fixed * Vec2<Fixnum>{rotation_lut[dir].x, rotation_lut[dir].y};
-            vector = vector + velocity();          // was sail_force_vector(); now carries drift too
-            if (auto e = APP.alloc_entity<Cannonball>(pos, vector)) {
-                APP.effects().push(std::move(e));
-            }
-
-            const int recoil_dir = (dir + 180) % 360;
-            const Fixnum recoil  = 0.4_fixed;
-            apply_impulse(recoil * Vec2<Fixnum>{rotation_lut[recoil_dir].x,
-                                                rotation_lut[recoil_dir].y});
-        }
-
-
-        void port_cannon()
-        {
-            auto pos = position_;
-            auto dir = rotation_.as_integer();
-            dir += 270;
-            dir %= 360;
-            pos.x += 4.0_fixed * rotation_lut[dir].x;
-            pos.y += 4.0_fixed * rotation_lut[dir].y;
-            auto vector = 3.0_fixed * Vec2<Fixnum>{rotation_lut[dir].x,
-                                                   rotation_lut[dir].y};
-            vector = vector + sail_force_vector();
-            if (auto e = APP.alloc_entity<Cannonball>(pos, vector)) {
-                APP.effects().push(std::move(e));
-            }
-
-            const int recoil_dir = (dir + 180) % 360;
-            const Fixnum recoil  = 0.4_fixed;
-            apply_impulse(recoil * Vec2<Fixnum>{rotation_lut[recoil_dir].x,
-                                                rotation_lut[recoil_dir].y});
-        }
-
-
         void update(const Wind& wind)
         {
             // --- Helm: full rudder once there's way on; fades only near stall --------
@@ -440,14 +369,6 @@ public:
             } else if (PLATFORM.input().pressed<Button::right>()) {
                 apply_turn(turn);
             }
-
-            // if (button_down<Button::action_1>()) {
-            //     starboard_cannon();
-            // }
-
-            // if (button_down<Button::action_2>()) {
-            //     port_cannon();
-            // }
 
             update_entities(milliseconds(17), projectiles_);
 
@@ -661,7 +582,6 @@ public:
                 mix_amt_ = 128;
             }
 
-
             // LOWER block: its row 0 at tack_x IS the tack -> land that on the gooseneck.
             (*sail_texture_1_)->remap(lower);
             Sprite lo;
@@ -740,7 +660,28 @@ public:
     };
 
 
+    struct State
+    {
+        Boat boat_;
+        Wind wind_;
+        Time anim_in_time_ = 0;
+        int circ_radius_ = 0;
+        bool exit_ = false;
+    };
+
+
+    SailingSimulatorScene() : state_(allocate<State>("sailing-state"))
+    {
+    }
+
+
     static constexpr const auto north_wind = 270.0_fixed;
+
+
+    State& state()
+    {
+        return **state_;
+    }
 
 
     void enter(Scene& prev) override
@@ -760,7 +701,9 @@ public:
         PLATFORM.clear_layer(Layer::map_0);
         PLATFORM.clear_layer(Layer::map_1);
         globals().entity_pools_.create("entity-mem");
-        wind_ = north_wind;
+        state().wind_ = north_wind;
+
+        PLATFORM.speaker().stream_music("high_wind.raw", 0);
     }
 
 
@@ -771,45 +714,45 @@ public:
         PLATFORM_EXTENSION(enable_parallax_clouds, true);
         init_clouds();
         APP.effects().clear();
+        PLATFORM.speaker().stream_music("unaccompanied_wind.raw", 0);
     }
 
 
     ScenePtr update(Time delta) override
     {
-        if (button_down<Button::alt_1>()) {
-            if (not sail_power_noted_) {
-                PLATFORM.fill_overlay(0);
-                sail_power_noted_ = true;
-            }
-        }
+        state().anim_in_time_ += delta;
 
+        constexpr auto fade_duration = milliseconds(800);
+        if (state().anim_in_time_ >= fade_duration) {
+            state().circ_radius_ = -1;
+        } else {
+            auto amount = 1.f - smoothstep(0.f, fade_duration, state().anim_in_time_);
+            state().circ_radius_ = 144 - int(144 * amount);
+            if (state().anim_in_time_ > delta) {
+                amount *= 0.75f;
+            }
+            // PLATFORM.screen().schedule_fade(amount);
+        }
 
         update_entities(milliseconds(17), APP.effects());
 
-        boat_.update(wind_);
+        state().boat_.update(state().wind_);
         auto view = PLATFORM.screen().get_view();
-        auto center = boat_.get_position();
+        auto center = state().boat_.get_position();
         center.x -= 120.0_fixed;
         center.y -= 80.0_fixed;
         view.set_center(fvec(center));
         PLATFORM.screen().set_view(view);
 
-        for (int x = 0; x < 30; ++x) {
-            PLATFORM.set_tile(Layer::overlay, x, 19, 0);
-        }
-        if (auto str = boat_.fmt_point_of_sail(wind_)) {
-            Text::print(str, {0, 19});
-        }
-
-        if (button_down<Button::alt_2>()) {
-            wind_ = wind_ + 45.0_fixed;
-            if (wind_ > 360.0_fixed) {
-                wind_ = wind_ - 360.0_fixed;
-            }
+        if (state().circ_radius_ < 0) {
+            show_hud(state().wind_);
         }
 
         if (button_down<Button::action_2>()) {
             PLATFORM.screen().schedule_fade(1);
+            PLATFORM.fill_overlay(0);
+            state().exit_ = true;
+            APP.effects().clear();
             return make_scene<DataCartModule>();
         }
 
@@ -817,9 +760,39 @@ public:
     }
 
 
+    void show_hud(const Fixnum& wind)
+    {
+        for (int x = 0; x < 30; ++x) {
+            PLATFORM.set_tile(Layer::overlay, x, 19, 0);
+        }
+        if (auto str = state().boat_.fmt_point_of_sail(wind)) {
+            Text::print(str, {0, 19});
+        }
+    }
+
+
     void display() override
     {
-        boat_.display(wind_);
+        if (state().exit_) {
+            return;
+        }
+
+        if (state().circ_radius_ >= 0) {
+            int circ_center_x = PLATFORM.screen().size().x / 2;
+            int circ_center_y = PLATFORM.screen().size().y / 2;
+
+            PLATFORM_EXTENSION(iris_wipe_effect,
+                               state().circ_radius_,
+                               circ_center_x,
+                               circ_center_y);
+        } else {
+            PLATFORM_EXTENSION(iris_wipe_effect, 0, 0, 0);
+            PLATFORM_EXTENSION(enable_parallax_clouds, false);
+        }
+
+        if (not state().exit_) {
+            state().boat_.display(state().wind_);
+        }
 
         for (auto& effect : APP.effects()) {
             PLATFORM.screen().draw(effect->sprite());
@@ -829,9 +802,7 @@ public:
 
 
 private:
-    Boat boat_;
-    Wind wind_;
-    bool sail_power_noted_ = false;
+    Optional<DynamicMemory<State>> state_;
 };
 
 
