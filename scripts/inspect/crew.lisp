@@ -17,10 +17,10 @@
           (if (file-exists? fpath)
               (let ((opts nil))
                 (push opts (read-ini fpath "rooms" (string room)))
-                (when adventure-log
-                  (push opts (read-ini fpath "adv-log" (string (caar adventure-log))))
-                  (when (cdr adventure-log)
-                    (push opts (read-ini fpath "adv-log" (string (caar (cdr adventure-log)))))))
+                ;; (when adventure-log
+                ;;   (push opts (read-ini fpath "adv-log" (string (caar adventure-log))))
+                ;;   (when (cdr adventure-log)
+                ;;     (push opts (read-ini fpath "adv-log" (string (caar (cdr adventure-log)))))))
                 (if-let ((txt (sample (remove opts nil))))
                     (dialog-await
                      (format "<c:%:%> " name icon)
