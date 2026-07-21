@@ -1079,11 +1079,7 @@ BINDING_TABLE({
           L_EXPECT_RATIONAL(0);
 
           DataCartLibrary lib;
-          if (lib.load(L_LOAD_INT(0))) {
-              return L_INT(1);
-          }
-
-          return L_NIL;
+          return lisp::make_boolean((bool)lib.load(L_LOAD_INT(0)));
       }}},
     {"cart-read",
      {SIG2(string, rational, string),

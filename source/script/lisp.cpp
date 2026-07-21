@@ -251,6 +251,7 @@ struct Context
     Value* debug_watchpoints_ = nullptr;
 
     Value* nil_ = nullptr;
+    Value* integer_one_ = nullptr;
     Value* string_buffer_ = nullptr;
     Value* bytecode_buffer_ = nullptr;
     Value* globals_tree_ = nullptr;
@@ -1344,7 +1345,7 @@ Value* make_cons(Value* car, Value* cdr)
 Value* make_boolean(bool is_true)
 {
     if (is_true) {
-        return L_INT(1);
+        return L_CTX.integer_one_;
     } else {
         return L_NIL;
     }
@@ -1779,6 +1780,7 @@ Value* make_string(const char* string)
     }
 
     auto [buffer, offset] = store_string(string, len);
+    push_op(buffer); // GC protect buffer
 
     auto val = alloc_value();
     val->hdr_.type_ = Value::Type::string;
@@ -1786,6 +1788,8 @@ Value* make_string(const char* string)
     val->string().data_.memory_.databuffer_ = compr(buffer);
     val->string().data_.memory_.offset_ = offset;
     val->string().hdr_.mode_bits_ = String::memory_string;
+
+    pop_op(); // GC unprotect buffer
     return val;
 }
 
@@ -3448,6 +3452,7 @@ void Protected::gc_mark()
 static void gc_mark()
 {
     gc_mark_value(L_CTX.nil_);
+    gc_mark_value(L_CTX.integer_one_);
     gc_mark_value(L_CTX.lexical_bindings_);
     for (auto& mcr : L_CTX.macros_) {
         gc_mark_value(mcr.definition_);
@@ -3961,7 +3966,7 @@ FINAL:
     if (symbol == "nil" or symbol == "false") {
         push_op(get_nil());
     } else if (symbol == "true") {
-        push_op(make_integer(1));
+        push_op(L_CTX.integer_one_);
     } else {
         if (symbol[0] == '#') {
             u32 symtab_index = 0;
@@ -4229,7 +4234,7 @@ static void macroexpand()
 }
 
 
-static void negate_number(Value* v)
+static void __negate_number(Value* v)
 {
     if (v->type() == Value::Type::ratio) {
         dcompr(v->ratio().numerator_)->integer().value_ *= -1;
@@ -4292,7 +4297,7 @@ template <typename T> u32 read_impl(T& code, int offset)
                 ++i;
                 pop_op(); // nil
                 i += read_number(code, offset + i);
-                negate_number(get_op0());
+                __negate_number(get_op0());
                 return i;
             } else {
                 if (code[offset + i + 1] == '.' and
@@ -4301,7 +4306,7 @@ template <typename T> u32 read_impl(T& code, int offset)
                     ++i;
                     pop_op(); // nil
                     i += read_number(code, offset + i);
-                    negate_number(get_op0());
+                    __negate_number(get_op0());
                     return i;
                 }
                 goto READ_SYMBOL;
@@ -7041,6 +7046,7 @@ void init(Optional<std::pair<const char*, u32>> external_symtab,
     L_CTX.nil_ = alloc_value();
     L_CTX.nil_->hdr_.type_ = Value::Type::nil;
     L_CTX.nil_->hdr_.mode_bits_ = 0;
+    L_CTX.integer_one_ = L_INT(1);
     L_CTX.globals_tree_ = L_CTX.nil_;
     L_CTX.callstack_ = L_CTX.nil_;
     L_CTX.lexical_bindings_ = L_CTX.nil_;
