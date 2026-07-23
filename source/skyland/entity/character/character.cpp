@@ -280,9 +280,10 @@ void Character::rewind(Time delta)
     sprite_.set_texture_index(base_frame(this) + 5);
 
     auto has_opponent = [&](Room* room) {
-        for (auto& character : room->characters()) {
-            if (character->owner() not_eq owner() and
-                character->grid_position() == grid_position_) {
+        const bool mine = owner_is_player_;
+        for (auto& chr : room->characters()) {
+            if (chr->grid_position() == grid_position_ and
+                chr->owner_is_player_ not_eq mine) {
                 return true;
             }
         }
@@ -370,9 +371,10 @@ void Character::set_idle()
 
 bool Character::has_opponent(Room* room)
 {
-    for (auto& character : room->characters()) {
-        if (character->owner() not_eq owner() and
-            character->grid_position() == grid_position_) {
+    const bool mine = owner_is_player_;
+    for (auto& chr : room->characters()) {
+        if (chr->grid_position() == grid_position_ and
+            chr->owner_is_player_ not_eq mine) {
             return true;
         }
     }
