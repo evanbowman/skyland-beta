@@ -106,7 +106,7 @@ ScenePtr TextEntryScene::update(Time delta)
         return player().test_button(k, milliseconds(500), milliseconds(100));
     };
 
-    auto row_strlen = strlen(keyboard[keyboard_cursor_.y]);
+    auto row_strlen = PLATFORM.strlen(keyboard[keyboard_cursor_.y]);
     if (row_strlen % 2) {
         Platform::fatal("logic error: invalid spacing in keyboard");
     }
@@ -197,7 +197,7 @@ static const auto status_colors =
 void TextEntryScene::render_keyboard()
 {
     for (int r = 0; r < 4; ++r) {
-        auto l = strlen(keyboard[r]);
+        auto l = PLATFORM.strlen(keyboard[r]);
         for (u32 i = 0; i < l; ++i) {
 
             const char c = keyboard[r][i];

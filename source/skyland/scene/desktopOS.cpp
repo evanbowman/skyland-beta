@@ -146,8 +146,8 @@ public:
     {
     public:
         DropdownMenu(const char* name, u8 x, u8 y)
-            : Clickable({{u8(strlen(name) * 8), 8}, {0, 0}}), name_(name),
-              x_(x), y_(y)
+            : Clickable({{u8(PLATFORM.strlen(name) * 8), 8}, {0, 0}}),
+              name_(name), x_(x), y_(y)
         {
             pos().x = Fixnum::from_integer(x * 8);
             pos().y = Fixnum::from_integer(y * 8) - 7.0_fixed;
@@ -168,7 +168,7 @@ public:
 
         u8 name_len() const
         {
-            return strlen(name_);
+            return PLATFORM.strlen(name_);
         }
 
 
@@ -188,7 +188,7 @@ public:
             if (open_) {
                 u32 longest_opt = 0;
                 for (auto& opt : options_) {
-                    auto len = strlen(opt.name());
+                    auto len = PLATFORM.strlen(opt.name());
                     if (len > longest_opt) {
                         longest_opt = len;
                     }
@@ -231,8 +231,8 @@ public:
         {
         public:
             Option(const char* name, OptionCallback cb, u8 x, u8 y)
-                : Clickable({{u8(strlen(name) * 8), 8}, {0, 0}}), name_(name),
-                  cb_(cb)
+                : Clickable({{u8(PLATFORM.strlen(name) * 8), 8}, {0, 0}}),
+                  name_(name), cb_(cb)
             {
                 pos().x = Fixnum::from_integer(x * 8);
                 pos().y = Fixnum::from_integer(y * 8);
@@ -397,7 +397,7 @@ public:
                 return;
             }
             u8 x = pos().x.as_integer() / 8;
-            int offset = strlen(name_) / 2;
+            int offset = PLATFORM.strlen(name_) / 2;
             x -= (offset - 2);
             OverlayCoord dest{x, 17};
             if (g_os_->hint_label_ and g_os_->hint_label_->coord() == dest) {
@@ -739,7 +739,7 @@ public:
                         for (int x = 0; x < 30; ++x) {
                             PLATFORM.set_tile(Layer::overlay, x, 16, 82);
                         }
-                        if (strlen(name) == 0) {
+                        if (PLATFORM.strlen(name) == 0) {
                             name = "unknown";
                         }
                         Text::print(name, {0, 16});

@@ -199,7 +199,10 @@ public:
     // sufficient for calculating collision checking or anything like that,
     // mostly due to multiplayer, continuously moving things can get out of
     // sync.
-    Vec2<Fixnum> visual_origin() const;
+    Vec2<Fixnum> visual_origin() const
+    {
+        return {position_.x, position_.y + Fixnum::from_integer(ambient_movement_)};
+    }
 
 
     using Terrain = Buffer<u8, 16>;

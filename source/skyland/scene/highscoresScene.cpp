@@ -510,7 +510,7 @@ ScenePtr HighscoresScene::update(Time)
         auto gettext = [next]() {
             auto receive = [next](const char* text) {
                 __login_token.valid_ = true;
-                if (strlen(text) not_eq 8) {
+                if (PLATFORM.strlen(text) not_eq 8) {
                     // sanity check
                     Platform::fatal("qr text logic error");
                 }

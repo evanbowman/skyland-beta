@@ -44,7 +44,8 @@ bool vm_can_suspend(Value*& agitant)
                 seen_interpreted_context = true;
             }
             if ((seen_interpreted_context and
-                 v->hdr_.mode_bits_ == Function::ModeBits::lisp_bytecode_function) or
+                 v->hdr_.mode_bits_ ==
+                     Function::ModeBits::lisp_bytecode_function) or
                 v->hdr_.mode_bits_ == Function::ModeBits::cpp_function) {
                 agitant = v;
                 can_suspend = false;
@@ -58,8 +59,8 @@ bool vm_can_suspend(Value*& agitant)
 Optional<SuspendedExecutionContext> vm_execute(Value* code_buffer,
                                                int start_offset)
 {
-    return vm_resume({ .code_buffer_ = code_buffer,
-                       .program_counter_ = start_offset});
+    return vm_resume(
+        {.code_buffer_ = code_buffer, .program_counter_ = start_offset});
 }
 
 
@@ -87,16 +88,11 @@ struct VMFrame
             ScratchBufferPtr code,
             int start_offset,
             int nested_scope,
-            int pc) :
-        code_buffer_(code_buffer),
-        code_(code),
-        saved_lexical_bindings_(L_NIL),
-        start_offset_(start_offset),
-        nested_scope_(nested_scope),
-        pc_(pc),
-        arguments_break_loc_(0),
-        discard_flag_(false),
-        argc_(0)
+            int pc)
+        : code_buffer_(code_buffer), code_(code),
+          saved_lexical_bindings_(L_NIL), start_offset_(start_offset),
+          nested_scope_(nested_scope), pc_(pc), arguments_break_loc_(0),
+          discard_flag_(false), argc_(0)
     {
     }
 };
@@ -173,8 +169,7 @@ template <typename... Args> void push_error(const char* msg, Args&&... args)
 
 
 
-Optional<SuspendedExecutionContext>
-vm_resume(const ExecutionContext& ctx)
+Optional<SuspendedExecutionContext> vm_resume(const ExecutionContext& ctx)
 {
     Value* code_buffer = ctx.code_buffer_;
 
@@ -210,16 +205,17 @@ vm_resume(const ExecutionContext& ctx)
     Protected invoke_target(L_NIL);
     int invoke_argc = 0;
 
-#define INVOKE(FUNCTION, ARGC)        \
-    invoke_target = (Value*)FUNCTION; \
-    invoke_argc = ARGC;               \
-    goto INVOKE_FN;                   \
+#define INVOKE(FUNCTION, ARGC)                                                 \
+    invoke_target = (Value*)FUNCTION;                                          \
+    invoke_argc = ARGC;                                                        \
+    goto INVOKE_FN;
 
     goto TOP;
 
 INVOKE_FN:
     if (invoke_target->type() == Value::Type::function and
-        invoke_target->hdr_.mode_bits_ == Function::ModeBits::lisp_bytecode_function) {
+        invoke_target->hdr_.mode_bits_ ==
+            Function::ModeBits::lisp_bytecode_function) {
 
         auto obj = (Value*)invoke_target;
 
@@ -279,14 +275,10 @@ INVOKE_FN:
             dcompr(obj->function().lisp_impl_.lexical_bindings_);
 
         auto buf = obj->function().bytecode_impl_.databuffer();
-        auto so = obj->function().bytecode_impl_.bytecode_offset()
-            ->integer().value_;
+        auto so =
+            obj->function().bytecode_impl_.bytecode_offset()->integer().value_;
 
-        vm_stack.emplace_back(buf,
-                              buf->databuffer().value(),
-                              so,
-                              0,
-                              so);
+        vm_stack.emplace_back(buf, buf->databuffer().value(), so, 0, so);
 
         vm_ctx = &vm_stack.back();
         vm_ctx->argc_ = invoke_argc;
@@ -565,7 +557,7 @@ TOP:
                 if (auto data = __get_local(*stk_loc)) {
                     vm_deserialize_context(vm_stack, data);
                     vm_ctx = &vm_stack.back();
-                 }
+                }
             } else {
                 PLATFORM.fatal("resume failed: missing STK");
             }
@@ -1287,7 +1279,8 @@ TOP:
         }
 
         case PushList::op(): {
-            auto list_size = read<PushList>(*vm_ctx->code_, vm_ctx->pc_)->element_count_;
+            auto list_size =
+                read<PushList>(*vm_ctx->code_, vm_ctx->pc_)->element_count_;
             ListBuilder lat;
             for (int i = 0; i < list_size; ++i) {
                 lat.push_back(get_op((list_size - 1) - i));
@@ -1408,12 +1401,14 @@ TOP:
             read<DestructureAssertPair>(*vm_ctx->code_, vm_ctx->pc_);
             auto top = get_op0();
             pop_op();
-            push_op(make_boolean(top->type() == Value::Type::cons and not is_list(top)));
+            push_op(make_boolean(top->type() == Value::Type::cons and
+                                 not is_list(top)));
             break;
         }
 
         case DestructureAssertList::op(): {
-            auto inst = read<DestructureAssertList>(*vm_ctx->code_, vm_ctx->pc_);
+            auto inst =
+                read<DestructureAssertList>(*vm_ctx->code_, vm_ctx->pc_);
             auto top = get_op0();
             auto len = length(top);
             pop_op();

@@ -29,6 +29,14 @@ namespace skyland
 
 
 
+static u64 movement_step_recip(int race)
+{
+    // ceil(2^62 / duration); (timer * recip) >> 22 == floor(timer * 2^40 / duration)
+    return race == 3 ? 30744573456183ull : 15372286728092ull;
+}
+
+
+// NOTE: the legacy movement step timing function...
 static Time movement_step_duration(int race)
 {
     if (race == 3) {
@@ -1209,12 +1217,18 @@ void Character::movement_step(Time delta, Room* current_room)
             sprite_.set_flip({true, false});
         }
 
-        auto interval =
-            Fixnum::create((static_cast<s64>(timer_) * Fixnum::scale()) /
-                           static_cast<s64>(movement_step_duration(race_)));
+        const s32 dx = ((s32)dest_grid_pos.x - (s32)grid_position_.x) * 16;
+        const s32 dy = ((s32)dest_grid_pos.y - (s32)grid_position_.y) * 16;
 
-        auto fpos = interpolate_fp(dest, o, interval);
+        const s64 iv = (s64)(((u64)(u32)timer_ * movement_step_recip(race_)) >> 22);
 
+        auto axis = [&](Fixnum base, s32 d) {
+            return d ? base + Fixnum::create(iv * d) : base;
+        };
+
+        Vec2<Fixnum> fpos;
+        fpos.x = axis(o.x, dx);
+        fpos.y = axis(o.y, dy);
         sprite_.set_position(fpos);
     }
 

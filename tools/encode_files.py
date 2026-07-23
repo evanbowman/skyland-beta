@@ -287,7 +287,11 @@ def encode_file(path, real_name, out, symbol_index_map=None):
         global bytes_encoded
 
         if bytes_encoded % 4 != 0:
-            print('invalid padding!?', bytes_encoded % 4)
+            # NOTE: word alignment is required to make the filesystem access
+            # efficient, and various file data payloads need to be aligned to be
+            # accessed properly by the engine, music files in particular need to
+            # be word aligned, we might as well align everything.
+            raise Exception('invalid padding!? {}'.format(bytes_encoded % 4))
 
         encoded_path = real_name.encode('utf-8')
 

@@ -39,7 +39,7 @@ BoxedDialogScene::BoxedDialogScene(DialogBuffer buffer)
             return true;
         },
         buffer->c_str(),
-        strlen(buffer->c_str()));
+        PLATFORM.strlen(buffer->c_str()));
     buffer_.push_back('\0');
     text_state_.current_word_ = buffer_.begin();
     goto_tutorial_ = 0;
@@ -754,7 +754,7 @@ ScenePtr BoxedDialogScene::update(Time delta)
 
                 if (t_len > max_text_len) {
                     max_text_len = t_len;
-                    final_char = text[strlen(text) - 1];
+                    final_char = text[PLATFORM.strlen(text) - 1];
                 }
             });
 

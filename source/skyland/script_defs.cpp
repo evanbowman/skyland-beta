@@ -2129,7 +2129,7 @@ BINDING_TABLE({
           while (pool) {
               StringBuffer<96> output;
               output = pool->name();
-              auto name_len = strlen(pool->name());
+              auto name_len = PLATFORM.strlen(pool->name());
               if (name_len < 20) {
                   output += StringBuffer<20>(' ', 20 - name_len);
               }
@@ -2479,7 +2479,7 @@ BINDING_TABLE({
           auto fn = lisp::get_op(0);
 
           PLATFORM.walk_filesystem([fn, search](const char* path, u32 size) {
-              auto len = strlen(search->string().value());
+              auto len = PLATFORM.strlen(search->string().value());
               for (u32 i = 0; i < len; ++i) {
                   if (path[i] not_eq search->string().value()[i]) {
                       return;

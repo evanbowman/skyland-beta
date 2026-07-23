@@ -564,7 +564,7 @@ elseif(GAMEBOY_ADVANCE)
     ${SOURCE_DIR}/platform/gba/gba_platform.cpp
     ${SOURCE_DIR}/platform/gba/skyland_mgba.cpp
     ${SOURCE_DIR}/platform/gba/gbp_logo.cpp
-    ${SOURCE_DIR}/platform/gba/memcpy.s
+    ${SOURCE_DIR}/platform/gba/string.s
     ${SOURCE_DIR}/platform/gba/bios.s
     ${SOURCE_DIR}/platform/gba/filesystem.cpp
     ${SOURCE_DIR}/platform/gba/bootleg_cart.cpp

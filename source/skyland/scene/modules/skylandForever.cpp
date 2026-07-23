@@ -75,16 +75,17 @@ void SkylandForever::enter(Scene& prev)
     const auto help = SYSTR(sf_hint);
 
     help_.emplace(
-
         help->c_str(),
-        OverlayCoord{(u8)centered_text_margins(strlen(help->c_str())), 18});
+        OverlayCoord{(u8)centered_text_margins(PLATFORM.strlen(help->c_str())),
+                     18});
 
     const auto title = SYSTR(sf_title);
 
     title_.emplace(
 
         title->c_str(),
-        OverlayCoord{(u8)centered_text_margins(strlen(title->c_str())), 1});
+        OverlayCoord{(u8)centered_text_margins(PLATFORM.strlen(title->c_str())),
+                     1});
 }
 
 

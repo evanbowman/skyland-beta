@@ -378,7 +378,7 @@ void pretty_print_current_fn_with_expr(lisp::Value* expr)
                         return true;
                     },
                     line.c_str(),
-                    strlen(line.c_str()));
+                    PLATFORM.strlen(line.c_str()));
 
                 if (linum == ps.match_begin_line_) {
                     print_char(utf8::getc(">"), {0, y}, text_colors);

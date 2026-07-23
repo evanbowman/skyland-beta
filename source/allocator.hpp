@@ -434,7 +434,7 @@ template <u32 max_pages> struct GenericBumpAllocator
 
     const char* strdup(const char* str)
     {
-        const auto len = strlen(str);
+        const auto len = PLATFORM.strlen(str);
         if (auto cpy = (char*)alloc(len + 1, 1)) {
             for (u32 i = 0; i < len; ++i) {
                 cpy[i] = str[i];

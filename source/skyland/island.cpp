@@ -2393,13 +2393,6 @@ Vec2<Fixnum> Island::origin() const
 
 
 
-Vec2<Fixnum> Island::visual_origin() const
-{
-    return {position_.x, position_.y + Fixnum::from_integer(ambient_movement_)};
-}
-
-
-
 Optional<SharedEntityRef<Drone>> Island::get_drone(const RoomCoord& coord)
 {
     for (auto& drone_sp : drones()) {

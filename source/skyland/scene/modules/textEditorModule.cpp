@@ -667,7 +667,8 @@ TextEditorModule::TextEditorModule(UserContext&& user_context,
     init_glyph_table();
 
     StringBuffer<8> lisp_ext(".lisp");
-    const bool is_lisp_script = str_eq(get_extension(file_path), lisp_ext);
+    const bool is_lisp_script =
+        str_eq(get_extension(file_path).c_str(), lisp_ext.c_str());
 
     if (file_mode == FileMode::update) {
         if (str_eq(get_extension(file_path).c_str(), ".slb")) {
@@ -702,7 +703,7 @@ TextEditorModule::TextEditorModule(UserContext&& user_context,
                         return true;
                     },
                     data,
-                    strlen(data));
+                    PLATFORM.strlen(data));
             }
 
             text_buffer_.push_back(load_glyph('\0'));
@@ -769,7 +770,7 @@ void TextEditorModule::load_lisp_script(const char* data)
             return true;
         },
         data,
-        strlen(data));
+        PLATFORM.strlen(data));
 }
 
 
@@ -1676,7 +1677,7 @@ ScenePtr TextEditorModule::update(Time delta)
                     return;
                 }
 
-                const auto intern_len = strlen(word);
+                const auto intern_len = PLATFORM.strlen(word);
                 if (intern_len <= state_->current_word_.length()) {
                     return;
                 }

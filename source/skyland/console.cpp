@@ -154,7 +154,7 @@ public:
             if (num[0] == '@') {
                 ++num;
             }
-            scratch_buffer_dump_sector(parse_int(num, strlen(num)));
+            scratch_buffer_dump_sector(parse_int(num, PLATFORM.strlen(num)));
         } else if (line == "pools annotate") {
             GenericPool::print_diagnostics();
         } else if (line == "quit") {

@@ -228,11 +228,9 @@ int compile_let(CompilerContext& ctx,
         append<instruction::LexicalFramePush>(ctx, buffer, write_pos);
     }
 
-    struct DestructuringError {
-        enum {
-            pair,
-            list
-        } reason_;
+    struct DestructuringError
+    {
+        enum { pair, list } reason_;
         u8 arity_;
         instruction::JumpIfFalse* branch_target_;
     };
@@ -290,15 +288,17 @@ int compile_let(CompilerContext& ctx,
                     cdr->type() == Value::Type::symbol) {
 
                     append<instruction::Dup>(ctx, buffer, write_pos);
-                    append<instruction::DestructureAssertPair>(ctx, buffer, write_pos);
-                    auto jif = append<instruction::JumpIfFalse>(ctx, buffer, write_pos);
+                    append<instruction::DestructureAssertPair>(
+                        ctx, buffer, write_pos);
+                    auto jif = append<instruction::JumpIfFalse>(
+                        ctx, buffer, write_pos);
                     if (destructuring_error_branches.full()) {
-                        PLATFORM.fatal("too many destructuring let bindings in one expression!");
+                        PLATFORM.fatal("too many destructuring let bindings in "
+                                       "one expression!");
                     }
-                    destructuring_error_branches.push_back({
-                            .reason_ = DestructuringError::pair,
-                            .branch_target_ = jif
-                        });
+                    destructuring_error_branches.push_back(
+                        {.reason_ = DestructuringError::pair,
+                         .branch_target_ = jif});
                     append<instruction::Dup>(ctx, buffer, write_pos);
                     append<instruction::First>(ctx, buffer, write_pos);
                     binding_def_sym(car);
@@ -310,13 +310,15 @@ int compile_let(CompilerContext& ctx,
                     auto syms = sym;
                     if (is_list(cdr)) {
                         append<instruction::Dup>(ctx, buffer, write_pos);
-                        append<instruction::DestructureAssertList>(ctx, buffer, write_pos)->len_ = length(syms);
-                        auto jif = append<instruction::JumpIfFalse>(ctx, buffer, write_pos);
-                        destructuring_error_branches.push_back({
-                            .reason_ = DestructuringError::list,
-                            .arity_ = (u8)length(syms),
-                            .branch_target_ = jif
-                        });
+                        append<instruction::DestructureAssertList>(
+                            ctx, buffer, write_pos)
+                            ->len_ = length(syms);
+                        auto jif = append<instruction::JumpIfFalse>(
+                            ctx, buffer, write_pos);
+                        destructuring_error_branches.push_back(
+                            {.reason_ = DestructuringError::list,
+                             .arity_ = (u8)length(syms),
+                             .branch_target_ = jif});
                     }
                     while (true) {
                         auto head = syms->cons().car();
@@ -345,8 +347,9 @@ int compile_let(CompilerContext& ctx,
                         }
                     }
                 } else {
-                    PLATFORM.fatal("destructuring let unimplemented for compiled "
-                                   "bytecode!");
+                    PLATFORM.fatal(
+                        "destructuring let unimplemented for compiled "
+                        "bytecode!");
                 }
             }
         }
@@ -388,7 +391,8 @@ int compile_let(CompilerContext& ctx,
             switch (err.reason_) {
             case DestructuringError::pair: {
                 if (auto s = get_symtab_index("--destructure-pair-failure")) {
-                    auto inst = append<instruction::LoadCall1>(ctx, buffer, write_pos);
+                    auto inst =
+                        append<instruction::LoadCall1>(ctx, buffer, write_pos);
                     inst->symtab_index_.set(*s);
                 } else {
                     append<instruction::Pop>(ctx, buffer, write_pos);
@@ -399,8 +403,11 @@ int compile_let(CompilerContext& ctx,
 
             case DestructuringError::list: {
                 if (auto s = get_symtab_index("--destructure-list-failure")) {
-                    append<instruction::PushSmallInteger>(ctx, buffer, write_pos)->value_ = err.arity_;
-                    auto inst = append<instruction::LoadCall2>(ctx, buffer, write_pos);
+                    append<instruction::PushSmallInteger>(
+                        ctx, buffer, write_pos)
+                        ->value_ = err.arity_;
+                    auto inst =
+                        append<instruction::LoadCall2>(ctx, buffer, write_pos);
                     inst->symtab_index_.set(*s);
                 } else {
                     append<instruction::Pop>(ctx, buffer, write_pos);

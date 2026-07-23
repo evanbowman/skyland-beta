@@ -30,8 +30,7 @@ struct ExecutionContext
 using SuspendedExecutionContext = ExecutionContext;
 
 
-Optional<SuspendedExecutionContext>
-vm_resume(const ExecutionContext& ctx);
+Optional<SuspendedExecutionContext> vm_resume(const ExecutionContext& ctx);
 
 
 

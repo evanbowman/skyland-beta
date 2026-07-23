@@ -64,67 +64,7 @@ void Sprite::set_alpha(Alpha alpha)
 }
 
 
-void Sprite::set_mix(const ColorMix& mix)
-{
-    mix_ = mix;
-}
-
-
 void Sprite::set_size(Size size)
 {
     size_ = size;
-}
-
-
-Sprite::Rotation Sprite::get_rotation() const
-{
-    return rot_;
-}
-
-
-const Sprite::Scale& Sprite::get_scale() const
-{
-    return scale_;
-}
-
-
-const Vec2<Fixnum>& Sprite::get_position() const
-{
-    return position_;
-}
-
-
-const Vec2<s16>& Sprite::get_origin() const
-{
-    return origin_;
-}
-
-
-TextureIndex Sprite::get_texture_index() const
-{
-    return texture_index_;
-}
-
-
-Vec2<bool> Sprite::get_flip() const
-{
-    return {flip_x_, flip_y_};
-}
-
-
-Sprite::Alpha Sprite::get_alpha() const
-{
-    return static_cast<Sprite::Alpha>(alpha_);
-}
-
-
-const ColorMix& Sprite::get_mix() const
-{
-    return mix_;
-}
-
-
-Sprite::Size Sprite::get_size() const
-{
-    return static_cast<Sprite::Size>(size_);
 }

@@ -177,7 +177,7 @@ u32 integer_text_length(int n)
 
     locale_num2str(n, buffer.data(), 10);
 
-    return strlen(buffer.data());
+    return PLATFORM.strlen(buffer.data());
 }
 
 
@@ -433,7 +433,7 @@ void Text::append(const char* str, const OptColors& colors)
                 return true;
             },
             str,
-            strlen(str));
+            PLATFORM.strlen(str));
 
     } else {
         auto write_pos = static_cast<u8>(coord_.x + len_);
@@ -446,7 +446,7 @@ void Text::append(const char* str, const OptColors& colors)
                 return true;
             },
             str,
-            strlen(str));
+            PLATFORM.strlen(str));
     }
 }
 
@@ -522,7 +522,7 @@ TextView::LineCount TextView::assign(const char* str,
     position_ = coord;
     size_ = size;
 
-    const auto len = strlen(str);
+    const auto len = PLATFORM.strlen(str);
     const auto ulen = utf8::len(str);
     utf8::BufferedStr ustr(str, len);
 

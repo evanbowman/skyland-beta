@@ -6741,6 +6741,13 @@ void Platform::memset_words(void* dest, u8 byte, u32 word_count)
 
 
 
+u32 Platform::strlen(const char* str) const
+{
+    return ::strlen(str);
+}
+
+
+
 void no_op_task(void*)
 {
 }

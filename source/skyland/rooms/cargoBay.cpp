@@ -43,7 +43,7 @@ void CargoBay::format_description(StringBuffer<512>& buffer)
 
 bool CargoBay::set_cargo(const char* cargo, u8 count)
 {
-    if (strlen(cargo) + 1 > sizeof cargo_) {
+    if (PLATFORM.strlen(cargo) + 1 > sizeof cargo_) {
         return false;
     }
 
@@ -141,7 +141,8 @@ void CargoBay::deserialize(lisp::Value* list)
     if (lisp::length(list) >= 4) {
         auto c = lisp::get_list(list, 3);
         if (c->type() == lisp::Value::Type::string) {
-            set_cargo(c->string().value(), strlen(c->string().value()));
+            set_cargo(c->string().value(),
+                      PLATFORM.strlen(c->string().value()));
         }
     }
 

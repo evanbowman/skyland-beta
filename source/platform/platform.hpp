@@ -109,6 +109,7 @@ public:
 
 
     void memset_words(void* dest, u8 byte, u32 word_count);
+    u32 strlen(const char* string) const;
 
 
     // NOTE: overlay tiles are 8x8px, so only the top left quarter of the

@@ -69,7 +69,7 @@ void Settings::set(const char* key, const char* value)
             auto l_key = kvp->cons().car();
             if (l_key->type() == lisp::Value::Type::symbol and
                 str_eq(l_key->symbol().name(), key)) {
-                if (value == nullptr or strlen(value) == 0) {
+                if (value == nullptr or PLATFORM.strlen(value) == 0) {
                     kvp->cons().set_cdr(L_NIL);
                 } else {
                     kvp->cons().set_cdr(lisp::make_string(value));

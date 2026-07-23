@@ -69,7 +69,7 @@ static inline int boot_init()
 
         flash_filesystem::store_file_data("/mods/init.lisp",
                                           user_init_file,
-                                          strlen(user_init_file),
+                                          PLATFORM.strlen(user_init_file),
                                           {.use_compression_ = true});
 
         clean_boot = true;

@@ -51,7 +51,7 @@ void expand_escape_sequences(const char* str, Function<16, void(char)> on_char)
 
 ScratchBufferPtr save_str(const char* str)
 {
-    if (strlen(str) - 1 > SCRATCH_BUFFER_SIZE) {
+    if (PLATFORM.strlen(str) - 1 > SCRATCH_BUFFER_SIZE) {
         Platform::fatal("save_str passed excessively long string");
     }
     auto tmp = make_zeroed_sbr("cached-str");
@@ -85,7 +85,7 @@ bool str_eq(const char* p1, const char* p2)
         if (*p1 not_eq *p2) {
             return false;
         }
-        if (*p1 == '\0' or *p2 == '\0') {
+        if (*p1 == '\0') {
             return true;
         }
         ++p1;
@@ -116,10 +116,10 @@ char* float_to_string(float f_val, int buffersize, char* result)
         i++;
     }
 
-    str_reverse(result, strlen(result));
+    str_reverse(result, PLATFORM.strlen(result));
 
     // trim trailing zeroes
-    for (int i = strlen(result) - 1; i >= 0; ++i) {
+    for (int i = PLATFORM.strlen(result) - 1; i >= 0; --i) {
         if (result[i] == '0') {
             result[i] = '\0';
         } else {

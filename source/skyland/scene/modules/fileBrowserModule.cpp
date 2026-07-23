@@ -42,7 +42,7 @@ FileBrowserModule::FileBrowserModule(UserContext&& user_context,
     path_ = allocate<PathBuffer>("fs-path-buffer");
 
     StringBuffer<max_folder_name> temp;
-    u32 path_len = strlen(path);
+    u32 path_len = PLATFORM.strlen(path);
 
     for (u32 i = 0; i < path_len; ++i) {
         temp.push_back(path[i]);
@@ -211,7 +211,7 @@ void FileBrowserModule::repaint()
 
     // walk_fs now only populates cwd_names_ and folders — no enq_line calls.
     auto walk_fs = [&](const char* path, u32 size) {
-        auto path_len = strlen(path);
+        auto path_len = PLATFORM.strlen(path);
         if (path_len < cwd.length()) {
             return;
         }

@@ -72,7 +72,7 @@ u32 size()
         size += sizeof(FileHeader) + hdr->size_.get();
 
         --files_remaining;
-        current += sizeof(FileHeader) + hdr->size_.get();
+        current += sizeof(FileHeader) + hdr->size_._unsafe__aligned_read();
     }
 
     return size;
@@ -104,7 +104,7 @@ void walk(
         callback(hdr->path_, hdr->size_.get() + sizeof(*hdr));
 
         --files_remaining;
-        current += sizeof(FileHeader) + hdr->size_.get();
+        current += sizeof(FileHeader) + hdr->size_._unsafe__aligned_read();
     }
 }
 
@@ -118,7 +118,7 @@ Optional<DirectoryCache> find_directory(const char* prefix)
     const auto root = get_root();
 
     u32 files_remaining = root->file_count_.get();
-    const u32 prefix_len = strlen(prefix);
+    const u32 prefix_len = PLATFORM.strlen(prefix);
 
     while (files_remaining) {
         auto hdr = (FileHeader*)current;
@@ -137,7 +137,7 @@ Optional<DirectoryCache> find_directory(const char* prefix)
         }
 
         --files_remaining;
-        current += sizeof(FileHeader) + hdr->size_.get();
+        current += sizeof(FileHeader) + hdr->size_._unsafe__aligned_read();
     }
 
     return nullopt();
@@ -160,7 +160,7 @@ load(FilePath path, Optional<DirectoryCache> dir)
         files_remaining = (*dir).second;
     }
 
-    auto path_len = strlen(path);
+    auto path_len = PLATFORM.strlen(path);
     if (path_len > sizeof(FileHeader::path_) - 1) {
         PLATFORM.fatal(format("supplied path % exceeds max path len!", path));
     }
@@ -181,7 +181,7 @@ load(FilePath path, Optional<DirectoryCache> dir)
         }
 
         --files_remaining;
-        current += sizeof(FileHeader) + hdr->size_.get();
+        current += sizeof(FileHeader) + hdr->size_._unsafe__aligned_read();
     }
 
     return {nullptr, 0, nullptr};

@@ -175,7 +175,7 @@ SpriteText::SpriteText(const char* str, const Configuration& conf)
             return true;
         },
         str,
-        strlen(str));
+        PLATFORM.strlen(str));
 
     show_chars_ = entries_.size();
     pixel_width_ = x_cursor;

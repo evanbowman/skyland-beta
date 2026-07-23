@@ -35,6 +35,8 @@ struct FileHeader
 {
     char path_[62]; // Must be null-terminated.
     host_u16 flags_;
+    // NOTE: on gba, the size_ field should be properly aligned to word
+    // boundaries.
     host_u32 size_;
 
     u8 get_padding()

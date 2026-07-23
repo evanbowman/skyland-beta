@@ -59,25 +59,63 @@ public:
     void set_texture_index(TextureIndex texture_index);
 
 
-    void set_flip(const Vec2<bool>& flip);
+    Vec2<bool> get_flip() const
+    {
+        return {flip_x_, flip_y_};
+    }
 
 
-    void set_alpha(Alpha alpha);
+    Alpha get_alpha() const
+    {
+        return static_cast<Sprite::Alpha>(alpha_);
+    }
 
 
-    void set_mix(const ColorMix& mix);
+    void set_mix(const ColorMix& mix)
+    {
+        // NOTE: struct copy assignment was generating a memcpy call
+        mix_.color_ = mix.color_;
+        mix_.amount_ = mix.amount_;
+    }
 
 
     void set_size(Size size);
 
 
-    const Vec2<Fixnum>& get_position() const;
+    const Vec2<Fixnum>& get_position() const
+    {
+        return position_;
+    }
 
 
-    const Vec2<s16>& get_origin() const;
+    const Vec2<s16>& get_origin() const
+    {
+        return origin_;
+    }
 
 
-    TextureIndex get_texture_index() const;
+    TextureIndex get_texture_index() const
+    {
+        return texture_index_;
+    }
+
+
+    void move_y(const Fixnum& dy)
+    {
+        position_.y += dy;
+    }
+
+
+    void move_x(const Fixnum& dx)
+    {
+        position_.x += dx;
+    }
+
+
+    void set_alpha(Alpha alpha);
+
+
+    void set_flip(const Vec2<bool>& flip);
 
 
     void set_tidx_8x8(u16 begin_index_16x32, u16 offset)
@@ -92,22 +130,28 @@ public:
     }
 
 
-    Vec2<bool> get_flip() const;
+    const ColorMix& get_mix() const
+    {
+        return mix_;
+    }
 
 
-    Alpha get_alpha() const;
+    Size get_size() const
+    {
+        return static_cast<Sprite::Size>(size_);
+    }
 
 
-    const ColorMix& get_mix() const;
+    Rotation get_rotation() const
+    {
+        return rot_;
+    }
 
 
-    Size get_size() const;
-
-
-    Rotation get_rotation() const;
-
-
-    const Scale& get_scale() const;
+    const Scale& get_scale() const
+    {
+        return scale_;
+    }
 
 
     void set_priority(u8 priority)

@@ -1,3 +1,7 @@
+/* NOTE: Some of the memcpy/memset implementations were written by Jasper Vijn,
+   the tonc author. Later I began adding my own functions as well...
+*/
+
 /*
 Copyright 2005-2009 J Vijn
 
@@ -182,3 +186,41 @@ memset16:
 	pop		{r3}
 .Llong_bl:
 	bx	r3
+
+
+.section .iwram, "ax", %progbits
+    .arm
+    .align  2
+    .global strlen_fast
+    .type   strlen_fast, %function
+strlen_fast:
+    and     r2, r0, #3          @ n = byte offset into word
+    bic     r1, r0, #3          @ word-aligned base
+    ldr     r3, [r1], #4        @ load containing word
+    rsb     r2, r2, #4
+    mov     r2, r2, lsl #3      @ 32 - 8n
+    mvn     ip, #0
+    orr     r3, r3, ip, lsr r2  @ low 8n bits -> 0xFF..., pre-string bytes nonzero
+
+    ldr     ip, =0x01010101
+
+    sub     r2, r3, ip
+    bic     r2, r2, r3
+    ands    r2, r2, ip, lsl #7  @ &0x80808080
+    bne     2f
+1:  ldr     r3, [r1], #4
+    sub     r2, r3, ip
+    bic     r2, r2, r3
+    ands    r2, r2, ip, lsl #7
+    beq     1b
+
+2:  sub     r1, r1, #4
+    tst     r3, #0x000000FF
+    addne   r1, r1, #1
+    tstne   r3, #0x0000FF00
+    addne   r1, r1, #1
+    tstne   r3, #0x00FF0000
+    addne   r1, r1, #1
+    sub     r0, r1, r0
+    bx      lr
+    .size   strlen_fast, .-strlen_fast

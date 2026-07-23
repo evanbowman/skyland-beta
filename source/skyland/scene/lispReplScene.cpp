@@ -223,8 +223,8 @@ void LispReplScene::enter(Scene& prev)
     entry_.emplace(OverlayCoord{0, u8(screen_tiles.y - offset)});
 
     const char* version_text = "Skyland LISP v05";
-    const auto vrsn_coord =
-        OverlayCoord{u8((screen_tiles.x - 2) - strlen(version_text)), 0};
+    const auto vrsn_coord = OverlayCoord{
+        u8((screen_tiles.x - 2) - PLATFORM.strlen(version_text)), 0};
 
     version_text_.emplace(vrsn_coord);
 
@@ -327,7 +327,7 @@ void LispReplScene::repaint_completions()
                 tempstr, i == cpl_->completion_cursor_ ? opts : shade_opts);
         }
 
-        const int len = strlen(str);
+        const int len = PLATFORM.strlen(str);
         if (len > 20) {
             for (; j < len and j < 19; ++j) {
                 tempstr[0] = str[j];
@@ -510,7 +510,7 @@ TOP:
             lisp::eval(lisp::get_op(0));
 
             if (history_.size() == 0 or
-                not str_eq(*command_, history_.back())) {
+                not str_eq((*command_).c_str(), history_.back().c_str())) {
                 history_.push_back(*command_);
             }
 

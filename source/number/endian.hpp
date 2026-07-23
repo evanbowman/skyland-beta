@@ -154,6 +154,13 @@ public:
         return to_host_order(value);
     }
 
+
+    T _unsafe__aligned_read()
+    {
+        return *((T*)this);
+    }
+
+
 private:
     char data_[sizeof(T)];
 };

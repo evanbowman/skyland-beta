@@ -918,7 +918,7 @@ bool store_file_data(const char* path,
     }
 
 
-    auto path_len = strlen(path);
+    auto path_len = PLATFORM.strlen(path);
     u8 path_padding = 0;
     if (path_len % 2 not_eq 0) {
         // Add an extra null byte to the end, to bring total size up to a

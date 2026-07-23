@@ -523,6 +523,11 @@ struct DataBuffer
         return *reinterpret_cast<ScratchBufferPtr*>(sbr_mem_);
     }
 
+    char* data()
+    {
+        return (*reinterpret_cast<ScratchBufferPtr*>(sbr_mem_))->data_;
+    }
+
     static void finalizer(Value* buffer);
 };
 
@@ -1091,7 +1096,7 @@ private:
 class BasicCharSequence final : public CharSequence
 {
 public:
-    BasicCharSequence(const char* ptr) : ptr_(ptr), len_(strlen(ptr))
+    BasicCharSequence(const char* ptr) : ptr_(ptr), len_(PLATFORM.strlen(ptr))
     {
     }
 
@@ -1106,6 +1111,16 @@ public:
             return '\0';
         }
         return ptr_[index];
+    }
+
+    const char* data() const
+    {
+        return ptr_;
+    }
+
+    u32 length() const
+    {
+        return len_;
     }
 
 private:
@@ -1132,6 +1147,11 @@ public:
             return '\0';
         }
         return v_[index];
+    }
+
+    u32 length() const
+    {
+        return v_.size();
     }
 
 private:

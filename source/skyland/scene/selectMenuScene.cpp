@@ -22,6 +22,7 @@
 #include "moveRoomScene.hpp"
 #include "readyScene.hpp"
 #include "salvageRoomScene.hpp"
+#include "script/lisp.hpp"
 #include "setGamespeedScene.hpp"
 #include "skyland/network.hpp"
 #include "skyland/player/player.hpp"
@@ -31,7 +32,6 @@
 #include "skyland/scene_pool.hpp"
 #include "skyland/sharedVariable.hpp"
 #include "skyland/skyland.hpp"
-#include "script/lisp.hpp"
 
 
 
@@ -295,18 +295,21 @@ void SelectMenuScene::enter(Scene& scene)
 
         if (not PLATFORM.network_peer().is_connected()) {
 
-            if (not is_far_camera() and APP.game_mode() not_eq App::GameMode::tutorial) {
-                add_line(SystemString::sel_menu_inspect, "", false, [this, cursor] {
-                    auto cb = APP.invoke_script("/scripts/inspect/inspect.lisp");
-                    if (cb->type() == lisp::Value::Type::function) {
-                        lisp::push_op(wrap_island(this->island()));
-                        lisp::push_op(L_INT(cursor.x));
-                        lisp::push_op(L_INT(cursor.y));
-                        lisp::safecall(cb, 3);
-                        lisp::pop_op();
-                    }
-                    return null_scene();
-                });
+            if (not is_far_camera() and
+                APP.game_mode() not_eq App::GameMode::tutorial) {
+                add_line(
+                    SystemString::sel_menu_inspect, "", false, [this, cursor] {
+                        auto cb =
+                            APP.invoke_script("/scripts/inspect/inspect.lisp");
+                        if (cb->type() == lisp::Value::Type::function) {
+                            lisp::push_op(wrap_island(this->island()));
+                            lisp::push_op(L_INT(cursor.x));
+                            lisp::push_op(L_INT(cursor.y));
+                            lisp::safecall(cb, 3);
+                            lisp::pop_op();
+                        }
+                        return null_scene();
+                    });
             }
 
             Character* chr = nullptr;

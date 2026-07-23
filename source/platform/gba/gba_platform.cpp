@@ -320,6 +320,16 @@ void memcpy16(void* dst, const void* src, uint hwcount);
 __attribute__((section(".iwram"), long_call)) void
 memset32(void* dst, u32 src, u32 wdn);
 void memset16(void* dst, u16 src, u32 hwn);
+
+__attribute__((section(".iwram"), long_call)) size_t
+strlen_fast(const char* str);
+}
+
+
+
+u32 Platform::strlen(const char* str) const
+{
+    return strlen_fast(str);
 }
 
 
@@ -1155,10 +1165,10 @@ void Platform::Screen::set_shader(Shader shader)
 
 
 
-Color agb_color_correction(const Color& c)
+void agb_color_correction(Color& c)
 {
     if (not color_correction_lut) {
-        return c;
+        return;
     }
 
 #define COLOR_LUT_SIZE 32
@@ -1168,22 +1178,22 @@ Color agb_color_correction(const Color& c)
                  c.g_ * COLOR_LUT_SIZE + c.b_) *
                 3;
 
-    // Access the RGB channels from the LUT
-    u8 r_value = color_correction_lut[index + 0];
-    u8 g_value = color_correction_lut[index + 1];
-    u8 b_value = color_correction_lut[index + 2];
-
-    return Color(r_value, g_value, b_value);
+    c.r_ = color_correction_lut[index + 0];
+    c.g_ = color_correction_lut[index + 1];
+    c.b_ = color_correction_lut[index + 2];
 }
 
 
 
 static Color invoke_shader(const Color& c, ShaderPalette palette, int index)
 {
-    return agb_color_correction(shader(std::move(palette),
-                                       c.hex(),
-                                       std::move(shader_argument),
-                                       std::move(index)));
+    Color transform(shader(std::move(palette),
+                           c.hex(),
+                           std::move(shader_argument),
+                           std::move(index)));
+
+    agb_color_correction(transform);
+    return transform;
 }
 
 
@@ -2781,7 +2791,7 @@ void Platform::fatal(const char* msg)
 
         text2.emplace(OverlayCoord{1, 3});
 
-        const auto msg_len = strlen(msg);
+        const auto msg_len = ::strlen(msg);
         if (msg_len > 28) {
             StringBuffer<28> temp;
             for (int i = 0; i < 21; ++i) {
@@ -6881,17 +6891,19 @@ void setup_hardcoded_palettes()
     // NOTE: these colors were a custom hack I threw in during the GBA game jam,
     // when I wanted background tiles to flicker between a few different colors.
     for (int i = 0; i < 16; ++i) {
-        MEM_BG_PALETTE[(15 * 16) + i] =
-            agb_color_correction(Color(custom_color(0xef0d54))).bgr_hex_555();
+        auto inp = Color(custom_color(0xef0d54));
+        agb_color_correction(inp);
+        MEM_BG_PALETTE[(15 * 16) + i] = inp.bgr_hex_555();
     }
     for (int i = 0; i < 16; ++i) {
-        MEM_BG_PALETTE[(14 * 16) + i] =
-            agb_color_correction(Color(custom_color(0x103163))).bgr_hex_555();
+        auto inp = Color(custom_color(0x103163));
+        agb_color_correction(inp);
+        MEM_BG_PALETTE[(14 * 16) + i] = inp.bgr_hex_555();
     }
     for (int i = 0; i < 16; ++i) {
-        MEM_BG_PALETTE[(13 * 16) + i] =
-            agb_color_correction(Color(ColorConstant::silver_white))
-                .bgr_hex_555();
+        auto inp = Color(ColorConstant::silver_white);
+        agb_color_correction(inp);
+        MEM_BG_PALETTE[(13 * 16) + i] = inp.bgr_hex_555();
     }
 
     // Really bad hack. We added a feature where the player can design his/her
@@ -6901,9 +6913,9 @@ void setup_hardcoded_palettes()
     for (auto& info : tile_textures) {
         if (str_eq(info.name_, "tilesheet")) {
             for (int i = 0; i < 16; ++i) {
-                auto c = agb_color_correction(
-                             Color::from_bgr_hex_555(info.palette_data_[i]))
-                             .bgr_hex_555();
+                auto inp = Color::from_bgr_hex_555(info.palette_data_[i]);
+                agb_color_correction(inp);
+                auto c = inp.bgr_hex_555();
                 MEM_BG_PALETTE[(12 * 16) + i] = c;
                 custom_flag_palette[i] = c;
 
@@ -6920,9 +6932,9 @@ void setup_hardcoded_palettes()
             // FIXME!!! handle this dynamically, rather than reserving a
             // specific palette...
             for (int i = 0; i < 16; ++i) {
-                auto c = agb_color_correction(
-                             Color::from_bgr_hex_555(info.palette_data_[i]))
-                             .bgr_hex_555();
+                auto inp = Color::from_bgr_hex_555(info.palette_data_[i]);
+                agb_color_correction(inp);
+                auto c = inp.bgr_hex_555();
                 MEM_BG_PALETTE[(10 * 16) + i] = c;
             }
         }
@@ -7542,20 +7554,20 @@ static const Platform::Extensions extensions{
             const auto c =
                 invoke_shader(real_color(last_color), ShaderPalette::tile0, 0);
             if (l == Layer::map_0_ext) {
-                auto corrected_color = agb_color_correction(Color(color));
-                tilesheet_0_palette[index] = corrected_color.bgr_hex_555();
-                MEM_BG_PALETTE[index] =
-                    blend(corrected_color.hex(), c, last_fade_amt);
+                auto inp = Color(color);
+                agb_color_correction(inp);
+                tilesheet_0_palette[index] = inp.bgr_hex_555();
+                MEM_BG_PALETTE[index] = blend(inp.hex(), c, last_fade_amt);
             }
         },
     .override_sprite_palette =
         [](u8 index, ColorConstant color) {
             const auto c = invoke_shader(
                 real_color(last_color), ShaderPalette::spritesheet, 0);
-            auto corrected_color = agb_color_correction(Color(color));
-            sprite_alt_palette[index] = corrected_color.bgr_hex_555();
-            MEM_PALETTE[32 + index] =
-                blend(corrected_color.hex(), c, last_fade_amt);
+            auto inp = Color(color);
+            agb_color_correction(inp);
+            sprite_alt_palette[index] = inp.bgr_hex_555();
+            MEM_PALETTE[32 + index] = blend(inp.hex(), c, last_fade_amt);
         },
     .__test_compare_sound =
         [](const char* name) {

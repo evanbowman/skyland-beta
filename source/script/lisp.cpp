@@ -858,6 +858,18 @@ constexpr bool is_powerof2(int v)
 }
 
 
+[[gnu::noinline, gnu::cold, noreturn]] static void unexpected_gc_error()
+{
+    PLATFORM.fatal("unexpected gc run!");
+}
+
+
+[[gnu::noinline, gnu::cold, noreturn]] static void oom_error()
+{
+    Platform::fatal("LISP out of memory");
+}
+
+
 Value* alloc_value()
 {
     auto init_val = [](Value* val) {
@@ -875,7 +887,7 @@ Value* alloc_value()
     }
 
     if (L_CTX.critical_gc_alert_) {
-        PLATFORM.fatal("unexpected gc run!");
+        unexpected_gc_error();
     }
 
     // To be honest, this is a bit of a precarious place to run the GC... lots
@@ -889,7 +901,7 @@ Value* alloc_value()
         return init_val(val);
     }
 
-    Platform::fatal("LISP out of memory");
+    oom_error();
 
     return nullptr;
 }
@@ -1430,7 +1442,7 @@ Value* make_error(Error::Code error_code, Value* context)
 
 Value* make_symbol(const char* name, Symbol::ModeBits mode)
 {
-    return make_symbol(name, strlen(name), mode);
+    return make_symbol(name, PLATFORM.strlen(name), mode);
 }
 
 
@@ -1460,7 +1472,7 @@ Value* make_databuffer(const char* sbr_tag, bool zero_fill)
         gc();
     }
 
-    if (strlen(sbr_tag) == 0) {
+    if (*sbr_tag == '\0') {
         sbr_tag = "lisp-databuffer";
     }
 
@@ -1701,7 +1713,7 @@ Value* make_string_from_literal(const char* str)
 {
     auto val = alloc_value();
     val->hdr_.type_ = Value::Type::string;
-    val->string().len_ = strlen(str);
+    val->string().len_ = PLATFORM.strlen(str);
     val->string().data_.literal_.value_ = str;
     val->string().hdr_.mode_bits_ = String::literal_string;
     return val;
@@ -1742,14 +1754,9 @@ std::pair<Value*, int> store_string(const char* string, u32 len)
         Protected p(buffer);
         L_CTX.string_buffer_ = buffer;
 
-        for (int i = 0; i < SCRATCH_BUFFER_SIZE; ++i) {
-            buffer->databuffer().value()->data_[i] = '\0';
-        }
-        auto write_ptr = buffer->databuffer().value()->data_;
-
-        while (*string) {
-            *write_ptr++ = *string++;
-        }
+        auto* data = buffer->databuffer().value()->data_;
+        memcpy(data, string, len);
+        data[len] = '\0';
 
         return {buffer, 0};
     }
@@ -1758,7 +1765,7 @@ std::pair<Value*, int> store_string(const char* string, u32 len)
 
 Value* make_string(const char* string)
 {
-    auto len = strlen(string);
+    auto len = PLATFORM.strlen(string);
 
     if (len == 0) {
         return make_string_from_literal("");
@@ -3634,13 +3641,15 @@ int gc()
     }
     gc_running = true;
 
-    l_foreach(get_var("--autoload-symbols"), [](Value* sym) {
-        if (sym->type() == Value::Type::symbol) {
-            if (globals_tree_find(sym)) {
-                globals_tree_erase(sym);
+    if (value_remaining_count) {
+        l_foreach(get_var("--autoload-symbols"), [](Value* sym) {
+            if (sym->type() == Value::Type::symbol) {
+                if (globals_tree_find(sym)) {
+                    globals_tree_erase(sym);
+                }
             }
-        }
-    });
+        });
+    }
 
     gc_mark();
     int collect_count = gc_sweep();
@@ -3670,7 +3679,7 @@ template <typename F> void foreach_string_intern(F&& fn)
 
             fn(str);
 
-            str += strlen(str) + 1;
+            str += PLATFORM.strlen(str) + 1;
         }
     }
 }
@@ -3889,13 +3898,48 @@ template <u32 Capacity>
 using ReadBuffer = StringAdapter<Capacity, Buffer<char, Capacity + 1, false>>;
 
 
+static constexpr auto make_sym_terminators()
+{
+    std::array<u8, 256> t {};
+    for (char c : {'[', ']', '(', ')', ' ', '\r', '\n', '\t', '\v',
+                   '\0', ';', '"', '.', '\''}) {
+        t[(u8)c] = 1;
+    }
+    return t;
+}
+inline constexpr auto sym_terminator = make_sym_terminators();
+
+
 template <typename T> u32 read_symbol(T& code, int offset)
 {
+    const auto first = code[offset];
     int i = 0;
 
-    ReadBuffer<64> symbol;
+    // NOTE: the interpreter provides a script-loading optimization, whereby
+    // scripts can be externally pre-processed to replace symbol strings with a
+    // numerical references to a line in the game's symbol file, prefixed by a
+    // '#' character. See lisp_symtab.dat and tools/encode_files.py.
+    if (first == '#' and
+        not sym_terminator[code[offset + 1]] and
+        bound_context->external_symtab_contents_) {
+        u32 symtab_index = 0;
+        ++i;
+        char c = code[offset + i];
+        do {
+            symtab_index = symtab_index * 10 + c - '0';
+            ++i;
+            c = code[offset + i];
+        } while (not sym_terminator[c]);
 
-    auto first = code[offset];
+        u32 symtab_offset = 32 * symtab_index;
+        if (symtab_offset >= bound_context->external_symtab_size_) {
+            PLATFORM.fatal(::format("invalid symtab offset %", symtab_offset));
+        }
+        push_op(make_symtab_symbol(symtab_index));
+        return i;
+    }
+
+    ReadBuffer<64> symbol;
     if (first == '\'' or first == '`' or first == ',' or first == '@') {
         symbol.push_back(first);
 
@@ -3968,23 +4012,6 @@ FINAL:
     } else if (symbol == "true") {
         push_op(L_CTX.integer_one_);
     } else {
-        if (symbol[0] == '#') {
-            u32 symtab_index = 0;
-            auto ptr = symbol.c_str() + 1;
-            while (*ptr not_eq '\0') {
-                symtab_index = symtab_index * 10 + *ptr - '0';
-                ++ptr;
-            }
-            u32 symtab_offset = 32 * symtab_index;
-            if (symtab_offset >= bound_context->external_symtab_size_) {
-                PLATFORM.fatal(
-                    ::format("invalid symtab offset %", symtab_offset));
-            }
-            if (bound_context->external_symtab_contents_) {
-                push_op(make_symtab_symbol(symtab_index));
-                return i;
-            }
-        }
         auto mode = Symbol::ModeBits::requires_intern;
         if (symbol.length() <= Symbol::buffer_size) {
             mode = Symbol::ModeBits::small;
@@ -3996,93 +4023,79 @@ FINAL:
 }
 
 
+template <typename T> static s32 parse_digits(T& code, int begin, int end)
+{
+    s32 result = 0;
+    for (int j = begin; j < end; ++j) {
+        result = result * 10 + (code[j] - '0');
+    }
+    return result;
+}
+
+
+template <typename T> static s32 parse_hex(T& code, int begin, int end)
+{
+    s32 ret = 0;
+    for (int j = begin; j < end and ret >= 0; ++j) {
+        ret = (ret << 4) | hextable[(u8)code[j]];
+    }
+    return ret;
+}
+
+
+template <typename T>
+__attribute__((noinline)) static Value* read_float(T& code, int offset, int len)
+{
+    char buf[66];
+    const int n = len < 65 ? len : 65;
+    for (int j = 0; j < n; ++j) {
+        buf[j] = code[offset + j];
+    }
+    buf[n] = '\0';
+    return L_FP(atof(buf));
+}
+
+
 template <typename T> static u32 read_number(T& code, int offset)
 {
     int i = 0;
-
-    ReadBuffer<64> num_str;
-    ReadBuffer<64> num_str2;
-
+    int slash = -1;
     bool is_fp = false;
-    bool is_ratio = false;
 
-    while (true) {
-        auto current = code[offset + i];
-        switch (current) {
-        case 'x':
-        case 'a':
-        case 'b':
-        case 'c':
-        case 'd':
-        case 'e':
-        case 'f':
-        case '0':
-        case '1':
-        case '2':
-        case '3':
-        case '4':
-        case '5':
-        case '6':
-        case '7':
-        case '8':
-        case '9':
-            if (is_ratio) {
-                num_str2.push_back(current);
-            } else {
-                num_str.push_back(current);
-            }
+    for (;;) {
+        const char c = code[offset + i];
+        if ((u8)(c - '0') < 10) {
             ++i;
-            break;
-
-        case '/': {
-            if (is_ratio) {
-                goto FINAL;
-            }
-            is_ratio = true;
+        } else if (c == '/') {
+            if (slash >= 0)
+                break;
+            slash = i;
             ++i;
+        } else if (c == '.') {
+            if (is_fp)
+                break;
+            const char next = code[offset + i + 1];
+            if ((u8)(next - '0') >= 10)
+                break;
+            is_fp = true;
+            ++i;
+        } else if (c == 'x' or (u8)(c - 'a') < 6) {
+            ++i;
+        } else {
             break;
-        };
-
-        case '.': {
-            if (is_fp) {
-                // Two decimal places don't make sense. Must be a dotted pair...
-                goto FINAL;
-            }
-            auto next = code[offset + i + 1];
-            if (next >= '0' and next <= '9') {
-                is_fp = true;
-                num_str.push_back(code[offset + i++]);
-            } else {
-                goto FINAL;
-            }
-            break;
-        }
-
-        default:
-            goto FINAL;
         }
     }
 
-FINAL:
-
-    auto parse_int = [](auto& str) {
-        s32 result = 0;
-        for (u32 i = 0; i < str.length(); ++i) {
-            result = result * 10 + (str[i] - '0');
-        }
-        return result;
-    };
-
-    if (is_ratio) {
-        push_op(make_ratio(parse_int(num_str), parse_int(num_str2)));
+    if (slash >= 0) {
+        push_op(make_ratio(parse_digits(code, offset, offset + slash),
+                           parse_digits(code, offset + slash + 1, offset + i)));
     } else if (is_fp) {
-        push_op(L_FP(atof(num_str.c_str())));
-    } else if (num_str.length() > 1 and num_str[1] == 'x') {
-        push_op(make_integer(hexdec((const u8*)num_str.begin() + 2)));
+        push_op(read_float(code, offset, i));
+    } else if (i > 1 and code[offset + 1] == 'x') {
+        push_op(make_integer(parse_hex(code, offset + 2, offset + i)));
     } else {
-        push_op(make_integer(parse_int(num_str)));
+        push_op(make_integer(parse_digits(code, offset, offset + i)));
     }
-
     return i;
 }
 
@@ -5923,9 +5936,11 @@ void eval_loop(EvalStack& eval_stack)
                         {.expr_ = fn,
                          .state_ = EvalFrame::vm_resume,
                          .vm_resume_ = {
-                             .code_buffer_ = fn->function().bytecode_impl_.databuffer(),
+                             .code_buffer_ =
+                                 fn->function().bytecode_impl_.databuffer(),
                              .program_counter_ =
-                             fn->function().bytecode_impl_.bytecode_offset()
+                                 fn->function()
+                                     .bytecode_impl_.bytecode_offset()
                                      ->integer()
                                      .value_}});
                 } else {
@@ -6098,7 +6113,7 @@ void apropos(const char* match, Vector<const char*>& completion_strs)
     StringBuffer<16> ident(match);
 
     auto handle_completion = [&ident, &completion_strs](const char* intern) {
-        const auto intern_len = strlen(intern);
+        const auto intern_len = PLATFORM.strlen(intern);
         if (intern_len <= ident.length()) {
             // I mean, there's no reason to autocomplete
             // to something shorter or the same length...
@@ -6392,7 +6407,7 @@ BUILTIN_TABLE(
            live_values([&bytes](Value& val) {
                if (val.type() == Value::Type::string) {
                    if (val.string().variant() == String::memory_string) {
-                       bytes += strlen(val.string().value()) + 1;
+                       bytes += PLATFORM.strlen(val.string().value()) + 1;
                    }
                }
            });
@@ -6717,7 +6732,7 @@ const char* intern(const char* string)
         return ni_sym;
     }
 
-    const auto len = strlen(string);
+    const auto len = PLATFORM.strlen(string);
 
     // Ok, no stable pointer to the string exists anywhere, so we'll have to
     // preserve the string contents in intern memory.
