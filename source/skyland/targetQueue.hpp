@@ -30,7 +30,7 @@ struct PackedTarget
 };
 
 
-using TargetQueue = TinyBuffer<PackedTarget, 3>;
+using TargetQueue = TinyBuffer<PackedTarget, 6>;
 
 
 

@@ -97,6 +97,7 @@ private:
 
     TargetQueue target_queue_;
     bool queue_mode_ = false;
+    u8 queue_cap_ = 3;
 };
 
 
