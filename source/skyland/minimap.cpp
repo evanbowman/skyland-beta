@@ -120,186 +120,211 @@ void hide()
 }
 
 
+static const int minimap_px_width = 104;
+static const int minimap_px_height = 40;
+using MinimapPixels = u8[minimap_px_height][minimap_px_width];
 
-void repaint(const Settings& settings)
+static const u8 color_red_index = 1;
+static const u8 color_black_index = 3;
+static const u8 color_tan_index = 8;
+static const u8 color_white_index = 4;
+static const u8 color_el_blue_index = 7;
+static const u8 color_gray_index = 10;
+static const u8 color_darkgray_index = 5;
+static const u8 color_burnt_orange_index = 14;
+static const u8 color_green_index = 11;
+static const u8 color_bright_yellow_index = 12;
+
+
+void draw_terrain(MinimapPixels canvas)
 {
-    needs_repaint_ = false;
-
-    if (APP.game_mode() == App::GameMode::tutorial) {
-        return;
-    }
-
-    const u8 width = minimap_width();
-
-    static const int minimap_px_width = 104;
-    static const int minimap_px_height = 40;
-    using MinimapPixels = u8[minimap_px_width][minimap_px_height];
-
-    // auto pixel_buffer = allocate<MinimapPixels>("m-px-buffer");
-    alignas(u32) MinimapPixels pixel_buffer;
-
-    auto cursor_loc = globals().far_cursor_loc_;
-
-    auto fb_cache = settings.pixel_cache_;
-
-    auto save_pixels = [&]() {
-        if (not fb_cache) {
-            return;
-        }
-        if (fb_cache->pixels_.size() == minimap_px_width * minimap_px_height) {
-            auto it = fb_cache->pixels_.begin();
-            for (int x = 0; x < minimap_px_width; ++x) {
-                for (int y = 0; y < minimap_px_height; ++y) {
-                    *(it++) = pixel_buffer[x][y];
-                }
-            }
-        } else {
-            for (int x = 0; x < minimap_px_width; ++x) {
-                for (int y = 0; y < minimap_px_height; ++y) {
-                    fb_cache->pixels_.push_back(pixel_buffer[x][y]);
-                }
-            }
-        }
-        fb_cache->player_island_checksum_ = APP.player_island().checksum();
-        fb_cache->opponent_island_checksum_ = opponent_island_checksum();
-    };
-
-    auto restore_pixels = [&]() {
-        if (not fb_cache) {
-            return;
-        }
-        if (fb_cache->pixels_.size() < minimap_px_width * minimap_px_height) {
-            Platform::fatal("logic err");
-        }
-        auto it = fb_cache->pixels_.begin();
-        for (int x = 0; x < minimap_px_width; ++x) {
-            for (int y = 0; y < minimap_px_height; ++y) {
-                pixel_buffer[x][y] = *(it++);
-            }
-        }
-    };
-
-    static const u8 color_red_index = 1;
-    static const u8 color_black_index = 3;
-    static const u8 color_tan_index = 8;
-    static const u8 color_white_index = 4;
-    static const u8 color_el_blue_index = 7;
-    static const u8 color_gray_index = 10;
-    static const u8 color_darkgray_index = 5;
-    static const u8 color_burnt_orange_index = 14;
-    static const u8 color_green_index = 11;
-    static const u8 color_bright_yellow_index = 12;
-
     const int opp_offset =
         1 + APP.player_island().terrain().size() + minimap_isle_spacing;
 
-    Buffer<Room*, 32> weapons;
-
-    auto is_selected = [&](RoomCoord c) {
-        if (settings.weapon_group_selection_) {
-            for (auto& oc : settings.weapon_group_selection_->rooms_) {
-                if (c == oc) {
-                    return true;
-                }
+    for (u32 x = 0; x < APP.player_island().terrain().size(); ++x) {
+        for (int xx = 0; xx < 3; ++xx) {
+            for (int yy = 0; yy < 3; ++yy) {
+                canvas[((15 - 3) * 3 + yy) - 2][(x + 1) * 3 + xx] =
+                    (yy == 0) ? color_green_index : color_darkgray_index;
             }
         }
-        return false;
-    };
+    }
 
-    if (fb_cache and
-        fb_cache->player_island_checksum_ == APP.player_island().checksum() and
-        fb_cache->opponent_island_checksum_ == opponent_island_checksum()) {
-
-        for (u8 y = 4; y < 15; ++y) {
-            for (u8 x = 0; x < 13; ++x) {
-                if (auto room = APP.player_island().get_room({x, y})) {
-                    if ((*room->metaclass())->category() ==
-                            Room::Category::weapon and
-                        ((settings.weapon_loc_ and
-                          *settings.weapon_loc_ == Vec2<u8>{x, y}) or
-                         (room->group() not_eq Room::Group::none and
-                          settings.group_ and
-                          room->group() == *settings.group_) or
-                         is_selected({x, y}))) {
-                        bool found = false;
-                        for (auto& wpn : weapons) {
-                            if (wpn == room) {
-                                found = true;
-                                break;
-                            }
-                        }
-                        if (not found) {
-                            weapons.push_back(room);
-                        }
-                    }
-                }
-            }
-        }
-
-        restore_pixels();
-
-    } else {
-        static const int wordsize = sizeof(void*);
-        static_assert(sizeof pixel_buffer % wordsize == 0);
-        PLATFORM.memset_words(
-            pixel_buffer, color_black_index, sizeof pixel_buffer / wordsize);
-
-        for (u32 x = 0; x < APP.player_island().terrain().size(); ++x) {
+    APP.with_opponent_island([&](auto& isle) {
+        for (u32 x = 0; x < isle.terrain().size(); ++x) {
             for (int xx = 0; xx < 3; ++xx) {
                 for (int yy = 0; yy < 3; ++yy) {
-                    pixel_buffer[(x + 1) * 3 + xx][((15 - 3) * 3 + yy) - 2] =
-                        (yy == 0) ? color_green_index : color_darkgray_index;
+                    canvas[((15 - 3) * 3 + yy) - 2][(x + opp_offset) * 3 + xx - 2] =
+                        (yy == 0) ? color_green_index
+                        : color_darkgray_index;
                 }
             }
         }
+    });
+}
 
-        APP.with_opponent_island([&](auto& isle) {
-            for (u32 x = 0; x < isle.terrain().size(); ++x) {
+
+
+bool is_selected(const Settings& settings, RoomCoord c)
+{
+    if (settings.weapon_group_selection_) {
+        for (auto& oc : settings.weapon_group_selection_->rooms_) {
+            if (c == oc) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+
+
+void draw_player_island(MinimapPixels pixel_buffer,
+                        Buffer<Room*, 32>& weapons,
+                        const Settings& settings)
+{
+    for (auto& room : APP.player_island().rooms()) {
+        auto pos = room->position();
+        auto mt = &room_metatable().first[room->metaclass_index()];
+        auto category = (*mt)->category();
+        const auto sz = room->size();
+
+        u8 base_clr;
+        switch (category) {
+        case Room::Category::wall:
+            if ((*mt)->properties() & RoomProperties::accepts_ion_damage) {
+                base_clr = color_el_blue_index;
+            } else {
+                base_clr = color_gray_index;
+            }
+            break;
+
+        case Room::Category::weapon:
+            base_clr = color_burnt_orange_index;
+            break;
+
+        default:
+            base_clr = color_tan_index;
+            break;
+        }
+
+        const auto group = room->group();
+
+        for (u8 x = pos.x; x < pos.x + sz.x; ++x) {
+            for (u8 y = pos.y; y < pos.y + sz.y; ++y) {
+                auto set_pixel = [&](int xo, int yo, int v) {
+                    pixel_buffer[((y - 3) * 3 + yo) - 2][(x + 1) * 3 + xo] =
+                        v;
+                };
+                if (APP.player_island().fire_present({x, y})) {
+                    set_pixel(0, 0, color_red_index);
+                    set_pixel(1, 0, color_red_index);
+                    set_pixel(2, 0, color_red_index);
+
+                    set_pixel(0, 1, color_red_index);
+                    set_pixel(1, 1, color_bright_yellow_index);
+                    set_pixel(2, 1, color_red_index);
+
+                    set_pixel(0, 2, color_bright_yellow_index);
+                    set_pixel(1, 2, color_bright_yellow_index);
+                    set_pixel(2, 2, color_bright_yellow_index);
+                    continue;
+                }
+                if (category == Room::Category::weapon and
+                    ((settings.weapon_loc_ and
+                      *settings.weapon_loc_ == Vec2<u8>{x, y}) or
+                     (group not_eq Room::Group::none and settings.group_ and
+                      group == (*settings.group_)) or
+                     is_selected(settings, {x, y}))) {
+                    bool found = false;
+                    for (auto& wpn : weapons) {
+                        if (wpn == room.get()) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (not found) {
+                        weapons.push_back(room.get());
+                    }
+                }
+
+                bool wpn_match =
+                    ((settings.weapon_loc_ and
+                      *settings.weapon_loc_ == Vec2<u8>{x, y}) or
+                     (group not_eq Room::Group::none and settings.group_ and
+                      group == *settings.group_));
+
                 for (int xx = 0; xx < 3; ++xx) {
                     for (int yy = 0; yy < 3; ++yy) {
-                        pixel_buffer[(x + opp_offset) * 3 + xx - 2]
-                                    [((15 - 3) * 3 + yy) - 2] =
-                                        (yy == 0) ? color_green_index
-                                                  : color_darkgray_index;
+                        u8 clr = base_clr;
+                        if (wpn_match and not(xx == 1 and yy == 1)) {
+                            clr = color_white_index;
+                        }
+
+                        pixel_buffer[((y - 3) * 3 + yy) - 2][(x + 1) * 3 + xx]
+                             = clr;
                     }
                 }
             }
-        });
+        }
+    }
 
-        for (auto& room : APP.player_island().rooms()) {
+    for (u8 y = 4; y < 15; ++y) {
+        for (u8 x = 0; x < 13; ++x) {
+            if (settings.show_destroyed_rooms_ and
+                player_destroyed_rooms.get(x, y)) {
+                if (not APP.player_island().get_room({x, y})) {
+                    for (int xx = 0; xx < 3; ++xx) {
+                        for (int yy = 0; yy < 3; ++yy) {
+                            pixel_buffer[((y - 3) * 3 + yy) - 2][(x + 1) * 3 + xx]
+                                 = 1;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+void draw_opponent_island(MinimapPixels pixel_buffer,
+                          int opp_offset,
+                          const Settings& settings)
+{
+    APP.with_opponent_island([&](auto& isle) {
+        for (auto& room : isle.rooms()) {
             auto pos = room->position();
             auto mt = &room_metatable().first[room->metaclass_index()];
             auto category = (*mt)->category();
             const auto sz = room->size();
 
-            u8 base_clr;
+            u8 clr;
             switch (category) {
             case Room::Category::wall:
-                if ((*mt)->properties() & RoomProperties::accepts_ion_damage) {
-                    base_clr = color_el_blue_index;
+                if ((*mt)->properties() &
+                    RoomProperties::accepts_ion_damage) {
+                    clr = color_el_blue_index;
                 } else {
-                    base_clr = color_gray_index;
+                    clr = color_gray_index;
                 }
                 break;
 
             case Room::Category::weapon:
-                base_clr = color_burnt_orange_index;
+                clr = color_burnt_orange_index;
                 break;
 
             default:
-                base_clr = color_tan_index;
+                clr = color_tan_index;
                 break;
             }
 
-            const auto group = room->group();
-
             for (u8 x = pos.x; x < pos.x + sz.x; ++x) {
                 for (u8 y = pos.y; y < pos.y + sz.y; ++y) {
-                    auto set_pixel = [&](int xo, int yo, int v) {
-                        pixel_buffer[(x + 1) * 3 + xo][((y - 3) * 3 + yo) - 2] =
-                            v;
-                    };
-                    if (APP.player_island().fire_present({x, y})) {
+                    if (isle.fire_present({x, y})) {
+                        auto set_pixel = [&](int xo, int yo, int v) {
+                            pixel_buffer[((y - 3) * 3 + yo) - 2][(x + opp_offset) * 3 + xo - 2]
+                                 = v;
+                        };
                         set_pixel(0, 0, color_red_index);
                         set_pixel(1, 0, color_red_index);
                         set_pixel(2, 0, color_red_index);
@@ -313,123 +338,80 @@ void repaint(const Settings& settings)
                         set_pixel(2, 2, color_bright_yellow_index);
                         continue;
                     }
-                    if (category == Room::Category::weapon and
-                        ((settings.weapon_loc_ and
-                          *settings.weapon_loc_ == Vec2<u8>{x, y}) or
-                         (group not_eq Room::Group::none and settings.group_ and
-                          group == (*settings.group_)) or
-                         is_selected({x, y}))) {
-                        bool found = false;
-                        for (auto& wpn : weapons) {
-                            if (wpn == room.get()) {
-                                found = true;
-                                break;
-                            }
-                        }
-                        if (not found) {
-                            weapons.push_back(room.get());
-                        }
-                    }
-
-                    bool wpn_match =
-                        ((settings.weapon_loc_ and
-                          *settings.weapon_loc_ == Vec2<u8>{x, y}) or
-                         (group not_eq Room::Group::none and settings.group_ and
-                          group == *settings.group_));
 
                     for (int xx = 0; xx < 3; ++xx) {
                         for (int yy = 0; yy < 3; ++yy) {
-                            u8 clr = base_clr;
-                            if (wpn_match and not(xx == 1 and yy == 1)) {
-                                clr = color_white_index;
-                            }
-
-                            pixel_buffer[(x + 1) * 3 + xx]
-                                        [((y - 3) * 3 + yy) - 2] = clr;
+                            pixel_buffer[((y - 3) * 3 + yy) - 2][(x + opp_offset) * 3 + xx - 2]
+                                 = clr;
                         }
                     }
                 }
             }
         }
+    });
 
-        for (u8 y = 4; y < 15; ++y) {
-            for (u8 x = 0; x < 13; ++x) {
-                if (settings.show_destroyed_rooms_ and
-                    player_destroyed_rooms.get(x, y)) {
-                    if (not APP.player_island().get_room({x, y})) {
-                        for (int xx = 0; xx < 3; ++xx) {
-                            for (int yy = 0; yy < 3; ++yy) {
-                                pixel_buffer[(x + 1) * 3 + xx]
-                                            [((y - 3) * 3 + yy) - 2] = 1;
-                            }
-                        }
-                    }
-                }
+}
+
+
+
+void encode_tiles(MinimapPixels pixel_buffer)
+{
+    const u8 width = minimap_width();
+    u16 tile = minimap_start_tile;
+
+    for (int y = 0; y < 5; ++y) {
+        for (int x = 0; x < width; ++x) {
+
+            Platform::EncodedTile t;
+            u32* dst = (u32*)t.bytes_;
+
+            for (int i = 0; i < 8; ++i) {
+                const u8* row = &pixel_buffer[y * 8 + i][x * 8];
+                u32 v0 = ((const u32*)row)[0];   // p0 p1 p2 p3
+                u32 v1 = ((const u32*)row)[1];   // p4 p5 p6 p7
+                u32 r0 = v0 | (v0 >> 4);
+                u32 r1 = v1 | (v1 >> 4);
+                *dst++ = ((r0 & 0xFF) | ((r0 >> 8) & 0xFF00))
+                       | (((r1 & 0xFF) | ((r1 >> 8) & 0xFF00)) << 16);
             }
+
+            PLATFORM.overwrite_overlay_tile(tile, t);
+            tile++;
         }
-
-        APP.with_opponent_island([&](auto& isle) {
-            for (auto& room : isle.rooms()) {
-                auto pos = room->position();
-                auto mt = &room_metatable().first[room->metaclass_index()];
-                auto category = (*mt)->category();
-                const auto sz = room->size();
-
-                u8 clr;
-                switch (category) {
-                case Room::Category::wall:
-                    if ((*mt)->properties() &
-                        RoomProperties::accepts_ion_damage) {
-                        clr = color_el_blue_index;
-                    } else {
-                        clr = color_gray_index;
-                    }
-                    break;
-
-                case Room::Category::weapon:
-                    clr = color_burnt_orange_index;
-                    break;
-
-                default:
-                    clr = color_tan_index;
-                    break;
-                }
-
-                for (u8 x = pos.x; x < pos.x + sz.x; ++x) {
-                    for (u8 y = pos.y; y < pos.y + sz.y; ++y) {
-                        if (isle.fire_present({x, y})) {
-                            auto set_pixel = [&](int xo, int yo, int v) {
-                                pixel_buffer[(x + opp_offset) * 3 + xo - 2]
-                                            [((y - 3) * 3 + yo) - 2] = v;
-                            };
-                            set_pixel(0, 0, color_red_index);
-                            set_pixel(1, 0, color_red_index);
-                            set_pixel(2, 0, color_red_index);
-
-                            set_pixel(0, 1, color_red_index);
-                            set_pixel(1, 1, color_bright_yellow_index);
-                            set_pixel(2, 1, color_red_index);
-
-                            set_pixel(0, 2, color_bright_yellow_index);
-                            set_pixel(1, 2, color_bright_yellow_index);
-                            set_pixel(2, 2, color_bright_yellow_index);
-                            continue;
-                        }
-
-                        for (int xx = 0; xx < 3; ++xx) {
-                            for (int yy = 0; yy < 3; ++yy) {
-                                pixel_buffer[(x + opp_offset) * 3 + xx - 2]
-                                            [((y - 3) * 3 + yy) - 2] = clr;
-                            }
-                        }
-                    }
-                }
-            }
-        });
-
-
-        save_pixels();
     }
+}
+
+
+void repaint(const Settings& settings)
+{
+    needs_repaint_ = false;
+
+    if (APP.game_mode() == App::GameMode::tutorial) {
+        return;
+    }
+
+    // auto pixel_buffer = allocate<MinimapPixels>("m-px-buffer");
+    alignas(u32) MinimapPixels pixel_buffer;
+
+    auto cursor_loc = globals().far_cursor_loc_;
+
+
+    const int opp_offset =
+        1 + APP.player_island().terrain().size() + minimap_isle_spacing;
+
+    Buffer<Room*, 32> weapons;
+
+
+    static const int wordsize = sizeof(void*);
+    static_assert(sizeof pixel_buffer % wordsize == 0);
+    PLATFORM.memset_words(pixel_buffer, color_black_index, sizeof pixel_buffer / wordsize);
+
+    draw_terrain(pixel_buffer);
+
+    draw_player_island(pixel_buffer, weapons, settings);
+
+    draw_opponent_island(pixel_buffer, opp_offset, settings);
+
 
     auto draw_drones = [&](auto& drone_list, int xoff, int x_align) {
         for (auto& drone : drone_list) {
@@ -443,14 +425,14 @@ void repaint(const Settings& settings)
 
             const int px = x_align;
 
-            pixel_buffer[(x + xoff) * 3 + 0 - px][((y - 3) * 3 + 0) - 2] = cl;
-            pixel_buffer[(x + xoff) * 3 + 1 - px][((y - 3) * 3 + 0) - 2] = cl;
-            pixel_buffer[(x + xoff) * 3 + 2 - px][((y - 3) * 3 + 0) - 2] = cl;
+            pixel_buffer[((y - 3) * 3 + 0) - 2][(x + xoff) * 3 + 0 - px] = cl;
+            pixel_buffer[((y - 3) * 3 + 0) - 2][(x + xoff) * 3 + 1 - px] = cl;
+            pixel_buffer[((y - 3) * 3 + 0) - 2][(x + xoff) * 3 + 2 - px] = cl;
 
-            pixel_buffer[(x + xoff) * 3 + 1 - px][((y - 3) * 3 + 1) - 2] = cl;
+            pixel_buffer[((y - 3) * 3 + 1) - 2][(x + xoff) * 3 + 1 - px] = cl;
 
-            pixel_buffer[(x + xoff) * 3 + 0 - px][((y - 3) * 3 + 2) - 2] = cl;
-            pixel_buffer[(x + xoff) * 3 + 2 - px][((y - 3) * 3 + 2) - 2] = cl;
+            pixel_buffer[((y - 3) * 3 + 2) - 2][(x + xoff) * 3 + 0 - px] = cl;
+            pixel_buffer[((y - 3) * 3 + 2) - 2][(x + xoff) * 3 + 2 - px] = cl;
         }
     };
 
@@ -465,15 +447,15 @@ void repaint(const Settings& settings)
         if (y < 0) {
             return;
         }
-        if (pixel_buffer[x][y] == color_black_index or
-            pixel_buffer[x][y] == color_white_index or
-            pixel_buffer[x][y] == 12) {
-            pixel_buffer[x][y] = color_white_index;
+        if (pixel_buffer[y][x] == color_black_index or
+            pixel_buffer[y][x] == color_white_index or
+            pixel_buffer[y][x] == 12) {
+            pixel_buffer[y][x] = color_white_index;
         } else {
-            if (pixel_buffer[x][y] == color_gray_index) {
-                pixel_buffer[x][y] = 13;
+            if (pixel_buffer[y][x] == color_gray_index) {
+                pixel_buffer[y][x] = 13;
             } else {
-                pixel_buffer[x][y] = 1;
+                pixel_buffer[y][x] = 1;
             }
 
             intersection(x, y);
@@ -491,16 +473,16 @@ void repaint(const Settings& settings)
                 const int xt = x_offset + x * 3 + xx;
                 const int yt = y_offset + y * 3 + yy;
                 if (not center and xx == 1 and yy == 1) {
-                    pixel_buffer[xt][yt] = color_black_index;
+                    pixel_buffer[yt][xt] = color_black_index;
                     continue;
                 }
                 if (center and xx == 1 and yy == 1) {
-                    pixel_buffer[xt][yt] = 12;
+                    pixel_buffer[yt][xt] = 12;
                     continue;
                 }
-                if (pixel_buffer[xt][yt] not_eq color_black_index and
-                    pixel_buffer[xt][yt] not_eq color_white_index) {
-                    pixel_buffer[xt][yt] = 1;
+                if (pixel_buffer[yt][xt] not_eq color_black_index and
+                    pixel_buffer[yt][xt] not_eq color_white_index) {
+                    pixel_buffer[yt][xt] = 1;
                 }
             }
         }
@@ -709,39 +691,20 @@ void repaint(const Settings& settings)
         auto xoff = cursor_loc.x + opp_offset;
         auto yoff = cursor_loc.y - 3;
 
-        pb[xoff * 3 - 2][(yoff * 3) - 2] = color_white_index;
-        pb[xoff * 3 + 1 - 2][(yoff * 3) - 2 + 1] = color_white_index;
-        pb[xoff * 3 + 2 - 2][(yoff * 3) - 2 + 2] = color_white_index;
-        pb[xoff * 3 + 2 - 2][(yoff * 3) - 2] = color_white_index;
-        pb[xoff * 3 - 2][(yoff * 3) - 2 + 2] = color_white_index;
+        pb[(yoff * 3) - 2][xoff * 3 - 2] = color_white_index;
+        pb[(yoff * 3) - 2 + 1][xoff * 3 + 1 - 2] = color_white_index;
+        pb[(yoff * 3) - 2 + 2][xoff * 3 + 2 - 2] = color_white_index;
+        pb[(yoff * 3) - 2][xoff * 3 + 2 - 2] = color_white_index;
+        pb[(yoff * 3) - 2 + 2][xoff * 3 - 2] = color_white_index;
 
-        pb[xoff * 3 - 2 + 1 - 1][(yoff * 3) + 1 - 2] = 13;
-        pb[xoff * 3 - 2 + 2][(yoff * 3) + 1 - 2] = 13;
-        pb[xoff * 3 + 1 - 2][(yoff * 3) + 1 - 2 - 1] = 13;
-        pb[xoff * 3 + 1 - 2][(yoff * 3) - 2 + 2] = 13;
+        pb[(yoff * 3) + 1 - 2][xoff * 3 - 2 + 1 - 1] = 13;
+        pb[(yoff * 3) + 1 - 2][xoff * 3 - 2 + 2] = 13;
+        pb[(yoff * 3) + 1 - 2 - 1][xoff * 3 + 1 - 2] = 13;
+        pb[(yoff * 3) - 2 + 2][xoff * 3 + 1 - 2] = 13;
     }
 
 
-    u16 tile = minimap_start_tile;
-    for (int y = 0; y < 5; ++y) {
-        for (int x = 0; x < width; ++x) {
-
-            Platform::EncodedTile t;
-            u8* out = t.bytes_;
-
-            u8 temp = 0;
-            for (int i = 0; i < 8; ++i) {
-                for (int j = 0; j < 8; j += 2) {
-                    temp = pixel_buffer[x * 8 + j][y * 8 + i] & 0xff;
-                    temp |= pixel_buffer[x * 8 + j + 1][y * 8 + i] << 4;
-                    *(out++) = temp;
-                }
-            }
-
-            PLATFORM.overwrite_overlay_tile(tile, t);
-            tile++;
-        }
-    }
+    encode_tiles(pixel_buffer);
 }
 
 

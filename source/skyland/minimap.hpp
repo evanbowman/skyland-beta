@@ -34,19 +34,8 @@ namespace skyland::minimap
 
 
 
-struct FramebufferCache
-{
-    Vector<u8> pixels_;
-
-    u16 player_island_checksum_ = -1;
-    u16 opponent_island_checksum_ = -1;
-};
-
-
-
 struct Settings
 {
-    FramebufferCache* pixel_cache_ = nullptr;
     GroupSelection* weapon_group_selection_ = nullptr;
     Optional<RoomCoord> weapon_loc_ = nullopt();
     Optional<Room::Group> group_ = nullopt();

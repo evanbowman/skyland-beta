@@ -565,7 +565,6 @@ void WeaponSetTargetScene::minimap_repaint()
     }
 
     minimap::Settings s;
-    s.pixel_cache_ = &fb_cache_;
 
     if (selection_) {
         s.weapon_group_selection_ = &**selection_;

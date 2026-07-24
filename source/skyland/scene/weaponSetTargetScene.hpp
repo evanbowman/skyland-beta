@@ -84,8 +84,6 @@ private:
     int cursor_tics_ = 0;
     Time tic_timer_ = milliseconds(100);
 
-    minimap::FramebufferCache fb_cache_;
-
     bool near_;
     bool resume_far_ = false;
 
