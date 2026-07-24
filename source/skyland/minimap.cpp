@@ -488,12 +488,30 @@ void repaint(const Settings& settings)
         }
     };
 
+    auto plot_p = [&](u8* p, int x, int y, auto intersection) {
+        if (y < 0) {
+            return;
+        }
+        const u8 v = *p;
+        if (v == color_black_index or v == color_white_index or v == 12) {
+            *p = color_white_index;
+        } else {
+            *p = (v == color_gray_index) ? 13 : 1;
+            intersection(x, y);
+        }
+    };
+
     auto plot_line = [&](Room* wpn, int x0, int y0, int x1, int y1) {
-        int dx = abs(x1 - x0);
-        int sx = x0 < x1 ? 1 : -1;
-        int dy = -abs(y1 - y0);
-        int sy = y0 < y1 ? 1 : -1;
+        const int dx = abs(x1 - x0);
+        const int sx = (x0 < x1) ? 1 : -1;
+        const int dy = -abs(y1 - y0);
+        const int sy = (y0 < y1) ? 1 : -1;
         int error = dx + dy;
+
+        const int xstep = sx;
+        const int ystep = sy * minimap_px_width;   // ±104
+
+        u8* p = &pixel_buffer[0][0] + y0 * minimap_px_width + x0;
 
         bool intersection = false;
         auto intersection_fn = [&](int x, int y) {
@@ -518,21 +536,22 @@ void repaint(const Settings& settings)
         };
 
         while (true) {
-            plot(x0, y0, intersection_fn);
-            if (x0 == x1 && y0 == y1)
+            plot_p(p, x0, y0, intersection_fn);
+            if (x0 == x1 and y0 == y1) {
                 break;
-            int e2 = 2 * error;
+            }
+            const int e2 = 2 * error;
             if (e2 >= dy) {
-                if (x0 == x1)
-                    break;
-                error = error + dy;
-                x0 = x0 + sx;
+                if (x0 == x1) break;
+                error += dy;
+                x0 += sx;
+                p += xstep;
             }
             if (e2 <= dx) {
-                if (y0 == y1)
-                    break;
-                error = error + dx;
-                y0 = y0 + sy;
+                if (y0 == y1) break;
+                error += dx;
+                y0 += sy;
+                p += ystep;
             }
         }
     };
