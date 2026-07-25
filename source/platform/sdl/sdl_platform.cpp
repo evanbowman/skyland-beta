@@ -2023,13 +2023,18 @@ TileDesc Platform::map_glyph(const utf8::Codepoint& glyph,
 
 void Platform::set_tile(u16 x, u16 y, TileDesc glyph, const FontColors& colors)
 {
-    set_overlay_tile(x, y, glyph);
+    set_tile(Layer::overlay, x, y, glyph);
 
     auto& val = tile_layers_[Layer::overlay][{x, y}];
     val.text_fg_color_ = colors.foreground_;
     val.text_bg_color_ = colors.background_;
 }
 
+
+void Platform::set_overlay_tile(u16 x, u16 y, TileDesc glyph)
+{
+    set_tile(Layer::overlay, x, y, glyph);
+}
 
 
 void Platform::enable_glyph_mode(bool enabled)
