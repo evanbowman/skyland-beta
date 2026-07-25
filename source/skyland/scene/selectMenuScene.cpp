@@ -612,7 +612,7 @@ void SelectMenuScene::enter(Scene& scene)
         SystemString::sel_menu_back, "", false, []() { return null_scene(); });
 
     for (int i = 0; i < opts_->longest_line_ + 1; ++i) {
-        PLATFORM.set_tile(Layer::overlay, i, 0, 425);
+        PLATFORM.set_overlay_tile(i, 0, 425);
     }
 
     for (auto& line : opts_->lines_) {
@@ -626,12 +626,12 @@ void SelectMenuScene::enter(Scene& scene)
     }
     for (u32 y = 0; y < opts_->lines_.size(); ++y) {
         if (opts_->specific_.get(y)) {
-            PLATFORM.set_tile(Layer::overlay, 0, y + 1, 159);
+            PLATFORM.set_overlay_tile(0, y + 1, 159);
         } else {
-            PLATFORM.set_tile(Layer::overlay, 0, y + 1, 112);
+            PLATFORM.set_overlay_tile(0, y + 1, 112);
         }
     }
-    PLATFORM.set_tile(Layer::overlay, 0, 1, 475);
+    PLATFORM.set_overlay_tile(0, 1, 475);
 }
 
 
@@ -674,7 +674,7 @@ ScenePtr SelectMenuScene::update(Time delta)
         for (u32 y = 0; y < 20; ++y) {
             auto t = PLATFORM.get_tile(Layer::overlay, x, y);
             if (t) {
-                PLATFORM.set_tile(Layer::overlay, x, y, 0);
+                PLATFORM.set_overlay_tile(x, y, 0);
             }
         }
     }
@@ -698,9 +698,9 @@ ScenePtr SelectMenuScene::update(Time delta)
         PLATFORM.speaker().play_sound("cursor_tick", 0);
         auto prev_sel = sel_;
         if (opts_->specific_.get(sel_)) {
-            PLATFORM.set_tile(Layer::overlay, 0, sel_ + 1, 159);
+            PLATFORM.set_overlay_tile(0, sel_ + 1, 159);
         } else {
-            PLATFORM.set_tile(Layer::overlay, 0, sel_ + 1, 112);
+            PLATFORM.set_overlay_tile(0, sel_ + 1, 112);
         }
         redraw_line(sel_, false);
         int tries = 0;
@@ -715,14 +715,14 @@ ScenePtr SelectMenuScene::update(Time delta)
         if (tries == Options::cap) {
             sel_ = prev_sel;
         }
-        PLATFORM.set_tile(Layer::overlay, 0, sel_ + 1, 475);
+        PLATFORM.set_overlay_tile(0, sel_ + 1, 475);
         redraw_line(sel_, true);
     } else if (test_button(Button::down)) {
         PLATFORM.speaker().play_sound("cursor_tick", 0);
         if (opts_->specific_.get(sel_)) {
-            PLATFORM.set_tile(Layer::overlay, 0, sel_ + 1, 159);
+            PLATFORM.set_overlay_tile(0, sel_ + 1, 159);
         } else {
-            PLATFORM.set_tile(Layer::overlay, 0, sel_ + 1, 112);
+            PLATFORM.set_overlay_tile(0, sel_ + 1, 112);
         }
         redraw_line(sel_, false);
         if ((u32)sel_ < opts_->lines_.size() - 1) {
@@ -730,14 +730,14 @@ ScenePtr SelectMenuScene::update(Time delta)
         } else {
             sel_ = 0;
         }
-        PLATFORM.set_tile(Layer::overlay, 0, sel_ + 1, 475);
+        PLATFORM.set_overlay_tile(0, sel_ + 1, 475);
         redraw_line(sel_, true);
     } else if (test_button(Button::up)) {
         PLATFORM.speaker().play_sound("cursor_tick", 0);
         if (opts_->specific_.get(sel_)) {
-            PLATFORM.set_tile(Layer::overlay, 0, sel_ + 1, 159);
+            PLATFORM.set_overlay_tile(0, sel_ + 1, 159);
         } else {
-            PLATFORM.set_tile(Layer::overlay, 0, sel_ + 1, 112);
+            PLATFORM.set_overlay_tile(0, sel_ + 1, 112);
         }
         redraw_line(sel_, false);
         if (sel_ > 0) {
@@ -745,7 +745,7 @@ ScenePtr SelectMenuScene::update(Time delta)
         } else if (sel_ == 0) {
             sel_ = opts_->lines_.size() - 1;
         }
-        PLATFORM.set_tile(Layer::overlay, 0, sel_ + 1, 475);
+        PLATFORM.set_overlay_tile(0, sel_ + 1, 475);
         redraw_line(sel_, true);
     }
 

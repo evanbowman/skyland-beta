@@ -139,7 +139,7 @@ void CreateBlockScene::exit(macro::EngineImpl& state, Scene& next)
     const auto st = calc_screen_tiles();
     for (int y = st.y - 8; y < st.y; ++y) {
         for (int x = 0; x < 32; ++x) {
-            PLATFORM.set_tile(Layer::overlay, x, y, 0);
+            PLATFORM.set_overlay_tile(x, y, 0);
         }
     }
 }
@@ -185,7 +185,7 @@ void render_cost(macro::EngineImpl& state,
             text.append(" -", text_colors);
             text.append(c.productivity_, text_colors);
             text.append(" ");
-            PLATFORM.set_tile(Layer::overlay, text.len() - 1, st.y - 1, 415);
+            PLATFORM.set_overlay_tile(text.len() - 1, st.y - 1, 415);
         }
 
         if (c.stone_) {
@@ -197,7 +197,7 @@ void render_cost(macro::EngineImpl& state,
             }
             text.append(c.stone_, text_colors);
             text.append(" ");
-            PLATFORM.set_tile(Layer::overlay, text.len() - 1, st.y - 1, 417);
+            PLATFORM.set_overlay_tile(text.len() - 1, st.y - 1, 417);
         }
 
         if (c.lumber_) {
@@ -209,7 +209,7 @@ void render_cost(macro::EngineImpl& state,
             }
             text.append(c.lumber_, text_colors);
             text.append(" ");
-            PLATFORM.set_tile(Layer::overlay, text.len() - 1, st.y - 1, 423);
+            PLATFORM.set_overlay_tile(text.len() - 1, st.y - 1, 423);
         }
 
         if (c.clay_) {
@@ -221,7 +221,7 @@ void render_cost(macro::EngineImpl& state,
             }
             text.append(c.clay_, text_colors);
             text.append(" ");
-            PLATFORM.set_tile(Layer::overlay, text.len() - 1, st.y - 1, 370);
+            PLATFORM.set_overlay_tile(text.len() - 1, st.y - 1, 370);
         }
 
         if (c.water_) {
@@ -233,7 +233,7 @@ void render_cost(macro::EngineImpl& state,
             }
             text.append(c.water_, text_colors);
             text.append(" ");
-            PLATFORM.set_tile(Layer::overlay, text.len() - 1, st.y - 1, 371);
+            PLATFORM.set_overlay_tile(text.len() - 1, st.y - 1, 371);
         }
 
         if (c.marble_) {
@@ -245,7 +245,7 @@ void render_cost(macro::EngineImpl& state,
             }
             text.append(c.marble_, text_colors);
             text.append(" ");
-            PLATFORM.set_tile(Layer::overlay, text.len() - 1, st.y - 1, 372);
+            PLATFORM.set_overlay_tile(text.len() - 1, st.y - 1, 372);
         }
 
         if (c.crystal_) {
@@ -257,7 +257,7 @@ void render_cost(macro::EngineImpl& state,
             }
             text.append(c.crystal_, text_colors);
             text.append(" ");
-            PLATFORM.set_tile(Layer::overlay, text.len() - 1, st.y - 1, 424);
+            PLATFORM.set_overlay_tile(text.len() - 1, st.y - 1, 424);
         }
 
         if (c.food_) {
@@ -269,13 +269,13 @@ void render_cost(macro::EngineImpl& state,
             }
             text.append(c.food_, text_colors);
             text.append(" ");
-            PLATFORM.set_tile(Layer::overlay, text.len() - 1, st.y - 1, 414);
+            PLATFORM.set_overlay_tile(text.len() - 1, st.y - 1, 414);
         }
     }
 
     const int count = st.x - text.len();
     for (int i = 0; i < count; ++i) {
-        PLATFORM.set_tile(Layer::overlay, i + text.len(), st.y - 1, 426);
+        PLATFORM.set_overlay_tile(i + text.len(), st.y - 1, 426);
     }
 }
 
@@ -301,24 +301,24 @@ void CreateBlockScene::show_options(EngineImpl& state)
     message(state);
 
     for (int i = 0; i < st.x; ++i) {
-        PLATFORM.set_tile(Layer::overlay, i, st.y - 2, 425);
-        PLATFORM.set_tile(Layer::overlay, i, st.y - 3, 0);
-        PLATFORM.set_tile(Layer::overlay, i, st.y - 4, 0);
-        PLATFORM.set_tile(Layer::overlay, i, st.y - 5, 0);
-        PLATFORM.set_tile(Layer::overlay, i, st.y - 6, 0);
+        PLATFORM.set_overlay_tile(i, st.y - 2, 425);
+        PLATFORM.set_overlay_tile(i, st.y - 3, 0);
+        PLATFORM.set_overlay_tile(i, st.y - 4, 0);
+        PLATFORM.set_overlay_tile(i, st.y - 5, 0);
+        PLATFORM.set_overlay_tile(i, st.y - 6, 0);
     }
 
     for (int i = st.x - 25; i < st.x - 5; ++i) {
-        PLATFORM.set_tile(Layer::overlay, i, st.y - 6, 425);
+        PLATFORM.set_overlay_tile(i, st.y - 6, 425);
     }
 
     for (int y = st.y - 5; y < st.y - 2; ++y) {
-        PLATFORM.set_tile(Layer::overlay, st.x - 26, y, 130);
-        PLATFORM.set_tile(Layer::overlay, st.x - 5, y, 433);
+        PLATFORM.set_overlay_tile(st.x - 26, y, 130);
+        PLATFORM.set_overlay_tile(st.x - 5, y, 433);
     }
 
-    PLATFORM.set_tile(Layer::overlay, st.x - 26, st.y - 2, 419);
-    PLATFORM.set_tile(Layer::overlay, st.x - 5, st.y - 2, 418);
+    PLATFORM.set_overlay_tile(st.x - 26, st.y - 2, 419);
+    PLATFORM.set_overlay_tile(st.x - 5, st.y - 2, 418);
 
     int opt_count = options_.size();
 

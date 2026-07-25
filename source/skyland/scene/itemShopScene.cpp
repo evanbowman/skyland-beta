@@ -88,11 +88,11 @@ void ItemShopScene::describe_selection()
     *info += "`";
     const auto st = calc_screen_tiles();
     for (int x = 0; x < st.x; ++x) {
-        PLATFORM.set_tile(Layer::overlay, x, st.y - 1, 0);
-        PLATFORM.set_tile(Layer::overlay, x, st.y - 2, 0);
+        PLATFORM.set_overlay_tile(x, st.y - 1, 0);
+        PLATFORM.set_overlay_tile(x, st.y - 2, 0);
     }
     for (u32 x = 0; x < info->length(); ++x) {
-        PLATFORM.set_tile(Layer::overlay, x, st.y - 2, 425);
+        PLATFORM.set_overlay_tile(x, st.y - 2, 425);
     }
     Text::print(info->c_str(), {0, (u8)(st.y - 1)});
 }
@@ -133,7 +133,7 @@ ScenePtr ItemShopScene::update(Time delta)
             state_ = State::ready;
             for (int x = 3; x < st.x - 3; ++x) {
                 for (int y = 3; y < st.y - 4; ++y) {
-                    PLATFORM.set_tile(Layer::overlay, x, y + 1, 112);
+                    PLATFORM.set_overlay_tile(x, y + 1, 112);
                 }
             }
 
@@ -164,7 +164,7 @@ ScenePtr ItemShopScene::update(Time delta)
             for (int x = 3; x < st.x - 3; ++x) {
                 for (int y = 3; y < st.y - 4; ++y) {
                     if (y <= progress + 3) {
-                        PLATFORM.set_tile(Layer::overlay, x, y + 1, 112);
+                        PLATFORM.set_overlay_tile(x, y + 1, 112);
                     }
                 }
             }

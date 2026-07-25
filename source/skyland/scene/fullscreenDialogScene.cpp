@@ -134,7 +134,7 @@ bool FullscreenDialogScene::advance_text(Time delta, bool sfx)
             x_offset = st.x - x_offset;
         }
 
-        PLATFORM.set_tile(Layer::overlay, x_offset, st.y - (y_offset), t);
+        PLATFORM.set_overlay_tile(x_offset, st.y - (y_offset), t);
 
         text_state_.current_word_remaining_--;
         text_state_.current_word_ += bytes_consumed;
@@ -155,9 +155,9 @@ void FullscreenDialogScene::clear_textbox()
     const auto st = calc_screen_tiles();
 
     for (int x = 1; x < st.x - 1; ++x) {
-        PLATFORM.set_tile(Layer::overlay, x, st.y - (4 + y_start()), 82);
-        PLATFORM.set_tile(Layer::overlay, x, st.y - (3 + y_start()), 82);
-        PLATFORM.set_tile(Layer::overlay, x, st.y - (2 + y_start()), 82);
+        PLATFORM.set_overlay_tile(x, st.y - (4 + y_start()), 82);
+        PLATFORM.set_overlay_tile(x, st.y - (3 + y_start()), 82);
+        PLATFORM.set_overlay_tile(x, st.y - (2 + y_start()), 82);
     }
 
     text_state_.line_ = 0;
@@ -460,7 +460,7 @@ void FullscreenDialogScene::process_command()
         for (int x = 0; x < 30; ++x) {
             for (int y = 0; y < 20; ++y) {
                 if (y < 3 or y > 12 or x < 3 or x > 26) {
-                    PLATFORM.set_tile(Layer::overlay, x, y, 82);
+                    PLATFORM.set_overlay_tile(x, y, 82);
                 }
             }
         }

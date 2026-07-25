@@ -114,7 +114,7 @@ void HideRoomsScene::repaint()
     put(index_ + 2, 213, 15, false);
 
     for (int x = 2; x < calc_screen_tiles().x - 2; ++x) {
-        PLATFORM.set_tile(Layer::overlay, x, 8, 377);
+        PLATFORM.set_overlay_tile(x, 8, 377);
     }
 }
 

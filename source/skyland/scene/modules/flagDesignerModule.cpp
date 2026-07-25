@@ -41,10 +41,10 @@ private:
 public:
     void print_icon(const OverlayCoord& coord, u16 tile)
     {
-        PLATFORM.set_tile(Layer::overlay, coord.x, coord.y, tile);
-        PLATFORM.set_tile(Layer::overlay, coord.x + 1, coord.y, tile + 1);
-        PLATFORM.set_tile(Layer::overlay, coord.x, coord.y + 1, tile + 2);
-        PLATFORM.set_tile(Layer::overlay, coord.x + 1, coord.y + 1, tile + 3);
+        PLATFORM.set_overlay_tile(coord.x, coord.y, tile);
+        PLATFORM.set_overlay_tile(coord.x + 1, coord.y, tile + 1);
+        PLATFORM.set_overlay_tile(coord.x, coord.y + 1, tile + 2);
+        PLATFORM.set_overlay_tile(coord.x + 1, coord.y + 1, tile + 3);
     }
 
 
@@ -82,9 +82,9 @@ public:
         int margin = (calc_screen_tiles().x - page_count * 2) / 2;
         for (int i = 0; i < page_count; ++i) {
             if (i == page_ + 1) {
-                PLATFORM.set_tile(Layer::overlay, margin + i * 2, 19, 85);
+                PLATFORM.set_overlay_tile(margin + i * 2, 19, 85);
             } else {
-                PLATFORM.set_tile(Layer::overlay, margin + i * 2, 19, 84);
+                PLATFORM.set_overlay_tile(margin + i * 2, 19, 84);
             }
         }
 
@@ -107,10 +107,10 @@ class FlagTemplateScene : public Scene
 public:
     void print_icon(const OverlayCoord& coord, u16 tile)
     {
-        PLATFORM.set_tile(Layer::overlay, coord.x, coord.y, tile);
-        PLATFORM.set_tile(Layer::overlay, coord.x + 1, coord.y, tile + 1);
-        PLATFORM.set_tile(Layer::overlay, coord.x, coord.y + 1, tile + 2);
-        PLATFORM.set_tile(Layer::overlay, coord.x + 1, coord.y + 1, tile + 3);
+        PLATFORM.set_overlay_tile(coord.x, coord.y, tile);
+        PLATFORM.set_overlay_tile(coord.x + 1, coord.y, tile + 1);
+        PLATFORM.set_overlay_tile(coord.x, coord.y + 1, tile + 2);
+        PLATFORM.set_overlay_tile(coord.x + 1, coord.y + 1, tile + 3);
     }
 
 
@@ -137,15 +137,15 @@ public:
             print_icon({1, u8(4 + y * 2)}, 88 + 8 + 4 * y);
         }
 
-        PLATFORM.set_tile(Layer::overlay, 3, 4, 86);
+        PLATFORM.set_overlay_tile(3, 4, 86);
 
         static const int page_count = 6;
         int margin = (calc_screen_tiles().x - page_count * 2) / 2;
         for (int i = 0; i < page_count; ++i) {
             if (i == 0) {
-                PLATFORM.set_tile(Layer::overlay, margin + i * 2, 19, 85);
+                PLATFORM.set_overlay_tile(margin + i * 2, 19, 85);
             } else {
-                PLATFORM.set_tile(Layer::overlay, margin + i * 2, 19, 84);
+                PLATFORM.set_overlay_tile(margin + i * 2, 19, 84);
             }
         }
     }
@@ -192,9 +192,9 @@ public:
                 PLATFORM.speaker().play_sound("click_wooden", 2);
             }
             for (int y = 0; y < 20; ++y) {
-                PLATFORM.set_tile(Layer::overlay, 3, 4 + y, 0);
+                PLATFORM.set_overlay_tile(3, 4 + y, 0);
             }
-            PLATFORM.set_tile(Layer::overlay, 3, 4 + sel_ * 2, 86);
+            PLATFORM.set_overlay_tile(3, 4 + sel_ * 2, 86);
         }
         if (test_button(Button::up)) {
             if (sel_ > 0) {
@@ -202,9 +202,9 @@ public:
                 PLATFORM.speaker().play_sound("click_wooden", 2);
             }
             for (int y = 0; y < 20; ++y) {
-                PLATFORM.set_tile(Layer::overlay, 3, 4 + y, 0);
+                PLATFORM.set_overlay_tile(3, 4 + y, 0);
             }
-            PLATFORM.set_tile(Layer::overlay, 3, 4 + sel_ * 2, 86);
+            PLATFORM.set_overlay_tile(3, 4 + sel_ * 2, 86);
         }
 
         if (player().button_down(Button::action_1)) {

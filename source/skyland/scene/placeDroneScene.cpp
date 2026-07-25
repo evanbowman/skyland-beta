@@ -115,7 +115,7 @@ void PlaceDroneScene::enter(Scene& prev)
                      OverlayCoord{0, 19});
 
     for (int i = 0; i < message_->len(); ++i) {
-        PLATFORM.set_tile(Layer::overlay, i, 18, 425);
+        PLATFORM.set_overlay_tile(i, 18, 425);
     }
 
     Island* island = &APP.player_island();

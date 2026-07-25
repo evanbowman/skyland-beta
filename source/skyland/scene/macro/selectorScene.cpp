@@ -40,25 +40,25 @@ public:
 
         Text(SYSTR(macro_mode_lock)->c_str(), OverlayCoord{1, 1}).__detach();
 
-        PLATFORM.set_tile(Layer::overlay, 1, 2, 393);
+        PLATFORM.set_overlay_tile(1, 2, 393);
         Text(":", OverlayCoord{2, 2}).__detach();
-        PLATFORM.set_tile(Layer::overlay, 3, 2, 388);
-        PLATFORM.set_tile(Layer::overlay, 4, 2, 390);
+        PLATFORM.set_overlay_tile(3, 2, 388);
+        PLATFORM.set_overlay_tile(4, 2, 390);
 
-        PLATFORM.set_tile(Layer::overlay, 1, 3, 395);
+        PLATFORM.set_overlay_tile(1, 3, 395);
         Text(":", OverlayCoord{2, 3}).__detach();
-        PLATFORM.set_tile(Layer::overlay, 3, 3, 387);
-        PLATFORM.set_tile(Layer::overlay, 4, 3, 390);
+        PLATFORM.set_overlay_tile(3, 3, 387);
+        PLATFORM.set_overlay_tile(4, 3, 390);
 
-        PLATFORM.set_tile(Layer::overlay, 1, 4, 394);
+        PLATFORM.set_overlay_tile(1, 4, 394);
         Text(":", OverlayCoord{2, 4}).__detach();
-        PLATFORM.set_tile(Layer::overlay, 3, 4, 389);
-        PLATFORM.set_tile(Layer::overlay, 4, 4, 390);
+        PLATFORM.set_overlay_tile(3, 4, 389);
+        PLATFORM.set_overlay_tile(4, 4, 390);
 
-        PLATFORM.set_tile(Layer::overlay, 1, 5, 392);
+        PLATFORM.set_overlay_tile(1, 5, 392);
         Text(":", OverlayCoord{2, 5}).__detach();
-        PLATFORM.set_tile(Layer::overlay, 3, 5, 112);
-        PLATFORM.set_tile(Layer::overlay, 4, 5, 391);
+        PLATFORM.set_overlay_tile(3, 5, 112);
+        PLATFORM.set_overlay_tile(4, 5, 391);
     }
 
 
@@ -126,7 +126,7 @@ void SelectorScene::exit(macro::EngineImpl& state, Scene& next)
 {
     MacrocosmScene::exit(state, next);
     for (int i = 0; i < text_->len(); ++i) {
-        PLATFORM.set_tile(Layer::overlay, i, 18, 0);
+        PLATFORM.set_overlay_tile(i, 18, 0);
     }
     text_.reset();
     text_2_.reset();
@@ -339,7 +339,7 @@ void SelectorScene::describe_selected(macro::EngineImpl& state)
     auto& sector = state.sector();
 
     for (int i = 0; i < text_->len(); ++i) {
-        PLATFORM.set_tile(Layer::overlay, i, 18, 0);
+        PLATFORM.set_overlay_tile(i, 18, 0);
     }
 
     auto s = SystemString::block_air;
@@ -361,7 +361,7 @@ void SelectorScene::describe_selected(macro::EngineImpl& state)
             text_->assign(b.c_str());
 
             for (int i = 0; i < text_->len(); ++i) {
-                PLATFORM.set_tile(Layer::overlay, i, 18, 425);
+                PLATFORM.set_overlay_tile(i, 18, 425);
             }
 
             return;
@@ -383,7 +383,7 @@ void SelectorScene::describe_selected(macro::EngineImpl& state)
     }
 
     for (int i = 0; i < text_->len(); ++i) {
-        PLATFORM.set_tile(Layer::overlay, i, 18, 425);
+        PLATFORM.set_overlay_tile(i, 18, 425);
     }
 }
 

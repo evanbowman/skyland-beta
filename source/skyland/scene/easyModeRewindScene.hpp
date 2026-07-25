@@ -104,15 +104,15 @@ public:
 
         // NOTE: because the procgen ai forcibly sets level number in top
         // corner.
-        PLATFORM.set_tile(Layer::overlay, calc_screen_tiles().x - 1, 0, 0);
-        PLATFORM.set_tile(Layer::overlay, calc_screen_tiles().x - 2, 0, 0);
+        PLATFORM.set_overlay_tile(calc_screen_tiles().x - 1, 0, 0);
+        PLATFORM.set_overlay_tile(calc_screen_tiles().x - 2, 0, 0);
 
         if (selected_ == 0) {
-            PLATFORM.set_tile(Layer::overlay, 1, yes_text_->coord().y, 87);
-            PLATFORM.set_tile(Layer::overlay, 1, no_text_->coord().y, 0);
+            PLATFORM.set_overlay_tile(1, yes_text_->coord().y, 87);
+            PLATFORM.set_overlay_tile(1, no_text_->coord().y, 0);
         } else {
-            PLATFORM.set_tile(Layer::overlay, 1, yes_text_->coord().y, 0);
-            PLATFORM.set_tile(Layer::overlay, 1, no_text_->coord().y, 87);
+            PLATFORM.set_overlay_tile(1, yes_text_->coord().y, 0);
+            PLATFORM.set_overlay_tile(1, no_text_->coord().y, 87);
         }
 
 

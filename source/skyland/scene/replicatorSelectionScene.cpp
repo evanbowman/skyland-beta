@@ -45,11 +45,11 @@ void ReplicatorSelectionScene::enter(Scene& prev)
 
     const int count = st.x - text_->len();
     for (int i = 0; i < count; ++i) {
-        PLATFORM.set_tile(Layer::overlay, i + text_->len(), st.y - 1, 426);
+        PLATFORM.set_overlay_tile(i + text_->len(), st.y - 1, 426);
     }
 
     for (int i = 0; i < st.x; ++i) {
-        PLATFORM.set_tile(Layer::overlay, i, st.y - 2, 425);
+        PLATFORM.set_overlay_tile(i, st.y - 2, 425);
     }
 
     yes_text_.emplace(OverlayCoord{u8(st.x - 7), u8(st.y - 3)});
@@ -59,7 +59,7 @@ void ReplicatorSelectionScene::enter(Scene& prev)
     no_text_->assign(SYSTR(salvage_option_B)->c_str());
 
     for (int i = 23; i < st.x; ++i) {
-        PLATFORM.set_tile(Layer::overlay, i, st.y - 4, 425);
+        PLATFORM.set_overlay_tile(i, st.y - 4, 425);
     }
 
     persist_ui();
@@ -77,10 +77,10 @@ void ReplicatorSelectionScene::exit(Scene& next)
 
     const auto st = calc_screen_tiles();
     for (int x = 0; x < st.x; ++x) {
-        PLATFORM.set_tile(Layer::overlay, x, st.y - 1, 0);
-        PLATFORM.set_tile(Layer::overlay, x, st.y - 2, 0);
-        PLATFORM.set_tile(Layer::overlay, x, st.y - 3, 0);
-        PLATFORM.set_tile(Layer::overlay, x, st.y - 4, 0);
+        PLATFORM.set_overlay_tile(x, st.y - 1, 0);
+        PLATFORM.set_overlay_tile(x, st.y - 2, 0);
+        PLATFORM.set_overlay_tile(x, st.y - 3, 0);
+        PLATFORM.set_overlay_tile(x, st.y - 4, 0);
     }
 
     if (APP.game_mode() == App::GameMode::co_op) {

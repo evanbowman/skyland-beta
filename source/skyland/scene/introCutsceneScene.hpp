@@ -68,14 +68,14 @@ public:
 
         const auto screen_tiles = calc_screen_tiles();
         for (int i = 0; i < screen_tiles.x; ++i) {
-            PLATFORM.set_tile(Layer::overlay, i, 0, 112);
-            PLATFORM.set_tile(Layer::overlay, i, 1, 112);
-            PLATFORM.set_tile(Layer::overlay, i, 2, 112);
-            PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y, 112);
-            PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y - 1, 112);
-            PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y - 2, 112);
-            PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y - 3, 112);
-            PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y - 4, 112);
+            PLATFORM.set_overlay_tile(i, 0, 112);
+            PLATFORM.set_overlay_tile(i, 1, 112);
+            PLATFORM.set_overlay_tile(i, 2, 112);
+            PLATFORM.set_overlay_tile(i, screen_tiles.y, 112);
+            PLATFORM.set_overlay_tile(i, screen_tiles.y - 1, 112);
+            PLATFORM.set_overlay_tile(i, screen_tiles.y - 2, 112);
+            PLATFORM.set_overlay_tile(i, screen_tiles.y - 3, 112);
+            PLATFORM.set_overlay_tile(i, screen_tiles.y - 4, 112);
         }
     }
 
@@ -298,14 +298,14 @@ public:
     {
         const auto screen_tiles = calc_screen_tiles();
         for (int i = 0; i < screen_tiles.x; ++i) {
-            PLATFORM.set_tile(Layer::overlay, i, 0, 112);
-            PLATFORM.set_tile(Layer::overlay, i, 1, 112);
-            PLATFORM.set_tile(Layer::overlay, i, 2, 112);
-            PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y, 112);
-            PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y - 1, 112);
-            PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y - 2, 112);
-            PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y - 3, 112);
-            PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y - 4, 112);
+            PLATFORM.set_overlay_tile(i, 0, 112);
+            PLATFORM.set_overlay_tile(i, 1, 112);
+            PLATFORM.set_overlay_tile(i, 2, 112);
+            PLATFORM.set_overlay_tile(i, screen_tiles.y, 112);
+            PLATFORM.set_overlay_tile(i, screen_tiles.y - 1, 112);
+            PLATFORM.set_overlay_tile(i, screen_tiles.y - 2, 112);
+            PLATFORM.set_overlay_tile(i, screen_tiles.y - 3, 112);
+            PLATFORM.set_overlay_tile(i, screen_tiles.y - 4, 112);
         }
     }
 
@@ -314,7 +314,7 @@ public:
     {
         const auto screen_tiles = calc_screen_tiles();
         for (int i = 0; i < screen_tiles.x; ++i) {
-            PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y - 4, 0);
+            PLATFORM.set_overlay_tile(i, screen_tiles.y - 4, 0);
         }
         text_.reset();
     }
@@ -362,14 +362,14 @@ public:
 
         const auto screen_tiles = calc_screen_tiles();
         for (int i = 0; i < screen_tiles.x; ++i) {
-            PLATFORM.set_tile(Layer::overlay, i, 0, 112);
-            PLATFORM.set_tile(Layer::overlay, i, 1, 112);
-            PLATFORM.set_tile(Layer::overlay, i, 2, 112);
-            PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y, 112);
-            PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y - 1, 112);
-            PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y - 2, 112);
-            PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y - 3, 112);
-            PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y - 4, 112);
+            PLATFORM.set_overlay_tile(i, 0, 112);
+            PLATFORM.set_overlay_tile(i, 1, 112);
+            PLATFORM.set_overlay_tile(i, 2, 112);
+            PLATFORM.set_overlay_tile(i, screen_tiles.y, 112);
+            PLATFORM.set_overlay_tile(i, screen_tiles.y - 1, 112);
+            PLATFORM.set_overlay_tile(i, screen_tiles.y - 2, 112);
+            PLATFORM.set_overlay_tile(i, screen_tiles.y - 3, 112);
+            PLATFORM.set_overlay_tile(i, screen_tiles.y - 4, 112);
         }
     }
 
@@ -526,14 +526,14 @@ public:
 
         const auto screen_tiles = calc_screen_tiles();
         for (int i = 0; i < screen_tiles.x; ++i) {
-            PLATFORM.set_tile(Layer::overlay, i, 0, 112);
-            PLATFORM.set_tile(Layer::overlay, i, 1, 112);
-            PLATFORM.set_tile(Layer::overlay, i, 2, 112);
-            PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y, 112);
-            PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y - 1, 112);
-            PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y - 2, 112);
-            PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y - 3, 112);
-            PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y - 4, 112);
+            PLATFORM.set_overlay_tile(i, 0, 112);
+            PLATFORM.set_overlay_tile(i, 1, 112);
+            PLATFORM.set_overlay_tile(i, 2, 112);
+            PLATFORM.set_overlay_tile(i, screen_tiles.y, 112);
+            PLATFORM.set_overlay_tile(i, screen_tiles.y - 1, 112);
+            PLATFORM.set_overlay_tile(i, screen_tiles.y - 2, 112);
+            PLATFORM.set_overlay_tile(i, screen_tiles.y - 3, 112);
+            PLATFORM.set_overlay_tile(i, screen_tiles.y - 4, 112);
         }
     }
 
@@ -638,14 +638,14 @@ public:
 
         const auto screen_tiles = calc_screen_tiles();
         for (int i = 0; i < screen_tiles.x; ++i) {
-            PLATFORM.set_tile(Layer::overlay, i, 0, 112);
-            PLATFORM.set_tile(Layer::overlay, i, 1, 112);
-            PLATFORM.set_tile(Layer::overlay, i, 2, 112);
-            PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y, 112);
-            PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y - 1, 112);
-            PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y - 2, 112);
-            PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y - 3, 112);
-            PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y - 4, 112);
+            PLATFORM.set_overlay_tile(i, 0, 112);
+            PLATFORM.set_overlay_tile(i, 1, 112);
+            PLATFORM.set_overlay_tile(i, 2, 112);
+            PLATFORM.set_overlay_tile(i, screen_tiles.y, 112);
+            PLATFORM.set_overlay_tile(i, screen_tiles.y - 1, 112);
+            PLATFORM.set_overlay_tile(i, screen_tiles.y - 2, 112);
+            PLATFORM.set_overlay_tile(i, screen_tiles.y - 3, 112);
+            PLATFORM.set_overlay_tile(i, screen_tiles.y - 4, 112);
         }
 
         PLATFORM.speaker().stream_music("isle_of_the_dead", 0);

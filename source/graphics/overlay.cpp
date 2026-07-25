@@ -200,14 +200,14 @@ void Text::erase()
 {
     if (not config_.double_size_) {
         for (int i = 0; i < len_; ++i) {
-            PLATFORM.set_tile(Layer::overlay, coord_.x + i, coord_.y, 0);
+            PLATFORM.set_overlay_tile(coord_.x + i, coord_.y, 0);
         }
     } else {
         for (int i = 0; i < len_ * 2; ++i) {
-            PLATFORM.set_tile(Layer::overlay, coord_.x + i, coord_.y, 0);
+            PLATFORM.set_overlay_tile(coord_.x + i, coord_.y, 0);
         }
         for (int i = 0; i < len_ * 2; ++i) {
-            PLATFORM.set_tile(Layer::overlay, coord_.x + i, coord_.y + 1, 0);
+            PLATFORM.set_overlay_tile(coord_.x + i, coord_.y + 1, 0);
         }
     }
 
@@ -305,10 +305,10 @@ void print_double_char(utf8::Codepoint c,
         }
 
         if (not colors) {
-            PLATFORM.set_tile(Layer::overlay, coord.x, coord.y, t0);
-            PLATFORM.set_tile(Layer::overlay, coord.x + 1, coord.y, t1);
-            PLATFORM.set_tile(Layer::overlay, coord.x, coord.y + 1, t2);
-            PLATFORM.set_tile(Layer::overlay, coord.x + 1, coord.y + 1, t3);
+            PLATFORM.set_overlay_tile(coord.x, coord.y, t0);
+            PLATFORM.set_overlay_tile(coord.x + 1, coord.y, t1);
+            PLATFORM.set_overlay_tile(coord.x, coord.y + 1, t2);
+            PLATFORM.set_overlay_tile(coord.x + 1, coord.y + 1, t3);
         } else {
             PLATFORM.set_tile(coord.x, coord.y, t0, *colors);
             PLATFORM.set_tile(coord.x + 1, coord.y, t1, *colors);
@@ -316,10 +316,10 @@ void print_double_char(utf8::Codepoint c,
             PLATFORM.set_tile(coord.x + 1, coord.y + 1, t3, *colors);
         }
     } else {
-        PLATFORM.set_tile(Layer::overlay, coord.x, coord.y, 0);
-        PLATFORM.set_tile(Layer::overlay, coord.x + 1, coord.y, 0);
-        PLATFORM.set_tile(Layer::overlay, coord.x, coord.y + 1, 0);
-        PLATFORM.set_tile(Layer::overlay, coord.x + 1, coord.y + 1, 0);
+        PLATFORM.set_overlay_tile(coord.x, coord.y, 0);
+        PLATFORM.set_overlay_tile(coord.x + 1, coord.y, 0);
+        PLATFORM.set_overlay_tile(coord.x, coord.y + 1, 0);
+        PLATFORM.set_overlay_tile(coord.x + 1, coord.y + 1, 0);
     }
 }
 
@@ -344,19 +344,19 @@ void print_char(utf8::Codepoint c,
         if (c == '@') {
             // Really bad hack, to show a full color coin icon in place of the
             // '@' char.
-            PLATFORM.set_tile(Layer::overlay, coord.x, coord.y, 146);
+            PLATFORM.set_overlay_tile(coord.x, coord.y, 146);
             return;
         }
         if (c == '`') {
-            PLATFORM.set_tile(Layer::overlay, coord.x, coord.y, 147);
+            PLATFORM.set_overlay_tile(coord.x, coord.y, 147);
             return;
         }
         if (c == (char)17) { // (device control 1 ascii char)
-            PLATFORM.set_tile(Layer::overlay, coord.x, coord.y, 422);
+            PLATFORM.set_overlay_tile(coord.x, coord.y, 422);
             return;
         }
         if (c == (char)18) { // (device control 2 ascii char)
-            PLATFORM.set_tile(Layer::overlay, coord.x, coord.y, 148);
+            PLATFORM.set_overlay_tile(coord.x, coord.y, 148);
             return;
         }
     }
@@ -372,12 +372,12 @@ void print_char(utf8::Codepoint c,
         }
 
         if (not colors) {
-            PLATFORM.set_tile(Layer::overlay, coord.x, coord.y, t);
+            PLATFORM.set_overlay_tile(coord.x, coord.y, t);
         } else {
             PLATFORM.set_tile(coord.x, coord.y, t, *colors);
         }
     } else {
-        PLATFORM.set_tile(Layer::overlay, coord.x, coord.y, 0);
+        PLATFORM.set_overlay_tile(coord.x, coord.y, 0);
     }
 }
 
@@ -385,7 +385,7 @@ void print_char(utf8::Codepoint c,
 void Text::resize(u32 len)
 {
     for (int i = len - 1; i < this->len(); ++i) {
-        PLATFORM.set_tile(Layer::overlay, coord_.x + i, coord_.y, 0);
+        PLATFORM.set_overlay_tile(coord_.x + i, coord_.y, 0);
     }
     len_ = 0;
 }
@@ -397,11 +397,11 @@ void Text::assign(const char* str, const OptColors& colors)
     if (len_ > new_len) {
         if (not config_.double_size_) {
             for (int i = new_len; i < len_; ++i) {
-                PLATFORM.set_tile(Layer::overlay, coord_.x + i, coord_.y, 0);
+                PLATFORM.set_overlay_tile(coord_.x + i, coord_.y, 0);
             }
         } else {
             for (int i = new_len; i < len_ * 2; ++i) {
-                PLATFORM.set_tile(Layer::overlay, coord_.x + i, coord_.y, 0);
+                PLATFORM.set_overlay_tile(coord_.x + i, coord_.y, 0);
             }
             for (int i = new_len; i < len_ * 2; ++i) {
                 PLATFORM.set_tile(
@@ -463,22 +463,22 @@ void Text::append(int num, const OptColors& colors)
 
 SmallIcon::SmallIcon(int tile, const OverlayCoord& coord) : coord_(coord)
 {
-    PLATFORM.set_tile(Layer::overlay, coord_.x, coord_.y, tile);
+    PLATFORM.set_overlay_tile(coord_.x, coord_.y, tile);
 }
 
 
 SmallIcon::~SmallIcon()
 {
-    PLATFORM.set_tile(Layer::overlay, coord_.x, coord_.y, 0);
+    PLATFORM.set_overlay_tile(coord_.x, coord_.y, 0);
 }
 
 
 void MediumIcon::draw(int tile, const OverlayCoord& coord)
 {
-    PLATFORM.set_tile(Layer::overlay, coord.x, coord.y, tile);
-    PLATFORM.set_tile(Layer::overlay, coord.x + 1, coord.y, tile + 1);
-    PLATFORM.set_tile(Layer::overlay, coord.x, coord.y + 1, tile + 2);
-    PLATFORM.set_tile(Layer::overlay, coord.x + 1, coord.y + 1, tile + 3);
+    PLATFORM.set_overlay_tile(coord.x, coord.y, tile);
+    PLATFORM.set_overlay_tile(coord.x + 1, coord.y, tile + 1);
+    PLATFORM.set_overlay_tile(coord.x, coord.y + 1, tile + 2);
+    PLATFORM.set_overlay_tile(coord.x + 1, coord.y + 1, tile + 3);
 }
 
 
@@ -490,10 +490,10 @@ MediumIcon::MediumIcon(int tile, const OverlayCoord& coord) : coord_(coord)
 
 MediumIcon::~MediumIcon()
 {
-    PLATFORM.set_tile(Layer::overlay, coord_.x, coord_.y, 0);
-    PLATFORM.set_tile(Layer::overlay, coord_.x + 1, coord_.y, 0);
-    PLATFORM.set_tile(Layer::overlay, coord_.x, coord_.y + 1, 0);
-    PLATFORM.set_tile(Layer::overlay, coord_.x + 1, coord_.y + 1, 0);
+    PLATFORM.set_overlay_tile(coord_.x, coord_.y, 0);
+    PLATFORM.set_overlay_tile(coord_.x + 1, coord_.y, 0);
+    PLATFORM.set_overlay_tile(coord_.x, coord_.y + 1, 0);
+    PLATFORM.set_overlay_tile(coord_.x + 1, coord_.y + 1, 0);
 }
 
 
@@ -505,7 +505,7 @@ TextView::~TextView()
 {
     for (int i = position_.x; i < position_.x + size_.x; ++i) {
         for (int j = position_.y; j < position_.y + size_.y; ++j) {
-            PLATFORM.set_tile(Layer::overlay, i, j, 0);
+            PLATFORM.set_overlay_tile(i, j, 0);
         }
     }
 }
@@ -627,31 +627,31 @@ Border::Border(const OverlayCoord& size,
         for (int y = position_.y; y < stopy; ++y) {
 
             if (x == position_.x and y == position_.y) {
-                PLATFORM.set_tile(Layer::overlay, x, y, 67 + 86 + tile_offset);
+                PLATFORM.set_overlay_tile(x, y, 67 + 86 + tile_offset);
 
             } else if (x == position_.x and y == stopy - 1) {
-                PLATFORM.set_tile(Layer::overlay, x, y, 67 + 88 + tile_offset);
+                PLATFORM.set_overlay_tile(x, y, 67 + 88 + tile_offset);
 
             } else if (x == stopx - 1 and y == position_.y) {
-                PLATFORM.set_tile(Layer::overlay, x, y, 67 + 85 + tile_offset);
+                PLATFORM.set_overlay_tile(x, y, 67 + 85 + tile_offset);
 
             } else if (x == stopx - 1 and y == stopy - 1) {
-                PLATFORM.set_tile(Layer::overlay, x, y, 67 + 87 + tile_offset);
+                PLATFORM.set_overlay_tile(x, y, 67 + 87 + tile_offset);
 
             } else if (x == position_.x) {
-                PLATFORM.set_tile(Layer::overlay, x, y, 67 + 84 + tile_offset);
+                PLATFORM.set_overlay_tile(x, y, 67 + 84 + tile_offset);
 
             } else if (y == position_.y) {
-                PLATFORM.set_tile(Layer::overlay, x, y, 67 + 81 + tile_offset);
+                PLATFORM.set_overlay_tile(x, y, 67 + 81 + tile_offset);
 
             } else if (x == stopx - 1) {
-                PLATFORM.set_tile(Layer::overlay, x, y, 67 + 82 + tile_offset);
+                PLATFORM.set_overlay_tile(x, y, 67 + 82 + tile_offset);
 
             } else if (y == stopy - 1) {
-                PLATFORM.set_tile(Layer::overlay, x, y, 67 + 83 + tile_offset);
+                PLATFORM.set_overlay_tile(x, y, 67 + 83 + tile_offset);
 
             } else if (fill) {
-                PLATFORM.set_tile(Layer::overlay, x, y, 67 + 80);
+                PLATFORM.set_overlay_tile(x, y, 67 + 80);
             }
         }
     }
@@ -671,22 +671,22 @@ Border::~Border()
                 (x == position_.x and y == stopy - 1) or
                 (x == stopx - 1 and y == position_.y) or
                 (x == stopx - 1 and y == stopy - 1)) {
-                PLATFORM.set_tile(Layer::overlay, x, y, default_tile_);
+                PLATFORM.set_overlay_tile(x, y, default_tile_);
 
             } else if (x == position_.x) {
-                PLATFORM.set_tile(Layer::overlay, x, y, default_tile_);
+                PLATFORM.set_overlay_tile(x, y, default_tile_);
 
             } else if (y == position_.y) {
-                PLATFORM.set_tile(Layer::overlay, x, y, default_tile_);
+                PLATFORM.set_overlay_tile(x, y, default_tile_);
 
             } else if (x == stopx - 1) {
-                PLATFORM.set_tile(Layer::overlay, x, y, default_tile_);
+                PLATFORM.set_overlay_tile(x, y, default_tile_);
 
             } else if (y == stopy - 1) {
-                PLATFORM.set_tile(Layer::overlay, x, y, default_tile_);
+                PLATFORM.set_overlay_tile(x, y, default_tile_);
 
             } else if (filled_) {
-                PLATFORM.set_tile(Layer::overlay, x, y, default_tile_);
+                PLATFORM.set_overlay_tile(x, y, default_tile_);
             }
         }
     }
@@ -696,7 +696,7 @@ Border::~Border()
 BossHealthBar::BossHealthBar(u8 height, const OverlayCoord& position)
     : position_(position), height_(height)
 {
-    PLATFORM.set_tile(Layer::overlay, position_.x, position_.y, 82);
+    PLATFORM.set_overlay_tile(position_.x, position_.y, 82);
     PLATFORM.set_tile(
         Layer::overlay, position_.x, position_.y + height + 1, 83);
     set_health(0.f);
@@ -738,7 +738,7 @@ BossHealthBar::~BossHealthBar()
 {
     for (int y = 0; y < height_ + 2 /* +2 due to the header and footer */;
          ++y) {
-        PLATFORM.set_tile(Layer::overlay, position_.x, position_.y + y, 0);
+        PLATFORM.set_overlay_tile(position_.x, position_.y + y, 0);
     }
 }
 
@@ -746,7 +746,7 @@ BossHealthBar::~BossHealthBar()
 LoadingBar::LoadingBar(u8 width, const OverlayCoord& position)
     : position_(position), width_(width)
 {
-    PLATFORM.set_tile(Layer::overlay, position_.x, position_.y, 401);
+    PLATFORM.set_overlay_tile(position_.x, position_.y, 401);
     PLATFORM.set_tile(
         Layer::overlay, position_.x + width + 1, position_.y, 411);
 
@@ -757,7 +757,7 @@ LoadingBar::LoadingBar(u8 width, const OverlayCoord& position)
 LoadingBar::~LoadingBar()
 {
     for (int x = 0; x < width_ + 5; ++x) {
-        PLATFORM.set_tile(Layer::overlay, position_.x + x, position_.y, 0);
+        PLATFORM.set_overlay_tile(position_.x + x, position_.y, 0);
     }
 }
 
@@ -864,7 +864,7 @@ void LeftSidebar::set_display_percentage(Float percentage)
         int current_tile = 0;
 
         while (pixels >= 8) {
-            PLATFORM.set_tile(Layer::overlay, current_tile + pos_.x, y, 121);
+            PLATFORM.set_overlay_tile(current_tile + pos_.x, y, 121);
             pixels -= 8;
             ++current_tile;
         }
@@ -876,7 +876,7 @@ void LeftSidebar::set_display_percentage(Float percentage)
         }
 
         while (current_tile < width_) {
-            PLATFORM.set_tile(Layer::overlay, current_tile + pos_.x, y, 0);
+            PLATFORM.set_overlay_tile(current_tile + pos_.x, y, 0);
             ++current_tile;
         }
     }

@@ -24,7 +24,7 @@ void AdventureLogScene::show_page(int page_num)
     entries_.clear();
     for (int x = 0; x < 30; ++x) {
         for (int y = 1; y < 20; ++y) {
-            PLATFORM.set_tile(Layer::overlay, x, y, 90);
+            PLATFORM.set_overlay_tile(x, y, 90);
         }
     }
 
@@ -48,7 +48,7 @@ void AdventureLogScene::show_page(int page_num)
     auto pages_text = format("%/%", page_num + 1, max_pages_);
 
     for (int x = 20; x < 30; ++x) {
-        PLATFORM.set_tile(Layer::overlay, x, 0, 90);
+        PLATFORM.set_overlay_tile(x, 0, 90);
     }
     Text::print(pages_text.c_str(),
                 {u8(30 - utf8::len(pages_text.c_str())), 0},
@@ -62,7 +62,7 @@ void AdventureLogScene::show_page(int page_num)
         entries_.emplace_back();
         entries_.back().assign(text.c_str(), {2, y}, {27, 3});
 
-        PLATFORM.set_tile(Layer::overlay, 1, y, 82);
+        PLATFORM.set_overlay_tile(1, y, 82);
         auto space_tile = PLATFORM.get_tile(Layer::overlay, 2, y + 1);
 
         y += 2;
@@ -80,17 +80,17 @@ void AdventureLogScene::show_page(int page_num)
     }
 
     if (cnt > end) {
-        PLATFORM.set_tile(Layer::overlay, 29, 18, 84);
-        PLATFORM.set_tile(Layer::overlay, 28, 18, 83);
-        PLATFORM.set_tile(Layer::overlay, 28, 19, 85);
-        PLATFORM.set_tile(Layer::overlay, 29, 19, 86);
+        PLATFORM.set_overlay_tile(29, 18, 84);
+        PLATFORM.set_overlay_tile(28, 18, 83);
+        PLATFORM.set_overlay_tile(28, 19, 85);
+        PLATFORM.set_overlay_tile(29, 19, 86);
     }
 
     if (page_ > 0) {
-        PLATFORM.set_tile(Layer::overlay, 0, 18, 87);
-        PLATFORM.set_tile(Layer::overlay, 1, 18, 83);
-        PLATFORM.set_tile(Layer::overlay, 0, 19, 89);
-        PLATFORM.set_tile(Layer::overlay, 1, 19, 87);
+        PLATFORM.set_overlay_tile(0, 18, 87);
+        PLATFORM.set_overlay_tile(1, 18, 83);
+        PLATFORM.set_overlay_tile(0, 19, 89);
+        PLATFORM.set_overlay_tile(1, 19, 87);
     }
 }
 
@@ -224,7 +224,7 @@ ScenePtr AdventureLogScene::update(Time delta)
                        APP.player().button_down(Button::action_2))) {
             state_ = State::fade_out;
             for (int x = 0; x < 30; ++x) {
-                PLATFORM.set_tile(Layer::overlay, x, 0, 90);
+                PLATFORM.set_overlay_tile(x, 0, 90);
             }
             timer_ = 0;
             break;
@@ -243,7 +243,7 @@ ScenePtr AdventureLogScene::update(Time delta)
                 entries_.clear();
                 for (int x = 0; x < 30; ++x) {
                     for (int y = 1; y < 20; ++y) {
-                        PLATFORM.set_tile(Layer::overlay, x, y, 90);
+                        PLATFORM.set_overlay_tile(x, y, 90);
                     }
                 }
                 state_ = State::page_turn_right_anim;
@@ -254,7 +254,7 @@ ScenePtr AdventureLogScene::update(Time delta)
             entries_.clear();
             for (int x = 0; x < 30; ++x) {
                 for (int y = 1; y < 20; ++y) {
-                    PLATFORM.set_tile(Layer::overlay, x, y, 90);
+                    PLATFORM.set_overlay_tile(x, y, 90);
                 }
             }
             state_ = State::page_turn_left_anim;
@@ -275,11 +275,11 @@ ScenePtr AdventureLogScene::update(Time delta)
                     switch (t) {
                     case 84:
                     case 85:
-                        PLATFORM.set_tile(Layer::overlay, x, y, 121);
+                        PLATFORM.set_overlay_tile(x, y, 121);
                         break;
 
                     case 89:
-                        PLATFORM.set_tile(Layer::overlay, x, y, 113);
+                        PLATFORM.set_overlay_tile(x, y, 113);
                         break;
 
                     case 114:
@@ -297,7 +297,7 @@ ScenePtr AdventureLogScene::update(Time delta)
                     case 126:
                     case 127:
                     case 128:
-                        PLATFORM.set_tile(Layer::overlay, x, y, t + 1);
+                        PLATFORM.set_overlay_tile(x, y, t + 1);
 
                         if (t == 122 and x > 0) {
                             auto prev =
@@ -322,7 +322,7 @@ ScenePtr AdventureLogScene::update(Time delta)
                             PLATFORM.set_tile(
                                 Layer::overlay, x - 1, y - 1, 114);
                         }
-                        PLATFORM.set_tile(Layer::overlay, x, y, 113);
+                        PLATFORM.set_overlay_tile(x, y, 113);
                         if (x == 0 and y == 0) {
                             state_ = State::page_fade_in_anim;
                             PLATFORM.screen().schedule_fade(

@@ -97,11 +97,11 @@ ScenePtr StartAdventureScene::update(Time delta)
         loaded_) {
 
         if (continue_opt_sel_ == 0) {
-            PLATFORM.set_tile(Layer::overlay, 1, 2, 475);
-            PLATFORM.set_tile(Layer::overlay, 1, 4, 112);
+            PLATFORM.set_overlay_tile(1, 2, 475);
+            PLATFORM.set_overlay_tile(1, 4, 112);
         } else {
-            PLATFORM.set_tile(Layer::overlay, 1, 2, 112);
-            PLATFORM.set_tile(Layer::overlay, 1, 4, 475);
+            PLATFORM.set_overlay_tile(1, 2, 112);
+            PLATFORM.set_overlay_tile(1, 4, 475);
         }
 
         if (button_down<Button::up>()) {

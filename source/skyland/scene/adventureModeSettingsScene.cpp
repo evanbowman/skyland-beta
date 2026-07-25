@@ -160,13 +160,13 @@ void AdventureModeSettingsScene::repaint()
 {
     for (int x = 0; x < 30; ++x) {
         for (int y = 10; y < 14; ++y) {
-            PLATFORM.set_tile(Layer::overlay, x, y, 0);
+            PLATFORM.set_overlay_tile(x, y, 0);
         }
     }
 
     auto show_dividing_line = [&] {
         for (int x = 1; x < 29; ++x) {
-            PLATFORM.set_tile(Layer::overlay, x, 13, 377);
+            PLATFORM.set_overlay_tile(x, 13, 377);
         }
     };
 
@@ -278,7 +278,7 @@ void AdventureModeSettingsScene::enter(Scene& prev)
     repaint();
 
     for (int x = 1; x < 29; ++x) {
-        PLATFORM.set_tile(Layer::overlay, x, 13, 377);
+        PLATFORM.set_overlay_tile(x, 13, 377);
     }
 
     PLATFORM.screen().fade(0.96f);

@@ -49,7 +49,7 @@ void NotificationScene::enter(Scene& prev)
     description_->assign(msg_.c_str());
 
     for (int i = 0; i < description_->len(); ++i) {
-        PLATFORM.set_tile(Layer::overlay, i, 18, 425);
+        PLATFORM.set_overlay_tile(i, 18, 425);
     }
 }
 

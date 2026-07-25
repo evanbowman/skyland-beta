@@ -58,7 +58,7 @@ void GroupSelectionScene::enter(Scene& prev)
                   OverlayCoord{0, u8(st.y - 1)});
 
     for (int i = 0; i < text_->len(); ++i) {
-        PLATFORM.set_tile(Layer::overlay, i, st.y - 2, 425);
+        PLATFORM.set_overlay_tile(i, st.y - 2, 425);
     }
 
     if (group_mti_) {
@@ -319,18 +319,18 @@ ScenePtr GroupSelectionScene::update(Time delta)
                 auto st = calc_screen_tiles();
 
                 for (int x = 0; x < st.x; ++x) {
-                    PLATFORM.set_tile(Layer::overlay, x, st.y - 1, 112);
-                    PLATFORM.set_tile(Layer::overlay, x, st.y - 2, 425);
-                    PLATFORM.set_tile(Layer::overlay, x, st.y - 3, 0);
+                    PLATFORM.set_overlay_tile(x, st.y - 1, 112);
+                    PLATFORM.set_overlay_tile(x, st.y - 2, 425);
+                    PLATFORM.set_overlay_tile(x, st.y - 3, 0);
                 }
 
                 auto msg = SYSTR(group_pick_group);
                 Text::print(msg->c_str(), OverlayCoord{0, u8(st.y - 1)});
 
                 auto len = utf8::len(msg->c_str());
-                PLATFORM.set_tile(Layer::overlay, len, st.y - 1, 395);
-                PLATFORM.set_tile(Layer::overlay, len + 1, st.y - 1, 393);
-                PLATFORM.set_tile(Layer::overlay, len + 2, st.y - 1, 394);
+                PLATFORM.set_overlay_tile(len, st.y - 1, 395);
+                PLATFORM.set_overlay_tile(len + 1, st.y - 1, 393);
+                PLATFORM.set_overlay_tile(len + 2, st.y - 1, 394);
 
                 break;
             }
@@ -399,12 +399,12 @@ void GroupSelectionScene::show_action_list()
 
     for (int x = 0; x < st.x; ++x) {
         for (int y = 0; y < 2; ++y) {
-            PLATFORM.set_tile(Layer::overlay, x, st.y - (y + 1), 112);
+            PLATFORM.set_overlay_tile(x, st.y - (y + 1), 112);
         }
-        PLATFORM.set_tile(Layer::overlay, x, st.y - 3, 425);
+        PLATFORM.set_overlay_tile(x, st.y - 3, 425);
     }
 
-    PLATFORM.set_tile(Layer::overlay, 0, (st.y - 2) + action_list_index_, 475);
+    PLATFORM.set_overlay_tile(0, (st.y - 2) + action_list_index_, 475);
 
     static const auto highlight_colors =
         FontColors{custom_color(0x000010), ColorConstant::aerospace_orange};

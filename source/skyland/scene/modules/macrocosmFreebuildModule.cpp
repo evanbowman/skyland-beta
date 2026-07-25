@@ -211,21 +211,21 @@ ScenePtr MacrocosmFreebuildModule::update(Time delta)
 
     switch (size_sel_) {
     case 0:
-        PLATFORM.set_tile(Layer::overlay, 1, 7, 396);
-        PLATFORM.set_tile(Layer::overlay, 1, 9, 0);
-        PLATFORM.set_tile(Layer::overlay, 1, 11, 0);
+        PLATFORM.set_overlay_tile(1, 7, 396);
+        PLATFORM.set_overlay_tile(1, 9, 0);
+        PLATFORM.set_overlay_tile(1, 11, 0);
         break;
 
     case 1:
-        PLATFORM.set_tile(Layer::overlay, 1, 7, 0);
-        PLATFORM.set_tile(Layer::overlay, 1, 9, 396);
-        PLATFORM.set_tile(Layer::overlay, 1, 11, 0);
+        PLATFORM.set_overlay_tile(1, 7, 0);
+        PLATFORM.set_overlay_tile(1, 9, 396);
+        PLATFORM.set_overlay_tile(1, 11, 0);
         break;
 
     case 2:
-        PLATFORM.set_tile(Layer::overlay, 1, 7, 0);
-        PLATFORM.set_tile(Layer::overlay, 1, 9, 0);
-        PLATFORM.set_tile(Layer::overlay, 1, 11, 396);
+        PLATFORM.set_overlay_tile(1, 7, 0);
+        PLATFORM.set_overlay_tile(1, 9, 0);
+        PLATFORM.set_overlay_tile(1, 11, 396);
         break;
     }
 

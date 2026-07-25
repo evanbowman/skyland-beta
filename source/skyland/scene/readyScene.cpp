@@ -70,7 +70,7 @@ void clear_room_description(Optional<Text>& room_description)
     for (int i = 0; i < room_description->len(); ++i) {
         auto xo = room_description->coord().x;
         if (PLATFORM.get_tile(Layer::overlay, xo + i, y) == 425) {
-            PLATFORM.set_tile(Layer::overlay, xo + i, y, 0);
+            PLATFORM.set_overlay_tile(xo + i, y, 0);
         }
     }
 
@@ -78,7 +78,7 @@ void clear_room_description(Optional<Text>& room_description)
         if (not ws->hide_chr_icon()) {
             for (int x = 0; x < 4; ++x) {
                 for (int y = 0; y < 4; ++y) {
-                    PLATFORM.set_tile(Layer::overlay, x, st.y - y - 1, 0);
+                    PLATFORM.set_overlay_tile(x, st.y - y - 1, 0);
                 }
             }
         }
@@ -829,7 +829,7 @@ void describe_room(Island* island,
                             };
                             auto b = chr->stats().info_.battles_fought_;
                             room_description->append("  ");
-                            PLATFORM.set_tile(Layer::overlay, icon_x(), y, 484);
+                            PLATFORM.set_overlay_tile(icon_x(), y, 484);
                             room_description->append(b);
                         }
                         ++i;
@@ -1020,14 +1020,14 @@ void describe_room(Island* island,
 
         for (int i = 0; i < calc_screen_tiles().x; ++i) {
             if (PLATFORM.get_tile(Layer::overlay, i, y) == 425) {
-                PLATFORM.set_tile(Layer::overlay, i, y, 0);
+                PLATFORM.set_overlay_tile(i, y, 0);
             }
         }
 
         for (int i = 0; i < room_description->len(); ++i) {
             auto xo = room_description->coord().x;
             if (not PLATFORM.get_tile(Layer::overlay, xo + i, y)) {
-                PLATFORM.set_tile(Layer::overlay, xo + i, y, 425);
+                PLATFORM.set_overlay_tile(xo + i, y, 425);
             }
         }
     }

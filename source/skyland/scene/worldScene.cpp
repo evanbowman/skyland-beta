@@ -107,7 +107,7 @@ static void show_multiplayer_pauses_remaining()
         return;
     }
 
-    PLATFORM.set_tile(Layer::overlay, st.x - 3, 3, 410);
+    PLATFORM.set_overlay_tile(st.x - 3, 3, 410);
     Text t(OverlayCoord{u8(st.x - 2), 3});
     t.assign("x");
     t.append(g.multiplayer_pauses_remaining_);
@@ -125,9 +125,9 @@ static void hide_multiplayer_pauses_remaining()
         return;
     }
 
-    PLATFORM.set_tile(Layer::overlay, st.x - 3, 3, 0);
-    PLATFORM.set_tile(Layer::overlay, st.x - 2, 3, 0);
-    PLATFORM.set_tile(Layer::overlay, st.x - 1, 3, 0);
+    PLATFORM.set_overlay_tile(st.x - 3, 3, 0);
+    PLATFORM.set_overlay_tile(st.x - 2, 3, 0);
+    PLATFORM.set_overlay_tile(st.x - 1, 3, 0);
 }
 
 
@@ -494,7 +494,7 @@ void WorldScene::multiplayer_vs_timeout_step(Time delta)
                 const u8 margin = centered_text_margins(msg.length());
 
                 for (u32 x = margin - 2; x < msg.length() + 2; ++x) {
-                    PLATFORM.set_tile(Layer::overlay, x, 4, 0);
+                    PLATFORM.set_overlay_tile(x, 4, 0);
                 }
 
                 globals().multiplayer_timeout_text_.emplace(
@@ -520,7 +520,7 @@ void WorldScene::multiplayer_vs_timeout_step(Time delta)
                 const u8 margin = centered_text_margins(msg.length());
 
                 for (u32 x = margin - 2; x < msg.length() + 2; ++x) {
-                    PLATFORM.set_tile(Layer::overlay, x, 4, 0);
+                    PLATFORM.set_overlay_tile(x, 4, 0);
                 }
 
                 globals().multiplayer_timeout_text_.emplace(
@@ -543,7 +543,7 @@ void WorldScene::update_ping()
         not disable_ui_) {
         auto msg = format<32>("ping: %ms", ping);
         for (int x = 0; x < 32; ++x) {
-            PLATFORM.set_tile(Layer::overlay, x, 0, 0);
+            PLATFORM.set_overlay_tile(x, 0, 0);
         }
         auto clr = Text::OptColors{
             {custom_color(0xa3c447), ColorConstant::rich_black}};
@@ -1053,23 +1053,23 @@ void WorldScene::set_pause_icon(u16 icon)
     if (icon == 0) {
         auto t = PLATFORM.get_tile(Layer::overlay, st.x - 2, 1);
         if (t) {
-            PLATFORM.set_tile(Layer::overlay, st.x - 3, 1, 0);
-            PLATFORM.set_tile(Layer::overlay, st.x - 2, 1, 0);
-            PLATFORM.set_tile(Layer::overlay, st.x - 3, 2, 0);
-            PLATFORM.set_tile(Layer::overlay, st.x - 2, 2, 0);
+            PLATFORM.set_overlay_tile(st.x - 3, 1, 0);
+            PLATFORM.set_overlay_tile(st.x - 2, 1, 0);
+            PLATFORM.set_overlay_tile(st.x - 3, 2, 0);
+            PLATFORM.set_overlay_tile(st.x - 2, 2, 0);
         }
     } else {
-        auto t = PLATFORM.get_tile(Layer::overlay, st.x - 2, 1);
+        auto t = PLATFORM.get_tile(Layer::overlay, st.x - 3, 1);
         if (t == icon) {
             return;
         }
 
         t = icon;
 
-        PLATFORM.set_tile(Layer::overlay, st.x - 3, 1, t++);
-        PLATFORM.set_tile(Layer::overlay, st.x - 2, 1, t++);
-        PLATFORM.set_tile(Layer::overlay, st.x - 3, 2, t++);
-        PLATFORM.set_tile(Layer::overlay, st.x - 2, 2, t);
+        PLATFORM.set_overlay_tile(st.x - 3, 1, t++);
+        PLATFORM.set_overlay_tile(st.x - 2, 1, t++);
+        PLATFORM.set_overlay_tile(st.x - 3, 2, t++);
+        PLATFORM.set_overlay_tile(st.x - 2, 2, t);
     }
 }
 

@@ -84,8 +84,8 @@ void MenuOptionsScene::enter(macro::EngineImpl& state, Scene& prev)
         m->drop_ui();
     }
 
-    PLATFORM.set_tile(Layer::overlay, 1, 1, 393);
-    PLATFORM.set_tile(Layer::overlay, 1, 2, 394);
+    PLATFORM.set_overlay_tile(1, 1, 393);
+    PLATFORM.set_overlay_tile(1, 2, 394);
 
     StringBuffer<32> mv(":");
     mv += SYSTR(start_menu_macroverse)->c_str();
@@ -112,8 +112,8 @@ void MenuOptionsScene::exit(macro::EngineImpl& state, Scene& next)
     harvest_text_.reset();
     message_text_.reset();
 
-    PLATFORM.set_tile(Layer::overlay, 1, 1, 0);
-    PLATFORM.set_tile(Layer::overlay, 1, 2, 0);
+    PLATFORM.set_overlay_tile(1, 1, 0);
+    PLATFORM.set_overlay_tile(1, 2, 0);
 }
 
 

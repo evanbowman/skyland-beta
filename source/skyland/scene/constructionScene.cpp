@@ -894,16 +894,16 @@ void ConstructionScene::show_current_building_text()
     for (int i = st.x - 25;
          i < int((st.x - 5) - utf8::len(category_str_buffer.c_str()));
          ++i) {
-        PLATFORM.set_tile(Layer::overlay, i, st.y - 6, 425);
+        PLATFORM.set_overlay_tile(i, st.y - 6, 425);
     }
 
     for (int y = st.y - 5; y < st.y - 2; ++y) {
-        PLATFORM.set_tile(Layer::overlay, st.x - 26, y, 130);
-        PLATFORM.set_tile(Layer::overlay, st.x - 5, y, 433);
+        PLATFORM.set_overlay_tile(st.x - 26, y, 130);
+        PLATFORM.set_overlay_tile(st.x - 5, y, 433);
     }
 
-    PLATFORM.set_tile(Layer::overlay, st.x - 26, st.y - 2, 419);
-    PLATFORM.set_tile(Layer::overlay, st.x - 5, st.y - 2, 418);
+    PLATFORM.set_overlay_tile(st.x - 26, st.y - 2, 419);
+    PLATFORM.set_overlay_tile(st.x - 5, st.y - 2, 418);
 
     {
         int index = building_selector_;
@@ -995,13 +995,13 @@ void ConstructionScene::show_current_building_text()
 
         last_category_ = current_category;
 
-        PLATFORM.set_tile(Layer::overlay, x - 1, st.y - 6, 419);
+        PLATFORM.set_overlay_tile(x - 1, st.y - 6, 419);
 
         for (int i = x; i < x + category_label_->len(); ++i) {
-            PLATFORM.set_tile(Layer::overlay, i, st.y - 7, 425);
+            PLATFORM.set_overlay_tile(i, st.y - 7, 425);
         }
 
-        PLATFORM.set_tile(Layer::overlay, st.x - 5, st.y - 6, 433);
+        PLATFORM.set_overlay_tile(st.x - 5, st.y - 6, 433);
     }
 }
 
@@ -1337,24 +1337,24 @@ void ConstructionScene::msg(const char* text)
 
     const int count = st.x - text_->len();
     for (int i = 0; i < count; ++i) {
-        PLATFORM.set_tile(Layer::overlay, i + text_->len(), st.y - 1, 426);
+        PLATFORM.set_overlay_tile(i + text_->len(), st.y - 1, 426);
     }
 
     for (int i = 0; i < st.x; ++i) {
-        PLATFORM.set_tile(Layer::overlay, i, st.y - 2, 425);
-        PLATFORM.set_tile(Layer::overlay, i, st.y - 3, 0);
-        PLATFORM.set_tile(Layer::overlay, i, st.y - 4, 0);
-        PLATFORM.set_tile(Layer::overlay, i, st.y - 5, 0);
+        PLATFORM.set_overlay_tile(i, st.y - 2, 425);
+        PLATFORM.set_overlay_tile(i, st.y - 3, 0);
+        PLATFORM.set_overlay_tile(i, st.y - 4, 0);
+        PLATFORM.set_overlay_tile(i, st.y - 5, 0);
 
         if (not category_label_ or
             (category_label_ and
              (i < category_label_->coord().x or
               i >= category_label_->coord().x + category_label_->len()))) {
-            PLATFORM.set_tile(Layer::overlay, i, st.y - 6, 0);
+            PLATFORM.set_overlay_tile(i, st.y - 6, 0);
         }
 
         if (show_category_) {
-            PLATFORM.set_tile(Layer::overlay, i, st.y - 7, 0);
+            PLATFORM.set_overlay_tile(i, st.y - 7, 0);
         }
     }
 }

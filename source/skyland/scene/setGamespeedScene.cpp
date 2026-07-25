@@ -139,13 +139,13 @@ void SetGamespeedScene::repaint_selector()
             start -= 1;
         }
 
-        PLATFORM.set_tile(Layer::overlay, start - i * 2, 1, t++);
-        PLATFORM.set_tile(Layer::overlay, start - i * 2 + 1, 1, t++);
-        PLATFORM.set_tile(Layer::overlay, start - i * 2, 2, t++);
-        PLATFORM.set_tile(Layer::overlay, start - i * 2 + 1, 2, t);
+        PLATFORM.set_overlay_tile(start - i * 2, 1, t++);
+        PLATFORM.set_overlay_tile(start - i * 2 + 1, 1, t++);
+        PLATFORM.set_overlay_tile(start - i * 2, 2, t++);
+        PLATFORM.set_overlay_tile(start - i * 2 + 1, 2, t);
 
-        PLATFORM.set_tile(Layer::overlay, start - i * 2, 3, 119);
-        PLATFORM.set_tile(Layer::overlay, start - i * 2 + 1, 3, 119);
+        PLATFORM.set_overlay_tile(start - i * 2, 3, 119);
+        PLATFORM.set_overlay_tile(start - i * 2 + 1, 3, 119);
     }
 
 
@@ -157,18 +157,18 @@ void SetGamespeedScene::repaint_selector()
         Layer::overlay, (st.x - 5) - 2 * ((int)GameSpeed::count - 1), 2, 128);
 
 
-    PLATFORM.set_tile(Layer::overlay, (st.x - 1), 1, 423);
+    PLATFORM.set_overlay_tile((st.x - 1), 1, 423);
 
 
-    PLATFORM.set_tile(Layer::overlay, (st.x - 1), 2, 433);
+    PLATFORM.set_overlay_tile((st.x - 1), 2, 433);
 
     // divider
-    PLATFORM.set_tile(Layer::overlay, (st.x - 4), 1, 379);
+    PLATFORM.set_overlay_tile((st.x - 4), 1, 379);
 
 
-    PLATFORM.set_tile(Layer::overlay, (st.x - 4), 2, 379);
+    PLATFORM.set_overlay_tile((st.x - 4), 2, 379);
 
-    PLATFORM.set_tile(Layer::overlay, (st.x - 4), 3, 119);
+    PLATFORM.set_overlay_tile((st.x - 4), 3, 119);
 
     if (not speed_text_) {
         speed_text_.emplace(OverlayCoord{0, u8(calc_screen_tiles().y - 1)});
@@ -180,11 +180,11 @@ void SetGamespeedScene::repaint_selector()
     const u8 y = calc_screen_tiles().y - 2;
 
     for (int i = 0; i < 30; ++i) {
-        PLATFORM.set_tile(Layer::overlay, i, y, 0);
+        PLATFORM.set_overlay_tile(i, y, 0);
     }
 
     for (int i = 0; i < speed_text_->len(); ++i) {
-        PLATFORM.set_tile(Layer::overlay, i, y, 425);
+        PLATFORM.set_overlay_tile(i, y, 425);
     }
 }
 

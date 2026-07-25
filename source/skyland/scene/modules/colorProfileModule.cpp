@@ -146,9 +146,9 @@ ScenePtr ColorProfileModule::update(Time delta)
 
     if (sel_ not_eq last_sel_) {
         for (int y = 3; y < 20; ++y) {
-            PLATFORM.set_tile(Layer::overlay, 1, y, 0);
+            PLATFORM.set_overlay_tile(1, y, 0);
         }
-        PLATFORM.set_tile(Layer::overlay, 1, 5 + sel_ * 2, 396);
+        PLATFORM.set_overlay_tile(1, 5 + sel_ * 2, 396);
         last_sel_ = sel_;
     }
 

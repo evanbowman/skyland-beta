@@ -54,11 +54,11 @@ void UpgradePromptScene::repaint()
 
     const int count = st.x - text_->len();
     for (int i = 0; i < count; ++i) {
-        PLATFORM.set_tile(Layer::overlay, i + text_->len(), st.y - 1, 426);
+        PLATFORM.set_overlay_tile(i + text_->len(), st.y - 1, 426);
     }
 
     for (int x = 0; x < st.x; ++x) {
-        PLATFORM.set_tile(Layer::overlay, x, st.y - 2, 425);
+        PLATFORM.set_overlay_tile(x, st.y - 2, 425);
     }
 
     int x_margin = (st.x - (4 * upgrade_to_.size())) / 2 - 2;
@@ -71,28 +71,28 @@ void UpgradePromptScene::repaint()
         auto icon = i == upgrade_index_ ? (*mt)->icon() : (*mt)->unsel_icon();
         PLATFORM.load_overlay_chunk(vram_locs[i], icon, 16);
         for (int x = 0; x < 4; ++x) {
-            PLATFORM.set_tile(Layer::overlay, x_start + x, st.y - 6, 425);
+            PLATFORM.set_overlay_tile(x_start + x, st.y - 6, 425);
         }
     }
 
-    PLATFORM.set_tile(Layer::overlay, 0, st.y - 3, 245);
-    PLATFORM.set_tile(Layer::overlay, 1, st.y - 3, 246);
-    PLATFORM.set_tile(Layer::overlay, 0, st.y - 2, 247);
-    PLATFORM.set_tile(Layer::overlay, 1, st.y - 2, 248);
-    PLATFORM.set_tile(Layer::overlay, 2, st.y - 2, 418);
-    PLATFORM.set_tile(Layer::overlay, 2, st.y - 3, 433);
-    PLATFORM.set_tile(Layer::overlay, 0, st.y - 4, 425);
-    PLATFORM.set_tile(Layer::overlay, 1, st.y - 4, 425);
+    PLATFORM.set_overlay_tile(0, st.y - 3, 245);
+    PLATFORM.set_overlay_tile(1, st.y - 3, 246);
+    PLATFORM.set_overlay_tile(0, st.y - 2, 247);
+    PLATFORM.set_overlay_tile(1, st.y - 2, 248);
+    PLATFORM.set_overlay_tile(2, st.y - 2, 418);
+    PLATFORM.set_overlay_tile(2, st.y - 3, 433);
+    PLATFORM.set_overlay_tile(0, st.y - 4, 425);
+    PLATFORM.set_overlay_tile(1, st.y - 4, 425);
 
-    PLATFORM.set_tile(Layer::overlay, x_margin - 1, st.y - 2, 419);
-    PLATFORM.set_tile(Layer::overlay, x_margin - 1, st.y - 3, 130);
-    PLATFORM.set_tile(Layer::overlay, x_margin - 1, st.y - 4, 130);
-    PLATFORM.set_tile(Layer::overlay, x_margin - 1, st.y - 5, 130);
+    PLATFORM.set_overlay_tile(x_margin - 1, st.y - 2, 419);
+    PLATFORM.set_overlay_tile(x_margin - 1, st.y - 3, 130);
+    PLATFORM.set_overlay_tile(x_margin - 1, st.y - 4, 130);
+    PLATFORM.set_overlay_tile(x_margin - 1, st.y - 5, 130);
     auto sel_end = x_margin + (upgrade_to_.size() * 4);
-    PLATFORM.set_tile(Layer::overlay, sel_end, st.y - 2, 418);
-    PLATFORM.set_tile(Layer::overlay, sel_end, st.y - 3, 433);
-    PLATFORM.set_tile(Layer::overlay, sel_end, st.y - 4, 433);
-    PLATFORM.set_tile(Layer::overlay, sel_end, st.y - 5, 433);
+    PLATFORM.set_overlay_tile(sel_end, st.y - 2, 418);
+    PLATFORM.set_overlay_tile(sel_end, st.y - 3, 433);
+    PLATFORM.set_overlay_tile(sel_end, st.y - 4, 433);
+    PLATFORM.set_overlay_tile(sel_end, st.y - 5, 433);
 
     yes_text_.emplace(OverlayCoord{u8(st.x - 7), u8(st.y - 3)});
     no_text_.emplace(OverlayCoord{u8(st.x - 7), u8(st.y - 2)});
@@ -101,11 +101,11 @@ void UpgradePromptScene::repaint()
     no_text_->assign(SYSTR(salvage_option_B)->c_str());
 
     for (int i = 23; i < st.x; ++i) {
-        PLATFORM.set_tile(Layer::overlay, i, st.y - 4, 425);
+        PLATFORM.set_overlay_tile(i, st.y - 4, 425);
     }
 
-    PLATFORM.set_tile(Layer::overlay, st.x - 8, st.y - 2, 419);
-    PLATFORM.set_tile(Layer::overlay, st.x - 8, st.y - 3, 130);
+    PLATFORM.set_overlay_tile(st.x - 8, st.y - 2, 419);
+    PLATFORM.set_overlay_tile(st.x - 8, st.y - 3, 130);
 }
 
 
@@ -308,7 +308,7 @@ public:
         }
         Text::print(text.c_str(), {0, 17});
         for (int i = 0; i < 30; ++i) {
-            PLATFORM.set_tile(Layer::overlay, i, 16, 425);
+            PLATFORM.set_overlay_tile(i, 16, 425);
         }
     }
 
@@ -329,9 +329,9 @@ public:
             OptColors clr;
             if (highlight) {
                 clr = highlight_colors;
-                PLATFORM.set_tile(Layer::overlay, 0, y, 475);
+                PLATFORM.set_overlay_tile(0, y, 475);
             } else {
-                PLATFORM.set_tile(Layer::overlay, 0, y, 112);
+                PLATFORM.set_overlay_tile(0, y, 112);
             }
             StringBuffer<84> line;
             line = txt;

@@ -96,7 +96,7 @@ public:
         auto path = (*opts_)[sel_].second.c_str();
         systemstring_bind_file(path);
         for (u8 x = 0; x < 30; ++x) {
-            PLATFORM.set_tile(Layer::overlay, x, 1, 0);
+            PLATFORM.set_overlay_tile(x, 1, 0);
         }
         Text::print(SYS_CSTR(choose_language), {1, 1});
     }
@@ -106,9 +106,9 @@ public:
     {
         auto show_cursor = [&] {
             for (int y = 3; y < 20; ++y) {
-                PLATFORM.set_tile(Layer::overlay, 1, y, 0);
+                PLATFORM.set_overlay_tile(1, y, 0);
             }
-            PLATFORM.set_tile(Layer::overlay, 1, 4 + sel_ * 2, 396);
+            PLATFORM.set_overlay_tile(1, 4 + sel_ * 2, 396);
         };
 
         show_cursor();
@@ -313,7 +313,7 @@ public:
 
             for (int x = 0; x < 30; ++x) {
                 // Clean boot select hint
-                PLATFORM.set_tile(Layer::overlay, x, 8, 0);
+                PLATFORM.set_overlay_tile(x, 8, 0);
             }
 
             Text::print(format("Mem: [%/%]",
@@ -341,7 +341,7 @@ public:
             Text::print(format("Stk: [%]", mstack).c_str(), {2, 10}, fc);
 
             for (int i = 16; i < 30; ++i) {
-                PLATFORM.set_tile(Layer::overlay, i, 10, 0);
+                PLATFORM.set_overlay_tile(i, 10, 0);
             }
             Text::print(
                 format("Lisp: [%]", lisp::value_pool_info().first).c_str(),
@@ -405,7 +405,7 @@ public:
             int opt = 0;
             for (int x = 0; x < 30; ++x) {
                 for (int y = 7; y < 20; ++y) {
-                    PLATFORM.set_tile(Layer::overlay, x, y, 0);
+                    PLATFORM.set_overlay_tile(x, y, 0);
                 }
             }
             Text::print("Select Boot Mode:", {2, 8}, fc);
@@ -444,7 +444,7 @@ public:
                                 fc);
                 } else {
                     for (int x = 0; x < 30; ++x) {
-                        PLATFORM.set_tile(Layer::overlay, x, 16, 0);
+                        PLATFORM.set_overlay_tile(x, 16, 0);
                     }
                 }
 

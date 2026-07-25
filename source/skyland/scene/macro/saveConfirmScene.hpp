@@ -33,8 +33,8 @@ public:
     {
         no_text_.emplace(SYSTR(no)->c_str(), OverlayCoord{3, 5});
         yes_text_.emplace(SYSTR(yes)->c_str(), OverlayCoord{3, 7});
-        PLATFORM.set_tile(Layer::overlay, 1, 5, 396);
-        PLATFORM.set_tile(Layer::overlay, 1, 7, 0);
+        PLATFORM.set_overlay_tile(1, 5, 396);
+        PLATFORM.set_overlay_tile(1, 7, 0);
     }
 
 
@@ -64,11 +64,11 @@ public:
             selection_ = not selection_;
             PLATFORM.speaker().play_sound("click_wooden", 2);
             if (not selection_) {
-                PLATFORM.set_tile(Layer::overlay, 1, 5, 396);
-                PLATFORM.set_tile(Layer::overlay, 1, 7, 0);
+                PLATFORM.set_overlay_tile(1, 5, 396);
+                PLATFORM.set_overlay_tile(1, 7, 0);
             } else {
-                PLATFORM.set_tile(Layer::overlay, 1, 5, 0);
-                PLATFORM.set_tile(Layer::overlay, 1, 7, 396);
+                PLATFORM.set_overlay_tile(1, 5, 0);
+                PLATFORM.set_overlay_tile(1, 7, 396);
             }
         }
 

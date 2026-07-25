@@ -87,11 +87,11 @@ public:
 
         const int count = st.x - text_->len();
         for (int i = 0; i < count; ++i) {
-            PLATFORM.set_tile(Layer::overlay, i + text_->len(), st.y - 1, 426);
+            PLATFORM.set_overlay_tile(i + text_->len(), st.y - 1, 426);
         }
 
         for (int i = 0; i < st.x; ++i) {
-            PLATFORM.set_tile(Layer::overlay, i, st.y - 2, 425);
+            PLATFORM.set_overlay_tile(i, st.y - 2, 425);
         }
         yes_text_.emplace(OverlayCoord{u8(st.x - 7), u8(st.y - 3)});
         no_text_.emplace(OverlayCoord{u8(st.x - 7), u8(st.y - 2)});
@@ -100,21 +100,21 @@ public:
         no_text_->assign(SYSTR(salvage_option_B)->c_str());
 
         for (int i = 23; i < st.x; ++i) {
-            PLATFORM.set_tile(Layer::overlay, i, st.y - 4, 425);
+            PLATFORM.set_overlay_tile(i, st.y - 4, 425);
         }
 
-        PLATFORM.set_tile(Layer::overlay, st.x - 8, st.y - 2, 419);
-        PLATFORM.set_tile(Layer::overlay, st.x - 8, st.y - 3, 130);
+        PLATFORM.set_overlay_tile(st.x - 8, st.y - 2, 419);
+        PLATFORM.set_overlay_tile(st.x - 8, st.y - 3, 130);
 
-        PLATFORM.set_tile(Layer::overlay, 0, st.y - 3, 160);
-        PLATFORM.set_tile(Layer::overlay, 1, st.y - 3, 161);
-        PLATFORM.set_tile(Layer::overlay, 0, st.y - 2, 162);
-        PLATFORM.set_tile(Layer::overlay, 1, st.y - 2, 163);
+        PLATFORM.set_overlay_tile(0, st.y - 3, 160);
+        PLATFORM.set_overlay_tile(1, st.y - 3, 161);
+        PLATFORM.set_overlay_tile(0, st.y - 2, 162);
+        PLATFORM.set_overlay_tile(1, st.y - 2, 163);
 
-        PLATFORM.set_tile(Layer::overlay, 2, st.y - 2, 418);
-        PLATFORM.set_tile(Layer::overlay, 2, st.y - 3, 433);
-        PLATFORM.set_tile(Layer::overlay, 0, st.y - 4, 425);
-        PLATFORM.set_tile(Layer::overlay, 1, st.y - 4, 425);
+        PLATFORM.set_overlay_tile(2, st.y - 2, 418);
+        PLATFORM.set_overlay_tile(2, st.y - 3, 433);
+        PLATFORM.set_overlay_tile(0, st.y - 4, 425);
+        PLATFORM.set_overlay_tile(1, st.y - 4, 425);
     }
 
 

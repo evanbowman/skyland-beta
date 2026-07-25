@@ -302,6 +302,8 @@ public:
                   TileDesc val,
                   Optional<u16> palette = {});
 
+    void set_overlay_tile(u16 x, u16 y, TileDesc val);
+
 
     void set_raw_tile(Layer layer, u16 x, u16 y, TileDesc val);
 

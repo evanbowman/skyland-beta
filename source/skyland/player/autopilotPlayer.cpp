@@ -96,32 +96,32 @@ void AutopilotPlayer::update(Time delta)
     button_tap_timeout_ -= delta;
     if (button_tap_timeout_ > 0) {
         if (taps_[(int)(Button::alt_1)]) {
-            PLATFORM.set_tile(Layer::overlay, 20, 8, 338);
-            PLATFORM.set_tile(Layer::overlay, 21, 8, 339);
+            PLATFORM.set_overlay_tile(20, 8, 338);
+            PLATFORM.set_overlay_tile(21, 8, 339);
         } else if (taps_[(int)Button::alt_2]) {
-            PLATFORM.set_tile(Layer::overlay, 26, 8, 340);
-            PLATFORM.set_tile(Layer::overlay, 27, 8, 341);
+            PLATFORM.set_overlay_tile(26, 8, 340);
+            PLATFORM.set_overlay_tile(27, 8, 341);
         } else if (taps_[(int)Button::right]) {
-            PLATFORM.set_tile(Layer::overlay, 21, 10, 342);
+            PLATFORM.set_overlay_tile(21, 10, 342);
         } else if (taps_[(int)Button::left]) {
-            PLATFORM.set_tile(Layer::overlay, 20, 10, 343);
+            PLATFORM.set_overlay_tile(20, 10, 343);
         } else if (taps_[(int)Button::up]) {
-            PLATFORM.set_tile(Layer::overlay, 20, 10, 344);
-            PLATFORM.set_tile(Layer::overlay, 21, 10, 345);
+            PLATFORM.set_overlay_tile(20, 10, 344);
+            PLATFORM.set_overlay_tile(21, 10, 345);
         } else if (taps_[(int)Button::down]) {
-            PLATFORM.set_tile(Layer::overlay, 20, 10, 346);
-            PLATFORM.set_tile(Layer::overlay, 21, 10, 347);
-            PLATFORM.set_tile(Layer::overlay, 20, 11, 348);
-            PLATFORM.set_tile(Layer::overlay, 21, 11, 349);
+            PLATFORM.set_overlay_tile(20, 10, 346);
+            PLATFORM.set_overlay_tile(21, 10, 347);
+            PLATFORM.set_overlay_tile(20, 11, 348);
+            PLATFORM.set_overlay_tile(21, 11, 349);
         } else if (taps_[(int)Button::action_1]) {
-            PLATFORM.set_tile(Layer::overlay, 27, 10, 350);
+            PLATFORM.set_overlay_tile(27, 10, 350);
         } else if (taps_[(int)Button::action_2]) {
-            PLATFORM.set_tile(Layer::overlay, 26, 10, 351);
-            PLATFORM.set_tile(Layer::overlay, 26, 11, 352);
+            PLATFORM.set_overlay_tile(26, 10, 351);
+            PLATFORM.set_overlay_tile(26, 11, 352);
         } else if (taps_[(int)Button::select]) {
-            PLATFORM.set_tile(Layer::overlay, 21, 12, 353);
+            PLATFORM.set_overlay_tile(21, 12, 353);
         } else if (taps_[(int)Button::start]) {
-            PLATFORM.set_tile(Layer::overlay, 21, 11, 412);
+            PLATFORM.set_overlay_tile(21, 11, 412);
         }
     }
 

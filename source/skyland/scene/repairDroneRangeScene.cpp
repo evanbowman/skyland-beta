@@ -37,7 +37,7 @@ ScenePtr RepairDroneRangeScene::update(Time delta)
         description_.emplace(SYSTR(repair_range)->c_str(), OverlayCoord{0, 19});
 
         for (int i = 0; i < description_->len(); ++i) {
-            PLATFORM.set_tile(Layer::overlay, i, 18, 425);
+            PLATFORM.set_overlay_tile(i, 18, 425);
         }
     }
 

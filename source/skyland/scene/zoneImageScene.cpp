@@ -54,14 +54,14 @@ void ZoneImageScene::enter(Scene& prev)
 
     const auto screen_tiles = calc_screen_tiles();
     for (int i = 0; i < screen_tiles.x; ++i) {
-        PLATFORM.set_tile(Layer::overlay, i, 0, 112);
-        PLATFORM.set_tile(Layer::overlay, i, 1, 112);
-        PLATFORM.set_tile(Layer::overlay, i, 2, 116);
-        PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y, 112);
-        PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y - 1, 112);
-        PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y - 2, 112);
-        PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y - 3, 112);
-        PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y - 4, 256);
+        PLATFORM.set_overlay_tile(i, 0, 112);
+        PLATFORM.set_overlay_tile(i, 1, 112);
+        PLATFORM.set_overlay_tile(i, 2, 116);
+        PLATFORM.set_overlay_tile(i, screen_tiles.y, 112);
+        PLATFORM.set_overlay_tile(i, screen_tiles.y - 1, 112);
+        PLATFORM.set_overlay_tile(i, screen_tiles.y - 2, 112);
+        PLATFORM.set_overlay_tile(i, screen_tiles.y - 3, 112);
+        PLATFORM.set_overlay_tile(i, screen_tiles.y - 4, 256);
     }
 
     if (APP.zone() == 1) {

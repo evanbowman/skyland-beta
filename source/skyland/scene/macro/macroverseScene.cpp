@@ -446,7 +446,7 @@ ScenePtr MacroverseScene::update(Time delta)
         auto st_y = calc_screen_tiles().y;
         for (int y = st_y - 6; y < st_y; ++y) {
             for (int x = 0; x < calc_screen_tiles().x; ++x) {
-                PLATFORM.set_tile(Layer::overlay, x, y, 0);
+                PLATFORM.set_overlay_tile(x, y, 0);
             }
         }
     };
@@ -666,7 +666,7 @@ ScenePtr MacroverseScene::update(Time delta)
                 sel_pos = {x, y};
             }
 
-            PLATFORM.set_tile(Layer::overlay, x, y, cursor_tile);
+            PLATFORM.set_overlay_tile(x, y, cursor_tile);
         }
 
         if (APP.player().button_down(Button::action_2)) {
@@ -674,7 +674,7 @@ ScenePtr MacroverseScene::update(Time delta)
             PLATFORM.speaker().play_sound("click_wooden", 2);
             opt_cursor_ = 2;
         } else if (APP.player().button_down(Button::action_1)) {
-            PLATFORM.set_tile(Layer::overlay, sel_pos.x, sel_pos.y, 0);
+            PLATFORM.set_overlay_tile(sel_pos.x, sel_pos.y, 0);
             switch (opt_cursor_) {
             case 0:
                 text_objs_.clear();
@@ -732,11 +732,11 @@ ScenePtr MacroverseScene::update(Time delta)
                 sel_pos = {x, y};
             }
 
-            PLATFORM.set_tile(Layer::overlay, x, y, cursor_tile);
+            PLATFORM.set_overlay_tile(x, y, cursor_tile);
         }
 
         if (APP.player().button_down(Button::action_2)) {
-            PLATFORM.set_tile(Layer::overlay, sel_pos.x, sel_pos.y, 0);
+            PLATFORM.set_overlay_tile(sel_pos.x, sel_pos.y, 0);
             text_objs_.clear();
             describe_selected(m);
             state_ = State::show;
@@ -744,7 +744,7 @@ ScenePtr MacroverseScene::update(Time delta)
         }
 
         if (APP.player().button_down(Button::action_1)) {
-            PLATFORM.set_tile(Layer::overlay, sel_pos.x, sel_pos.y, 0);
+            PLATFORM.set_overlay_tile(sel_pos.x, sel_pos.y, 0);
             switch (opt_cursor_) {
             case 0:
                 text_objs_.clear();
@@ -805,7 +805,7 @@ ScenePtr MacroverseScene::update(Time delta)
 
             auto cursor_tile = 0;
 
-            PLATFORM.set_tile(Layer::overlay, x, y, cursor_tile);
+            PLATFORM.set_overlay_tile(x, y, cursor_tile);
         }
 
         if (APP.player().button_down(Button::up) or
@@ -817,12 +817,12 @@ ScenePtr MacroverseScene::update(Time delta)
             text_objs_.clear();
             opt_cursor_ = 0;
             enter_opt_state();
-            PLATFORM.set_tile(Layer::overlay, sel_pos.x, sel_pos.y, 0);
+            PLATFORM.set_overlay_tile(sel_pos.x, sel_pos.y, 0);
             break;
         }
 
         if (APP.player().button_down(Button::action_1)) {
-            PLATFORM.set_tile(Layer::overlay, sel_pos.x, sel_pos.y, 0);
+            PLATFORM.set_overlay_tile(sel_pos.x, sel_pos.y, 0);
             colony_create_slots_.clear();
             auto push = [&](s8 x, s8 y) {
                 if (not m.load_sector({x, y})) {
@@ -845,7 +845,7 @@ ScenePtr MacroverseScene::update(Time delta)
                     auto s = str.c_str();
                     while (*s not_eq '\0') {
                         if (*s == '_') {
-                            PLATFORM.set_tile(Layer::overlay, 1 + i, y, 111);
+                            PLATFORM.set_overlay_tile(1 + i, y, 111);
                         }
                         ++s;
                         ++i;
@@ -867,7 +867,7 @@ ScenePtr MacroverseScene::update(Time delta)
 
                     stringify(m.sector().productivity()).c_str(),
                     OverlayCoord{2, 4});
-                PLATFORM.set_tile(Layer::overlay, 1, 4, 111);
+                PLATFORM.set_overlay_tile(1, 4, 111);
             }
 
             selected_colony_.reset();
@@ -900,8 +900,8 @@ ScenePtr MacroverseScene::update(Time delta)
 
                     // state_ = State::select_colony_layout;
 
-                    // PLATFORM.set_tile(Layer::overlay, 1, 3, 0);
-                    // PLATFORM.set_tile(Layer::overlay, 1, 4, 0);
+                    // PLATFORM.set_overlay_tile(1, 3, 0);
+                    // PLATFORM.set_overlay_tile(1, 4, 0);
                     // text_objs_.clear();
                     // show_layout_text();
 
@@ -945,8 +945,8 @@ ScenePtr MacroverseScene::update(Time delta)
         }
 
         if (APP.player().button_down(Button::action_2)) {
-            PLATFORM.set_tile(Layer::overlay, 1, 3, 0);
-            PLATFORM.set_tile(Layer::overlay, 1, 4, 0);
+            PLATFORM.set_overlay_tile(1, 3, 0);
+            PLATFORM.set_overlay_tile(1, 4, 0);
             enter_opt_state();
         }
 
@@ -1052,16 +1052,16 @@ void MacroverseScene::describe_selected(macro::EngineImpl& state)
     }
 
     for (int i = 0; i < text_objs_[0].len(); ++i) {
-        PLATFORM.set_tile(Layer::overlay, 1 + i, st.y - 3, 0);
+        PLATFORM.set_overlay_tile(1 + i, st.y - 3, 0);
     }
 
     text_objs_[0].assign(state.sector().name().c_str());
 
     for (int i = 0; i < text_objs_[0].len(); ++i) {
-        PLATFORM.set_tile(Layer::overlay, 1 + i, st.y - 3, 86);
+        PLATFORM.set_overlay_tile(1 + i, st.y - 3, 86);
     }
 
-    PLATFORM.set_tile(Layer::overlay, 1, st.y - 2, 85);
+    PLATFORM.set_overlay_tile(1, st.y - 2, 85);
 
     text_objs_[1].assign(state.sector().population());
 }

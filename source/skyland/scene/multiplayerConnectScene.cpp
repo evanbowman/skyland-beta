@@ -120,7 +120,7 @@ ScenePtr MultiplayerConnectScene::update(Time delta)
     case Platform::NetworkPeer::Interface::internet:
         for (int x = 0; x < 30; ++x) {
             for (int y = 3; y < 20; ++y) {
-                PLATFORM.set_tile(Layer::overlay, x, y, 0);
+                PLATFORM.set_overlay_tile(x, y, 0);
             }
         }
         switch (internet_host_peer_state_) {
@@ -171,7 +171,7 @@ ScenePtr MultiplayerConnectScene::update(Time delta)
                 auto& host = (**hosts_)[i];
                 Text::print(host.username_.c_str(), {3, (u8)(6 + i * 2)});
             }
-            PLATFORM.set_tile(Layer::overlay, 1, 6 + host_choice_sel_ * 2, 475);
+            PLATFORM.set_overlay_tile(1, 6 + host_choice_sel_ * 2, 475);
             if (button_down<Button::action_2>()) {
                 break;
             }

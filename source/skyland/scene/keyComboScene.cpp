@@ -39,7 +39,7 @@ void ButtonComboScene::enter(Scene& prev)
     }
 
     for (int i = 0; i < 30; ++i) {
-        PLATFORM.set_tile(Layer::overlay, i, 18, 425);
+        PLATFORM.set_overlay_tile(i, 18, 425);
     }
 
     APP.key_callback_processor().reset();

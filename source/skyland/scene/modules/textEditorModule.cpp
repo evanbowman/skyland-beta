@@ -390,7 +390,7 @@ void TextEditorModule::render(int start_line)
             const u16 t = PLATFORM.map_glyph(c, *mapping_info);
 
             while (x not_eq calc_screen_tiles().x) {
-                PLATFORM.set_tile(Layer::overlay, x, y, t);
+                PLATFORM.set_overlay_tile(x, y, t);
                 ++x;
             }
 
@@ -435,7 +435,7 @@ void TextEditorModule::render(int start_line)
                     t,
                     FontColors{custom_color(0xfff5b8), custom_color(0x007cbf)});
             } else {
-                PLATFORM.set_tile(Layer::overlay, x, y, t);
+                PLATFORM.set_overlay_tile(x, y, t);
             }
         }
 
@@ -457,7 +457,7 @@ FILL:
 
     while (y not_eq y_max()) {
         while (x not_eq calc_screen_tiles().x) {
-            PLATFORM.set_tile(Layer::overlay, x, y, t);
+            PLATFORM.set_overlay_tile(x, y, t);
             ++x;
         }
         ++y;
@@ -1008,7 +1008,7 @@ ScenePtr TextEditorModule::update(Time delta)
         const auto y = (cursor_.y - start_line_) + cursor_y_offset();
 
         const auto t = PLATFORM.get_tile(Layer::overlay, x, y);
-        PLATFORM.set_tile(Layer::overlay, x, y, t);
+        PLATFORM.set_overlay_tile(x, y, t);
 
         PLATFORM.set_palette(Layer::overlay, x, y, stashed_palette_);
     };

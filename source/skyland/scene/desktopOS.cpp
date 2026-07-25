@@ -547,11 +547,11 @@ public:
             for (int x = 0; x < 30; ++x) {
                 for (int y = 2; y < 17; ++y) {
                     if (y == 2) {
-                        PLATFORM.set_tile(Layer::overlay, x, y, 89);
+                        PLATFORM.set_overlay_tile(x, y, 89);
                     } else if (y == 3) {
-                        PLATFORM.set_tile(Layer::overlay, x, y, 91);
+                        PLATFORM.set_overlay_tile(x, y, 91);
                     } else {
-                        PLATFORM.set_tile(Layer::overlay, x, y, 82);
+                        PLATFORM.set_overlay_tile(x, y, 82);
                     }
                 }
             }
@@ -560,12 +560,12 @@ public:
                 {custom_color(0x717199), custom_color(0xeaeef3)}};
 
             Text::print(head.c_str(), {mg, 3}, heading_colors);
-            PLATFORM.set_tile(Layer::overlay, 0, 2, 87);
-            PLATFORM.set_tile(Layer::overlay, 0, 3, 92);
-            PLATFORM.set_tile(Layer::overlay, 1, 2, 94);
-            // PLATFORM.set_tile(Layer::overlay, 2, 2, 95);
-            // PLATFORM.set_tile(Layer::overlay, 2, 3, 96);
-            PLATFORM.set_tile(Layer::overlay, 29, 2, 88);
+            PLATFORM.set_overlay_tile(0, 2, 87);
+            PLATFORM.set_overlay_tile(0, 3, 92);
+            PLATFORM.set_overlay_tile(1, 2, 94);
+            // PLATFORM.set_overlay_tile(2, 2, 95);
+            // PLATFORM.set_overlay_tile(2, 3, 96);
+            PLATFORM.set_overlay_tile(29, 2, 88);
         }
 
 
@@ -737,7 +737,7 @@ public:
                 if (hovered >= 0) {
                     if (auto name = describe_sbr(hovered)) {
                         for (int x = 0; x < 30; ++x) {
-                            PLATFORM.set_tile(Layer::overlay, x, 16, 82);
+                            PLATFORM.set_overlay_tile(x, 16, 82);
                         }
                         if (PLATFORM.strlen(name) == 0) {
                             name = "unknown";
@@ -746,7 +746,7 @@ public:
                     }
                 } else {
                     for (int x = 0; x < 30; ++x) {
-                        PLATFORM.set_tile(Layer::overlay, x, 16, 82);
+                        PLATFORM.set_overlay_tile(x, 16, 82);
                     }
                 }
                 break;
@@ -1094,12 +1094,12 @@ public:
                 if (alternate) {
                     Text::print(nm.c_str(), {0, y});
                     if (selected_track_ == i) {
-                        PLATFORM.set_tile(Layer::overlay, 0, y, 98);
+                        PLATFORM.set_overlay_tile(0, y, 98);
                     }
                 } else {
                     Text::print(nm.c_str(), {0, y}, alt_colors);
                     if (selected_track_ == i) {
-                        PLATFORM.set_tile(Layer::overlay, 0, y, 99);
+                        PLATFORM.set_overlay_tile(0, y, 99);
                     }
                 }
                 alternate = not alternate;
@@ -1409,7 +1409,7 @@ public:
 
             for (int x = 0; x < 30; ++x) {
                 for (int y = 4; y < 17; ++y) {
-                    PLATFORM.set_tile(Layer::overlay, x, y, 97);
+                    PLATFORM.set_overlay_tile(x, y, 97);
                 }
             }
             if (impl_) {
@@ -1563,7 +1563,7 @@ public:
 
             for (int x = 0; x < 30; ++x) {
                 for (int y = 4; y < 17; ++y) {
-                    PLATFORM.set_tile(Layer::overlay, x, y, 97);
+                    PLATFORM.set_overlay_tile(x, y, 97);
                 }
             }
             if (not has_init_) {
@@ -1680,8 +1680,8 @@ public:
     void draw_menu_bar()
     {
         for (int x = 0; x < 30; ++x) {
-            PLATFORM.set_tile(Layer::overlay, x, 0, 82);
-            PLATFORM.set_tile(Layer::overlay, x, 1, 82);
+            PLATFORM.set_overlay_tile(x, 0, 82);
+            PLATFORM.set_overlay_tile(x, 1, 82);
         }
         PLATFORM.set_overlay_origin(0, 7);
 
@@ -1693,11 +1693,11 @@ public:
     {
         for (int x = 0; x < 24; ++x) {
             for (int y = 0; y < 3; ++y) {
-                PLATFORM.set_tile(Layer::overlay, x + 3, y + 18, 83);
+                PLATFORM.set_overlay_tile(x + 3, y + 18, 83);
             }
         }
-        PLATFORM.set_tile(Layer::overlay, 3, 18, 85); // corners
-        PLATFORM.set_tile(Layer::overlay, 26, 18, 86);
+        PLATFORM.set_overlay_tile(3, 18, 85); // corners
+        PLATFORM.set_overlay_tile(26, 18, 86);
     }
 
 
@@ -2043,7 +2043,7 @@ public:
     {
         for (int x = 0; x < 30; ++x) {
             for (int y = 2; y < 17; ++y) {
-                PLATFORM.set_tile(Layer::overlay, x, y, 0);
+                PLATFORM.set_overlay_tile(x, y, 0);
             }
         }
         if (not mem_->windows_.empty()) {

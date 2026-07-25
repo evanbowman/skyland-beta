@@ -214,10 +214,10 @@ void BoxedDialogScene::process_command()
         }
         for (int x = 0; x < 30; ++x) {
             for (int y = 0; y < 2; ++y) {
-                PLATFORM.set_tile(Layer::overlay, x, y, 123);
+                PLATFORM.set_overlay_tile(x, y, 123);
             }
-            PLATFORM.set_tile(Layer::overlay, x, 13, 123);
-            PLATFORM.set_tile(Layer::overlay, x, 19, 123);
+            PLATFORM.set_overlay_tile(x, 13, 123);
+            PLATFORM.set_overlay_tile(x, 19, 123);
         }
         PLATFORM.load_tile1_texture(bkg_name.c_str());
         PLATFORM.set_scroll(Layer::map_1_ext, 0, 0);
@@ -254,7 +254,7 @@ void BoxedDialogScene::process_command()
             auto amt = Float(i / 2) / frames;
             for (u8 x = 2; x < 28 * 2 * amt; ++x) {
                 for (u8 y = 1; y < 12; ++y) {
-                    PLATFORM.set_tile(Layer::overlay, x, y, 82);
+                    PLATFORM.set_overlay_tile(x, y, 82);
                 }
             }
             PLATFORM.screen().schedule_fade(
@@ -271,13 +271,13 @@ void BoxedDialogScene::process_command()
         for (u8 x = 2; x < 28; ++x) {
             for (u8 y = 1; y < 12; ++y) {
                 if (x == 2 or x == 27) {
-                    PLATFORM.set_tile(Layer::overlay, x, y, 82);
+                    PLATFORM.set_overlay_tile(x, y, 82);
                 } else if (y == 1) {
-                    PLATFORM.set_tile(Layer::overlay, x, y, 93);
+                    PLATFORM.set_overlay_tile(x, y, 93);
                 } else if (y == 11) {
-                    PLATFORM.set_tile(Layer::overlay, x, y, 94);
+                    PLATFORM.set_overlay_tile(x, y, 94);
                 } else {
-                    PLATFORM.set_tile(Layer::overlay, x, y, 0);
+                    PLATFORM.set_overlay_tile(x, y, 0);
                 }
             }
         }
@@ -439,11 +439,11 @@ bool BoxedDialogScene::advance_text(Time delta, bool sfx)
         if (not data_->anim_ready_ or
             punctuation_or_whitespace(*text_state_.current_word_)) {
             if (cp == '@') {
-                PLATFORM.set_tile(Layer::overlay, x_offset, p_y, 146);
+                PLATFORM.set_overlay_tile(x_offset, p_y, 146);
             } else if (cp == '*') {
-                PLATFORM.set_tile(Layer::overlay, x_offset, p_y, 149);
+                PLATFORM.set_overlay_tile(x_offset, p_y, 149);
             } else {
-                PLATFORM.set_tile(Layer::overlay, x_offset, p_y, t);
+                PLATFORM.set_overlay_tile(x_offset, p_y, t);
             }
         } else {
             auto pos = data_->anim_ready_->position();
@@ -477,25 +477,25 @@ void BoxedDialogScene::clear_textbox()
     const auto st = calc_screen_tiles();
 
     for (int x = 1; x < st.x - 1; ++x) {
-        PLATFORM.set_tile(Layer::overlay, x, st.y - (5 + y_start), 84);
-        PLATFORM.set_tile(Layer::overlay, x, st.y - (4 + y_start), 82);
-        PLATFORM.set_tile(Layer::overlay, x, st.y - (3 + y_start), 82);
-        PLATFORM.set_tile(Layer::overlay, x, st.y - (2 + y_start), 82);
-        PLATFORM.set_tile(Layer::overlay, x, st.y - (1 + y_start), 85);
+        PLATFORM.set_overlay_tile(x, st.y - (5 + y_start), 84);
+        PLATFORM.set_overlay_tile(x, st.y - (4 + y_start), 82);
+        PLATFORM.set_overlay_tile(x, st.y - (3 + y_start), 82);
+        PLATFORM.set_overlay_tile(x, st.y - (2 + y_start), 82);
+        PLATFORM.set_overlay_tile(x, st.y - (1 + y_start), 85);
     }
 
-    PLATFORM.set_tile(Layer::overlay, 0, st.y - (4 + y_start), 89);
-    PLATFORM.set_tile(Layer::overlay, 0, st.y - (3 + y_start), 89);
-    PLATFORM.set_tile(Layer::overlay, 0, st.y - (2 + y_start), 89);
+    PLATFORM.set_overlay_tile(0, st.y - (4 + y_start), 89);
+    PLATFORM.set_overlay_tile(0, st.y - (3 + y_start), 89);
+    PLATFORM.set_overlay_tile(0, st.y - (2 + y_start), 89);
 
-    PLATFORM.set_tile(Layer::overlay, st.x - 1, st.y - (4 + y_start), 88);
-    PLATFORM.set_tile(Layer::overlay, st.x - 1, st.y - (3 + y_start), 88);
-    PLATFORM.set_tile(Layer::overlay, st.x - 1, st.y - (2 + y_start), 88);
+    PLATFORM.set_overlay_tile(st.x - 1, st.y - (4 + y_start), 88);
+    PLATFORM.set_overlay_tile(st.x - 1, st.y - (3 + y_start), 88);
+    PLATFORM.set_overlay_tile(st.x - 1, st.y - (2 + y_start), 88);
 
-    PLATFORM.set_tile(Layer::overlay, 0, st.y - (5 + y_start), 83);
-    PLATFORM.set_tile(Layer::overlay, 0, st.y - (1 + y_start), 90);
-    PLATFORM.set_tile(Layer::overlay, st.x - 1, st.y - (5 + y_start), 87);
-    PLATFORM.set_tile(Layer::overlay, st.x - 1, st.y - (1 + y_start), 86);
+    PLATFORM.set_overlay_tile(0, st.y - (5 + y_start), 83);
+    PLATFORM.set_overlay_tile(0, st.y - (1 + y_start), 90);
+    PLATFORM.set_overlay_tile(st.x - 1, st.y - (5 + y_start), 87);
+    PLATFORM.set_overlay_tile(st.x - 1, st.y - (1 + y_start), 86);
 
     text_state_.line_ = 0;
     text_state_.pos_ = 0;
@@ -511,21 +511,21 @@ void BoxedDialogScene::clear_textbox()
         }
 
         for (int i = 4; i < data_->character_name_text_->len() + 1; ++i) {
-            PLATFORM.set_tile(Layer::overlay, 1 + i, st.y - 6, 113);
+            PLATFORM.set_overlay_tile(1 + i, st.y - 6, 113);
         }
 
         for (int i = 1; i < data_->character_name_text_->len() + 1; ++i) {
-            PLATFORM.set_tile(Layer::overlay, i, st.y - 8, 114);
+            PLATFORM.set_overlay_tile(i, st.y - 8, 114);
         }
 
 
-        PLATFORM.set_tile(Layer::overlay, 0, st.y - 5, 122);
-        PLATFORM.set_tile(Layer::overlay, 0, st.y - 4, 122);
-        PLATFORM.set_tile(Layer::overlay, 0, st.y - 3, 122);
+        PLATFORM.set_overlay_tile(0, st.y - 5, 122);
+        PLATFORM.set_overlay_tile(0, st.y - 4, 122);
+        PLATFORM.set_overlay_tile(0, st.y - 3, 122);
 
-        PLATFORM.set_tile(Layer::overlay, 0, st.y - 6, 119);
-        PLATFORM.set_tile(Layer::overlay, 0, st.y - 7, 120);
-        PLATFORM.set_tile(Layer::overlay, 0, st.y - 8, 121);
+        PLATFORM.set_overlay_tile(0, st.y - 6, 119);
+        PLATFORM.set_overlay_tile(0, st.y - 7, 120);
+        PLATFORM.set_overlay_tile(0, st.y - 8, 121);
 
 
         PLATFORM.set_tile(Layer::overlay,
@@ -547,7 +547,7 @@ void BoxedDialogScene::clear_textbox()
         auto len = data_->character_name_text_->len();
         for (int y = loc.y - 1; y < loc.y + 1; ++y) {
             for (int x = loc.x - 1; x < loc.x + len + 1; ++x) {
-                PLATFORM.set_tile(Layer::overlay, x, y, 0);
+                PLATFORM.set_overlay_tile(x, y, 0);
             }
         }
         data_->character_name_text_.reset();
@@ -673,9 +673,9 @@ ScenePtr BoxedDialogScene::update(Time delta)
             }
             if (PLATFORM.get_tile(Layer::overlay, x, st.y - (2 + y_start)) ==
                 91) {
-                PLATFORM.set_tile(Layer::overlay, x, st.y - (2 + y_start), 92);
+                PLATFORM.set_overlay_tile(x, st.y - (2 + y_start), 92);
             } else {
-                PLATFORM.set_tile(Layer::overlay, x, st.y - (2 + y_start), 91);
+                PLATFORM.set_overlay_tile(x, st.y - (2 + y_start), 91);
             }
         }
     };
@@ -772,7 +772,7 @@ ScenePtr BoxedDialogScene::update(Time delta)
                 for (int y = st.y - (6 + (opt_count * 2 - 1) + y_start);
                      y < st.y - 7;
                      ++y) {
-                    PLATFORM.set_tile(Layer::overlay, x, y, 82);
+                    PLATFORM.set_overlay_tile(x, y, 82);
                 }
             }
 

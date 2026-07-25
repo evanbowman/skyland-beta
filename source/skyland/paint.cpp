@@ -51,9 +51,9 @@ void Paint::init()
         palette_[td.data_[0][0]] = 488 + i;
         if (td.data_[0][0] == 0) {
             // This is a transparent tile, so we draw an icon instead
-            PLATFORM.set_tile(Layer::overlay, td.data_[0][0] + 1, y, 487);
+            PLATFORM.set_overlay_tile(td.data_[0][0] + 1, y, 487);
         } else {
-            PLATFORM.set_tile(Layer::overlay, td.data_[0][0] + 1, y, 488 + i);
+            PLATFORM.set_overlay_tile(td.data_[0][0] + 1, y, 488 + i);
             PLATFORM.set_palette(Layer::overlay, td.data_[0][0] + 1, y, 0);
         }
     }
@@ -215,7 +215,7 @@ void Paint::show_color_name()
         "olive green",
     };
     for (int i = 2; i < 16; ++i) {
-        PLATFORM.set_tile(Layer::overlay, i, 19, 0);
+        PLATFORM.set_overlay_tile(i, 19, 0);
     }
     static const FontColors shade[16] = {
         {ColorConstant::silver_white, custom_color(0x163061)},
@@ -272,18 +272,18 @@ void Paint::show_toolbar()
 
     MediumIcon::draw(258, OverlayCoord{26, 2});
     MediumIcon::draw(262, OverlayCoord{28, 2});
-    PLATFORM.set_tile(Layer::overlay, 27, 4, 258 + 8);
+    PLATFORM.set_overlay_tile(27, 4, 258 + 8);
 
     for (int x = 0; x < 19; ++x) {
         if (x < 1 or x > 16) {
-            PLATFORM.set_tile(Layer::overlay, x, 18, 258 + 9);
-            PLATFORM.set_tile(Layer::overlay, x, 19, 258 + 11);
+            PLATFORM.set_overlay_tile(x, 18, 258 + 9);
+            PLATFORM.set_overlay_tile(x, 19, 258 + 11);
         }
     }
-    PLATFORM.set_tile(Layer::overlay, 18, 18, 258 + 12);
-    PLATFORM.set_tile(Layer::overlay, 18, 19, 258 + 13);
+    PLATFORM.set_overlay_tile(18, 18, 258 + 12);
+    PLATFORM.set_overlay_tile(18, 19, 258 + 13);
 
-    PLATFORM.set_tile(Layer::overlay, 1, 18, 487); // transparent color
+    PLATFORM.set_overlay_tile(1, 18, 487); // transparent color
 
     for (int i = 0; i < icon_count; ++i) {
         OverlayCoord coord;
@@ -347,19 +347,19 @@ void Paint::show_preview()
     PLATFORM.set_tile(Layer::overlay, 21, 3, 133, 0);
     PLATFORM.set_tile(Layer::overlay, 22, 3, 134, 0);
 
-    PLATFORM.set_tile(Layer::overlay, 19, 0, 258 + 15);
-    PLATFORM.set_tile(Layer::overlay, 24, 0, 258 + 16);
-    PLATFORM.set_tile(Layer::overlay, 19, 5, 258 + 17);
-    PLATFORM.set_tile(Layer::overlay, 24, 5, 258 + 18);
+    PLATFORM.set_overlay_tile(19, 0, 258 + 15);
+    PLATFORM.set_overlay_tile(24, 0, 258 + 16);
+    PLATFORM.set_overlay_tile(19, 5, 258 + 17);
+    PLATFORM.set_overlay_tile(24, 5, 258 + 18);
 
     for (int x = 20; x < 24; ++x) {
-        PLATFORM.set_tile(Layer::overlay, x, 0, 258 + 19);
-        PLATFORM.set_tile(Layer::overlay, x, 5, 258 + 22);
+        PLATFORM.set_overlay_tile(x, 0, 258 + 19);
+        PLATFORM.set_overlay_tile(x, 5, 258 + 22);
     }
 
     for (int y = 1; y < 5; ++y) {
-        PLATFORM.set_tile(Layer::overlay, 19, y, 258 + 20);
-        PLATFORM.set_tile(Layer::overlay, 24, y, 258 + 21);
+        PLATFORM.set_overlay_tile(19, y, 258 + 20);
+        PLATFORM.set_overlay_tile(24, y, 258 + 21);
     }
 }
 
@@ -374,7 +374,7 @@ void Paint::show()
                 Platform::fatal("pixel is not 4bit indexed color!");
             }
             const auto t = palette_[val];
-            PLATFORM.set_tile(Layer::overlay, x + origin_x_, y + origin_y_, t);
+            PLATFORM.set_overlay_tile(x + origin_x_, y + origin_y_, t);
             PLATFORM.set_palette(
                 Layer::overlay, x + origin_x_, y + origin_y_, 0);
         }
@@ -876,8 +876,8 @@ void Paint::show_tool_name()
     };
 
     for (int x = 0; x < 9; ++x) {
-        PLATFORM.set_tile(Layer::overlay, 21 + x, 19, 0);
-        PLATFORM.set_tile(Layer::overlay, 21 + x, 18, 0);
+        PLATFORM.set_overlay_tile(21 + x, 19, 0);
+        PLATFORM.set_overlay_tile(21 + x, 18, 0);
     }
 
     StringBuffer<9> temp_str = names[(int)tool_];
@@ -893,7 +893,7 @@ void Paint::show_tool_name()
     Text::print(temp_str.c_str(), OverlayCoord{name_x, 19});
 
     for (int x = name_x; x < 30; ++x) {
-        PLATFORM.set_tile(Layer::overlay, x, 18, 425);
+        PLATFORM.set_overlay_tile(x, 18, 425);
     }
 }
 

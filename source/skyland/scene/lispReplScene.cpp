@@ -94,11 +94,11 @@ void LispReplScene::repaint_entry(bool show_cursor)
 
     if (gui_mode_) {
         for (int i = 1; i < 32; ++i) {
-            PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y - 4, 97);
+            PLATFORM.set_overlay_tile(i, screen_tiles.y - 4, 97);
         }
     } else {
         for (int i = 1; i < 32; ++i) {
-            PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y - 1, 112);
+            PLATFORM.set_overlay_tile(i, screen_tiles.y - 1, 112);
         }
     }
 
@@ -231,7 +231,7 @@ void LispReplScene::enter(Scene& prev)
     if (not gui_mode_) {
 
         for (int i = 0; i < 31; ++i) {
-            PLATFORM.set_tile(Layer::overlay, i, 0, 112);
+            PLATFORM.set_overlay_tile(i, 0, 112);
         }
 
         version_text_->assign(version_text);
@@ -486,7 +486,7 @@ TOP:
                         if (not gui_mode_) {
                             for (int x = 11; x < 30; ++x) {
                                 for (int y = 3; y < 27; ++y) {
-                                    PLATFORM.set_tile(Layer::overlay, x, y, 0);
+                                    PLATFORM.set_overlay_tile(x, y, 0);
                                 }
                             }
                         }

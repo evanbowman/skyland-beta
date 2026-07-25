@@ -39,7 +39,7 @@ void TileOptionsScene::exit(macro::EngineImpl& state, Scene& next)
     const auto st = calc_screen_tiles();
     for (int y = st.y - 8; y < st.y; ++y) {
         for (int x = 0; x < 32; ++x) {
-            PLATFORM.set_tile(Layer::overlay, x, y, 0);
+            PLATFORM.set_overlay_tile(x, y, 0);
         }
     }
 }
@@ -202,12 +202,12 @@ void TileOptionsScene::show_options(macro::EngineImpl& state)
     msg(state, str.c_str());
 
     for (int y = st.y - 5; y < st.y - 2; ++y) {
-        PLATFORM.set_tile(Layer::overlay, st.x - 22, y, 130);
-        PLATFORM.set_tile(Layer::overlay, st.x - 9, y, 433);
+        PLATFORM.set_overlay_tile(st.x - 22, y, 130);
+        PLATFORM.set_overlay_tile(st.x - 9, y, 433);
     }
 
-    PLATFORM.set_tile(Layer::overlay, st.x - 22, st.y - 2, 419);
-    PLATFORM.set_tile(Layer::overlay, st.x - 9, st.y - 2, 418);
+    PLATFORM.set_overlay_tile(st.x - 22, st.y - 2, 419);
+    PLATFORM.set_overlay_tile(st.x - 9, st.y - 2, 418);
 
     PLATFORM.load_overlay_chunk(
         258, options_[(selector_ + 1) % options_.size()]->unsel_icon_, 16);
@@ -224,7 +224,7 @@ void TileOptionsScene::show_options(macro::EngineImpl& state)
         197, options_[(selector_) % options_.size()]->sel_icon_, 16);
 
     for (int i = st.x - 21; i < st.x - 9; ++i) {
-        PLATFORM.set_tile(Layer::overlay, i, st.y - 6, 425);
+        PLATFORM.set_overlay_tile(i, st.y - 6, 425);
     }
 
     draw_image(181, st.x - 21, st.y - 5, 4, 4, Layer::overlay);
@@ -249,16 +249,16 @@ void TileOptionsScene::msg(macro::EngineImpl& state, const char* text)
 
     const int count = st.x - text_->len();
     for (int i = 0; i < count; ++i) {
-        PLATFORM.set_tile(Layer::overlay, i + text_->len(), st.y - 1, 426);
+        PLATFORM.set_overlay_tile(i + text_->len(), st.y - 1, 426);
     }
 
     for (int i = 0; i < st.x; ++i) {
-        PLATFORM.set_tile(Layer::overlay, i, st.y - 2, 425);
-        PLATFORM.set_tile(Layer::overlay, i, st.y - 3, 0);
-        PLATFORM.set_tile(Layer::overlay, i, st.y - 4, 0);
-        PLATFORM.set_tile(Layer::overlay, i, st.y - 5, 0);
+        PLATFORM.set_overlay_tile(i, st.y - 2, 425);
+        PLATFORM.set_overlay_tile(i, st.y - 3, 0);
+        PLATFORM.set_overlay_tile(i, st.y - 4, 0);
+        PLATFORM.set_overlay_tile(i, st.y - 5, 0);
 
-        PLATFORM.set_tile(Layer::overlay, i, st.y - 6, 0);
+        PLATFORM.set_overlay_tile(i, st.y - 6, 0);
     }
 }
 

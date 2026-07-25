@@ -183,7 +183,7 @@ private:
 
         for (int x = 0; x < 32; ++x) {
             for (int y = 0; y < 32; ++y) {
-                PLATFORM.set_tile(Layer::overlay, x, y, textview_margin_tile);
+                PLATFORM.set_overlay_tile(x, y, textview_margin_tile);
             }
         }
     }

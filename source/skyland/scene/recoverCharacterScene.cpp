@@ -141,11 +141,11 @@ void RecoverCharacterScene::enter(Scene& prev)
 
     const int count = st.x - text_->len();
     for (int i = 0; i < count; ++i) {
-        PLATFORM.set_tile(Layer::overlay, i + text_->len(), st.y - 1, 426);
+        PLATFORM.set_overlay_tile(i + text_->len(), st.y - 1, 426);
     }
 
     for (int i = 0; i < st.x; ++i) {
-        PLATFORM.set_tile(Layer::overlay, i, st.y - 2, 425);
+        PLATFORM.set_overlay_tile(i, st.y - 2, 425);
     }
 }
 
@@ -158,8 +158,8 @@ void RecoverCharacterScene::exit(Scene& next)
 
     auto st = calc_screen_tiles();
     for (int i = 0; i < st.x; ++i) {
-        PLATFORM.set_tile(Layer::overlay, i, st.y - 1, 0);
-        PLATFORM.set_tile(Layer::overlay, i, st.y - 2, 0);
+        PLATFORM.set_overlay_tile(i, st.y - 1, 0);
+        PLATFORM.set_overlay_tile(i, st.y - 2, 0);
     }
 
     text_.reset();

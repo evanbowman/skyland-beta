@@ -85,7 +85,7 @@ void DatetimeModule::repaint()
 {
     for (int y = 0; y < 20; ++y) {
         for (int x = 0; x < 30; ++x) {
-            PLATFORM.set_tile(Layer::overlay, x, y, 0);
+            PLATFORM.set_overlay_tile(x, y, 0);
         }
     }
 
@@ -129,15 +129,15 @@ void DatetimeModule::repaint()
 
     if (state_ == State::set_hour) {
         for (int i = 0; i < 8; ++i) {
-            PLATFORM.set_tile(Layer::overlay, 1 + i, hms_y + 6, 358);
+            PLATFORM.set_overlay_tile(1 + i, hms_y + 6, 358);
         }
     } else if (state_ == State::set_min) {
         for (int i = 0; i < 8; ++i) {
-            PLATFORM.set_tile(Layer::overlay, 11 + i, hms_y + 6, 358);
+            PLATFORM.set_overlay_tile(11 + i, hms_y + 6, 358);
         }
     } else if (state_ == State::set_sec) {
         for (int i = 0; i < 8; ++i) {
-            PLATFORM.set_tile(Layer::overlay, 21 + i, hms_y + 6, 358);
+            PLATFORM.set_overlay_tile(21 + i, hms_y + 6, 358);
         }
     }
 

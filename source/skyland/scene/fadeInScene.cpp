@@ -72,14 +72,14 @@ void FadeInScene::enter(Scene& prev)
     auto st = calc_screen_tiles();
     for (int i = 1; i < st.x; ++i) {
         for (int j = 0; j < st.y; ++j) {
-            PLATFORM.set_tile(Layer::overlay, i, j, 112);
+            PLATFORM.set_overlay_tile(i, j, 112);
         }
     }
 
     for (int y = 0; y < st.y; y += 3) {
-        PLATFORM.set_tile(Layer::overlay, 0, y, 157);
-        PLATFORM.set_tile(Layer::overlay, 0, y + 1, 112);
-        PLATFORM.set_tile(Layer::overlay, 0, y + 2, 158);
+        PLATFORM.set_overlay_tile(0, y, 157);
+        PLATFORM.set_overlay_tile(0, y + 1, 112);
+        PLATFORM.set_overlay_tile(0, y + 2, 158);
     }
 
     PLATFORM.screen().set_shader(APP.environment().shader());
@@ -194,7 +194,7 @@ ScenePtr FadeInScene::update(Time delta)
             for (int y = 0; y < 32; ++y) {
                 auto prev = PLATFORM.get_tile(Layer::overlay, st.x - 1 - x, y);
                 if (prev) {
-                    PLATFORM.set_tile(Layer::overlay, st.x - 1 - x, y, 0);
+                    PLATFORM.set_overlay_tile(st.x - 1 - x, y, 0);
                 }
             }
         }

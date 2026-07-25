@@ -80,7 +80,7 @@ void GlossaryViewerModule::load_appendix_page(int page)
 
     for (int x = 0; x < 30; ++x) {
         for (int y = 0; y < 20; ++y) {
-            PLATFORM.set_tile(Layer::overlay, x, y, 112);
+            PLATFORM.set_overlay_tile(x, y, 112);
         }
     }
 
@@ -130,7 +130,7 @@ void GlossaryViewerModule::load_drone_page(int page)
 
     for (int x = 0; x < 30; ++x) {
         for (int y = 0; y < 20; ++y) {
-            PLATFORM.set_tile(Layer::overlay, x, y, 112);
+            PLATFORM.set_overlay_tile(x, y, 112);
         }
     }
 
@@ -144,7 +144,7 @@ void GlossaryViewerModule::load_drone_page(int page)
         item_name_.emplace(OverlayCoord{6, 1});
     }
 
-    PLATFORM.set_tile(Layer::overlay, 28, 1, 103);
+    PLATFORM.set_overlay_tile(28, 1, 103);
 
     StringBuffer<30> temp;
     temp += mt[page]->name();
@@ -260,7 +260,7 @@ void GlossaryViewerModule::load_page(int page)
     } else {
         dependency_text_.reset();
         for (int x = 0; x < 30; ++x) {
-            PLATFORM.set_tile(Layer::overlay, x, 18, 0);
+            PLATFORM.set_overlay_tile(x, 18, 0);
         }
     }
 
@@ -334,7 +334,7 @@ void GlossaryViewerModule::enter(Scene& prev)
         state_ not_eq State::quickview_appendix) {
         for (int x = 15; x < 32; ++x) {
             for (int y = 0; y < 20; ++y) {
-                PLATFORM.set_tile(Layer::overlay, x, y, 112);
+                PLATFORM.set_overlay_tile(x, y, 112);
             }
         }
     }
@@ -412,7 +412,7 @@ void GlossaryViewerModule::load_filters()
         t.__detach();
     }
 
-    PLATFORM.set_tile(Layer::overlay, 1, 4 + filter_cursor_ * 2, 396);
+    PLATFORM.set_overlay_tile(1, 4 + filter_cursor_ * 2, 396);
 }
 
 
@@ -438,22 +438,22 @@ void GlossaryViewerModule::draw_category_line(int line, Text::OptColors colors)
     case ((int)Room::Category::count + 1): {
         auto str = SYSTR(glossary_filters);
         t.append(str->c_str(), colors);
-        PLATFORM.set_tile(Layer::overlay, 3, y, 386);
+        PLATFORM.set_overlay_tile(3, y, 386);
         break;
     }
     case ((int)Room::Category::count): {
         t.append(SYS_CSTR(glossary_drones), colors);
-        PLATFORM.set_tile(Layer::overlay, 3, y, 103);
+        PLATFORM.set_overlay_tile(3, y, 103);
         break;
     }
     case ((int)Room::Category::count + 3): {
         t.append(SYS_CSTR(glossary_projectiles), colors);
-        PLATFORM.set_tile(Layer::overlay, 3, y, 105);
+        PLATFORM.set_overlay_tile(3, y, 105);
         break;
     }
     case ((int)Room::Category::count + 2): {
         t.append(SYS_CSTR(glossary_appendix), colors);
-        PLATFORM.set_tile(Layer::overlay, 3, y, 104);
+        PLATFORM.set_overlay_tile(3, y, 104);
         break;
     }
     default: {
@@ -479,13 +479,13 @@ void GlossaryViewerModule::load_categories()
 {
     for (int x = 0; x < 16; ++x) {
         for (int y = 0; y < 20; ++y) {
-            PLATFORM.set_tile(Layer::overlay, x, y, 112);
+            PLATFORM.set_overlay_tile(x, y, 112);
         }
     }
 
     for (int x = 20; x < 32; ++x) {
         for (int y = 0; y < 20; ++y) {
-            PLATFORM.set_tile(Layer::overlay, x, y, 0);
+            PLATFORM.set_overlay_tile(x, y, 0);
         }
     }
 
@@ -553,7 +553,7 @@ void GlossaryViewerModule::show_category_image(int img)
     if (state_ not_eq State::category_transition_enter) {
         for (int x = 16; x < 30; ++x) {
             for (int y = 0; y < 20; ++y) {
-                PLATFORM.set_tile(Layer::overlay, x, y, 0);
+                PLATFORM.set_overlay_tile(x, y, 0);
             }
         }
     }
@@ -587,7 +587,7 @@ ScenePtr GlossaryViewerModule::show_categories_impl(Time delta)
         cg_page_ += 1;
         for (int x = 0; x < 15; ++x) {
             for (int y = 4; y < 20; ++y) {
-                PLATFORM.set_tile(Layer::overlay, x, y, 112);
+                PLATFORM.set_overlay_tile(x, y, 112);
             }
         }
         PLATFORM.speaker().play_sound("cursor_tick", 0);
@@ -595,7 +595,7 @@ ScenePtr GlossaryViewerModule::show_categories_impl(Time delta)
             draw_category_line(i);
         }
         draw_category_line(cg_cursor_, cg_highlight_colors);
-        PLATFORM.set_tile(Layer::overlay, 1, 4 + cg_cursor_ * 2, 483);
+        PLATFORM.set_overlay_tile(1, 4 + cg_cursor_ * 2, 483);
         show_cg_page_marker();
     }
 
@@ -604,7 +604,7 @@ ScenePtr GlossaryViewerModule::show_categories_impl(Time delta)
         cg_cursor_ = 0;
         for (int x = 0; x < 15; ++x) {
             for (int y = 4; y < 20; ++y) {
-                PLATFORM.set_tile(Layer::overlay, x, y, 112);
+                PLATFORM.set_overlay_tile(x, y, 112);
             }
         }
         PLATFORM.speaker().play_sound("cursor_tick", 0);
@@ -612,7 +612,7 @@ ScenePtr GlossaryViewerModule::show_categories_impl(Time delta)
             draw_category_line(i);
         }
         draw_category_line(cg_cursor_, cg_highlight_colors);
-        PLATFORM.set_tile(Layer::overlay, 1, 4 + cg_cursor_ * 2, 483);
+        PLATFORM.set_overlay_tile(1, 4 + cg_cursor_ * 2, 483);
         show_cg_page_marker();
     }
 
@@ -622,9 +622,9 @@ ScenePtr GlossaryViewerModule::show_categories_impl(Time delta)
         PLATFORM.speaker().play_sound("cursor_tick", 0);
         draw_category_line(cg_cursor_, cg_highlight_colors);
         for (int y = 2; y < 20; ++y) {
-            PLATFORM.set_tile(Layer::overlay, 1, y, 112);
+            PLATFORM.set_overlay_tile(1, y, 112);
         }
-        PLATFORM.set_tile(Layer::overlay, 1, 4 + cg_cursor_ * 2, 483);
+        PLATFORM.set_overlay_tile(1, 4 + cg_cursor_ * 2, 483);
     }
 
     if (test_button(Button::down) and
@@ -634,9 +634,9 @@ ScenePtr GlossaryViewerModule::show_categories_impl(Time delta)
         PLATFORM.speaker().play_sound("cursor_tick", 0);
         draw_category_line(cg_cursor_, cg_highlight_colors);
         for (int y = 2; y < 20; ++y) {
-            PLATFORM.set_tile(Layer::overlay, 1, y, 112);
+            PLATFORM.set_overlay_tile(1, y, 112);
         }
-        PLATFORM.set_tile(Layer::overlay, 1, 4 + cg_cursor_ * 2, 483);
+        PLATFORM.set_overlay_tile(1, 4 + cg_cursor_ * 2, 483);
     }
 
     if (APP.player().button_down(Button::action_1)) {
@@ -650,10 +650,10 @@ ScenePtr GlossaryViewerModule::show_categories_impl(Time delta)
 
         for (int y = 20; y < 32; ++y) {
             for (int x = 0; x < 16; ++x) {
-                PLATFORM.set_tile(Layer::overlay, x, y, 112);
+                PLATFORM.set_overlay_tile(x, y, 112);
             }
             for (int x = 16; x < 30; ++x) {
-                PLATFORM.set_tile(Layer::overlay, x, y, 0);
+                PLATFORM.set_overlay_tile(x, y, 0);
             }
         }
         PLATFORM.screen().clear();
@@ -674,9 +674,9 @@ void GlossaryViewerModule::show_cg_page_marker()
     int margin = (calc_screen_tiles().x / 2 - cg_page_count * 2) / 2 + 1;
     for (int i = 0; i < cg_page_count; ++i) {
         if (i == cg_page_) {
-            PLATFORM.set_tile(Layer::overlay, margin + i * 2, 18, 102);
+            PLATFORM.set_overlay_tile(margin + i * 2, 18, 102);
         } else {
-            PLATFORM.set_tile(Layer::overlay, margin + i * 2, 18, 105);
+            PLATFORM.set_overlay_tile(margin + i * 2, 18, 105);
         }
     }
 }
@@ -734,9 +734,9 @@ ScenePtr GlossaryViewerModule::update(Time delta)
             --filter_cursor_;
             PLATFORM.speaker().play_sound("cursor_tick", 0);
             for (int y = 2; y < 20; ++y) {
-                PLATFORM.set_tile(Layer::overlay, 1, y, 0);
+                PLATFORM.set_overlay_tile(1, y, 0);
             }
-            PLATFORM.set_tile(Layer::overlay, 1, 4 + filter_cursor_ * 2, 483);
+            PLATFORM.set_overlay_tile(1, 4 + filter_cursor_ * 2, 483);
         }
 
         if (test_button(Button::down) and
@@ -744,17 +744,17 @@ ScenePtr GlossaryViewerModule::update(Time delta)
             ++filter_cursor_;
             PLATFORM.speaker().play_sound("cursor_tick", 0);
             for (int y = 2; y < 20; ++y) {
-                PLATFORM.set_tile(Layer::overlay, 1, y, 0);
+                PLATFORM.set_overlay_tile(1, y, 0);
             }
 
-            PLATFORM.set_tile(Layer::overlay, 1, 4 + filter_cursor_ * 2, 483);
+            PLATFORM.set_overlay_tile(1, 4 + filter_cursor_ * 2, 483);
         }
 
         if (APP.player().button_down(Button::action_1)) {
 
             for (int x = 0; x < 30; ++x) {
                 for (int y = 0; y < 20; ++y) {
-                    PLATFORM.set_tile(Layer::overlay, x, y, 0);
+                    PLATFORM.set_overlay_tile(x, y, 0);
                 }
             }
 
@@ -860,7 +860,7 @@ ScenePtr GlossaryViewerModule::update(Time delta)
         for (int i = 0; i < low; ++i) {
             for (int y = 0; y < 20; ++y) {
                 if (PLATFORM.get_tile(Layer::overlay, 16 + i, y) not_eq 112) {
-                    PLATFORM.set_tile(Layer::overlay, 16 + i, y, 112);
+                    PLATFORM.set_overlay_tile(16 + i, y, 112);
                 } else {
                     break;
                 }
@@ -871,7 +871,7 @@ ScenePtr GlossaryViewerModule::update(Time delta)
             if (PLATFORM.get_tile(Layer::overlay, 16 + low, y) == t) {
                 break;
             } else {
-                PLATFORM.set_tile(Layer::overlay, 16 + low, y, t);
+                PLATFORM.set_overlay_tile(16 + low, y, t);
             }
         }
 
@@ -884,7 +884,7 @@ ScenePtr GlossaryViewerModule::update(Time delta)
             case 0: {
                 for (int x = 0; x < 30; ++x) {
                     for (int y = 0; y < 20; ++y) {
-                        PLATFORM.set_tile(Layer::overlay, x, y, 0);
+                        PLATFORM.set_overlay_tile(x, y, 0);
                     }
                 }
 
@@ -927,7 +927,7 @@ ScenePtr GlossaryViewerModule::update(Time delta)
                     state_ = State::filters;
                     for (int x = 0; x < 30; ++x) {
                         for (int y = 0; y < 20; ++y) {
-                            PLATFORM.set_tile(Layer::overlay, x, y, 0);
+                            PLATFORM.set_overlay_tile(x, y, 0);
                         }
                     }
                     filter_cursor_ = 0;
@@ -939,7 +939,7 @@ ScenePtr GlossaryViewerModule::update(Time delta)
                 case 2:
                     for (int x = 0; x < 30; ++x) {
                         for (int y = 0; y < 20; ++y) {
-                            PLATFORM.set_tile(Layer::overlay, x, y, 112);
+                            PLATFORM.set_overlay_tile(x, y, 112);
                         }
                     }
                     load_appendix_page(0);
@@ -1001,7 +1001,7 @@ ScenePtr GlossaryViewerModule::update(Time delta)
             state_ = State::filters;
             for (int x = 0; x < 30; ++x) {
                 for (int y = 0; y < 20; ++y) {
-                    PLATFORM.set_tile(Layer::overlay, x, y, 0);
+                    PLATFORM.set_overlay_tile(x, y, 0);
                 }
             }
             load_filters();
@@ -1094,7 +1094,7 @@ ScenePtr GlossaryViewerModule::update(Time delta)
         auto rem = (int)progress % 8;
         for (int i = 16 + low + 1; i < 30; ++i) {
             for (int y = 0; y < 20; ++y) {
-                PLATFORM.set_tile(Layer::overlay, i, y, 0);
+                PLATFORM.set_overlay_tile(i, y, 0);
             }
         }
         for (int y = 0; y < 20; ++y) {
@@ -1102,7 +1102,7 @@ ScenePtr GlossaryViewerModule::update(Time delta)
             if (PLATFORM.get_tile(Layer::overlay, 16 + low, y) == t) {
                 break;
             } else {
-                PLATFORM.set_tile(Layer::overlay, 16 + low, y, t);
+                PLATFORM.set_overlay_tile(16 + low, y, t);
             }
         }
 
@@ -1110,7 +1110,7 @@ ScenePtr GlossaryViewerModule::update(Time delta)
             state_ = State::show_categories;
             for (int i = 16; i < 30; ++i) {
                 for (int y = 0; y < 20; ++y) {
-                    PLATFORM.set_tile(Layer::overlay, i, y, 0);
+                    PLATFORM.set_overlay_tile(i, y, 0);
                 }
             }
             draw_category_line(cg_cursor_, cg_highlight_colors);
@@ -1136,7 +1136,7 @@ ScenePtr GlossaryViewerModule::update(Time delta)
         auto rem = (int)progress % 8;
         for (int i = 16 + low + 1; i < 30; ++i) {
             for (int y = 0; y < 20; ++y) {
-                PLATFORM.set_tile(Layer::overlay, i, y, 0);
+                PLATFORM.set_overlay_tile(i, y, 0);
             }
         }
         for (int y = 0; y < 20; ++y) {
@@ -1144,7 +1144,7 @@ ScenePtr GlossaryViewerModule::update(Time delta)
             if (PLATFORM.get_tile(Layer::overlay, 16 + low, y) == t) {
                 break;
             } else {
-                PLATFORM.set_tile(Layer::overlay, 16 + low, y, t);
+                PLATFORM.set_overlay_tile(16 + low, y, t);
             }
         }
 
@@ -1153,12 +1153,12 @@ ScenePtr GlossaryViewerModule::update(Time delta)
             state_ = State::show_categories;
             for (int x = 0; x < 30; ++x) {
                 for (int y = 0; y < 20; ++y) {
-                    PLATFORM.set_tile(Layer::overlay, x, y, 0);
+                    PLATFORM.set_overlay_tile(x, y, 0);
                 }
             }
             load_categories();
             draw_category_line(cg_cursor_, cg_highlight_colors);
-            PLATFORM.set_tile(Layer::overlay, 1, 4 + cg_cursor_ * 2, 483);
+            PLATFORM.set_overlay_tile(1, 4 + cg_cursor_ * 2, 483);
             show_cg_page_marker();
         }
 

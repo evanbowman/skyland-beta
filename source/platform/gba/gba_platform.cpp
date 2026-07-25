@@ -5608,7 +5608,7 @@ void Platform::fill_overlay(u16 tile)
 
 
 
-static void set_overlay_tile(u16 x, u16 y, u16 val, int palette)
+static void set_overlay_tile_impl(u16 x, u16 y, u16 val, int palette)
 {
     if (get_gflag(GlobalFlag::glyph_mode)) {
         // This is where we handle the reference count for mapped glyphs. If
@@ -5716,14 +5716,14 @@ void Platform::set_tile(u16 x, u16 y, TileDesc glyph, const FontColors& colors)
     }();
 
     if (existing_mapping) {
-        set_overlay_tile(x, y, glyph, *existing_mapping);
+        set_tile(Layer::overlay, x, y, glyph, *existing_mapping);
     } else {
         const auto target = custom_text_palette_write_ptr;
 
         MEM_BG_PALETTE[target * 16 + default_colors.fg_] = fg_color_hash;
         MEM_BG_PALETTE[target * 16 + default_colors.bg_] = bg_color_hash;
 
-        set_overlay_tile(x, y, glyph, target);
+        set_tile(Layer::overlay, x, y, glyph, target);
 
         custom_text_palette_write_ptr =
             ((target + 1) - custom_text_palette_begin) %
@@ -5785,7 +5785,7 @@ void Platform::set_palette(Layer layer, u16 x, u16 y, u16 palette)
         set_map_tile_16p_palette(sbb_t0_tiles, x, y, palette);
     } else if (layer == Layer::overlay) {
         auto t = get_tile(Layer::overlay, x, y);
-        set_overlay_tile(x, y, t, palette);
+        set_tile(Layer::overlay, x, y, t, palette);
     }
 }
 
@@ -5812,6 +5812,16 @@ void Platform::set_raw_tile(Layer layer, u16 x, u16 y, TileDesc val)
 
 
 
+void Platform::set_overlay_tile(u16 x, u16 y, u16 val)
+{
+    if (x > 31 or y > 31) {
+        return;
+    }
+    ::set_overlay_tile_impl(x, y, val, 1);
+}
+
+
+
 void Platform::set_tile(Layer layer,
                         u16 x,
                         u16 y,
@@ -5823,7 +5833,7 @@ void Platform::set_tile(Layer layer,
         if (x > 31 or y > 31) {
             return;
         }
-        set_overlay_tile(x, y, val, palette ? *palette : 1);
+        set_overlay_tile_impl(x, y, val, palette ? *palette : 1);
         break;
 
     case Layer::map_1_ext:

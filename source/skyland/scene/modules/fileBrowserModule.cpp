@@ -155,7 +155,7 @@ void FileBrowserModule::repaint()
         y_offset = 4;
         for (int x = 0; x < 30; ++x) {
             for (int y = 4; y < 17; ++y) {
-                PLATFORM.set_tile(Layer::overlay, x, y, 82);
+                PLATFORM.set_overlay_tile(x, y, 82);
             }
         }
     }
@@ -178,7 +178,7 @@ void FileBrowserModule::repaint()
 
     if (not gui_mode_) {
         for (int y = 1; y < 20; ++y) {
-            PLATFORM.set_tile(Layer::overlay, 1, y, 0);
+            PLATFORM.set_overlay_tile(1, y, 0);
         }
     }
 
@@ -313,9 +313,9 @@ void FileBrowserModule::repaint()
             PLATFORM.set_tile(i + 1, 0, t, highlight_colors);
         }
 
-        PLATFORM.set_tile(Layer::overlay, 1, 3 + scroll_index_, 113);
-        PLATFORM.set_tile(Layer::overlay, 0, 0, 114);
-        PLATFORM.set_tile(Layer::overlay, 29, 0, 115);
+        PLATFORM.set_overlay_tile(1, 3 + scroll_index_, 113);
+        PLATFORM.set_overlay_tile(0, 0, 114);
+        PLATFORM.set_overlay_tile(29, 0, 115);
     }
 
     while (line_count < lines_.size()) {
@@ -428,7 +428,7 @@ ScenePtr FileBrowserModule::update(Time delta)
         if (scroll_index_ == 14 and
             scroll_index_ + line_offset_ < (int)(*cwd_names_)->size() - 1) {
             if (not gui_mode_) {
-                PLATFORM.set_tile(Layer::overlay, 1, 3 + scroll_index_, 0);
+                PLATFORM.set_overlay_tile(1, 3 + scroll_index_, 0);
             }
             ++line_offset_;
             repaint();
@@ -436,7 +436,7 @@ ScenePtr FileBrowserModule::update(Time delta)
         } else if (scroll_index_ + line_offset_ <
                    (int)(*cwd_names_)->size() - 1) {
             if (not gui_mode_) {
-                PLATFORM.set_tile(Layer::overlay, 1, 3 + scroll_index_, 0);
+                PLATFORM.set_overlay_tile(1, 3 + scroll_index_, 0);
             }
 
             if (lines_.size() > (u32)scroll_index_) {
@@ -454,7 +454,7 @@ ScenePtr FileBrowserModule::update(Time delta)
                     lines_[scroll_index_], info.name_.c_str(), info.size_);
             }
             if (not gui_mode_) {
-                PLATFORM.set_tile(Layer::overlay, 1, 3 + scroll_index_, 113);
+                PLATFORM.set_overlay_tile(1, 3 + scroll_index_, 113);
             }
             PLATFORM.speaker().play_sound("click_wooden", 2);
         }
@@ -463,14 +463,14 @@ ScenePtr FileBrowserModule::update(Time delta)
     auto scroll_up = [&] {
         if (scroll_index_ == 0 and line_offset_ > 0) {
             if (not gui_mode_) {
-                PLATFORM.set_tile(Layer::overlay, 1, 3 + scroll_index_, 0);
+                PLATFORM.set_overlay_tile(1, 3 + scroll_index_, 0);
             }
             --line_offset_;
             repaint();
             PLATFORM.speaker().play_sound("click_wooden", 2);
         } else if (scroll_index_ > 0) {
             if (not gui_mode_) {
-                PLATFORM.set_tile(Layer::overlay, 1, 3 + scroll_index_, 0);
+                PLATFORM.set_overlay_tile(1, 3 + scroll_index_, 0);
             }
             if (lines_.size() > (u32)scroll_index_) {
                 auto& info = (**cwd_names_)[scroll_index_ + line_offset_];
@@ -487,7 +487,7 @@ ScenePtr FileBrowserModule::update(Time delta)
                     lines_[scroll_index_], info.name_.c_str(), info.size_);
             }
             if (not gui_mode_) {
-                PLATFORM.set_tile(Layer::overlay, 1, 3 + scroll_index_, 113);
+                PLATFORM.set_overlay_tile(1, 3 + scroll_index_, 113);
             }
             PLATFORM.speaker().play_sound("click_wooden", 2);
         }

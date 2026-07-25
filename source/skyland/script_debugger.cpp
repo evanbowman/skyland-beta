@@ -421,7 +421,7 @@ static void onscreen_debugger_render_tab(lisp::Value* expr, u32& scroll)
 {
     for (int x = 0; x < 30; ++x) {
         for (int y = 6; y < 19; ++y) {
-            PLATFORM.set_tile(Layer::overlay, x, y, 0);
+            PLATFORM.set_overlay_tile(x, y, 0);
         }
     }
 
@@ -789,7 +789,7 @@ lisp::debug::Action handle_error_occurred(lisp::Value* expr)
             redisplay = false;
             for (int x = 0; x < 30; ++x) {
                 for (int y = 8; y < 19; ++y) {
-                    PLATFORM.set_tile(Layer::overlay, x, y, 0);
+                    PLATFORM.set_overlay_tile(x, y, 0);
                 }
             }
             switch (tab) {
@@ -903,7 +903,7 @@ lisp::debug::Action handle_enter_compiled_function(lisp::Value* expr)
             redisplay = false;
             for (int x = 0; x < 30; ++x) {
                 for (int y = 5; y < 20; ++y) {
-                    PLATFORM.set_tile(Layer::overlay, x, y, 0);
+                    PLATFORM.set_overlay_tile(x, y, 0);
                 }
             }
             switch (tab) {

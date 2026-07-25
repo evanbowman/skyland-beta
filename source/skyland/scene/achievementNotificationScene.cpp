@@ -55,15 +55,15 @@ ScenePtr AchievementNotificationScene::update(Time delta)
 
             for (int x = 3; x < st.x - 3; ++x) {
                 for (int y = 3; y < st.y - 4; ++y) {
-                    PLATFORM.set_tile(Layer::overlay, x, y, 112);
+                    PLATFORM.set_overlay_tile(x, y, 112);
                 }
             }
 
             for (int x = 4; x < st.x - 4; ++x) {
-                PLATFORM.set_tile(Layer::overlay, x, 8, 377);
+                PLATFORM.set_overlay_tile(x, 8, 377);
             }
 
-            PLATFORM.set_tile(Layer::overlay, st.x - 5, 4, 378);
+            PLATFORM.set_overlay_tile(st.x - 5, 4, 378);
 
             auto mt = load_metaclass(achievements::reward(achievement_));
             if (not mt) {
@@ -83,11 +83,11 @@ ScenePtr AchievementNotificationScene::update(Time delta)
             PLATFORM.set_tile(
                 Layer::overlay, 3 + achievement_text_->len(), 4, 482);
             for (int x = 0; x < achievement_text_->len() + 1; ++x) {
-                PLATFORM.set_tile(Layer::overlay, 3 + x, 3, 478);
+                PLATFORM.set_overlay_tile(3 + x, 3, 478);
             }
-            PLATFORM.set_tile(Layer::overlay, 2, 4, 480);
-            PLATFORM.set_tile(Layer::overlay, 2, 5, 481);
-            PLATFORM.set_tile(Layer::overlay, 2, 3, 479);
+            PLATFORM.set_overlay_tile(2, 4, 480);
+            PLATFORM.set_overlay_tile(2, 5, 481);
+            PLATFORM.set_overlay_tile(2, 3, 479);
 
 
             achievement_name_.emplace(OverlayCoord{4, 6});
@@ -129,7 +129,7 @@ ScenePtr AchievementNotificationScene::update(Time delta)
             for (int x = 3; x < st.x - 3; ++x) {
                 for (int y = 3; y < st.y - 4; ++y) {
                     if (y <= progress + 3) {
-                        PLATFORM.set_tile(Layer::overlay, x, y, 112);
+                        PLATFORM.set_overlay_tile(x, y, 112);
                     }
                 }
             }

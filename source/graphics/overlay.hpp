@@ -336,7 +336,7 @@ private:
     void fill(int tile)
     {
         for (int i = position_.x; i < position_.x + width_; ++i) {
-            PLATFORM.set_tile(Layer::overlay, i, position_.y, tile);
+            PLATFORM.set_overlay_tile(i, position_.y, tile);
         }
     }
 

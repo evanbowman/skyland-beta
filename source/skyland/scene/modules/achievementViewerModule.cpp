@@ -45,7 +45,7 @@ void AchievementViewerModule::load_page(int page)
     }
 
     for (int x = 1; x < 29; ++x) {
-        PLATFORM.set_tile(Layer::overlay, x, 12, 377);
+        PLATFORM.set_overlay_tile(x, 12, 377);
     }
 
     if (not unlocks_text_) {
@@ -61,9 +61,9 @@ void AchievementViewerModule::load_page(int page)
     achievement_name_->assign(temp.c_str());
 
     if (is_unlocked(achievement)) {
-        PLATFORM.set_tile(Layer::overlay, 28, 5, 378);
+        PLATFORM.set_overlay_tile(28, 5, 378);
     } else {
-        PLATFORM.set_tile(Layer::overlay, 28, 5, 112);
+        PLATFORM.set_overlay_tile(28, 5, 112);
     }
 
     temp.clear();
@@ -104,7 +104,7 @@ void AchievementViewerModule::load_page(int page)
     for (int x = 0; x < 30; ++x) {
         for (int y = 4; y < 20; ++y) {
             if (PLATFORM.get_tile(Layer::overlay, x, y) == 0) {
-                PLATFORM.set_tile(Layer::overlay, x, y, 112);
+                PLATFORM.set_overlay_tile(x, y, 112);
             }
         }
     }
@@ -123,10 +123,10 @@ void AchievementViewerModule::enter(Scene& prev)
     achievements_heading_->append(SYSTR(module_achievements)->c_str(),
                                   banner_color);
 
-    PLATFORM.set_tile(Layer::overlay, achievements_heading_->len(), 1, 476);
+    PLATFORM.set_overlay_tile(achievements_heading_->len(), 1, 476);
 
     for (int x = 0; x < achievements_heading_->len() + 1; ++x) {
-        PLATFORM.set_tile(Layer::overlay, x, 0, 477);
+        PLATFORM.set_overlay_tile(x, 0, 477);
     }
 
     load_page(0);

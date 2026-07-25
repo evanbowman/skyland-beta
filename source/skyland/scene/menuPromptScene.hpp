@@ -58,8 +58,8 @@ public:
 
         t2_.emplace(loadstr(opt_2_)->c_str(), OverlayCoord{3, 18});
 
-        PLATFORM.set_tile(Layer::overlay, 1, 16, 475);
-        PLATFORM.set_tile(Layer::overlay, 1, 18, 0);
+        PLATFORM.set_overlay_tile(1, 16, 475);
+        PLATFORM.set_overlay_tile(1, 18, 0);
 
         if (play_alert_sfx_) {
             PLATFORM.speaker().play_sound("click_digital_1", 1);
@@ -97,8 +97,8 @@ public:
             cursor_ = 0;
             t1_->assign(loadstr(opt_1_)->c_str(), sel_colors);
             t2_->assign(loadstr(opt_2_)->c_str());
-            PLATFORM.set_tile(Layer::overlay, 1, 16, 475);
-            PLATFORM.set_tile(Layer::overlay, 1, 18, 0);
+            PLATFORM.set_overlay_tile(1, 16, 475);
+            PLATFORM.set_overlay_tile(1, 18, 0);
             PLATFORM.speaker().play_sound("cursor_tick", 0);
         }
 
@@ -106,8 +106,8 @@ public:
             cursor_ = 1;
             t1_->assign(loadstr(opt_1_)->c_str());
             t2_->assign(loadstr(opt_2_)->c_str(), sel_colors);
-            PLATFORM.set_tile(Layer::overlay, 1, 18, 475);
-            PLATFORM.set_tile(Layer::overlay, 1, 16, 0);
+            PLATFORM.set_overlay_tile(1, 18, 475);
+            PLATFORM.set_overlay_tile(1, 16, 0);
             PLATFORM.speaker().play_sound("cursor_tick", 0);
         }
 

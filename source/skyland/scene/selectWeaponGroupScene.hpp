@@ -49,7 +49,7 @@ public:
             Layer::overlay, text_->len() + 2, calc_screen_tiles().y - 1, 394);
 
         for (int i = 0; i < text_->len() + 3; ++i) {
-            PLATFORM.set_tile(Layer::overlay, i, 18, 425);
+            PLATFORM.set_overlay_tile(i, 18, 425);
         }
     }
 

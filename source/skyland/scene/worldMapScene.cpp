@@ -412,11 +412,11 @@ void WorldMapScene::update_storm_frontier(WorldGraph& map, int offset)
         for (int y = 0; y < 20; ++y) {
             const auto t = PLATFORM.get_tile(Layer::overlay, x, y);
             if (t == 83) {
-                PLATFORM.set_tile(Layer::overlay, x, y, 0);
+                PLATFORM.set_overlay_tile(x, y, 0);
             } else if (t == 86) {
-                PLATFORM.set_tile(Layer::overlay, x, y, 89);
+                PLATFORM.set_overlay_tile(x, y, 89);
             } else if (t == 87) {
-                PLATFORM.set_tile(Layer::overlay, x, y, 90);
+                PLATFORM.set_overlay_tile(x, y, 90);
             }
         }
     }
@@ -424,11 +424,11 @@ void WorldMapScene::update_storm_frontier(WorldGraph& map, int offset)
         const int x = 1 + (map.storm_depth_ + 1 + offset) * 2;
         auto t = PLATFORM.get_tile(Layer::overlay, x, y);
         if (t == 0) {
-            PLATFORM.set_tile(Layer::overlay, x, y, 83);
+            PLATFORM.set_overlay_tile(x, y, 83);
         } else if (t == 89) {
-            PLATFORM.set_tile(Layer::overlay, x, y, 86);
+            PLATFORM.set_overlay_tile(x, y, 86);
         } else if (t == 90) {
-            PLATFORM.set_tile(Layer::overlay, x, y, 87);
+            PLATFORM.set_overlay_tile(x, y, 87);
         }
     }
 }
@@ -551,8 +551,8 @@ bool WorldMapScene::can_abort_move() const
 
 void show_saved_indicator()
 {
-    PLATFORM.set_tile(Layer::overlay, 27, 1, 168);
-    PLATFORM.set_tile(Layer::overlay, 28, 1, 169);
+    PLATFORM.set_overlay_tile(27, 1, 168);
+    PLATFORM.set_overlay_tile(28, 1, 169);
 }
 
 
@@ -965,17 +965,17 @@ ScenePtr WorldMapScene::update(Time delta)
 
         auto clr_txt = [&] {
             for (int i = -1; i < save_opt_len_; ++i) {
-                PLATFORM.set_tile(Layer::overlay, x + i, 17, 0);
-                PLATFORM.set_tile(Layer::overlay, x + i, 18, 0);
+                PLATFORM.set_overlay_tile(x + i, 17, 0);
+                PLATFORM.set_overlay_tile(x + i, 18, 0);
             }
         };
 
         if (save_opt_sel_) {
-            PLATFORM.set_tile(Layer::overlay, x - 1, 17, 167);
-            PLATFORM.set_tile(Layer::overlay, x - 1, 18, 166);
+            PLATFORM.set_overlay_tile(x - 1, 17, 167);
+            PLATFORM.set_overlay_tile(x - 1, 18, 166);
         } else {
-            PLATFORM.set_tile(Layer::overlay, x - 1, 17, 166);
-            PLATFORM.set_tile(Layer::overlay, x - 1, 18, 167);
+            PLATFORM.set_overlay_tile(x - 1, 17, 166);
+            PLATFORM.set_overlay_tile(x - 1, 18, 167);
         }
 
         if (APP.player().button_down(Button::down)) {
@@ -1614,16 +1614,16 @@ ScenePtr WorldMapScene::update(Time delta)
         const auto screen_tiles = calc_screen_tiles();
         heading_.reset();
         for (int i = 0; i < screen_tiles.x; ++i) {
-            PLATFORM.set_tile(Layer::overlay, i, 0, 112);
-            PLATFORM.set_tile(Layer::overlay, i, 1, 112);
-            PLATFORM.set_tile(Layer::overlay, i, 2, 112);
-            PLATFORM.set_tile(Layer::overlay, i, 3, 112);
-            PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y, 112);
-            PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y - 1, 112);
-            PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y - 2, 112);
-            PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y - 3, 112);
-            PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y - 4, 112);
-            PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y - 5, 112);
+            PLATFORM.set_overlay_tile(i, 0, 112);
+            PLATFORM.set_overlay_tile(i, 1, 112);
+            PLATFORM.set_overlay_tile(i, 2, 112);
+            PLATFORM.set_overlay_tile(i, 3, 112);
+            PLATFORM.set_overlay_tile(i, screen_tiles.y, 112);
+            PLATFORM.set_overlay_tile(i, screen_tiles.y - 1, 112);
+            PLATFORM.set_overlay_tile(i, screen_tiles.y - 2, 112);
+            PLATFORM.set_overlay_tile(i, screen_tiles.y - 3, 112);
+            PLATFORM.set_overlay_tile(i, screen_tiles.y - 4, 112);
+            PLATFORM.set_overlay_tile(i, screen_tiles.y - 5, 112);
         }
         state_ = State::show_saved_text;
         load_savegame_txtr();
@@ -1651,21 +1651,21 @@ ScenePtr WorldMapScene::update(Time delta)
         if (timer_ > milliseconds(7500)) {
             heading_.reset();
             for (int i = 0; i < 30; ++i) {
-                PLATFORM.set_tile(Layer::overlay, i, 1, 112);
+                PLATFORM.set_overlay_tile(i, 1, 112);
             }
         }
 
         if (timer_ > milliseconds(7600)) {
             const auto screen_tiles = calc_screen_tiles();
             for (int i = 0; i < 30; ++i) {
-                PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y - 4, 112);
+                PLATFORM.set_overlay_tile(i, screen_tiles.y - 4, 112);
             }
         }
 
         if (timer_ > milliseconds(7700)) {
             const auto screen_tiles = calc_screen_tiles();
             for (int i = 0; i < 30; ++i) {
-                PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y - 2, 112);
+                PLATFORM.set_overlay_tile(i, screen_tiles.y - 2, 112);
             }
         }
 
@@ -1704,10 +1704,10 @@ ScenePtr WorldMapScene::update(Time delta)
         for (int y = 4; y < 4 + 6; ++y) {
             if ((y - 4) * 8 < fractional_pixels) {
                 for (int x = 0; x < 30; ++x) {
-                    PLATFORM.set_tile(Layer::overlay, x, y, 112);
+                    PLATFORM.set_overlay_tile(x, y, 112);
                 }
                 for (int x = 0; x < 30; ++x) {
-                    PLATFORM.set_tile(Layer::overlay, x, 14 - (y - 4), 112);
+                    PLATFORM.set_overlay_tile(x, 14 - (y - 4), 112);
                 }
             } else if (((y + 1) - 4) * 8 > fractional_pixels and
                        fractional_pixels % 8) {
@@ -2268,7 +2268,7 @@ void WorldMapScene::enter(Scene& prev_scene)
     }
 
     for (int x = 0; x < 5; ++x) {
-        PLATFORM.set_tile(Layer::overlay, 30 - 5 + x, 0, 179 + x);
+        PLATFORM.set_overlay_tile(30 - 5 + x, 0, 179 + x);
     }
 
     update_storm_frontier(APP.world_graph(), -1);
@@ -2281,19 +2281,19 @@ void WorldMapScene::draw_border()
     auto st = calc_screen_tiles();
 
     for (int x = 1; x < st.x - 1; ++x) {
-        PLATFORM.set_tile(Layer::overlay, x, 0, 89);
-        PLATFORM.set_tile(Layer::overlay, x, st.y - 1, 90);
+        PLATFORM.set_overlay_tile(x, 0, 89);
+        PLATFORM.set_overlay_tile(x, st.y - 1, 90);
     }
 
     for (int y = 1; y < st.y - 1; ++y) {
-        PLATFORM.set_tile(Layer::overlay, 0, y, 91);
-        PLATFORM.set_tile(Layer::overlay, st.x - 1, y, 92);
+        PLATFORM.set_overlay_tile(0, y, 91);
+        PLATFORM.set_overlay_tile(st.x - 1, y, 92);
     }
 
-    PLATFORM.set_tile(Layer::overlay, 0, 0, 93);
-    PLATFORM.set_tile(Layer::overlay, st.x - 1, 0, 95);
-    PLATFORM.set_tile(Layer::overlay, 0, st.y - 1, 96);
-    PLATFORM.set_tile(Layer::overlay, st.x - 1, st.y - 1, 94);
+    PLATFORM.set_overlay_tile(0, 0, 93);
+    PLATFORM.set_overlay_tile(st.x - 1, 0, 95);
+    PLATFORM.set_overlay_tile(0, st.y - 1, 96);
+    PLATFORM.set_overlay_tile(st.x - 1, st.y - 1, 94);
 }
 
 

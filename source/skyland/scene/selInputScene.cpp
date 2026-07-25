@@ -63,7 +63,7 @@ void SelInputScene::enter(Scene& prev)
     auto st = calc_screen_tiles();
 
     for (int i = 0; i < text_->len(); ++i) {
-        PLATFORM.set_tile(Layer::overlay, i, st.y - 2, 425);
+        PLATFORM.set_overlay_tile(i, st.y - 2, 425);
     }
 
     cached_near_cursor_ = globals().near_cursor_loc_;

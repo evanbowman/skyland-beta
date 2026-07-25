@@ -57,17 +57,17 @@ void SelectSampleScene::show_options()
 
     PLATFORM.fill_overlay(0);
 
-    PLATFORM.set_tile(Layer::overlay, 1, 2, 90);
-    PLATFORM.set_tile(Layer::overlay, 28, 2, 92);
-    PLATFORM.set_tile(Layer::overlay, 1, 15, 94);
-    PLATFORM.set_tile(Layer::overlay, 28, 15, 96);
+    PLATFORM.set_overlay_tile(1, 2, 90);
+    PLATFORM.set_overlay_tile(28, 2, 92);
+    PLATFORM.set_overlay_tile(1, 15, 94);
+    PLATFORM.set_overlay_tile(28, 15, 96);
     for (int x = 2; x < 28; ++x) {
-        PLATFORM.set_tile(Layer::overlay, x, 2, 91);
-        PLATFORM.set_tile(Layer::overlay, x, 15, 95);
+        PLATFORM.set_overlay_tile(x, 2, 91);
+        PLATFORM.set_overlay_tile(x, 15, 95);
     }
     for (int y = 3; y < 15; ++y) {
-        PLATFORM.set_tile(Layer::overlay, 1, y, 93);
-        PLATFORM.set_tile(Layer::overlay, 28, y, 97);
+        PLATFORM.set_overlay_tile(1, y, 93);
+        PLATFORM.set_overlay_tile(28, y, 97);
     }
 
     if (not samples_) {
@@ -104,9 +104,9 @@ void SelectSampleScene::show_options()
         int margin = (calc_screen_tiles().x - page_count_ * 2) / 2;
         for (int i = 0; i < page_count_; ++i) {
             if (i == page_) {
-                PLATFORM.set_tile(Layer::overlay, margin + i * 2, 18, 83);
+                PLATFORM.set_overlay_tile(margin + i * 2, 18, 83);
             } else {
-                PLATFORM.set_tile(Layer::overlay, margin + i * 2, 18, 82);
+                PLATFORM.set_overlay_tile(margin + i * 2, 18, 82);
             }
         }
     }

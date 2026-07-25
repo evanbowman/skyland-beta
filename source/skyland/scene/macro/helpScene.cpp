@@ -35,41 +35,41 @@ void HelpScene::show_page(int pg)
     }
 
     for (int i = 0; i < heading_->len(); ++i) {
-        PLATFORM.set_tile(Layer::overlay, i, 0, 0);
+        PLATFORM.set_overlay_tile(i, 0, 0);
     }
     heading_->assign(SYS_CSTR(macro_help_prefix));
 
     int margin = (calc_screen_tiles().x - page_count * 2) / 2;
     for (int i = 0; i < page_count; ++i) {
         if (i == page_) {
-            PLATFORM.set_tile(Layer::overlay, margin + i * 2, 18, 101);
+            PLATFORM.set_overlay_tile(margin + i * 2, 18, 101);
         } else {
-            PLATFORM.set_tile(Layer::overlay, margin + i * 2, 18, 100);
+            PLATFORM.set_overlay_tile(margin + i * 2, 18, 100);
         }
     }
 
     switch (pg) {
     case 0:
         heading_->append(SYS_CSTR(macro_help_title_1));
-        PLATFORM.set_tile(Layer::overlay, heading_->len() + 1, 1, 413);
+        PLATFORM.set_overlay_tile(heading_->len() + 1, 1, 413);
         tv_->assign(SYS_CSTR(macro_help_1), {1, 4}, {28, 7});
         break;
 
     case 1:
         heading_->append(SYS_CSTR(macro_help_title_2));
-        PLATFORM.set_tile(Layer::overlay, heading_->len() + 1, 1, 415);
+        PLATFORM.set_overlay_tile(heading_->len() + 1, 1, 415);
         tv_->assign(SYS_CSTR(macro_help_2), {1, 4}, {28, 7});
         break;
 
     case 2:
         heading_->append(SYS_CSTR(macro_help_title_3));
-        PLATFORM.set_tile(Layer::overlay, heading_->len() + 1, 1, 414);
+        PLATFORM.set_overlay_tile(heading_->len() + 1, 1, 414);
         tv_->assign(SYS_CSTR(macro_help_3), {1, 4}, {28, 7});
         break;
 
     case 3:
         heading_->append(SYS_CSTR(macro_help_title_3));
-        PLATFORM.set_tile(Layer::overlay, heading_->len() + 1, 1, 414);
+        PLATFORM.set_overlay_tile(heading_->len() + 1, 1, 414);
         tv_->assign(SYS_CSTR(macro_help_4), {1, 4}, {28, 7});
         break;
 
@@ -96,7 +96,7 @@ void HelpScene::show_page(int pg)
 
     auto st = calc_screen_tiles();
     for (int x = 0; x < st.x; ++x) {
-        PLATFORM.set_tile(Layer::overlay, x, 2, 107);
+        PLATFORM.set_overlay_tile(x, 2, 107);
     }
 }
 

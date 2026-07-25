@@ -142,7 +142,7 @@ void ScriptedMenuScene::repaint_model()
 {
     for (int x = 0; x < 30; ++x) {
         for (int y = 0; y < 20; ++y) {
-            PLATFORM.set_tile(Layer::overlay, x, y, 0);
+            PLATFORM.set_overlay_tile(x, y, 0);
         }
     }
 
@@ -163,7 +163,7 @@ void ScriptedMenuScene::repaint_model()
                 u8 t = get_int_attr(v, "tile");
                 for (int i = x; i < x + w; ++i) {
                     for (int j = y; j < y + h; ++j) {
-                        PLATFORM.set_tile(Layer::overlay, i, j, t);
+                        PLATFORM.set_overlay_tile(i, j, t);
                     }
                 }
             } else if (str_eq(front, "md-icon")) {
@@ -181,7 +181,7 @@ void ScriptedMenuScene::repaint_model()
                 u8 p = get_int_attr(v, "p");
 
                 for (int i = x; i < x + w; i += p) {
-                    PLATFORM.set_tile(Layer::overlay, i, y, t);
+                    PLATFORM.set_overlay_tile(i, y, t);
                 }
             } else if (str_eq(front, "col")) {
                 u8 x = get_int_attr(v, "x");
@@ -191,7 +191,7 @@ void ScriptedMenuScene::repaint_model()
                 u8 p = get_int_attr(v, "p");
 
                 for (int i = y; i < y + h; i += p) {
-                    PLATFORM.set_tile(Layer::overlay, x, i, t);
+                    PLATFORM.set_overlay_tile(x, i, t);
                 }
             }
         });

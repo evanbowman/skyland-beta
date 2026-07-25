@@ -46,7 +46,7 @@ bool CreditsModule::load_page(u32 page)
 
     for (int x = 0; x < 30; ++x) {
         for (int y = 0; y < 20; ++y) {
-            PLATFORM.set_tile(Layer::overlay, x, y, 112);
+            PLATFORM.set_overlay_tile(x, y, 112);
         }
     }
 
@@ -62,7 +62,7 @@ bool CreditsModule::load_page(u32 page)
                     for (int x = 0; x < 30; ++x) {
                         for (int yy = 0; yy < 20; ++yy) {
                             if (not(yy < y or yy > y + 9 or x < 3 or x > 26)) {
-                                PLATFORM.set_tile(Layer::overlay, x, yy, 0);
+                                PLATFORM.set_overlay_tile(x, yy, 0);
                             }
                         }
                     }

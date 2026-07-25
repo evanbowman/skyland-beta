@@ -22,12 +22,12 @@ void DataCartModule::show_cart(int index)
 
     for (int x = 0; x < 30; ++x) {
         for (int y = 0; y < 20; ++y) {
-            PLATFORM.set_tile(Layer::overlay, x, y, 0);
+            PLATFORM.set_overlay_tile(x, y, 0);
         }
     }
 
     // left arrow icon
-    PLATFORM.set_tile(Layer::overlay, 1, 8, index == 0 ? 107 : 105);
+    PLATFORM.set_overlay_tile(1, 8, index == 0 ? 107 : 105);
 
     // right arrow icon
     PLATFORM.set_tile(Layer::overlay,
@@ -49,14 +49,14 @@ void DataCartModule::show_cart(int index)
 
     draw_image(332, 5, 3, 20, 2, Layer::overlay);
     for (int i = 5; i < 13; ++i) {
-        PLATFORM.set_tile(Layer::overlay, 6, i, 384);
-        PLATFORM.set_tile(Layer::overlay, 23, i, 372);
+        PLATFORM.set_overlay_tile(6, i, 384);
+        PLATFORM.set_overlay_tile(23, i, 372);
     }
     for (int i = 7; i < 23; ++i) {
-        PLATFORM.set_tile(Layer::overlay, i, 13, 375);
+        PLATFORM.set_overlay_tile(i, 13, 375);
     }
-    PLATFORM.set_tile(Layer::overlay, 6, 13, 373);
-    PLATFORM.set_tile(Layer::overlay, 23, 13, 374);
+    PLATFORM.set_overlay_tile(6, 13, 373);
+    PLATFORM.set_overlay_tile(23, 13, 374);
 
     auto cart = carts_->load(index);
     if (not cart) {
@@ -86,11 +86,11 @@ void DataCartModule::show_cart(int index)
 
         auto type = cart->expect_content_string("icon");
         if (*type == "image") {
-            PLATFORM.set_tile(Layer::overlay, 8, 10, 386);
+            PLATFORM.set_overlay_tile(8, 10, 386);
         } else if (*type == "files") {
-            PLATFORM.set_tile(Layer::overlay, 8, 10, 387);
+            PLATFORM.set_overlay_tile(8, 10, 387);
         } else if (*type == "exe") {
-            PLATFORM.set_tile(Layer::overlay, 8, 10, 385);
+            PLATFORM.set_overlay_tile(8, 10, 385);
         }
     }
 
@@ -274,12 +274,12 @@ ScenePtr DataCartModule::update(Time delta)
                 state_ = State::anim_out;
                 timer_ = 0;
                 for (int x = 0; x < 30; ++x) {
-                    PLATFORM.set_tile(Layer::overlay, x, 0, 0);
-                    PLATFORM.set_tile(Layer::overlay, x, 20, 0);
+                    PLATFORM.set_overlay_tile(x, 0, 0);
+                    PLATFORM.set_overlay_tile(x, 20, 0);
                 }
                 for (int y = 0; y < 20; ++y) {
-                    PLATFORM.set_tile(Layer::overlay, 1, y, 0);
-                    PLATFORM.set_tile(Layer::overlay, 28, y, 0);
+                    PLATFORM.set_overlay_tile(1, y, 0);
+                    PLATFORM.set_overlay_tile(28, y, 0);
                 }
                 draw_image(112, 5, 3, 20, 11, Layer::overlay);
 
@@ -293,18 +293,18 @@ ScenePtr DataCartModule::update(Time delta)
 
                 auto type = cart->expect_content_string("icon");
                 if (*type == "image") {
-                    PLATFORM.set_tile(Layer::overlay, 8, 10, 389);
+                    PLATFORM.set_overlay_tile(8, 10, 389);
                 } else if (*type == "files") {
-                    PLATFORM.set_tile(Layer::overlay, 8, 10, 390);
+                    PLATFORM.set_overlay_tile(8, 10, 390);
                 } else if (*type == "exe") {
-                    PLATFORM.set_tile(Layer::overlay, 8, 10, 388);
+                    PLATFORM.set_overlay_tile(8, 10, 388);
                 }
 
                 PLATFORM.speaker().play_sound("button_wooden", 3);
 
                 for (int y = 21; y < 30; ++y) {
                     for (int x = 0; x < 30; ++x) {
-                        PLATFORM.set_tile(Layer::overlay, x, y, 0);
+                        PLATFORM.set_overlay_tile(x, y, 0);
                     }
                 }
 
@@ -436,7 +436,7 @@ public:
             if (auto c = cart.get_content_string("inscription")) {
                 for (int x = 4; x < 26; ++x) {
                     for (int y = 1; y < 18; ++y) {
-                        PLATFORM.set_tile(Layer::overlay, x, y, 309);
+                        PLATFORM.set_overlay_tile(x, y, 309);
                     }
                 }
                 PLATFORM.screen().clear();

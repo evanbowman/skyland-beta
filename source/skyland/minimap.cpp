@@ -90,7 +90,7 @@ void show()
     u16 tile = minimap_start_tile;
     for (int y = 0; y < 5; ++y) {
         for (int x = 0; x < width; ++x) {
-            PLATFORM.set_tile(Layer::overlay, anchor + x, y_anchor + y, tile++);
+            PLATFORM.set_overlay_tile(anchor + x, y_anchor + y, tile++);
         }
     }
 

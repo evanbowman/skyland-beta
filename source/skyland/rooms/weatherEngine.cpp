@@ -54,8 +54,8 @@ public:
 
         const auto st = calc_screen_tiles();
 
-        PLATFORM.set_tile(Layer::overlay, 0, st.y - 1, 398);
-        PLATFORM.set_tile(Layer::overlay, 1, st.y - 1, 399);
+        PLATFORM.set_overlay_tile(0, st.y - 1, 398);
+        PLATFORM.set_overlay_tile(1, st.y - 1, 399);
 
         text_.emplace(OverlayCoord{2, u8(st.y - 1)});
         set_str();

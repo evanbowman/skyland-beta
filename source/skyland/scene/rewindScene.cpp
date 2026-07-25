@@ -267,25 +267,25 @@ ScenePtr RewindScene::update(Time)
     if (speed_changed) {
         switch (speed_) {
         case 0:
-            PLATFORM.set_tile(Layer::overlay, 0, 16, 475);
-            PLATFORM.set_tile(Layer::overlay, 0, 17, 112);
-            PLATFORM.set_tile(Layer::overlay, 0, 18, 112);
+            PLATFORM.set_overlay_tile(0, 16, 475);
+            PLATFORM.set_overlay_tile(0, 17, 112);
+            PLATFORM.set_overlay_tile(0, 18, 112);
             PLATFORM.speaker().set_music_speed(
                 Platform::Speaker::MusicSpeed::reversed);
             break;
 
         case 1:
-            PLATFORM.set_tile(Layer::overlay, 0, 16, 112);
-            PLATFORM.set_tile(Layer::overlay, 0, 17, 475);
-            PLATFORM.set_tile(Layer::overlay, 0, 18, 112);
+            PLATFORM.set_overlay_tile(0, 16, 112);
+            PLATFORM.set_overlay_tile(0, 17, 475);
+            PLATFORM.set_overlay_tile(0, 18, 112);
             PLATFORM.speaker().set_music_speed(
                 Platform::Speaker::MusicSpeed::reversed4x);
             break;
 
         case 2:
-            PLATFORM.set_tile(Layer::overlay, 0, 16, 112);
-            PLATFORM.set_tile(Layer::overlay, 0, 17, 112);
-            PLATFORM.set_tile(Layer::overlay, 0, 18, 475);
+            PLATFORM.set_overlay_tile(0, 16, 112);
+            PLATFORM.set_overlay_tile(0, 17, 112);
+            PLATFORM.set_overlay_tile(0, 18, 475);
             PLATFORM.speaker().set_music_speed(
                 Platform::Speaker::MusicSpeed::reversed8x);
             break;
@@ -2223,9 +2223,9 @@ void RewindScene::enter(Scene& prev)
     speed_text2_.emplace("4x", OverlayCoord{1, 17});
     speed_text3_.emplace("8x", OverlayCoord{1, 18});
 
-    PLATFORM.set_tile(Layer::overlay, 0, 16, 475);
-    PLATFORM.set_tile(Layer::overlay, 0, 17, 112);
-    PLATFORM.set_tile(Layer::overlay, 0, 18, 112);
+    PLATFORM.set_overlay_tile(0, 16, 475);
+    PLATFORM.set_overlay_tile(0, 17, 112);
+    PLATFORM.set_overlay_tile(0, 18, 112);
 }
 
 
@@ -2236,9 +2236,9 @@ void RewindScene::exit(Scene& next)
     speed_text2_.reset();
     speed_text3_.reset();
 
-    PLATFORM.set_tile(Layer::overlay, 0, 16, 0);
-    PLATFORM.set_tile(Layer::overlay, 0, 17, 0);
-    PLATFORM.set_tile(Layer::overlay, 0, 18, 0);
+    PLATFORM.set_overlay_tile(0, 16, 0);
+    PLATFORM.set_overlay_tile(0, 17, 0);
+    PLATFORM.set_overlay_tile(0, 18, 0);
 
     if (not APP.time_stream().pushes_enabled()) {
         Platform::fatal("sanity check: exit rewind scene, pushes not enabled");

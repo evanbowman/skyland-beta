@@ -383,7 +383,7 @@ void MacrocosmScene::enter(macro::EngineImpl& state, Scene& prev)
     draw_buttonlock(state);
 
     for (int y = 5; y < 13; y += 2) {
-        PLATFORM.set_tile(Layer::overlay, 28, y, 471);
+        PLATFORM.set_overlay_tile(28, y, 471);
     }
 }
 
@@ -439,23 +439,23 @@ void MacrocosmScene::draw_buttonlock(macro::EngineImpl& state)
 
     switch (state.data_->buttonlock_) {
     case Buttonlock::nolock:
-        PLATFORM.set_tile(Layer::overlay, 27, y, 0);
-        PLATFORM.set_tile(Layer::overlay, 28, y, 0);
+        PLATFORM.set_overlay_tile(27, y, 0);
+        PLATFORM.set_overlay_tile(28, y, 0);
         break;
 
     case Buttonlock::buildlock:
-        PLATFORM.set_tile(Layer::overlay, 27, y, 388);
-        PLATFORM.set_tile(Layer::overlay, 28, y, 390);
+        PLATFORM.set_overlay_tile(27, y, 388);
+        PLATFORM.set_overlay_tile(28, y, 390);
         break;
 
     case Buttonlock::improvelock:
-        PLATFORM.set_tile(Layer::overlay, 27, y, 387);
-        PLATFORM.set_tile(Layer::overlay, 28, y, 390);
+        PLATFORM.set_overlay_tile(27, y, 387);
+        PLATFORM.set_overlay_tile(28, y, 390);
         break;
 
     case Buttonlock::deletelock:
-        PLATFORM.set_tile(Layer::overlay, 27, y, 389);
-        PLATFORM.set_tile(Layer::overlay, 28, y, 390);
+        PLATFORM.set_overlay_tile(27, y, 389);
+        PLATFORM.set_overlay_tile(28, y, 390);
         break;
     }
 }

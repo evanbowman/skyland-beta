@@ -55,14 +55,14 @@ void ModifierButtonHintScene::enter(Scene& prev)
 
     for (int x = 3; x < st.x - 3; ++x) {
         for (int y = 2; y < st.y - 2; ++y) {
-            PLATFORM.set_tile(Layer::overlay, x, y, 112);
+            PLATFORM.set_overlay_tile(x, y, 112);
         }
     }
 
-    PLATFORM.set_tile(Layer::overlay, 4, 6, 392);
-    PLATFORM.set_tile(Layer::overlay, 4, 8, 393);
-    PLATFORM.set_tile(Layer::overlay, 4, 10, 394);
-    PLATFORM.set_tile(Layer::overlay, 4, 12, 395);
+    PLATFORM.set_overlay_tile(4, 6, 392);
+    PLATFORM.set_overlay_tile(4, 8, 393);
+    PLATFORM.set_overlay_tile(4, 10, 394);
+    PLATFORM.set_overlay_tile(4, 12, 395);
 
     Text b_opt("/B", OverlayCoord{5, 6});
     b_opt.__detach();

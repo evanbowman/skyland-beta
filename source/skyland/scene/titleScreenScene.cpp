@@ -329,36 +329,36 @@ void TitleScreenScene::redraw_margins()
     const auto screen_tiles = calc_screen_tiles();
     for (int i = 0; i < screen_tiles.x; ++i) {
 
-        PLATFORM.set_tile(Layer::overlay, i, 0, 112);
-        PLATFORM.set_tile(Layer::overlay, i, 1, 112);
-        PLATFORM.set_tile(Layer::overlay, i, 2, 116);
+        PLATFORM.set_overlay_tile(i, 0, 112);
+        PLATFORM.set_overlay_tile(i, 1, 112);
+        PLATFORM.set_overlay_tile(i, 2, 116);
 
-        PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y, 112);
-        PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y - 1, 112);
-        PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y - 2, 112);
-        PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y - 3, 112);
-        PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y - 4, 256);
+        PLATFORM.set_overlay_tile(i, screen_tiles.y, 112);
+        PLATFORM.set_overlay_tile(i, screen_tiles.y - 1, 112);
+        PLATFORM.set_overlay_tile(i, screen_tiles.y - 2, 112);
+        PLATFORM.set_overlay_tile(i, screen_tiles.y - 3, 112);
+        PLATFORM.set_overlay_tile(i, screen_tiles.y - 4, 256);
 
         if (scale_offset().y / 8 > 0) {
 
             int y = 0;
             for (y = 0; y < 3; ++y) {
-                PLATFORM.set_tile(Layer::overlay, i, y, 112);
+                PLATFORM.set_overlay_tile(i, y, 112);
             }
 
             for (; y < scale_offset().y / 8; ++y) {
-                PLATFORM.set_tile(Layer::overlay, i, y, 112);
+                PLATFORM.set_overlay_tile(i, y, 112);
             }
 
-            PLATFORM.set_tile(Layer::overlay, i, y, 116);
+            PLATFORM.set_overlay_tile(i, y, 116);
 
             // FIXME!
-            PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y, 112);
-            PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y - 1, 112);
-            PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y - 2, 112);
-            PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y - 3, 112);
-            PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y - 4, 112);
-            PLATFORM.set_tile(Layer::overlay, i, screen_tiles.y - 5, 256);
+            PLATFORM.set_overlay_tile(i, screen_tiles.y, 112);
+            PLATFORM.set_overlay_tile(i, screen_tiles.y - 1, 112);
+            PLATFORM.set_overlay_tile(i, screen_tiles.y - 2, 112);
+            PLATFORM.set_overlay_tile(i, screen_tiles.y - 3, 112);
+            PLATFORM.set_overlay_tile(i, screen_tiles.y - 4, 112);
+            PLATFORM.set_overlay_tile(i, screen_tiles.y - 5, 256);
         }
     }
 
@@ -368,7 +368,7 @@ void TitleScreenScene::redraw_margins()
         int margin = overflow / 2;
         for (int y = 0; y < screen_tiles.y; ++y) {
             for (int x = 0; x < margin; ++x) {
-                PLATFORM.set_tile(Layer::overlay, x, y, 112);
+                PLATFORM.set_overlay_tile(x, y, 112);
                 PLATFORM.set_tile(
                     Layer::overlay, (screen_tiles.x - 1) - x, y, 112);
             }
@@ -1001,7 +1001,7 @@ ScenePtr TitleScreenScene::update(Time delta)
             for (int y = y_start; y < y_start + y_travel; ++y) {
                 if ((y - y_start) * 8 < fractional_pixels) {
                     for (int x = 0; x < 30; ++x) {
-                        PLATFORM.set_tile(Layer::overlay, x, y, 112);
+                        PLATFORM.set_overlay_tile(x, y, 112);
                     }
                     for (int x = 0; x < 30; ++x) {
                         PLATFORM.set_tile(
@@ -1067,7 +1067,7 @@ ScenePtr TitleScreenScene::update(Time delta)
             for (int y = y_start; y < y_start + y_travel; ++y) {
                 if ((y - y_start) * 8 < fractional_pixels) {
                     for (int x = 0; x < 30; ++x) {
-                        PLATFORM.set_tile(Layer::overlay, x, y, 112);
+                        PLATFORM.set_overlay_tile(x, y, 112);
                     }
                     for (int x = 0; x < 30; ++x) {
                         PLATFORM.set_tile(
@@ -1105,7 +1105,7 @@ ScenePtr TitleScreenScene::update(Time delta)
             state_ = State::fade_exit_cancel;
             timer_ = 0;
             for (int x = 0; x < 30; ++x) {
-                PLATFORM.set_tile(Layer::overlay, x, 18, 112);
+                PLATFORM.set_overlay_tile(x, 18, 112);
             }
             break;
         }
@@ -1128,7 +1128,7 @@ ScenePtr TitleScreenScene::update(Time delta)
                 clr = highlight_colors;
             }
             Text::print(no_str->c_str(), {3, 17}, clr);
-            PLATFORM.set_tile(Layer::overlay, 1, 17, exit_sel_ ? 112 : 475);
+            PLATFORM.set_overlay_tile(1, 17, exit_sel_ ? 112 : 475);
         }
         {
             auto yes_str = SYSTR(title_exit_yes);
@@ -1138,7 +1138,7 @@ ScenePtr TitleScreenScene::update(Time delta)
             }
             u8 x = 27 - utf8::len(yes_str->c_str());
             Text::print(yes_str->c_str(), {x, 17}, clr);
-            PLATFORM.set_tile(Layer::overlay, x - 2, 17, exit_sel_ ? 475 : 112);
+            PLATFORM.set_overlay_tile(x - 2, 17, exit_sel_ ? 475 : 112);
         }
         break;
     }
@@ -1782,7 +1782,7 @@ void TitleScreenScene::macro_gen_sample_island()
 void TitleScreenScene::show_module_icons(int page)
 {
     // left arrow icon
-    PLATFORM.set_tile(Layer::overlay, 1, 8, module_page_ == 0 ? 175 : 173);
+    PLATFORM.set_overlay_tile(1, 8, module_page_ == 0 ? 175 : 173);
 
     // right arrow icon
     PLATFORM.set_tile(Layer::overlay,
@@ -1830,10 +1830,10 @@ void TitleScreenScene::show_module_icons(int page)
                 }
             }
 
-            PLATFORM.set_tile(Layer::overlay, x_start, y_start, 466);
-            PLATFORM.set_tile(Layer::overlay, x_start + 5, y_start, 467);
-            PLATFORM.set_tile(Layer::overlay, x_start, y_start + 5, 468);
-            PLATFORM.set_tile(Layer::overlay, x_start + 5, y_start + 5, 469);
+            PLATFORM.set_overlay_tile(x_start, y_start, 466);
+            PLATFORM.set_overlay_tile(x_start + 5, y_start, 467);
+            PLATFORM.set_overlay_tile(x_start, y_start + 5, 468);
+            PLATFORM.set_overlay_tile(x_start + 5, y_start + 5, 469);
 
             auto icon = alloc_icon();
             PLATFORM.load_overlay_chunk(icon, f->icon(), 16);

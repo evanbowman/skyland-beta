@@ -39,10 +39,10 @@ void ModifiedSelectorScene::enter(macro::EngineImpl& state, Scene& prev)
 
     layers_text_.emplace(SYSTR(macro_layers)->c_str(), OverlayCoord{3, 2});
 
-    PLATFORM.set_tile(Layer::overlay, 1, 1, 394);
-    PLATFORM.set_tile(Layer::overlay, 2, 1, 395);
-    PLATFORM.set_tile(Layer::overlay, 1, 2, 392);
-    PLATFORM.set_tile(Layer::overlay, 2, 2, 393);
+    PLATFORM.set_overlay_tile(1, 1, 394);
+    PLATFORM.set_overlay_tile(2, 1, 395);
+    PLATFORM.set_overlay_tile(1, 2, 392);
+    PLATFORM.set_overlay_tile(2, 2, 393);
 
     visible_layers_text_.emplace(
         OverlayCoord{0, (u8)(calc_screen_tiles().y - 1)});
@@ -60,10 +60,10 @@ void ModifiedSelectorScene::exit(macro::EngineImpl& state, Scene& next)
     layers_text_.reset();
     visible_layers_text_.reset();
     cursor_text_.reset();
-    PLATFORM.set_tile(Layer::overlay, 1, 1, 0);
-    PLATFORM.set_tile(Layer::overlay, 2, 1, 0);
-    PLATFORM.set_tile(Layer::overlay, 1, 2, 0);
-    PLATFORM.set_tile(Layer::overlay, 2, 2, 0);
+    PLATFORM.set_overlay_tile(1, 1, 0);
+    PLATFORM.set_overlay_tile(2, 1, 0);
+    PLATFORM.set_overlay_tile(1, 2, 0);
+    PLATFORM.set_overlay_tile(2, 2, 0);
 }
 
 
