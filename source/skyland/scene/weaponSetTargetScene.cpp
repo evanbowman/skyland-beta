@@ -148,22 +148,14 @@ ScenePtr WeaponSetTargetScene::update(Time delta)
     }
 
 
-    if (APP.player().button_down(Button::select)) {
-        if (not queue_mode_) {
-            if (PLATFORM.network_peer().is_connected()) {
-                PLATFORM.speaker().play_sound("beep_error", 3);
-                return null_scene();
-            }
-            PLATFORM.speaker().play_sound("weapon_target", 3);
-            queue_mode_ = true;
-            redraw_target_queue_text();
-        } else if (queue_cap_ == 3) {
-            queue_cap_ = 6;
-            redraw_target_queue_text();
-            PLATFORM.speaker().play_sound("weapon_target", 3);
-        } else {
+    if (not queue_mode_ and APP.player().button_down(Button::select)) {
+        if (PLATFORM.network_peer().is_connected()) {
             PLATFORM.speaker().play_sound("beep_error", 3);
+            return null_scene();
         }
+        PLATFORM.speaker().play_sound("weapon_target", 3);
+        queue_mode_ = true;
+        redraw_target_queue_text();
     }
 
 
@@ -224,7 +216,7 @@ ScenePtr WeaponSetTargetScene::update(Time delta)
         if (APP.opponent_island()->get_room(cursor_loc)) {
 
             if (queue_mode_) {
-                if (target_queue_.size() < queue_cap_ - 1) {
+                if (not target_queue_.full()) {
                     target_queue_.push_back(PackedTarget::pack(cursor_loc));
                     redraw_target_queue_text();
                     return null_scene();
@@ -421,7 +413,8 @@ void WeaponSetTargetScene::redraw_target_queue_text()
     }
 
     auto fmt_str = SYSTR(weapon_target_queue);
-    target_queue_text_->assign(format(fmt_str->c_str(), target_queue_.size(), (int)queue_cap_)
+    target_queue_text_->assign(
+        format(fmt_str->c_str(), target_queue_.size(), target_queue_.capacity())
             .c_str());
 }
 
