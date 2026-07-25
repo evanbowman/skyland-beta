@@ -17,8 +17,8 @@
    (12  . "flak_r2_damage")
    (10  . "flak_r3_damage")
    (20  . "arcbolt_damage")
-   (10   . "incinerator_impact_damage")
-   (2   . "incinerator_splash_damage")
+   (14   . "incinerator_impact_damage")
+   (3   . "incinerator_splash_damage")
    (40  . "rocket_bomb_impact_damage")
    (16  . "rocket_bomb_splash_damage")))
 
