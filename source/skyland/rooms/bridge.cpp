@@ -57,7 +57,7 @@ public:
             return next;
         }
 
-        auto parent = near_ ? &player_island() : opponent_island();
+        auto parent = resolve_island(near_);
         if (not parent) {
             return make_scene<ReadyScene>();
         }
@@ -114,7 +114,7 @@ public:
     {
         Sprite cursor;
 
-        auto parent = near_ ? &player_island() : opponent_island();
+        auto parent = resolve_island(near_);
         if (not parent) {
             return;
         }

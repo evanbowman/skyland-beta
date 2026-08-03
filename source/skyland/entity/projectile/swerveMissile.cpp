@@ -69,7 +69,7 @@ void SwerveMissile::update(Time delta)
     }
 
     auto node_to_coord = [&](SwerveMissileSilo::Node n) {
-        auto isle = n.near_ ? &APP.player_island() : APP.opponent_island();
+        auto isle = resolve_island(n.near_);
         auto pos = isle->origin();
         pos.x += Fixnum::from_integer(n.pos_.x * 16) + 8.0_fixed;
         pos.y += Fixnum::from_integer(n.pos_.y * 16) + 8.0_fixed;

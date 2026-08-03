@@ -570,6 +570,17 @@ bool is_player_island(const Island* isle);
 
 
 
+inline Island* resolve_island(bool near)
+{
+    if (near) {
+        return &player_island();
+    } else {
+        return opponent_island();
+    }
+}
+
+
+
 BlockChecksum opponent_island_checksum();
 BlockChecksum island_checksums();
 

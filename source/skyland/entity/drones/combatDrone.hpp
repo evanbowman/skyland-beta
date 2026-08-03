@@ -107,8 +107,7 @@ public:
                         return;
                     }
 
-                    auto island = target_near_ ? &APP.player_island()
-                                               : APP.opponent_island();
+                    auto island = resolve_island(target_near_);
 
                     if (auto drone = island->get_drone(*target)) {
 

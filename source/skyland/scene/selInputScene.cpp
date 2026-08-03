@@ -53,7 +53,7 @@ void SelInputScene::enter(Scene& prev)
             w_ot_ = (*mt)->weapon_orientation();
         }
     } else {
-        auto isle = near_ ? &APP.player_island() : APP.opponent_island();
+        auto isle = resolve_island(near_);
         if (isle and not isle->interior_visible()) {
             show_island_interior(isle);
         }
@@ -229,7 +229,7 @@ ScenePtr SelInputScene::update(Time delta)
             }
         }
 
-        auto isle = near_ ? &APP.player_island() : APP.opponent_island();
+        auto isle = resolve_island(near_);
 
         int x = cursor_loc.x;
         int y = cursor_loc.y;

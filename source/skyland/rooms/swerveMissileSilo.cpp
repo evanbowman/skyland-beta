@@ -128,7 +128,7 @@ public:
         auto& cursor_loc =
             is_near_ ? globals().near_cursor_loc_ : globals().far_cursor_loc_;
 
-        auto isle = is_near_ ? &APP.player_island() : APP.opponent_island();
+        auto isle = resolve_island(is_near_);
 
         if (is_near_) {
             near_camera();
@@ -198,7 +198,7 @@ public:
             return;
         }
 
-        auto isle = is_near_ ? &APP.player_island() : APP.opponent_island();
+        auto isle = resolve_island(is_near_);
         auto& cursor_loc =
             is_near_ ? globals().near_cursor_loc_ : globals().far_cursor_loc_;
 
@@ -218,8 +218,7 @@ public:
         for (auto& node : path_) {
             ++n;
             Sprite spr;
-            auto isle =
-                node.near_ ? &APP.player_island() : APP.opponent_island();
+            auto isle = resolve_island(node.near_);
             auto pos = isle->visual_origin();
             pos.x += Fixnum::from_integer(node.pos_.x * 16);
             pos.y += Fixnum::from_integer(node.pos_.y * 16);

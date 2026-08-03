@@ -431,8 +431,7 @@ ScenePtr RewindScene::update(Time)
         case time_stream::event::Type::canvas_block_destroyed: {
             auto e = (time_stream::event::CanvasBlockDestroyed*)end;
 
-            Island* island =
-                e->near_ ? &APP.player_island() : APP.opponent_island();
+            Island* island = resolve_island(e->near_);
 
             if (island) {
                 if (auto room = island->get_room({e->x_, e->y_})) {
@@ -639,7 +638,7 @@ ScenePtr RewindScene::update(Time)
 
         case time_stream::event::Type::reenter_cold_boot: {
             auto e = (time_stream::event::ReenterColdBoot*)end;
-            auto isle = e->near_ ? &APP.player_island() : APP.opponent_island();
+            auto isle = resolve_island(e->near_);
             if (isle) {
                 if (auto room = isle->get_room({e->x_, e->y_})) {
                     room->rewind_enter_cold_boot();
@@ -1249,8 +1248,7 @@ ScenePtr RewindScene::update(Time)
 
         case time_stream::event::Type::character_movement_path_assigned: {
             auto e = (time_stream::event::CharacterMovementPathAssigned*)end;
-            Island* island =
-                e->near_ ? &APP.player_island() : APP.opponent_island();
+            Island* island = resolve_island(e->near_);
 
             if (not island) {
                 APP.time_stream().pop(sizeof *e);
@@ -1285,8 +1283,7 @@ ScenePtr RewindScene::update(Time)
 
         case time_stream::event::Type::character_moved: {
             auto e = (time_stream::event::CharacterMoved*)end;
-            Island* island =
-                e->near_ ? &APP.player_island() : APP.opponent_island();
+            Island* island = resolve_island(e->near_);
 
             if (not island) {
                 APP.time_stream().pop(sizeof *e);
@@ -1325,8 +1322,7 @@ ScenePtr RewindScene::update(Time)
         case time_stream::event::Type::character_died: {
             auto e = (time_stream::event::CharacterDied*)end;
 
-            Island* island =
-                e->near_ ? &APP.player_island() : APP.opponent_island();
+            Island* island = resolve_island(e->near_);
 
             if (not island) {
                 APP.time_stream().pop(sizeof *e);
@@ -1378,8 +1374,7 @@ ScenePtr RewindScene::update(Time)
         case time_stream::event::Type::replicant_created: {
             auto e = (time_stream::event::ReplicantCreated*)end;
 
-            Island* island =
-                e->near_ ? &APP.player_island() : APP.opponent_island();
+            Island* island = resolve_island(e->near_);
 
             if (not island) {
                 APP.time_stream().pop(sizeof *e);
@@ -1414,8 +1409,7 @@ ScenePtr RewindScene::update(Time)
         case time_stream::event::Type::character_health_changed: {
             auto e = (time_stream::event::CharacterHealthChanged*)end;
 
-            Island* island =
-                e->near_ ? &APP.player_island() : APP.opponent_island();
+            Island* island = resolve_island(e->near_);
 
             if (not island) {
                 APP.time_stream().pop(sizeof *e);
@@ -1438,11 +1432,9 @@ ScenePtr RewindScene::update(Time)
         case time_stream::event::Type::character_transported: {
             auto e = (time_stream::event::CharacterTransported*)end;
 
-            Island* source_island =
-                e->source_near_ ? &APP.player_island() : APP.opponent_island();
+            Island* source_island = resolve_island(e->source_near_);
 
-            Island* dest_island = not e->source_near_ ? &APP.player_island()
-                                                      : APP.opponent_island();
+            Island* dest_island = resolve_island(not e->source_near_);
 
             if (not source_island or not dest_island) {
                 APP.time_stream().pop(sizeof *e);
@@ -1506,11 +1498,9 @@ ScenePtr RewindScene::update(Time)
         case time_stream::event::Type::character_disembark: {
             auto e = (time_stream::event::CharacterDisembark*)end;
 
-            Island* source_island =
-                e->chr_near_ ? &APP.player_island() : APP.opponent_island();
+            Island* source_island = resolve_island(e->chr_near_);
 
-            Island* dest_island =
-                not e->chr_near_ ? &APP.player_island() : APP.opponent_island();
+            Island* dest_island = resolve_island(not e->chr_near_);
 
             if (not source_island or not dest_island) {
                 APP.time_stream().pop(sizeof *e);
@@ -1582,8 +1572,7 @@ ScenePtr RewindScene::update(Time)
 
         case time_stream::event::Type::drone_target_queue_pop: {
             auto e = (time_stream::event::DroneTargetQueuePop*)end;
-            auto isle = e->destination_near_ ? &APP.player_island()
-                                             : APP.opponent_island();
+            auto isle = resolve_island(e->destination_near_);
             if (isle) {
                 if (auto drone = isle->get_drone({e->x_pos_, e->y_pos_})) {
                     (*drone)->__rewind_push_target_queue(
@@ -1597,8 +1586,7 @@ ScenePtr RewindScene::update(Time)
 
         case time_stream::event::Type::drone_target_queue_clear: {
             auto e = (time_stream::event::DroneTargetQueueClear*)end;
-            auto isle = e->destination_near_ ? &APP.player_island()
-                                             : APP.opponent_island();
+            auto isle = resolve_island(e->destination_near_);
             if (isle) {
                 if (auto drone = isle->get_drone({e->x_pos_, e->y_pos_})) {
                     (*drone)->clear_target_queue();
@@ -1639,8 +1627,7 @@ ScenePtr RewindScene::update(Time)
         case time_stream::event::Type::weapon_set_target: {
             auto e = (time_stream::event::WeaponSetTarget*)end;
 
-            Island* island =
-                e->near_ ? &APP.player_island() : APP.opponent_island();
+            Island* island = resolve_island(e->near_);
 
             if (not island) {
                 APP.time_stream().pop(sizeof *e);
@@ -1699,8 +1686,7 @@ ScenePtr RewindScene::update(Time)
         case time_stream::event::Type::island_terrain_changed: {
             auto e = (time_stream::event::IslandTerrainChanged*)end;
 
-            Island* island =
-                e->near_ ? &APP.player_island() : APP.opponent_island();
+            Island* island = resolve_island(e->near_);
 
             if (island) {
                 island->init_terrain(e->previous_terrain_size_);
@@ -1715,8 +1701,7 @@ ScenePtr RewindScene::update(Time)
         case time_stream::event::Type::drone_deployed: {
             auto e = (time_stream::event::DroneDeployed*)end;
 
-            Island* dest_island = e->destination_near_ ? &APP.player_island()
-                                                       : APP.opponent_island();
+            Island* dest_island = resolve_island(e->destination_near_);
 
             if (dest_island) {
                 for (auto& drone_sp : dest_island->drones()) {
@@ -1739,8 +1724,7 @@ ScenePtr RewindScene::update(Time)
         case time_stream::event::Type::drone_health_changed: {
             auto e = (time_stream::event::DroneHealthChanged*)end;
 
-            Island* dest_island = e->destination_near_ ? &APP.player_island()
-                                                       : APP.opponent_island();
+            Island* dest_island = resolve_island(e->destination_near_);
 
             if (dest_island) {
                 for (auto& drone : dest_island->drones()) {
@@ -1761,8 +1745,7 @@ ScenePtr RewindScene::update(Time)
         case time_stream::event::Type::drone_set_target: {
             auto e = (time_stream::event::DroneSetTarget*)end;
 
-            Island* dest_island = e->destination_near_ ? &APP.player_island()
-                                                       : APP.opponent_island();
+            Island* dest_island = resolve_island(e->destination_near_);
 
             if (dest_island) {
                 for (auto& drone : dest_island->drones()) {
@@ -1790,8 +1773,7 @@ ScenePtr RewindScene::update(Time)
         case time_stream::event::Type::drone_reload_complete: {
             auto e = (time_stream::event::DroneReloadComplete*)end;
 
-            Island* dest_island = e->destination_near_ ? &APP.player_island()
-                                                       : APP.opponent_island();
+            Island* dest_island = resolve_island(e->destination_near_);
 
             if (dest_island) {
                 for (auto& drone : dest_island->drones()) {
@@ -1812,11 +1794,9 @@ ScenePtr RewindScene::update(Time)
         case time_stream::event::Type::drone_destroyed: {
             auto e = (time_stream::event::DroneDestroyed*)end;
 
-            Island* dest_island = e->destination_near_ ? &APP.player_island()
-                                                       : APP.opponent_island();
+            Island* dest_island = resolve_island(e->destination_near_);
 
-            Island* parent_island =
-                e->parent_near_ ? &APP.player_island() : APP.opponent_island();
+            Island* parent_island = resolve_island(e->parent_near_);
 
             if (not dest_island or not parent_island) {
                 APP.time_stream().pop(sizeof *e);
@@ -2048,8 +2028,7 @@ ScenePtr RewindScene::update(Time)
 
         case time_stream::event::cargo_bay_contents: {
             auto e = (time_stream::event::CargoBayContents*)end;
-            Island* island =
-                e->near_ ? &APP.player_island() : APP.opponent_island();
+            Island* island = resolve_island(e->near_);
 
             if (island) {
                 if (auto r = island->get_room({e->x_, e->y_})) {
@@ -2070,8 +2049,7 @@ ScenePtr RewindScene::update(Time)
         case time_stream::event::isle_phase_change: {
             auto e = (time_stream::event::IslePhaseChange*)end;
 
-            Island* isle =
-                e->near_ ? &APP.player_island() : APP.opponent_island();
+            Island* isle = resolve_island(e->near_);
 
             if (isle) {
                 isle->set_phase(e->prev_phase_);
@@ -2085,8 +2063,7 @@ ScenePtr RewindScene::update(Time)
         case time_stream::event::phase_shifter_state_change: {
             auto e = (time_stream::event::PhaseShifterStateChange*)end;
 
-            Island* isle =
-                e->near_ ? &APP.player_island() : APP.opponent_island();
+            Island* isle = resolve_island(e->near_);
 
             if (isle) {
                 if (auto room = isle->get_room({e->x_, e->y_})) {
@@ -2104,8 +2081,7 @@ ScenePtr RewindScene::update(Time)
         case time_stream::event::room_width_adjusted: {
             auto e = (time_stream::event::RoomWidthAdjusted*)end;
 
-            Island* isle =
-                e->near_ ? &APP.player_island() : APP.opponent_island();
+            Island* isle = resolve_island(e->near_);
 
             if (isle) {
                 if (auto room = isle->get_room({e->room_x_, e->room_y_})) {
@@ -2122,8 +2098,7 @@ ScenePtr RewindScene::update(Time)
         case time_stream::event::particle_lance_destroyed: {
             auto e = (time_stream::event::ParticleLanceDestroyed*)end;
 
-            Island* isle =
-                e->near_ ? &APP.player_island() : APP.opponent_island();
+            Island* isle = resolve_island(e->near_);
 
             if (isle) {
                 if (auto room = isle->get_room({e->x_, e->y_})) {

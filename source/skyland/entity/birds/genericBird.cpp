@@ -136,11 +136,7 @@ void GenericBird::update(Time delta)
 {
     Island* island = nullptr;
 
-    if (near_) {
-        island = &player_island();
-    } else {
-        island = opponent_island();
-    }
+    island = resolve_island(near_);
 
     if (island == nullptr) {
         this->kill();
@@ -247,18 +243,16 @@ void GenericBird::rewind(Time delta)
 {
     Island* island = nullptr;
 
-    if (near_) {
-        island = &player_island();
-    } else {
-        island = opponent_island();
+    island = resolve_island(near_);
+
+
+    if (island == nullptr) {
+        this->kill();
+        return;
     }
 
     if (island->is_destroyed()) {
         this->signal();
-    }
-
-    if (island == nullptr) {
-        this->kill();
     }
 
     switch (state_) {
@@ -324,11 +318,7 @@ void GenericBird::signal()
 
 Island* GenericBird::island()
 {
-    if (near_) {
-        return &player_island();
-    } else {
-        return opponent_island();
-    }
+    return resolve_island(near_);
 }
 
 

@@ -173,7 +173,7 @@ void BallistaBolt::on_collision(Room& room, Vec2<u8> origin)
         return;
     }
 
-    auto src = state_.player_src_ ? &player_island() : opponent_island();
+    auto src = resolve_island(state_.player_src_);
 
     if (src and src == room.parent() and is_forcefield(room.metaclass())) {
         return;

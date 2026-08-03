@@ -88,7 +88,7 @@ void ReplicatorSelectionScene::exit(Scene& next)
         auto& cursor_loc =
             near_ ? globals().near_cursor_loc_ : globals().far_cursor_loc_;
 
-        Island* island = near_ ? &APP.player_island() : APP.opponent_island();
+        Island* island = resolve_island(near_);
 
         if (auto room = island->get_room(cursor_loc)) {
             room->co_op_release_lock();
@@ -117,7 +117,7 @@ ScenePtr ReplicatorSelectionScene::update(Time delta)
         auto& cursor_loc =
             near_ ? globals().near_cursor_loc_ : globals().far_cursor_loc_;
 
-        Island* island = near_ ? &APP.player_island() : APP.opponent_island();
+        Island* island = resolve_island(near_);
 
         if (APP.player().button_down(Button::action_1)) {
             exit_countdown_ = milliseconds(500);

@@ -403,7 +403,7 @@ void Drone::display(Platform::Screen& screen)
 
 void Drone::update_targets()
 {
-    auto isle = target_near_ ? &APP.player_island() : APP.opponent_island();
+    auto isle = resolve_island(target_near_);
     if (not isle) {
         return;
     }

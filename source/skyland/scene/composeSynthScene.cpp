@@ -900,7 +900,7 @@ void ComposeSynthScene::enter(Scene& prev)
 
     repaint();
 
-    auto island = synth_near_ ? &player_island() : opponent_island();
+    auto island = resolve_island(synth_near_);
 
     for (auto& room : island->rooms()) {
         // Stop any currently-playing chiptunes.
