@@ -499,7 +499,7 @@ static void set_left_subtree(Value* tree, Value* value)
 #define TKEY(T) T->tree_branch().pair()->tree_kvp().key()
 
 
-Value* globals_tree_splay(Value* t, Value* key)
+Value* globals_tree_splay(Value* t, Symbol::UniqueId inp_key)
 {
     Value *L, *R, *Y;
     if (t == get_nil()) {
@@ -511,8 +511,6 @@ Value* globals_tree_splay(Value* t, Value* key)
     Value* temp = L_CTX.tree_nullnode_;
 
     L = R = temp;
-
-    auto inp_key = key->symbol().unique_id();
 
     for (;;) {
         if (inp_key < TKEY(t)) {
@@ -570,7 +568,8 @@ static bool globals_tree_insert(Value* key, Value* value, bool define_var)
         return true;
 
     } else {
-        auto pt = globals_tree_splay(L_CTX.globals_tree_, key);
+        auto id = key->symbol().unique_id();
+        auto pt = globals_tree_splay(L_CTX.globals_tree_, id);
         L_CTX.globals_tree_ = pt;
 
         auto inp_key = key->symbol().unique_id();
@@ -636,7 +635,7 @@ static void globals_tree_traverse(Value* root, GlobalsTreeVisitor callback)
 }
 
 
-static void globals_tree_erase(Value* key)
+static void globals_tree_erase(Symbol::UniqueId key)
 {
     if (L_CTX.globals_tree_ == get_nil()) {
         return;
@@ -644,7 +643,7 @@ static void globals_tree_erase(Value* key)
 
     L_CTX.globals_tree_ = globals_tree_splay(L_CTX.globals_tree_, key);
 
-    if (TKEY(L_CTX.globals_tree_) != key->symbol().unique_id()) {
+    if (TKEY(L_CTX.globals_tree_) != key) {
         return;
     }
 
@@ -671,7 +670,7 @@ static void globals_tree_erase(Value* key)
 }
 
 
-static Value* globals_tree_find(Value* key)
+static Value* globals_tree_find(Symbol::UniqueId key)
 {
     if (L_CTX.globals_tree_ == get_nil()) {
         return nullptr;
@@ -679,7 +678,7 @@ static Value* globals_tree_find(Value* key)
 
     auto pt = globals_tree_splay(L_CTX.globals_tree_, key);
     L_CTX.globals_tree_ = pt;
-    if (key->symbol().unique_id() == TKEY(pt)) {
+    if (key == TKEY(pt)) {
         return pt->tree_branch().pair()->tree_kvp().value();
     }
 
@@ -1517,6 +1516,7 @@ Value* make_tree_kvp(Symbol::UniqueId key, Value* value)
     auto val = alloc_value();
     val->hdr_.type_ = Value::Type::tree_node;
     val->hdr_.mode_bits_ = 1;
+    val->tree_kvp().cached_builtin_ = 0;
     val->tree_kvp().set_key(key);
     val->tree_kvp().set_value(value);
     return val;
@@ -2667,7 +2667,7 @@ void lint(Value* expr, Value* variable_list, lisp::Protected& gvar_list)
                         if (sym->type() == Value::Type::symbol) {
                             if (is_set_temp) {
                                 if (contains(gvar_list, sym) or
-                                    globals_tree_find(sym)) {
+                                    globals_tree_find(sym->symbol().unique_id())) {
                                     push_error("set-temp % shadows existing "
                                                "global!",
                                                sym);
@@ -2959,7 +2959,7 @@ Value* lint_code(CharSequence& code)
                         if (sym->type() == Value::Type::symbol) {
                             if (str_eq(invoke->symbol().name(), "set-temp")) {
                                 if (contains(gvar_list, sym) or
-                                    globals_tree_find(sym)) {
+                                    globals_tree_find(sym->symbol().unique_id())) {
                                     push_error("set-temp % shadows existing "
                                                "global!",
                                                sym);
@@ -3633,6 +3633,22 @@ void live_values(::Function<6 * sizeof(void*), void(Value&)> callback)
 }
 
 
+void clear_builtin_cache()
+{
+    CompactVector<Symbol::UniqueId> cached_builtins;
+
+    globals_tree_traverse(L_CTX.globals_tree_, [&](Value& kvp, Value& node) {
+        if (kvp.tree_kvp().cached_builtin_) {
+            cached_builtins.push_back(kvp.tree_kvp().key());
+        }
+    });
+
+    for (auto id : cached_builtins) {
+        globals_tree_erase(id);
+    }
+}
+
+
 static bool gc_running;
 int gc()
 {
@@ -3644,12 +3660,14 @@ int gc()
     if (value_remaining_count) {
         l_foreach(get_var("--autoload-symbols"), [](Value* sym) {
             if (sym->type() == Value::Type::symbol) {
-                if (globals_tree_find(sym)) {
-                    globals_tree_erase(sym);
+                if (globals_tree_find(sym->symbol().unique_id())) {
+                    globals_tree_erase(sym->symbol().unique_id());
                 }
             }
         });
     }
+
+    clear_builtin_cache();
 
     gc_mark();
     int collect_count = gc_sweep();
@@ -6264,7 +6282,7 @@ BUILTIN_TABLE(
                    return make_error(Error::Code::invalid_syntax, str);
                }
                GC_REQUIRE_SPACE(4);
-               if (not globals_tree_find(get_op(i))) {
+               if (not globals_tree_find(get_op(i)->symbol().unique_id())) {
                    set_var(get_op(i), L_NIL, true);
                }
            }
@@ -6275,7 +6293,7 @@ BUILTIN_TABLE(
        [](int argc) {
            L_EXPECT_OP(0, symbol);
 
-           auto found = globals_tree_find(get_op0());
+           auto found = globals_tree_find(get_op0()->symbol().unique_id());
            return make_integer(found not_eq nullptr);
        }}},
      {"unbind",
@@ -6289,7 +6307,7 @@ BUILTIN_TABLE(
                }
                GC_REQUIRE_SPACE(20);
                set_var(sym, L_NIL, true);
-               globals_tree_erase(sym);
+               globals_tree_erase(sym->symbol().unique_id());
            }
 
            return get_nil();
@@ -6868,11 +6886,12 @@ Value* get_var(Value* symbol)
         }
     }
 
+    const auto sym_id = symbol->symbol().unique_id();
+
     // First, check to see if any lexical (non-global) bindings exist for a
     // symbol.
     if (L_CTX.lexical_bindings_ not_eq get_nil()) {
         auto stack = L_CTX.lexical_bindings_;
-        auto sym_id = symbol->symbol().unique_id();
 
         while (stack not_eq get_nil()) {
 
@@ -6893,10 +6912,15 @@ Value* get_var(Value* symbol)
     // After walking all the way up the stack, we didn't find any existing
     // lexical bindings. Now, we want to check the global variable tree to see
     // if any variable exists.
-    auto found = globals_tree_find(symbol);
+    Value* splay_pt = nullptr;
 
-    if (found) {
-        return found;
+    if (L_CTX.globals_tree_ not_eq get_nil()) {
+        auto key = symbol->symbol().unique_id();
+        splay_pt = globals_tree_splay(L_CTX.globals_tree_, key);
+        L_CTX.globals_tree_ = splay_pt;
+        if (key == TKEY(splay_pt)) {
+            return splay_pt->tree_branch().pair()->tree_kvp().value();
+        }
     }
 
     const char* const symbol_name = symbol->symbol().name();
@@ -6911,6 +6935,30 @@ Value* get_var(Value* symbol)
     if (builtin.second) {
         auto fn = lisp::make_function(builtin.second);
         fn->function().sig_ = builtin.first;
+
+        // Due to the previous access to the splay tree above, we already have
+        // the insert position on hand for caching the missing builtin function
+        // in the splay tree, so the caching operation itself is quite cheap...
+        if (splay_pt) {
+            if (sym_id < TKEY(splay_pt)) {
+                auto kvp = make_tree_kvp(sym_id, fn);
+                kvp->tree_kvp().cached_builtin_ = 1;
+                auto node = make_tree_branch(kvp, LST(splay_pt), splay_pt);
+                SLST(splay_pt, get_nil());
+                L_CTX.globals_tree_ = node;
+            } else if (sym_id > TKEY(splay_pt)) {
+                auto kvp = make_tree_kvp(sym_id, fn);
+                kvp->tree_kvp().cached_builtin_ = 1;
+                auto node = make_tree_branch(kvp, splay_pt, RST(splay_pt));
+                SRST(splay_pt, get_nil());
+                L_CTX.globals_tree_ = node;
+            } else {
+                // For us to insert at an existing splay pivot, the node would
+                // need to already be in the tree, but it's not, otherwise we
+                // wouldn't be in this code path...
+            }
+        }
+
         return fn;
     }
 
@@ -7021,7 +7069,7 @@ const char* nameof(Value* value)
         }
     });
 
-    if (name) {
+    if (name and not str_eq(name, "???")) {
         return name;
     }
 
