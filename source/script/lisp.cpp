@@ -3644,13 +3644,13 @@ void clean_builtin_cache()
             if (l_kvp.access_count_ == 0) {
                 cached_builtins.push_back(l_kvp.key());
             } else {
-                --l_kvp.access_count_;
+                l_kvp.access_count_ /= 2;
             }
         }
     });
 
     for (auto id : cached_builtins) {
-        info(::format("clean %", decode_symbol_name(id)));
+        // info(::format("clean %", decode_symbol_name(id)));
         globals_tree_erase(id);
     }
 }
