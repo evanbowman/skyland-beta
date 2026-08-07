@@ -297,6 +297,7 @@ struct Context
     u16 string_buffer_remaining_ = 0;
     u16 arguments_break_loc_;
     u8 current_fn_argc_ = 0;
+    u8 builtin_cache_decay_ = 1;
     bool strict_ : 1 = false;
     bool callstack_untouched_ : 1 = true;
     bool critical_gc_alert_ : 1 = false;
@@ -3317,6 +3318,31 @@ void format(Value* value, Printer& p)
 // node back to the pool.
 
 
+static void gc_mark_value(Value* value);
+
+
+NOINLINE static void gc_mark_promise(Promise& promise)
+{
+    gc_mark_value(dcompr(promise.eval_stack_));
+    gc_mark_value(dcompr(promise.operand_stack_));
+    for (int i = 0; i < promise.eval_stack_elems_; ++i) {
+        auto frame = promise.load_eval_frame(i);
+        gc_mark_value(frame.expr_);
+        switch (frame.state_) {
+        case EvalFrame::vm_resume:
+            gc_mark_value(frame.vm_resume_.code_buffer_);
+            break;
+
+        default:
+            break;
+        }
+    }
+    for (int i = 0; i < promise.operand_stack_elems_; ++i) {
+        gc_mark_value(promise.load_operand(i));
+    }
+}
+
+
 static void gc_mark_value(Value* value)
 {
     if (value->hdr_.mark_bit_) {
@@ -3347,23 +3373,7 @@ static void gc_mark_value(Value* value)
         break;
 
     case Value::Type::promise:
-        gc_mark_value(dcompr(value->promise().eval_stack_));
-        gc_mark_value(dcompr(value->promise().operand_stack_));
-        for (int i = 0; i < value->promise().eval_stack_elems_; ++i) {
-            auto frame = value->promise().load_eval_frame(i);
-            gc_mark_value(frame.expr_);
-            switch (frame.state_) {
-            case EvalFrame::vm_resume:
-                gc_mark_value(frame.vm_resume_.code_buffer_);
-                break;
-
-            default:
-                break;
-            }
-        }
-        for (int i = 0; i < value->promise().operand_stack_elems_; ++i) {
-            gc_mark_value(value->promise().load_operand(i));
-        }
+        gc_mark_promise(value->promise());
         break;
 
     case Value::Type::string:
@@ -3645,7 +3655,7 @@ void clean_builtin_cache()
             if (l_kvp.access_count_ == 0) {
                 cached_builtins.push_back(l_kvp.key());
             } else {
-                l_kvp.access_count_--;
+                l_kvp.access_count_ -= L_CTX.builtin_cache_decay_;
             }
         }
     });
@@ -3668,8 +3678,9 @@ int gc()
     if (value_remaining_count) {
         l_foreach(get_var("--autoload-symbols"), [](Value* sym) {
             if (sym->type() == Value::Type::symbol) {
-                if (globals_tree_find(sym->symbol().unique_id())) {
-                    globals_tree_erase(sym->symbol().unique_id());
+                auto uid = sym->symbol().unique_id();
+                if (globals_tree_find(uid)) {
+                    globals_tree_erase(uid);
                 }
             }
         });
@@ -4070,7 +4081,7 @@ template <typename T> static s32 parse_hex(T& code, int begin, int end)
 
 
 template <typename T>
-__attribute__((noinline)) static Value* read_float(T& code, int offset, int len)
+NOINLINE static Value* read_float(T& code, int offset, int len)
 {
     char buf[66];
     const int n = len < 65 ? len : 65;
@@ -6479,6 +6490,13 @@ BUILTIN_TABLE(
                        .c_str());
            }
            early_gc_threshold = val;
+           return L_NIL;
+       }}},
+     {"lisp-set-builtin-cache-decay",
+      {SIG1(nil, integer),
+       [](int) {
+           L_EXPECT_OP(0, integer);
+           L_CTX.builtin_cache_decay_ = L_LOAD_INT(0);
            return L_NIL;
        }}},
      {"lisp-mem-crit-gc-alert",

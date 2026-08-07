@@ -21,6 +21,7 @@
 
 
 (lisp-mem-set-gc-thresh default-early-gc-thresh)
+(lisp-set-builtin-cache-decay 1)
 (global 'dialog-opts)
 
 

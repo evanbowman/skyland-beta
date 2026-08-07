@@ -888,6 +888,32 @@ o──────────────────────────�
 
 o────────────────────────────o
 
+ (lisp-set-builtin-cache-decay
+  value)
+
+ The interpreter doesn't keep
+ builtin functions in memory
+ until they're needed. Upon
+ referencing a builtin
+ function, the interpreter
+ loads it from rom and
+ inserts it into the global
+ variable table. The cache
+ decay value determines how
+ long builtins stay in the
+ table. The default value is
+ 1. A value of zero would
+ prevent builtins from ever
+ being unloaded, which could
+ create excessive memory
+ pressure. Higher values will
+ make the interpreter more
+ eagerly remove builtins from
+ the global variable table.
+
+
+o────────────────────────────o
+
  (nameof value)
 
  Returns a symbol representing
