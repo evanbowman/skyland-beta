@@ -55,6 +55,7 @@ struct VariableBinding
 {
     const char* name_;
     Value* value_;
+    bool cached_ = false;
 };
 
 

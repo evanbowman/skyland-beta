@@ -1518,6 +1518,7 @@ Value* make_tree_kvp(Symbol::UniqueId key, Value* value)
     val->hdr_.type_ = Value::Type::tree_node;
     val->hdr_.mode_bits_ = 1;
     val->tree_kvp().cached_builtin_ = 0;
+    val->tree_kvp().access_count_ = 1;
     val->tree_kvp().set_key(key);
     val->tree_kvp().set_value(value);
     return val;
@@ -3644,13 +3645,13 @@ void clean_builtin_cache()
             if (l_kvp.access_count_ == 0) {
                 cached_builtins.push_back(l_kvp.key());
             } else {
-                l_kvp.access_count_ /= 2;
+                l_kvp.access_count_--;
             }
         }
     });
 
     for (auto id : cached_builtins) {
-        // info(::format("clean %", decode_symbol_name(id)));
+        info(::format("clean %", decode_symbol_name(id)));
         globals_tree_erase(id);
     }
 }
@@ -4996,7 +4997,11 @@ void get_globals(Vector<VariableBinding>& results)
                 return;
             }
         }
-        results.push_back({name, kvp.tree_kvp().value()});
+        results.push_back({
+                name,
+                kvp.tree_kvp().value(),
+                (bool)kvp.tree_kvp().cached_builtin_
+            });
     });
 }
 
@@ -5020,7 +5025,7 @@ void get_locals(Vector<VariableBinding>& results)
                     }
                 }
                 if (not var_exists) {
-                    results.push_back({name, kvp->cons().cdr()});
+                    results.push_back({name, kvp->cons().cdr(), false});
                 }
 
                 bindings = bindings->cons().cdr();

@@ -468,7 +468,11 @@ static void onscreen_debugger_render_tab(lisp::Value* expr, u32& scroll)
             u8 y = (start_y + (i - scroll) * 2);
             StringBuffer<30> out;
             if ((int)i >= local_count) {
-                out += "g:";
+                out += "g";
+                if (vars[i].cached_) {
+                    out += "[cache]";
+                }
+                out += ":";
             }
             out += vars[i].name_;
             out += ": ";
