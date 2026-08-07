@@ -592,6 +592,7 @@ static bool globals_tree_insert(Value* key, Value* value, bool define_var)
             }
         } else {
             pt->tree_branch().pair()->tree_kvp().set_value(value);
+            pt->tree_branch().pair()->tree_kvp().cached_builtin_ = 0;
         }
         return true;
     }
@@ -6865,21 +6866,22 @@ NativeInterface::LookupResult __load_builtin(const char* name)
 
 Value* get_var(Value* symbol)
 {
-    if (symbol->symbol().name()[0] == '$') {
-        if (symbol->symbol().name()[1] == 'V') {
+    const char* const symbol_name = symbol->symbol().name();
+    if (symbol_name[0] == '$') {
+        if (symbol_name[1] == 'V') {
             // Special case: use '$V' to access arguments as a list.
             ListBuilder lat;
             for (int i = L_CTX.current_fn_argc_ - 1; i > -1; --i) {
                 lat.push_front(get_arg(i));
             }
             return lat.result();
-        } else if (symbol->symbol().name()[1] == 'q') {
+        } else if (symbol_name[1] == 'q') {
             // A shortcut to allow you to refer to the quote symbol.
             return make_symbol("'");
         } else {
             s32 argn = 0;
-            for (u32 i = 1; symbol->symbol().name()[i] not_eq '\0'; ++i) {
-                argn = argn * 10 + (symbol->symbol().name()[i] - '0');
+            for (u32 i = 1; symbol_name[i] not_eq '\0'; ++i) {
+                argn = argn * 10 + (symbol_name[i] - '0');
             }
 
             return get_arg(argn);
@@ -6923,8 +6925,6 @@ Value* get_var(Value* symbol)
         }
     }
 
-    const char* const symbol_name = symbol->symbol().name();
-
     // Next, we want to check to see if any builtin functions exist for our
     // symbol name. By keeping builtins out of the globals tree, we decrease the
     // lower bound on the interpreter's memory usage. On the other hand, doing
@@ -6941,22 +6941,29 @@ Value* get_var(Value* symbol)
         // the insert position on hand for caching the missing builtin function
         // in the splay tree, so the caching operation itself is quite cheap...
         if (splay_pt) {
-            if (sym_id < TKEY(splay_pt)) {
-                Protected kvp = make_tree_kvp(sym_id, fn);
-                kvp->tree_kvp().cached_builtin_ = 1;
-                auto node = make_tree_branch(kvp, LST(splay_pt), splay_pt);
-                SLST(splay_pt, get_nil());
-                L_CTX.globals_tree_ = node;
-            } else if (sym_id > TKEY(splay_pt)) {
-                Protected kvp = make_tree_kvp(sym_id, fn);
-                kvp->tree_kvp().cached_builtin_ = 1;
-                auto node = make_tree_branch(kvp, splay_pt, RST(splay_pt));
-                SRST(splay_pt, get_nil());
-                L_CTX.globals_tree_ = node;
+            Protected kvp = make_tree_kvp(sym_id, fn);
+            kvp->tree_kvp().cached_builtin_ = 1;
+            auto node = make_tree_branch(kvp, get_nil(), get_nil());
+            // NOTE: first check that allocations did not trigger a gc and move
+            // the splay pivot.
+            if (L_CTX.globals_tree_ == splay_pt) {
+                if (sym_id < TKEY(splay_pt)) {
+                    SLST(node, LST(splay_pt));
+                    SRST(node, splay_pt);
+                    SLST(splay_pt, get_nil());
+                    L_CTX.globals_tree_ = node;
+                } else if (sym_id > TKEY(splay_pt)) {
+                    SLST(node, splay_pt);
+                    SRST(node, RST(splay_pt));
+                    SRST(splay_pt, get_nil());
+                    L_CTX.globals_tree_ = node;
+                } else {
+                    // For us to insert at an existing splay pivot, the node would
+                    // need to already be in the tree, but it's not, otherwise we
+                    // wouldn't be in this code path...
+                }
             } else {
-                // For us to insert at an existing splay pivot, the node would
-                // need to already be in the tree, but it's not, otherwise we
-                // wouldn't be in this code path...
+
             }
         }
 
