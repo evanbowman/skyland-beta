@@ -3651,7 +3651,7 @@ void clean_builtin_cache()
     });
 
     for (auto id : cached_builtins) {
-        info(::format("clean %", decode_symbol_name(id)));
+        // info(::format("clean %", decode_symbol_name(id)));
         globals_tree_erase(id);
     }
 }
