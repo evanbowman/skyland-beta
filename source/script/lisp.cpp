@@ -3634,17 +3634,23 @@ void live_values(::Function<6 * sizeof(void*), void(Value&)> callback)
 }
 
 
-void clear_builtin_cache()
+void clean_builtin_cache()
 {
     CompactVector<Symbol::UniqueId> cached_builtins;
 
     globals_tree_traverse(L_CTX.globals_tree_, [&](Value& kvp, Value& node) {
         if (kvp.tree_kvp().cached_builtin_) {
-            cached_builtins.push_back(kvp.tree_kvp().key());
+            auto& l_kvp = kvp.tree_kvp();
+            if (l_kvp.access_count_ == 0) {
+                cached_builtins.push_back(l_kvp.key());
+            } else {
+                --l_kvp.access_count_;
+            }
         }
     });
 
     for (auto id : cached_builtins) {
+        info(::format("clean %", decode_symbol_name(id)));
         globals_tree_erase(id);
     }
 }
@@ -3668,7 +3674,7 @@ int gc()
         });
     }
 
-    clear_builtin_cache();
+    clean_builtin_cache();
 
     gc_mark();
     int collect_count = gc_sweep();
@@ -6921,7 +6927,9 @@ Value* get_var(Value* symbol)
         splay_pt = globals_tree_splay(L_CTX.globals_tree_, key);
         L_CTX.globals_tree_ = splay_pt;
         if (key == TKEY(splay_pt)) {
-            return splay_pt->tree_branch().pair()->tree_kvp().value();
+            auto& kvp = splay_pt->tree_branch().pair()->tree_kvp();
+            ++kvp.access_count_;
+            return kvp.value();
         }
     }
 

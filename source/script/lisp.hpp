@@ -414,7 +414,7 @@ struct TreeKvp
 {
     ValueHeader hdr_;
     u8 cached_builtin_ : 1;
-    u8 unused_ : 7;
+    u8 access_count_ : 7;
 
     static ValueHeader::Type type()
     {
