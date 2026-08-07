@@ -741,7 +741,7 @@ ScenePtr WorldMapScene::update(Time delta)
 
         if (APP.player_island().has_radar()) {
             collect_targets(6, 6);
-            has_radar_ = true;
+            radar_intensity_ = 1;
         } else {
             collect_targets(5, 5);
         }
@@ -1772,41 +1772,29 @@ void draw_range_to_matrix(ShadeIntensity matrix[30][20],
                           int x,
                           int y,
                           ShadeIntensity intensity,
-                          bool has_radar)
+                          int radar_intensity)
 {
-    if (has_radar) {
-        // 5 tiles wide × 11 tiles tall for radar ranges
+    int x_extent = 9;
+    int y_extent = 9;
+
+    for (int i = 0; i < radar_intensity; ++i) {
         x -= 1;
         y -= 1;
-        for (int ty = 0; ty < 11; ++ty) {
-            for (int tx = 0; tx < 11; ++tx) {
-                int matrix_x = x + tx;
-                int matrix_y = y + ty;
+        x_extent += 2;
+        y_extent += 2;
+    }
 
-                // Bounds check
-                if (matrix_x >= 0 && matrix_x < 30 && matrix_y >= 0 &&
-                    matrix_y < 20) {
-                    // Only write if not already occupied
-                    if (matrix[matrix_x][matrix_y] == ShadeIntensity::none) {
-                        matrix[matrix_x][matrix_y] = intensity;
-                    }
-                }
-            }
-        }
-    } else {
-        // 9 tiles wide × 9 tiles tall for normal ranges
-        for (int ty = 0; ty < 9; ++ty) {
-            for (int tx = 0; tx < 9; ++tx) {
-                int matrix_x = x + tx;
-                int matrix_y = y + ty;
+    for (int ty = 0; ty < x_extent; ++ty) {
+        for (int tx = 0; tx < y_extent; ++tx) {
+            int matrix_x = x + tx;
+            int matrix_y = y + ty;
 
-                // Bounds check
-                if (matrix_x >= 0 && matrix_x < 30 && matrix_y >= 0 &&
-                    matrix_y < 20) {
-                    // Only write if not already occupied
-                    if (matrix[matrix_x][matrix_y] == ShadeIntensity::none) {
-                        matrix[matrix_x][matrix_y] = intensity;
-                    }
+            // Bounds check
+            if (matrix_x >= 0 && matrix_x < 30 && matrix_y >= 0 &&
+                matrix_y < 20) {
+                // Only write if not already occupied
+                if (matrix[matrix_x][matrix_y] == ShadeIntensity::none) {
+                    matrix[matrix_x][matrix_y] = intensity;
                 }
             }
         }
@@ -1984,13 +1972,13 @@ void WorldMapScene::build_range_cache(ShadeIntensity matrix[30][20],
     auto x = (current.coord_.x + map_start_x) - 4;
     auto y = (current.coord_.y + map_start_y) - 4;
 
-    draw_range_to_matrix(matrix, x, y, ShadeIntensity::light, has_radar_);
+    draw_range_to_matrix(matrix, x, y, ShadeIntensity::light, radar_intensity_);
     auto o = movement_targets_[movement_cursor_];
     draw_range_to_matrix(matrix,
                          o.x + map_start_x - 4,
                          o.y + map_start_y - 4,
                          ShadeIntensity::medium,
-                         has_radar_);
+                         radar_intensity_);
 
     Buffer<Vec2<s8>, 10> tier_2_reachable;
     for (int x = o.x - 4; x < o.x + 5; ++x) {
@@ -2012,7 +2000,7 @@ void WorldMapScene::build_range_cache(ShadeIntensity matrix[30][20],
                                  o.x + map_start_x - 4,
                                  o.y + map_start_y - 4,
                                  ShadeIntensity::dark,
-                                 has_radar_);
+                                 radar_intensity_);
         }
     }
 

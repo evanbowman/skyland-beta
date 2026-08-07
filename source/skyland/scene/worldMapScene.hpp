@@ -157,7 +157,7 @@ private:
     u8 cursor_keyframe_ = 0;
     bool tier_2_visible_ = false;
     bool fast_ = false;
-    bool has_radar_ = false;
+    u8 radar_intensity_ = 0;
     u8 save_opt_sel_ = 0;
     u8 save_opt_len_ = 0;
     bool nav_mode_ = false;
