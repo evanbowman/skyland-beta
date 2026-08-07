@@ -6934,6 +6934,7 @@ Value* get_var(Value* symbol)
     auto builtin = __load_builtin(symbol_name);
     if (builtin.second) {
         auto fn = lisp::make_function(builtin.second);
+        push_op(fn); // preserve fn
         fn->function().sig_ = builtin.first;
 
         // Due to the previous access to the splay tree above, we already have
@@ -6941,13 +6942,13 @@ Value* get_var(Value* symbol)
         // in the splay tree, so the caching operation itself is quite cheap...
         if (splay_pt) {
             if (sym_id < TKEY(splay_pt)) {
-                auto kvp = make_tree_kvp(sym_id, fn);
+                Protected kvp = make_tree_kvp(sym_id, fn);
                 kvp->tree_kvp().cached_builtin_ = 1;
                 auto node = make_tree_branch(kvp, LST(splay_pt), splay_pt);
                 SLST(splay_pt, get_nil());
                 L_CTX.globals_tree_ = node;
             } else if (sym_id > TKEY(splay_pt)) {
-                auto kvp = make_tree_kvp(sym_id, fn);
+                Protected kvp = make_tree_kvp(sym_id, fn);
                 kvp->tree_kvp().cached_builtin_ = 1;
                 auto node = make_tree_branch(kvp, splay_pt, RST(splay_pt));
                 SRST(splay_pt, get_nil());
@@ -6959,6 +6960,7 @@ Value* get_var(Value* symbol)
             }
         }
 
+        pop_op(); // unpreserve fn
         return fn;
     }
 
