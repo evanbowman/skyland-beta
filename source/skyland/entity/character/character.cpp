@@ -1222,7 +1222,8 @@ void Character::movement_step(Time delta, Room* current_room)
         const s32 dx = ((s32)dest_grid_pos.x - (s32)grid_position_.x) * 16;
         const s32 dy = ((s32)dest_grid_pos.y - (s32)grid_position_.y) * 16;
 
-        const s64 iv = (s64)(((u64)(u32)timer_ * movement_step_recip(race_)) >> 22);
+        const s64 iv =
+            (s64)(((u64)(u32)timer_ * movement_step_recip(race_)) >> 22);
 
         auto axis = [&](Fixnum base, s32 d) {
             return d ? base + Fixnum::create(iv * d) : base;

@@ -201,7 +201,8 @@ public:
     // sync.
     Vec2<Fixnum> visual_origin() const
     {
-        return {position_.x, position_.y + Fixnum::from_integer(ambient_movement_)};
+        return {position_.x,
+                position_.y + Fixnum::from_integer(ambient_movement_)};
     }
 
 

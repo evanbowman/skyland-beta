@@ -678,7 +678,8 @@ int find_file(const char* path, Record& result)
         if (r.invalidate_.get() == Record::InvalidateStatus::valid) {
 
             char file_name[FS_MAX_PATH + 1];
-            PLATFORM.read_save_data(file_name, r.file_info_.name_length_, offset);
+            PLATFORM.read_save_data(
+                file_name, r.file_info_.name_length_, offset);
             file_name[r.file_info_.name_length_] = '\0';
 
             if (str_eq(path, file_name)) {

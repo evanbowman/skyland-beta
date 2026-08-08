@@ -77,9 +77,9 @@ void logic_error(const char* file, int line);
 
 
 #if defined(_MSC_VER)
-    #define NOINLINE __declspec(noinline)
+#define NOINLINE __declspec(noinline)
 #elif defined(__GNUC__) || defined(__clang__)
-    #define NOINLINE __attribute__((noinline))
+#define NOINLINE __attribute__((noinline))
 #else
-    #define NOINLINE
+#define NOINLINE
 #endif

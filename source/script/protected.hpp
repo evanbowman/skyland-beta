@@ -27,7 +27,6 @@ private:
     static Protected* __protected_values;
 
 public:
-
     Protected(Value* val) : val_(val)
     {
         prev_ = nullptr;

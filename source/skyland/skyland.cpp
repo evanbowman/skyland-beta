@@ -823,6 +823,8 @@ lisp::Value* App::invoke_script(
         seq.set_src_path(inp_path);
         auto result = lisp::dostring(seq, *err_handler);
         if (not conf.exclude_delta_ and initialized_) {
+            // auto overhead = PLATFORM.delta_clock().reset();
+            // info(format("% took %", path, overhead));
             PLATFORM.delta_clock().reset();
         }
         return result;

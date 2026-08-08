@@ -502,55 +502,58 @@ static void set_left_subtree(Value* tree, Value* value)
 
 Value* globals_tree_splay(Value* t, Symbol::UniqueId inp_key)
 {
-    Value *L, *R, *Y;
-    if (t == get_nil()) {
+    Value* nil = get_nil();
+    if (t == nil) {
         return t;
     }
 
-    // Top-down traversal requires one proxy object, which we'll manually
-    // deallocate later.
     Value* temp = L_CTX.tree_nullnode_;
-
-    L = R = temp;
+    Value* L = temp;
+    Value* R = temp;
 
     for (;;) {
         if (inp_key < TKEY(t)) {
-            if (LST(t) == get_nil())
+            Value* lc = LST(t);
+            if (lc == nil) {
                 break;
-            if (inp_key < TKEY(LST(t))) {
-                Y = LST(t); /* rotate right */
-                SLST(t, RST(Y));
-                SRST(Y, t);
-                t = Y;
-                if (LST(t) == get_nil())
-                    break;
             }
-            SLST(R, t); /* link right */
+            if (inp_key < TKEY(lc)) { // rotate right
+                SLST(t, RST(lc));
+                SRST(lc, t);
+                t = lc;
+                lc = LST(t);
+                if (lc == nil) {
+                    break;
+                }
+            }
+            SLST(R, t); // link right
             R = t;
-            t = LST(t);
+            t = lc; // no reload
         } else if (inp_key > TKEY(t)) {
-            if (RST(t) == get_nil())
+            Value* rc = RST(t);
+            if (rc == nil) {
                 break;
-            if (inp_key > TKEY(RST(t))) {
-                Y = RST(t); /* rotate left */
-                SRST(t, LST(Y));
-                SLST(Y, t);
-                t = Y;
-                if (RST(t) == get_nil())
-                    break;
             }
-            SRST(L, t); /* link left */
+            if (inp_key > TKEY(rc)) { // rotate left
+                SRST(t, LST(rc));
+                SLST(rc, t);
+                t = rc;
+                rc = RST(t);
+                if (rc == nil) {
+                    break;
+                }
+            }
+            SRST(L, t); // link left
             L = t;
-            t = RST(t);
+            t = rc;
         } else {
             break;
         }
     }
-    SRST(L, LST(t)); /* assemble */
+    SRST(L, LST(t));
     SLST(R, RST(t));
     SLST(t, RST(temp));
     SRST(t, LST(temp));
-
     return t;
 }
 
@@ -2670,7 +2673,8 @@ void lint(Value* expr, Value* variable_list, lisp::Protected& gvar_list)
                         if (sym->type() == Value::Type::symbol) {
                             if (is_set_temp) {
                                 if (contains(gvar_list, sym) or
-                                    globals_tree_find(sym->symbol().unique_id())) {
+                                    globals_tree_find(
+                                        sym->symbol().unique_id())) {
                                     push_error("set-temp % shadows existing "
                                                "global!",
                                                sym);
@@ -2962,7 +2966,8 @@ Value* lint_code(CharSequence& code)
                         if (sym->type() == Value::Type::symbol) {
                             if (str_eq(invoke->symbol().name(), "set-temp")) {
                                 if (contains(gvar_list, sym) or
-                                    globals_tree_find(sym->symbol().unique_id())) {
+                                    globals_tree_find(
+                                        sym->symbol().unique_id())) {
                                     push_error("set-temp % shadows existing "
                                                "global!",
                                                sym);
@@ -3765,93 +3770,107 @@ template <typename T> u32 read_array(T& code, int offset)
 
 template <typename T> u32 read_list(T& code, int offset)
 {
-    int i = 0;
-
     gc_safepoint();
 
-    auto result = get_nil();
-    push_op(get_nil());
+    // Only BasicCharSequence exposes a stable, contiguous buffer...
+    constexpr bool contiguous = std::is_same_v<T, BasicCharSequence>;
 
+    [[maybe_unused]] const char* p = nullptr;
+    [[maybe_unused]] int len = 0;
+    if constexpr (contiguous) {
+        p = code.data();
+        len = (int)code.length();
+    }
+
+    auto at = [&](int pos) -> char {
+        if constexpr (contiguous) {
+            return (unsigned)pos < (unsigned)len ? p[pos] : '\0';
+        } else {
+            return code[pos];
+        }
+    };
+
+    Value* const nil = get_nil();
+    Value* tail = nullptr; // last cons; head lives on the op stack
+    push_op(nil);          // placeholder; becomes head on first element
     bool dotted_pair = false;
 
+    int pos = offset; // precondition: offset >= 0
+
     while (true) {
-        switch (code[offset + i]) {
+        switch (at(pos)) {
         case '\r':
         case '\n':
         case '\t':
         case '\v':
         case ' ':
-            ++i;
-            break;
-
-        case '.':
-            if (code[offset + i + 1] >= '0' and code[offset + i + 1] <= '9') {
-                goto DEFAULT;
-            } else {
-                i += 1;
-                if (dotted_pair or result == get_nil()) {
-                    push_reader_error(
-                        code, i, Error::Code::mismatched_parentheses);
-                    return i;
-                } else {
-                    dotted_pair = true;
-                    i += read_impl(code, offset + i);
-                    result->cons().set_cdr(get_op0());
-                    pop_op();
-                }
-            }
-            break;
+            ++pos;
+            continue;
 
         case ';':
             while (true) {
-                auto current = code[offset + i];
-                if (current == '\0' or current == '\r' or current == '\n') {
+                const char d = at(pos);
+                if (d == '\0' or d == '\r' or d == '\n')
                     break;
-                } else {
-                    ++i;
-                }
+                ++pos;
             }
-            break;
+            continue;
 
         case ']':
         case ')':
-            ++i;
-            return i;
+            ++pos;
+            return pos - offset;
 
         case '\0':
             pop_op();
-            push_reader_error(code, i, Error::Code::mismatched_parentheses);
-            return i;
-            break;
+            push_reader_error(
+                code, pos - offset, Error::Code::mismatched_parentheses);
+            return pos - offset;
+
+        case '.': {
+            const char nx = at(pos + 1);
+            if (nx >= '0' and nx <= '9') {
+                goto ELEMENT;
+            }
+            ++pos;
+            if (dotted_pair or tail == nullptr) {
+                push_reader_error(
+                    code, pos - offset, Error::Code::mismatched_parentheses);
+                return pos - offset;
+            }
+            dotted_pair = true;
+            pos += read_impl(code, pos);
+            tail->cons().set_cdr(get_op0());
+            pop_op();
+            continue;
+        }
 
         default:
-        DEFAULT:
+        ELEMENT:
             if (dotted_pair) {
-                push_reader_error(code, i, Error::Code::mismatched_parentheses);
-                return i;
+                push_reader_error(
+                    code, pos - offset, Error::Code::mismatched_parentheses);
+                return pos - offset;
             }
-            i += read_impl(code, offset + i);
+            pos += read_impl(code, pos);
 
-            if (result == get_nil()) {
-                result = make_cons(get_op0(), get_nil());
+            if (tail == nullptr) { // first element
+                Value* h = make_cons(get_op0(), nil);
                 if (get_op0()->type() == Value::Type::symbol and
                     get_op0()->symbol().unique_id() == L_CTX.macro_symbol_id_) {
-                    // FIXME: for performance reasons, the reader eagerly
-                    // expands macros. This would make writing macros really
-                    // inconvenient, so we disable macroexpansion when we're in
-                    // the middle of reading a macro.
                     L_CTX.disable_macroexpand_ = true;
                 }
-                pop_op(); // the result from read()
-                pop_op(); // nil
-                push_op(result);
+                pop_op();   // element from read_impl
+                pop_op();   // placeholder nil
+                push_op(h); // protect the head
+                tail = h;
             } else {
-                auto next = make_cons(get_op0(), get_nil());
-                pop_op();
-                result->cons().set_cdr(next);
-                result = next;
+                Value* next = make_cons(get_op0(), nil);
+                pop_op(); // element from read_impl
+                tail->cons().set_cdr(next);
+                tail = next;
             }
-            break;
+            continue;
         }
     }
 }
@@ -3915,9 +3934,21 @@ using ReadBuffer = StringAdapter<Capacity, Buffer<char, Capacity + 1, false>>;
 
 static constexpr auto make_sym_terminators()
 {
-    std::array<u8, 256> t {};
-    for (char c : {'[', ']', '(', ')', ' ', '\r', '\n', '\t', '\v',
-                   '\0', ';', '"', '.', '\''}) {
+    std::array<u8, 256> t{};
+    for (char c : {'[',
+                   ']',
+                   '(',
+                   ')',
+                   ' ',
+                   '\r',
+                   '\n',
+                   '\t',
+                   '\v',
+                   '\0',
+                   ';',
+                   '"',
+                   '.',
+                   '\''}) {
         t[(u8)c] = 1;
     }
     return t;
@@ -3934,8 +3965,7 @@ template <typename T> u32 read_symbol(T& code, int offset)
     // scripts can be externally pre-processed to replace symbol strings with a
     // numerical references to a line in the game's symbol file, prefixed by a
     // '#' character. See lisp_symtab.dat and tools/encode_files.py.
-    if (first == '#' and
-        not sym_terminator[code[offset + 1]] and
+    if (first == '#' and not sym_terminator[code[offset + 1]] and
         bound_context->external_symtab_contents_) {
         u32 symtab_index = 0;
         ++i;
@@ -4986,11 +5016,9 @@ void get_globals(Vector<VariableBinding>& results)
                 return;
             }
         }
-        results.push_back({
-                name,
-                kvp.tree_kvp().value(),
-                (bool)kvp.tree_kvp().cached_builtin_
-            });
+        results.push_back({name,
+                           kvp.tree_kvp().value(),
+                           (bool)kvp.tree_kvp().cached_builtin_});
     });
 }
 
@@ -6972,7 +7000,6 @@ Value* get_var(Value* symbol)
                     // wouldn't be in this code path...
                 }
             } else {
-
             }
         }
 

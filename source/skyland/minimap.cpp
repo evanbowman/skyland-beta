@@ -154,9 +154,9 @@ void draw_terrain(MinimapPixels canvas)
         for (u32 x = 0; x < isle.terrain().size(); ++x) {
             for (int xx = 0; xx < 3; ++xx) {
                 for (int yy = 0; yy < 3; ++yy) {
-                    canvas[((15 - 3) * 3 + yy) - 2][(x + opp_offset) * 3 + xx - 2] =
-                        (yy == 0) ? color_green_index
-                        : color_darkgray_index;
+                    canvas[((15 - 3) * 3 + yy) - 2][(x + opp_offset) * 3 + xx -
+                                                    2] =
+                        (yy == 0) ? color_green_index : color_darkgray_index;
                 }
             }
         }
@@ -213,8 +213,7 @@ void draw_player_island(MinimapPixels pixel_buffer,
         for (u8 x = pos.x; x < pos.x + sz.x; ++x) {
             for (u8 y = pos.y; y < pos.y + sz.y; ++y) {
                 auto set_pixel = [&](int xo, int yo, int v) {
-                    pixel_buffer[((y - 3) * 3 + yo) - 2][(x + 1) * 3 + xo] =
-                        v;
+                    pixel_buffer[((y - 3) * 3 + yo) - 2][(x + 1) * 3 + xo] = v;
                 };
                 if (APP.player_island().fire_present({x, y})) {
                     set_pixel(0, 0, color_red_index);
@@ -261,8 +260,8 @@ void draw_player_island(MinimapPixels pixel_buffer,
                             clr = color_white_index;
                         }
 
-                        pixel_buffer[((y - 3) * 3 + yy) - 2][(x + 1) * 3 + xx]
-                             = clr;
+                        pixel_buffer[((y - 3) * 3 + yy) - 2][(x + 1) * 3 + xx] =
+                            clr;
                     }
                 }
             }
@@ -276,8 +275,8 @@ void draw_player_island(MinimapPixels pixel_buffer,
                 if (not APP.player_island().get_room({x, y})) {
                     for (int xx = 0; xx < 3; ++xx) {
                         for (int yy = 0; yy < 3; ++yy) {
-                            pixel_buffer[((y - 3) * 3 + yy) - 2][(x + 1) * 3 + xx]
-                                 = 1;
+                            pixel_buffer[((y - 3) * 3 + yy) - 2]
+                                        [(x + 1) * 3 + xx] = 1;
                         }
                     }
                 }
@@ -301,8 +300,7 @@ void draw_opponent_island(MinimapPixels pixel_buffer,
             u8 clr;
             switch (category) {
             case Room::Category::wall:
-                if ((*mt)->properties() &
-                    RoomProperties::accepts_ion_damage) {
+                if ((*mt)->properties() & RoomProperties::accepts_ion_damage) {
                     clr = color_el_blue_index;
                 } else {
                     clr = color_gray_index;
@@ -322,8 +320,8 @@ void draw_opponent_island(MinimapPixels pixel_buffer,
                 for (u8 y = pos.y; y < pos.y + sz.y; ++y) {
                     if (isle.fire_present({x, y})) {
                         auto set_pixel = [&](int xo, int yo, int v) {
-                            pixel_buffer[((y - 3) * 3 + yo) - 2][(x + opp_offset) * 3 + xo - 2]
-                                 = v;
+                            pixel_buffer[((y - 3) * 3 + yo) - 2]
+                                        [(x + opp_offset) * 3 + xo - 2] = v;
                         };
                         set_pixel(0, 0, color_red_index);
                         set_pixel(1, 0, color_red_index);
@@ -341,15 +339,14 @@ void draw_opponent_island(MinimapPixels pixel_buffer,
 
                     for (int xx = 0; xx < 3; ++xx) {
                         for (int yy = 0; yy < 3; ++yy) {
-                            pixel_buffer[((y - 3) * 3 + yy) - 2][(x + opp_offset) * 3 + xx - 2]
-                                 = clr;
+                            pixel_buffer[((y - 3) * 3 + yy) - 2]
+                                        [(x + opp_offset) * 3 + xx - 2] = clr;
                         }
                     }
                 }
             }
         }
     });
-
 }
 
 
@@ -367,12 +364,12 @@ void encode_tiles(MinimapPixels pixel_buffer)
 
             for (int i = 0; i < 8; ++i) {
                 const u8* row = &pixel_buffer[y * 8 + i][x * 8];
-                u32 v0 = ((const u32*)row)[0];   // p0 p1 p2 p3
-                u32 v1 = ((const u32*)row)[1];   // p4 p5 p6 p7
+                u32 v0 = ((const u32*)row)[0]; // p0 p1 p2 p3
+                u32 v1 = ((const u32*)row)[1]; // p4 p5 p6 p7
                 u32 r0 = v0 | (v0 >> 4);
                 u32 r1 = v1 | (v1 >> 4);
-                *dst++ = ((r0 & 0xFF) | ((r0 >> 8) & 0xFF00))
-                       | (((r1 & 0xFF) | ((r1 >> 8) & 0xFF00)) << 16);
+                *dst++ = ((r0 & 0xFF) | ((r0 >> 8) & 0xFF00)) |
+                         (((r1 & 0xFF) | ((r1 >> 8) & 0xFF00)) << 16);
             }
 
             PLATFORM.overwrite_overlay_tile(tile, t);
@@ -404,7 +401,8 @@ void repaint(const Settings& settings)
 
     static const int wordsize = sizeof(void*);
     static_assert(sizeof pixel_buffer % wordsize == 0);
-    PLATFORM.memset_words(pixel_buffer, color_black_index, sizeof pixel_buffer / wordsize);
+    PLATFORM.memset_words(
+        pixel_buffer, color_black_index, sizeof pixel_buffer / wordsize);
 
     draw_terrain(pixel_buffer);
 
@@ -509,7 +507,7 @@ void repaint(const Settings& settings)
         int error = dx + dy;
 
         const int xstep = sx;
-        const int ystep = sy * minimap_px_width;   // ±104
+        const int ystep = sy * minimap_px_width; // ±104
 
         u8* p = &pixel_buffer[0][0] + y0 * minimap_px_width + x0;
 
@@ -542,13 +540,15 @@ void repaint(const Settings& settings)
             }
             const int e2 = 2 * error;
             if (e2 >= dy) {
-                if (x0 == x1) break;
+                if (x0 == x1)
+                    break;
                 error += dy;
                 x0 += sx;
                 p += xstep;
             }
             if (e2 <= dx) {
-                if (y0 == y1) break;
+                if (y0 == y1)
+                    break;
                 error += dx;
                 y0 += sy;
                 p += ystep;
