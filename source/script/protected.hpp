@@ -20,43 +20,62 @@ namespace lisp
 
 // Protected objects will not be collected until the Protected wrapper goes out
 // of scope.
-class ProtectedBase
+
+class Protected final
 {
+private:
+    static Protected* __protected_values;
+
 public:
-    ProtectedBase();
 
-    ProtectedBase(const ProtectedBase&) = delete;
+    Protected(Value* val) : val_(val)
+    {
+        prev_ = nullptr;
+        next_ = __protected_values;
 
-    ProtectedBase(ProtectedBase&&) = delete;
+        if (__protected_values) {
+            __protected_values->prev_ = this;
+        }
 
-    virtual ~ProtectedBase();
+        __protected_values = this;
+    }
 
-    virtual void gc_mark() = 0;
 
-    ProtectedBase* next() const
+    Protected(const Protected&) = delete;
+
+
+    Protected(Protected&&) = delete;
+
+
+    ~Protected()
+    {
+        if (prev_ == nullptr) {
+            // We're the list head!
+            __protected_values = next_;
+        } else {
+            prev_->next_ = next_;
+        }
+
+        if (next_) {
+            next_->prev_ = prev_;
+        }
+    }
+
+
+    static void mark_all();
+    void gc_mark();
+
+
+    Protected* next() const
     {
         return next_;
     }
 
-    ProtectedBase* prev() const
+    Protected* prev() const
     {
         return prev_;
     }
 
-protected:
-    ProtectedBase* prev_;
-    ProtectedBase* next_;
-};
-
-
-class Protected : public ProtectedBase
-{
-public:
-    Protected(Value* val) : val_(val)
-    {
-    }
-
-    void gc_mark() override;
 
     Protected& operator=(Value* val)
     {
@@ -84,8 +103,10 @@ public:
         return val_;
     }
 
-protected:
+private:
     Value* val_;
+    Protected* prev_;
+    Protected* next_;
 };
 
 

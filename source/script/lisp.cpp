@@ -3431,40 +3431,22 @@ static void gc_mark_value(Value* value)
 }
 
 
-static ProtectedBase* __protected_values = nullptr;
-
-
-ProtectedBase::ProtectedBase()
-{
-    prev_ = nullptr;
-    next_ = __protected_values;
-
-    if (__protected_values) {
-        __protected_values->prev_ = this;
-    }
-
-    __protected_values = this;
-}
-
-
-ProtectedBase::~ProtectedBase()
-{
-    if (prev_ == nullptr) {
-        // We're the list head!
-        __protected_values = next_;
-    } else {
-        prev_->next_ = next_;
-    }
-
-    if (next_) {
-        next_->prev_ = prev_;
-    }
-}
+Protected* Protected::__protected_values = nullptr;
 
 
 void Protected::gc_mark()
 {
     gc_mark_value(val_);
+}
+
+
+void Protected::mark_all()
+{
+    auto p_list = __protected_values;
+    while (p_list) {
+        p_list->gc_mark();
+        p_list = p_list->next();
+    }
 }
 
 
@@ -3496,11 +3478,7 @@ static void gc_mark()
 
     gc_mark_value(L_CTX.callstack_);
 
-    auto p_list = __protected_values;
-    while (p_list) {
-        p_list->gc_mark();
-        p_list = p_list->next();
-    }
+    Protected::mark_all();
 }
 
 
