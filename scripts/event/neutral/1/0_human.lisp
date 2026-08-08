@@ -95,7 +95,13 @@
             (chr-new (player) (car dest) (cdr dest) 'neutral '((race . 0) (icon . 17)))
             (chr-del (opponent) 0 14)
             (await (dialog* (tr "<c:Mercenary:17> Ahoy! Ready to knock some heads!?")))
-            (await (dialog* (tr "The mercenary joined your crew!")))
+            (sound "click_digital_1")
+            (dialog-await (if (equal (device-info 'name) "GameboyAdvance")
+                              "<b:/scripts/data/img/mercenary_closeup.img.bin> "
+                              ;; TODO: fix drawing inline images in boxed dialog for
+                              ;; non-gba targets.
+                              "")
+                          (tr "The mercenary joined your crew!"))
             (exit)
             (adventure-log-add 27 (list (* 400 (zone)))))
         (progn
