@@ -99,10 +99,15 @@
          (dialog (tr "<c:Warrior Monk:41>I live to serve!"))
          (defn on-dialog-closed ()
            (setq on-dialog-closed nil)
-           (dialog (tr "The monk joined your crew!"))
-           (pickup-cart-cb 10
-                           (tr "The Ashwalker Monk reluctantly hands over a datacart that he'd been keeping...")
-                           exit))))))
+           (sound "click_digital_1")
+           (dialog-await (if (equal (device-info 'name) "GameboyAdvance")
+                             "<b:/scripts/data/img/ashwalker_closeup.img.bin> "
+                             ;; TODO: fix drawing inline images in boxed dialog for
+                             ;; non-gba targets.
+                             "")
+                         (tr "The monk joined your crew!"))
+           (pickup-cart 10 (tr "The Ashwalker Monk reluctantly hands over a datacart that he'd been keeping..."))
+           (exit))))))
 
 
 
