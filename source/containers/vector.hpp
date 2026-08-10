@@ -78,9 +78,27 @@ private:
 
         ~Chunk()
         {
-            if (header_.next_) {
-                ((Chunk*)(*header_.next_)->data_)->~Chunk();
+            // Nothing to do if we're the tail.
+            if (not header_.next_) {
+                return;
             }
+
+            typename Mem::PtrType cursor = *header_.next_;
+            header_.next_.reset();
+
+            while (true) {
+                Chunk* c = (Chunk*)cursor->data_;
+
+                if (not c->header_.next_) {
+                    break;
+                }
+
+                typename Mem::PtrType next = *c->header_.next_;
+                c->header_.next_.reset();
+
+                cursor = next; // releases c's buffer, advances to its successor
+            }
+            // 'cursor' released here, freeing the final chunk.
         }
 
 

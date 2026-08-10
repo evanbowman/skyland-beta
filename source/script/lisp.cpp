@@ -511,7 +511,7 @@ Value* globals_tree_splay(Value* t, Symbol::UniqueId inp_key)
     Value* L = temp;
     Value* R = temp;
 
-    for (;;) {
+    while (true) {
         if (inp_key < TKEY(t)) {
             Value* lc = LST(t);
             if (lc == nil) {
@@ -3881,9 +3881,26 @@ template <typename T> u32 read_string(T& code, int offset)
     auto temp = make_scratch_buffer("lisp-string-memory");
     auto write = temp->data_;
 
+    constexpr bool contiguous = std::is_same_v<T, BasicCharSequence>;
+
+    [[maybe_unused]] const char* p = nullptr;
+    [[maybe_unused]] int len = 0;
+    if constexpr (contiguous) {
+        p = code.data();
+        len = (int)code.length();
+    }
+
+    auto at = [&](int pos) -> char {
+        if constexpr (contiguous) {
+            return (unsigned)pos < (unsigned)len ? p[pos] : '\0';
+        } else {
+            return code[pos];
+        }
+    };
+
     int i = 0;
     while (true) {
-        const auto current = code[offset + i];
+        const auto current = at(offset + i);
 
         if (current == '"') {
             break;
@@ -4107,7 +4124,7 @@ template <typename T> static u32 read_number(T& code, int offset)
     int slash = -1;
     bool is_fp = false;
 
-    for (;;) {
+    while (true) {
         const char c = code[offset + i];
         if ((u8)(c - '0') < 10) {
             ++i;
@@ -4306,91 +4323,83 @@ static void __negate_number(Value* v)
 
 template <typename T> u32 read_impl(T& code, int offset)
 {
-    int i = 0;
-
     gc_safepoint();
-
     push_op(get_nil());
 
+    constexpr bool contiguous = std::is_same_v<T, BasicCharSequence>;
+    [[maybe_unused]] const char* p   = nullptr;
+    [[maybe_unused]] int         len = 0;
+    if constexpr (contiguous) {
+        p   = code.data();
+        len = (int)code.length();
+    }
+    auto at = [&](int pos) -> char {
+        if constexpr (contiguous) {
+            return (unsigned)pos < (unsigned)len ? p[pos] : '\0';
+        } else {
+            return code[pos];
+        }
+    };
+
+    int i = 0;
     while (true) {
-        switch (code[offset + i]) {
+        const char c = at(offset + i);       // dispatch char, kept for the guard
+        switch (c) {
         case '\0':
             return i;
 
         case '[':
-        case '(': {
+        case '(':
             ++i;
             pop_op(); // nil
             i += read_list(code, offset + i);
-            // list now at stack top.
             if (not L_CTX.disable_macroexpand_) {
                 macroexpand();
             }
             return i;
-        }
 
         case ';':
             while (true) {
-                auto current = code[offset + i];
-                if (current == '\0' or current == '\r' or current == '\n') {
-                    break;
-                } else {
-                    ++i;
-                }
+                const char d = at(offset + i);
+                if (d == '\0' or d == '\r' or d == '\n') break;
+                ++i;
             }
             break;
 
         case '.':
-            if (code[offset + i + 1] >= '0' and code[offset + i + 1] <= '9') {
+            if (at(offset + i + 1) >= '0' and at(offset + i + 1) <= '9') {
                 pop_op(); // nil
                 i += read_number(code, offset + i);
                 return i;
-            } else {
-                goto READ_SYMBOL;
             }
-            break;
+            goto READ_SYMBOL;
 
         case '-':
-            if (code[offset + i + 1] >= '0' and code[offset + i + 1] <= '9') {
+            if (at(offset + i + 1) >= '0' and at(offset + i + 1) <= '9') {
                 ++i;
                 pop_op(); // nil
                 i += read_number(code, offset + i);
                 __negate_number(get_op0());
                 return i;
-            } else {
-                if (code[offset + i + 1] == '.' and
-                    code[offset + i + 2] >= '0' and
-                    code[offset + i + 2] <= '9') {
-                    ++i;
-                    pop_op(); // nil
-                    i += read_number(code, offset + i);
-                    __negate_number(get_op0());
-                    return i;
-                }
-                goto READ_SYMBOL;
             }
-            break;
+            if (at(offset + i + 1) == '.' and
+                at(offset + i + 2) >= '0' and
+                at(offset + i + 2) <= '9') {
+                ++i;
+                pop_op(); // nil
+                i += read_number(code, offset + i);
+                __negate_number(get_op0());
+                return i;
+            }
+            goto READ_SYMBOL;
 
-        case '0':
-        case '1':
-        case '2':
-        case '3':
-        case '4':
-        case '5':
-        case '6':
-        case '7':
-        case '8':
-        case '9':
+        case '0': case '1': case '2': case '3': case '4':
+        case '5': case '6': case '7': case '8': case '9':
             pop_op(); // nil
             i += read_number(code, offset + i);
-            // number now at stack top.
             return i;
 
-        case '\n':
-        case '\r':
-        case '\v':
-        case '\t':
-        case ' ':
+        case '\n': case '\r': case '\v': case '\t': case ' ':
             ++i;
             break;
 
@@ -4400,36 +4409,35 @@ template <typename T> u32 read_impl(T& code, int offset)
             return i + 1;
 
         case '#':
-            if (code[offset + i + 1] == '(') {
+            if (at(offset + i + 1) == '(') {
                 pop_op(); // nil
                 i += read_array(code, offset + i + 2);
                 return i + 2;
-            } else {
-                goto READ_SYMBOL;
             }
+            goto READ_SYMBOL;
 
         READ_SYMBOL:
         default:
             pop_op(); // nil
             i += read_symbol(code, offset + i);
-            // symbol now at stack top.
 
-            // Ok, so for quoted expressions, we're going to put the value into
-            // a cons, where the car holds the quote symbol, and the cdr holds
-            // the value. Not sure how else to support top-level quoted
-            // values outside of s-expressions.
-            if (get_op0()->type() == Value::Type::symbol and
-                (str_cmp(get_op0()->symbol().name(), "'") == 0 or
-                 str_cmp(get_op0()->symbol().name(), "`") == 0)) {
-
-                auto pair = make_cons(get_op0(), get_nil());
-                push_op(pair);
-                i += read_impl(code, offset + i);
-                pair->cons().set_cdr(get_op0());
-                pop_op(); // result of read()
-                pop_op(); // pair
-                pop_op(); // symbol
-                push_op(pair);
+            // A symbol can only be named "'" or "`" if its first char is that
+            // char — which is exactly the char we dispatched on. Guarding on c
+            // skips both str_cmps (and the double name() eval) for every other
+            // symbol, i.e. the common case.
+            if ((c == '\'' or c == '`') and
+                get_op0()->type() == Value::Type::symbol) {
+                const char* nm = get_op0()->symbol().name();
+                if (nm[0] == c and nm[1] == '\0') {   // == str_cmp(nm, quote)==0
+                    auto pair = make_cons(get_op0(), get_nil());
+                    push_op(pair);
+                    i += read_impl(code, offset + i);
+                    pair->cons().set_cdr(get_op0());
+                    pop_op(); // result of read()
+                    pop_op(); // pair
+                    pop_op(); // symbol
+                    push_op(pair);
+                }
             }
             return i;
         }
