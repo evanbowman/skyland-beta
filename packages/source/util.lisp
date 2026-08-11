@@ -116,9 +116,11 @@
 ;; Shortcut for making sure enough space on a player's island exists to place a
 ;; new block.
 (defn/c alloc-space ((sym . symbol))
-  (let ((size (rinfo 'size sym)))
-    (while (not (construction-sites (player) size))
-      (terrain-set (player) (+ (terrain (player)) 1)))))
+  (let ((size (rinfo 'size sym))
+        (iters 4))
+    (while (and iters (not (construction-sites (player) size)))
+      (terrain-set (player) (+ (terrain (player)) 1))
+      (setq iters (decr iters)))))
 
 
 (defn/c chance ((n . int)) ; 1 in n chance
