@@ -46,6 +46,9 @@ private:
     } state_ = State::fade_in;
 
 
+    StringBuffer<100> selected_script_name();
+
+
     Optional<lisp::Protected> challenges_;
     Buffer<Text, 5> text_;
 

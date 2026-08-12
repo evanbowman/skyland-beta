@@ -672,7 +672,7 @@ void WorldMapScene::preload_scripts()
     // occasion. Let's hide the lag by loading scripts during fade out, and
     // registering a task to process part of the fade in the background.
     auto script_name = LoadLevelScene::target_script_name(node.type_);
-    timer_ += preload_script_during_fade(fade_out_duration, script_name);
+    timer_ += preload_script_during_fade(fade_out_duration, script_name, {});
 }
 
 

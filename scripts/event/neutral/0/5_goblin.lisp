@@ -39,6 +39,7 @@
 
 
 (defn on-converge ()
+  (setq on-converge nil)
   (dialog
    (tr "<c:Goblin Raider:39>Finally, sssomeone answered! <B:0> My raid crew left me behind when the town's defenssses were stronger than expected. <B:0> Got knocked out by some debris when their ion cannon hit us... By the time I came to, everyone wasss gone. _bitter_laugh_ Guesss they figured I was dead weight. <B:0> Would you have room for a more... reliable crew member?"))
 

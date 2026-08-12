@@ -37,6 +37,7 @@
 
 
 (defn on-converge ()
+  (setq on-converge nil)
   (let ((r (filter (lambda (room)
                      (or (equal (get room 0) 'hull)
                          (equal (get room 0) 'bronze-hull)))

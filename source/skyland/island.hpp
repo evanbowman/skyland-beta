@@ -89,7 +89,6 @@ public:
                 return true;
             }
         }
-        PLATFORM.fatal("room pool exhausted");
         return false;
     }
 

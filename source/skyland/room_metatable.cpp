@@ -15,6 +15,7 @@
 
 #include "eternal/eternal.hpp"
 #include "ext_workram_data.hpp"
+#include "skyland/skyland.hpp"
 #include "skyland/rooms/amplifier.hpp"
 #include "skyland/rooms/annihilator.hpp"
 #include "skyland/rooms/arcGun.hpp"
@@ -136,7 +137,11 @@ template <typename T> struct InfoImpl : public RoomMeta::Info
                 const RoomCoord& position,
                 const Island::InsertRoomConf& conf) const override
     {
-        parent->add_room<T>(position, conf);
+        if (not parent->add_room<T>(position, conf)) {
+            if (not APP.is_developer_mode() and not parent->rooms().full()) {
+                PLATFORM.fatal("room pool exhausted");
+            }
+        }
     }
 
     const char* name() const override

@@ -12,6 +12,7 @@
 #include "selectChallengeScene.hpp"
 #include "achievementNotificationScene.hpp"
 #include "fadeInScene.hpp"
+#include "skyland/preload.hpp"
 #include "skyland/scene_pool.hpp"
 #include "skyland/skyland.hpp"
 #include "titleScreenScene.hpp"
@@ -192,6 +193,28 @@ void SelectChallengeScene::display()
 
 
 
+StringBuffer<100> SelectChallengeScene::selected_script_name()
+{
+    auto index = page_ * 5 + cursor_;
+    auto choice = lisp::get_list(*challenges_, index);
+
+    auto file_name = choice->cons().cdr();
+    if (file_name->type() not_eq lisp::Value::Type::string) {
+        PLATFORM.fatal("challenge list format invalid");
+    }
+
+    StringBuffer<100> path("/scripts/");
+    path += file_name->string().value();
+
+    return path;
+}
+
+
+
+constexpr auto fade_duration = milliseconds(800);
+
+
+
 ScenePtr SelectChallengeScene::update(Time delta)
 {
     if (exit_) {
@@ -265,6 +288,13 @@ ScenePtr SelectChallengeScene::update(Time delta)
             timer_ = 0;
             text_.clear();
             PLATFORM.fill_overlay(0);
+            PLATFORM.screen().clear();
+            PLATFORM.screen().display();
+            auto script = selected_script_name();
+            timer_ += preload_script_during_fade(fade_duration, script.c_str(), {
+                    .initial_fade_ = default_fade,
+                    .title_menu_fade_ = true
+                });
         } else if (APP.player().button_down(Button::action_2)) {
             text_.clear();
             PLATFORM.fill_overlay(0);
@@ -274,7 +304,6 @@ ScenePtr SelectChallengeScene::update(Time delta)
     }
 
     case State::fade_out: {
-        constexpr auto fade_duration = milliseconds(800);
         if (timer_ > fade_duration) {
             APP.camera()->reset();
             PLATFORM.screen().fade(
@@ -288,10 +317,6 @@ ScenePtr SelectChallengeScene::update(Time delta)
             }
 
             APP.set_coins(0);
-
-            StringBuffer<100> path("/scripts/");
-            path += file_name->string().value();
-            APP.invoke_script(path.c_str());
 
             prep_level();
 

@@ -20,6 +20,7 @@
 
 
 (defn on-converge ()
+  (setq on-converge nil)
   (let ((request (string
                   (tr "<c:Conclave Elder:51>We have monitored your vessel's progress, your fortress demonstrates... adaptability. <B:0> This quality is required for a matter of immediate concern. <B:0>")
                   (tr "City Aestria has ceased all transmissions. Core crystal failure - complete power loss. <B:0> The city carried a particle lance, mining technology from our mountain era. In trained hands, merely a tool. <B:0> In desperate or ignorant hands... the device destabilizes catastrophically. <B:0>")

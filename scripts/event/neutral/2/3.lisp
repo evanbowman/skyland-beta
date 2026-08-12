@@ -46,6 +46,7 @@
 
 
 (defn on-converge ()
+  (setq on-converge nil)
   (dialog (format (tr "<c:Captain:7>I managed to steal this decimator from some goblins, but they're catching up to me! I know... I could sell you the weapon! I'll install it on your island for %@...")
                   dec-cost))
   (setq on-converge nil)

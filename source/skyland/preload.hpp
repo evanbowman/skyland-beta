@@ -33,9 +33,17 @@ struct ScriptPreloadGuard
 
 
 
+struct ScriptPreloadOptions
+{
+    Float initial_fade_ = 0.f;
+    bool title_menu_fade_ = false;
+};
+
+
 using ElapsedTime = Time;
 ElapsedTime preload_script_during_fade(Time fade_out_duration,
-                                       const char* script_path);
+                                       const char* script_path,
+                                       ScriptPreloadOptions opts);
 
 
 

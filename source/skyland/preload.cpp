@@ -93,8 +93,46 @@ static void background_fade_task(void* data)
 
 
 
+// Alternate background fade task used for certain specific menus.
+static void background_title_menu_fade_task(void* data)
+{
+    auto fade_data = (BackgroundFadePayload*)data;
+    auto& fade_amounts = fade_data->background_fade_amounts_;
+    auto& index = fade_data->background_fade_index_;
+
+    Platform::Extensions::QuickfadeConfig conf;
+    conf.include_sprites_ = true;
+
+    fade_data->fade_alternate_ += 1;
+    fade_data->fade_alternate_ %= 3;
+    switch (fade_data->fade_alternate_) {
+    case 0:
+        conf.include_background_ = true;
+        break;
+
+    case 1:
+        conf.include_overlay_ = true;
+        break;
+
+    case 2:
+        conf.include_tile0_ = true;
+        break;
+    }
+
+    if (index < fade_amounts.size()) {
+        PLATFORM_EXTENSION(
+            quickfade, fade_amounts[index++], ColorConstant::rich_black, conf);
+    }
+
+    APP.update_parallax(milliseconds(16));
+    APP._render_update_scroll();
+}
+
+
+
 ElapsedTime preload_script_during_fade(Time fade_out_duration,
-                                       const char* script_path)
+                                       const char* script_path,
+                                       ScriptPreloadOptions opts)
 {
     ScriptPreloadGuard preload;
 
@@ -120,8 +158,8 @@ ElapsedTime preload_script_during_fade(Time fade_out_duration,
         // background in the set of layers that we're incrementally fading, but
         // that would waste cpu in a critical piece of code.
         conf.include_background_ = true;
-        PLATFORM_EXTENSION(
-            quickfade, max_fade_amount, ColorConstant::rich_black, conf);
+        // PLATFORM_EXTENSION(
+        //     quickfade, max_fade_amount, ColorConstant::rich_black, conf);
 
         Time temp = 0;
         // NOTE: this assumes 60 fps!
@@ -130,12 +168,17 @@ ElapsedTime preload_script_during_fade(Time fade_out_duration,
             // NOTE: the interrupt handler that's running this fade sequence
             // cannot run heavy functions like smoothstep.
             u8 amount =
-                max_fade_amount * smoothstep(0.f, fade_out_duration, temp);
+                max_fade_amount * (opts.initial_fade_ + (1.f - opts.initial_fade_) * smoothstep(0.f, fade_out_duration, temp));
             fade_state.background_fade_amounts_.push_back(amount);
         }
 
+        auto task = background_fade_task;
+        if (opts.title_menu_fade_) {
+            task = background_title_menu_fade_task;
+        }
+
         old_task =
-            PLATFORM.set_background_task(background_fade_task, &fade_state);
+            PLATFORM.set_background_task(task, &fade_state);
     }
 
     LoadLevelScene::update_weather();

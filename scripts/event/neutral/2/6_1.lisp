@@ -26,6 +26,7 @@
 
 
 (defn on-converge ()
+  (setq on-converge nil)
   (dialog (tr "<c:Scavenger:29>Hello! Having trouble there? <B:0> Fortunately for you, we have a large stockpile of spare deflector fields! Here, take this one!"))
   (setq on-converge nil)
   (alloc-space 'deflector)

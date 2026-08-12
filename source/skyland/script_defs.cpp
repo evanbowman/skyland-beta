@@ -1758,7 +1758,7 @@ BINDING_TABLE({
           L_EXPECT_OP(1, wrapped);
 
           auto island = unwrap_isle(lisp::get_op(1));
-          island->init_terrain(L_LOAD_INT(0));
+          island->init_terrain(L_LOAD_INT(0), not script_preload_active());
 
           return L_NIL;
       }}},
