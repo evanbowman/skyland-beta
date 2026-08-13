@@ -8,6 +8,9 @@
 (tr-bind-current)
 
 (lambda (isle x y)
+  (when (bound? 'on-converge)
+    (gamespeed-set gamespeed-paused))
+
   (if-let ((info (room-load isle x y)))
       (let ((path (format "/scripts/inspect/%.lisp" (car info))))
         (dialog-opts-reset)

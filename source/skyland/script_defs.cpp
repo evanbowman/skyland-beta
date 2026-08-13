@@ -1511,6 +1511,17 @@ BINDING_TABLE({
           push_menu_queue.push_back(make_deferred_scene<LoadLevelScene>());
           return L_NIL;
       }}},
+    {"gamespeed-set",
+     {SIG1(nil, integer),
+      [](int argc) {
+          auto gs = L_LOAD_INT(0);
+          if (gs >= (int)GameSpeed::count) {
+              return lisp::make_error(::format("bad gamespeed value %", gs));
+          }
+          auto old = APP.game_speed();
+          APP.game_speed() = (GameSpeed)gs;
+          return L_INT((int)old);
+      }}},
     {"savegame",
      {SIG0(nil),
       [](int argc) {

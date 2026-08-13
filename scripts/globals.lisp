@@ -37,6 +37,13 @@
  'tr-files)
 
 
+(defconstant gamespeed-paused 0)
+(defconstant gamespeed-slow 1)
+(defconstant gamespeed-normal 2)
+(defconstant gamespeed-fast 3)
+(defconstant gamespeed-rewind 4)
+
+
 (defconstant difficulty-beginner 0)
 (defconstant difficulty-normal 1)
 (defconstant difficulty-hard 2)

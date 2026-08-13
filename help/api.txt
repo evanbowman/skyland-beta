@@ -918,6 +918,16 @@ o──────────────────────────�
 
 o────────────────────────────o
 
+ (gamespeed-set mode)
+
+ Set the gamespeed to mode.
+ Returns the previous mode,
+ or an error for invalid
+ inputs.
+
+
+o────────────────────────────o
+
  (help)
 
  No arguments: open up the
