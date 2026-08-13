@@ -10,7 +10,6 @@
 
 (opponent-init 9 'neutral)
 
-
 (island-configure
  (opponent)
  '((power-core 3 13)
@@ -30,65 +29,90 @@
 (set-temp 'dec-discount (floor (/ dec-cost 2)))
 
 
+(defn/temp place-decimator ()
+  (coins-add (- dec-cost))
+  (alloc-space 'decimator)
+  (let ((xy (await (sel-input* 'decimator (tr "Place weapon where? (2x2)")))))
+    (sound "build0")
+    (room-new (player) (list 'decimator (car xy) (cdr xy)))
+    (room-del (opponent) 0 13))
+  (await (dialog* (tr "<c:Captain:7> OK, all finished! The weapon recharges quite slowly, but nothing's more destructive! You need to move one of your crew into the weapon, though, or it won't recharge.")))
+  (adventure-log-add 44 '())
+  (exit))
+
+
+(defn/temp remove-shop ()
+  (let ((xy (cdr (wg-pos))))
+    ;; Switch the current map node back to visited, so that it doesn't appear
+    ;; as a shop on the world map.
+    (wg-node-set (first xy) (second xy) wg-id-visited)))
+
+
+(defn/temp setup-shop ()
+  (let ((xy (cdr (wg-pos))))
+    ;; Swap the current level type, converting it temporarily into a shop, so
+    ;; the player can leave to salvage and return.
+    (wg-node-set (first xy) (second xy) wg-id-shop)
+    (await (dialog* (tr "<c:Captain:7>Alright, I'll wait here. Come find me when you've scraped together the resources! <B:0> (or use the START menu to return to the world map)")))))
+
+
 (defn/temp hide-evidence? ()
-  (dialog (format (tr "<c:Captain:7>Look, those goblins are getting closer... <B:0> Tell you what - pay me %@ instead of %@, and help me destroy the evidence that I was ever here. <B:0> They'll assume YOU stole it from them directly. Deal?")
-                  dec-discount
-                  dec-cost))
-  (dialog-opts-reset)
-  (dialog-opts-push (format (tr "Hide evidence (%@).") dec-discount)
-                    (lambda ()
-                      (setq dec-cost dec-discount)
-                      (on-dialog-accepted)
-                      (push-pending-event (+ 1 (choice 2))
-                                          "/scripts/event/hostile/dec-revenge.lisp")))
-  (dialog-opts-push (format (tr "Pay %@…") dec-cost) on-dialog-accepted)
-  (dialog-opts-push (tr "No thanks.") on-dialog-declined))
+  (case (await (dialog-choice*
+                (format (tr "<c:Captain:7>Look, those goblins are getting closer... <B:0> Tell you what - pay me %@ instead of %@, and help me destroy the evidence that I was ever here. <B:0> They'll assume YOU stole it from them directly. Deal?")
+                        dec-discount
+                        dec-cost)
+                (list (format (tr "Hide evidence (%@).") dec-discount)
+                      (format (tr "Pay %@…") dec-cost)
+                      (tr "No thanks."))))
+    (0 (setq dec-cost dec-discount)
+       (push-pending-event (+ 1 (choice 2))
+                           "/scripts/event/hostile/dec-revenge.lisp")
+       (on-dialog-accepted))
+    (1 (on-dialog-accepted))
+    (2 (on-dialog-declined))))
 
 
 (defn on-converge ()
   (setq on-converge nil)
-  (dialog (format (tr "<c:Captain:7>I managed to steal this decimator from some goblins, but they're catching up to me! I know... I could sell you the weapon! I'll install it on your island for %@...")
-                  dec-cost))
-  (setq on-converge nil)
-  (dialog-opts-reset)
-  (dialog-opts-push (format (tr "Here's %@…") dec-cost) on-dialog-accepted)
-  (dialog-opts-push (tr "Can I have a discount?") hide-evidence?)
-  (dialog-opts-push (tr "No thanks.") on-dialog-declined))
+  (case (await (dialog-choice*
+                (format (tr "<c:Captain:7>I managed to steal this decimator from some goblins, but they're catching up to me! I know... I could sell you the weapon! I'll install it on your island for %@...")
+                        dec-cost)
+                (list (format (tr "Here's %@…") dec-cost)
+                      (tr "Can I have a discount?")
+                      (tr "No thanks."))))
+    (0 (on-dialog-accepted))
+    (1 (hide-evidence?))
+    (2 (on-dialog-declined))))
 
 
 (setq on-dialog-declined exit)
 
 
 (defn on-dialog-accepted ()
-  (if (bound? 'fut) (unbind 'fut))
+  (if (> (coins) (decr dec-cost))
+      (place-decimator)
+      (if (dialog-await-y/n (format (tr "<c:Captain:7>Sorry, I went to all this trouble, I really can't sell you this tech for less than %@. Do you want to salvage some stuff to come up with the funds?")
+                                    dec-cost))
+          (setup-shop)
+          (on-dialog-declined))))
 
-  (if (< (coins) dec-cost)
-      (progn
-        (dialog (format (tr "<c:Captain:7>Sorry, I went to all this trouble, I really can't sell you this tech for less than %@. Do you want to salvage some stuff to come up with the funds? I'll check back in in 15 seconds?")
-                        dec-cost))
-        (dialog-setup-y/n)
-        (let ((f (this)))
-          (defn fut ()
-            (if (> (coins) 1499)
-                (progn
-                  (dialog (tr "<c:captain:7>Seems like you have enough now!"))
-                  (setq on-dialog-closed f))
-              (f))))
-        (setq on-dialog-accepted (lambda () (on-timeout 12000 'fut)))
-        (setq on-dialog-declined (lambda () (unbind 'fut) (exit))))
-    (progn
-      (coins-add (* -1 dec-cost))
 
-      (alloc-space 'decimator)
+(defn on-shop-enter ()
+  (if (> (coins) (decr dec-cost))
+      (if (dialog-await-y/n (format (tr "<c:Captain:7>Looks like you've got enough now. <B:0> Install the decimator for %@?")
+                                    dec-cost))
+          (progn
+            ;; In shop levels, sel-input allows you to cancel selecting
+            ;; coordinates. take down the shop now that we no longer need it.
+            (remove-shop)
+            (place-decimator)))
+      (if (not (dialog-await-binary-q (format (tr "<c:Captain:7>Sorry, the price was %@, you're still %@ short…")
+                                              dec-cost
+                                              (- dec-cost (coins)))
+                                      (tr "Salvage more stuff…")
+                                      (tr "Exit.")))
+          (exit))))
 
-      (sel-input
-       'decimator
-       (tr "Place weapon where? (2x2)")
-       (lambda (isle x y)
-         (room-new (player) (list 'decimator x y))
-         (room-del (opponent) 0 13)
-         (dialog (tr "<c:Captain:7> OK, all finished! The weapon recharges quite slowly, but nothing's more destructive! You need to move one of your crew into the weapon, though, or it won't recharge."))
-         (adventure-log-add 44 '())
 
-         (setq on-dialog-closed '())
-         (exit))))))
+(defn on-level-exit ()
+  (remove-shop))

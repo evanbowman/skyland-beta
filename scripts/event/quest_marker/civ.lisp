@@ -31,36 +31,34 @@
   (if boy
       (defn on-converge ()
         (setq on-converge nil)
-        (dialog-sequence
-         "<c:Sylph:21><S:1>Hello, traveller..."
-         "<c:Orphan Boy:26><S:1>Oh!!! I'm home at last!"
-         "<c:Sylph:21><S:1>Oh! What have we here?!"
-         (lambda ()
-           (map (lambda (chr)
-                  (if (equal id (lookup 'id (cddr chr)))
-                      (chr-del (player) (car chr) (cadr chr))))
-                (chrs (player)))
-           (coins-add 2000)
-           (adventure-log-add 55 nil))
-         (tr "The orphan boy returned to his home!")
-         (tr "<c:Sylph:21>Hello, traveller...<B:0> I am very grateful to you for bringing him back! ...")
-         (lambda()
-           (on-timeout 500 'fut)
-           (defn fut ()
-                  (sound "bell")
-                  (sound "thunder_close_1")
-                  (effect "lightning" 0 0)
-                  (opponent-reset)
-                  (wg-storm-frontier-set (max (list (- (wg-storm-frontier) 3) 1)))
 
-                  (on-timeout 1000 'fut)
+        (dialog-sequence "<c:Sylph:21><S:1>Hello, traveller..."
+                         "<c:Orphan Boy:26><S:1>Oh!!! I'm home at last!"
+                         "<c:Sylph:21><S:1>Oh! What have we here?!")
 
-                  (defn fut ()
-                    (dialog (tr "A flash of resplendent light emanates from the city... <B:0> the approaching storm clouds recede far into the horizon... <B:0> The Sylph castle seems to have also transported some strange block onto your island... <B:0> Where do you want to place it?"))
-                    (unbind 'fut)
-                    (defn on-dialog-closed ()
-                      (place-new-block 'amplifier (tr "Place amplifier:"))
-                      (exit)))))))
+        (map (lambda (chr)
+               (if (equal id (lookup 'id (cddr chr)))
+                   (chr-del (player) (car chr) (cadr chr))))
+             (chrs (player)))
+        (coins-add 2000)
+        (adventure-log-add 55 nil)
+
+        (dialog-sequence (tr "The orphan boy returned to his home!")
+                         (tr "<c:Sylph:21>Hello, traveller...<B:0> I am very grateful to you for bringing him back! ..."))
+
+        (sleep 500)
+        (sound "bell")
+        (sound "thunder_close_1")
+        (effect "lightning" 0 0)
+        (opponent-reset)
+        (wg-storm-frontier-set (max (list (- (wg-storm-frontier) 3) 1)))
+
+        (sleep 1000)
+
+        (dialog-await (tr "A flash of resplendent light emanates from the city... <B:0> the approaching storm clouds recede far into the horizon... <B:0> The Sylph castle seems to have also transported some strange block onto your island... <B:0> Where do you want to place it?"))
+
+        (place-new-block 'amplifier (tr "Place amplifier:"))
+        (exit))
 
     (defn on-converge ()
       (dialog (tr "Despite multiple attempts to contact the city, the inhabitants are unresponsive. It's too bad the child isn't aboard your island anymore, maybe he'd know what this was all about..."))

@@ -18,37 +18,10 @@
 (chr-new (opponent) 2 14 'neutral '((race . 1)))
 
 
-
 (flag-show (opponent) flag-id-marauder)
 
 
-(defn/temp place-items (variant resp)
-  (let ((reply resp)
-        (item variant))
-    (lambda ()
-      (alloc-space item)
-      (sel-input
-       item
-       (string
-        (tr "Place first ")
-        (rinfo 'name item)
-        (format " (%x%):" (car (rinfo 'size item)) (cdr (rinfo 'size item))))
-       (lambda (isle x y)
-         (room-new (player) (list item x y))
-         (sound "build0")
-         (alloc-space item)
-         (sel-input
-          item
-          (string (tr "Place second ") (rinfo 'name item) ":")
-          (lambda (isle x y)
-            (room-new (player) (list item x y))
-            (sound "build0")
-            (dialog reply)
-            (setq on-dialog-closed exit))))))))
-
-
-(let ((item (sample '(arc-gun flak-gun fire-charge)))
-      (skip 1))
+(let ((item (sample '(arc-gun flak-gun fire-charge))))
 
   (terrain-set (opponent) (+ (terrain (opponent)) (* 2 (car (rinfo 'size item)))))
 
@@ -58,57 +31,92 @@
        '(11 12 13 14))
 
 
-  (setq on-converge
-        (lambda ()
-          (dialog (format (tr "<c:Scavenger:35> Found thessse %s") (rinfo 'name item))
-                  (if (equal (faction) 'goblin)
-                      (tr " on a human isssle!")
-                      (tr "... err ... Well, don't worry where I got them! <B:0>"))
-                  (tr " Still working, barely sssinged! 1300@ for two, yesss? Better price than waiting for your workshop to build them!")
-                  (if (< (coins) 1300)
-                      (tr "...but you don't ssseem to have enough. Do you want to sssalvage some stuff to come up with the fundsss? I'll check back in 15 secondsss?")
-                      ""))
-          (dialog-opts-reset)
-          (dialog-opts-push (tr "Purchase for 1300@.") on-dialog-accepted)
-          (dialog-opts-push (tr "Take by force.")
-                            (lambda ()
-                              (adventure-log-add 71 (list (rinfo 'name item)))
-                              (dialog (tr "<c:Scavenger:35>Gah! Fine, take them! <B:0> Ssstolen from some fat merchantsss anyway... <B:0> But we won't forget thisss. We know where to find more friendsss..."))
-                              (push-pending-event (+ 2 (choice 4)) "/scripts/event/hostile/scavenger-vengeance.lisp")
-                              (setq on-dialog-closed
-                                    (place-items item (tr "The goblins storm off, swearing vengeance...")))))
-          (dialog-opts-push (tr "Decline offer.") on-dialog-declined)
-          (setq on-converge nil)))
+  (defn/temp place-items (reply)
+    (let ((msgs (list (string (tr "Place first ")
+                              (rinfo 'name item)
+                              (format " (%x%):" (car (rinfo 'size item)) (cdr (rinfo 'size item))))
+                      (string (tr "Place second ") (rinfo 'name item) ":"))))
+      (while msgs
+        (alloc-space item)
+        (let ((xy (await (sel-input* item (car msgs)))))
+          (room-new (player) (list item (car xy) (cdr xy)))
+          (sound "build0"))
+        (setq msgs (cdr msgs))))
+    (await (dialog* reply))
+    (exit))
 
 
+  (defn/temp buy-items ()
+    (adventure-log-add 67 (list (rinfo 'name item) 1300))
+    (coins-add -1300)
+    (place-items (tr "<c:Scavenger:35>Yesss! Sssmart choice! Don't mind the burn marksss, they add character!")))
 
-  (setq on-dialog-accepted
-        (lambda ()
-          (if (bound? 'fut) (unbind 'fut))
 
-          (if (< (coins) 1300)
-              (progn
-                ;; Capture the current executing function, reinvoke after n seconds...
-                (let ((f (this)))
-                  (defn fut ()
-                    (if (> (coins) 1299)
-                        (progn
-                          (dialog (tr "<c:Scavenger:35>Ssseems like you have enough now!"))
-                          (setq on-dialog-closed f))
-                        (f))))
+  (defn/temp take-by-force ()
+    (adventure-log-add 71 (list (rinfo 'name item)))
+    (await (dialog* (tr "<c:Scavenger:35>Gah! Fine, take them! <B:0> Ssstolen from some fat merchantsss anyway... <B:0> But we won't forget thisss. We know where to find more friendsss...")))
+    (push-pending-event (+ 2 (choice 4)) "/scripts/event/hostile/scavenger-vengeance.lisp")
+    (place-items (tr "The goblins storm off, swearing vengeance...")))
 
-                (if skip
-                    (progn
-                      (setq skip 0)
-                      (on-timeout 15000 'fut))
-                    (progn
-                      (dialog (tr "<c:Scavenger:35>Sorry, that's not enough! Do you want to sssalvage some ssstuff to come up with the ressourcesss for payment? I'll check back in in 15 seconds?"))
-                      (dialog-setup-y/n)
-                      (setq on-dialog-accepted (lambda () (on-timeout 15000 'fut)))
-                      (setq on-dialog-declined (lambda () (unbind 'fut) (exit))))))
-              (progn
-                (adventure-log-add 67 (list (rinfo 'name item) 1300))
-                (coins-add -1300)
-                ((place-items item (tr "<c:Scavenger:35>Yesss! Sssmart choice! Don't mind the burn marksss, they add character!"))))))))
 
-(setq on-dialog-declined exit)
+  (defn/temp remove-shop ()
+    (let ((xy (cdr (wg-pos))))
+      ;; Switch the current map node back to visited, so that it doesn't appear
+      ;; as a shop on the world map.
+      (wg-node-set (first xy) (second xy) wg-id-visited)))
+
+
+  (defn/temp setup-shop ()
+    (let ((xy (cdr (wg-pos))))
+      ;; Swap the current level type, converting it temporarily into a shop, so
+      ;; the player can leave to salvage and return.
+      (wg-node-set (first xy) (second xy) wg-id-shop)
+      (await (dialog* (tr "<c:Scavenger:35>Heh, we'll ssstick around. Come find usss when you've ssscraped up the resources! <B:0> (or use the START menu to return to the world map)")))))
+
+
+  (defn on-converge ()
+    (setq on-converge nil)
+    (let ((msg (string
+                (format (tr "<c:Scavenger:35> Found thessse %s") (rinfo 'name item))
+                (if (equal (faction) 'goblin)
+                    (tr " on a human isssle!")
+                    (tr "... err ... Well, don't worry where I got them! <B:0>"))
+                (tr " Still working, barely sssinged! 1300@ for two, yesss? Better price than waiting for your workshop to build them!"))))
+      (case (await (dialog-choice* msg
+                                   (list (tr "Purchase for 1300@.")
+                                         (tr "Take by force.")
+                                         (tr "Decline offer."))))
+        (0 (on-dialog-accepted))
+        (1 (take-by-force))
+        (2 (on-dialog-declined)))))
+
+
+  (setq on-dialog-declined exit)
+
+
+  (defn on-dialog-accepted ()
+    (if (> (coins) 1299)
+        (buy-items)
+        (if (dialog-await-y/n (tr "<c:Scavenger:35>Sorry, that's not enough! Do you want to sssalvage some ssstuff to come up with the ressourcesss for payment?"))
+            (setup-shop)
+            (on-dialog-declined))))
+
+
+  (defn on-shop-enter ()
+    (if (> (coins) 1299)
+        (if (dialog-await-y/n (format (tr "<c:Scavenger:35>Ssseems like you have enough now! <B:0> Buy two %s for 1300@?")
+                                      (rinfo 'name item)))
+            (progn
+              ;; In shop levels, sel-input allows you to cancel selecting
+              ;; coordinates. take down the shop now that we no longer need it.
+              (remove-shop)
+              (buy-items)))
+        (if (not (dialog-await-binary-q (format (tr "<c:Scavenger:35>Sorry, the price wasss 1300@, you're ssstill %@ short…")
+                                                (- 1300 (coins)))
+                                        (tr "Salvage more stuff…")
+                                        (tr "Exit.")))
+            (exit))))
+
+
+  (defn on-level-exit ()
+    (remove-shop)))
