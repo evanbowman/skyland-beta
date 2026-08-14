@@ -1145,17 +1145,6 @@ o──────────────────────────�
 
 o────────────────────────────o
 
- (on-timeout
-  milliseconds
-  callback-sym)
-
- Invoke function bound to
- callback-sym after integer
- milliseconds have passed.
-
-
-o────────────────────────────o
-
  (port mode)
 
  Configure serial port.
