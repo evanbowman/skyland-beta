@@ -340,9 +340,13 @@ public:
 
     T& back()
     {
-        auto last = end();
-        --last;
-        return *last;
+        if (end_cache_) {
+            return end_cache_->array()[end_chunk_size_ - 1];
+        }
+        int index = size_ - 1;
+        Chunk* current = (Chunk*)data_->data_;
+        seek_chunk(current, index);
+        return current->array()[index];
     }
 
 
