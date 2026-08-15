@@ -1133,8 +1133,8 @@ static void place_offensive_drone(DroneBay& db,
     }
 
     // Find lowest available slot y-value, into which we may place a drone.
-    u8 min_y = 15;
-    for (int y = 15; y > 0; --y) {
+    u8 min_y = 14;
+    for (int y = 14; y > 0; --y) {
         if (slot[1][y]) {
             min_y = y;
             break;
@@ -1187,7 +1187,7 @@ static void place_offensive_drone(DroneBay& db,
             for (u8 y = 7; y < 9; ++y) {
                 if (slot[0][y]) {
                     RoomCoord cursor{1, u8(y + 1)};
-                    while (cursor.x < 16 and cursor.y < 15) {
+                    while (cursor.x < 16 and cursor.y < 14) {
                         if (player_rooms.get(cursor.x, cursor.y)) {
                             if (auto room = player_island.get_room(cursor)) {
                                 left_column_weights[y] = room->get_atp();
@@ -1209,7 +1209,7 @@ static void place_offensive_drone(DroneBay& db,
             for (u8 y = 7; y < 9; ++y) {
                 if (slot[right_column][y]) {
                     RoomCoord cursor{u8(right_column - 1), u8(y + 1)};
-                    while (cursor.x > 0 and cursor.y < 15) {
+                    while (cursor.x > 0 and cursor.y < 14) {
                         if (player_rooms.get(cursor.x, cursor.y)) {
                             if (auto room = player_island.get_room(cursor)) {
                                 left_column_weights[y] = room->get_atp();
@@ -1252,7 +1252,7 @@ static void place_offensive_drone(DroneBay& db,
 
     Optional<RoomCoord> ideal_coord;
     ATP max_weight = 0.0_atp;
-    for (u8 y = construction_zone_min_y; y < 15; ++y) {
+    for (u8 y = construction_zone_min_y; y < 14; ++y) {
         if (left_column_weights[y] > max_weight) {
             if (left_anchor) {
                 ideal_coord = {0, y};
