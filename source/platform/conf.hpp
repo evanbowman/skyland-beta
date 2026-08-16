@@ -11,16 +11,16 @@
 
 #pragma once
 
+
 #include "allocator.hpp"
 #include "platform.hpp"
 #include "string.hpp"
+#include <optional>
 #include <variant>
 
-// This code is kind of junk. I realized that I needed an INI parser, and
-// remembered that I'd written one years ago.
 
-
-
+// A small INI reader.
+//
 class Conf
 {
 public:
@@ -29,7 +29,8 @@ public:
     }
 
     using Integer = int;
-    using StrBuffer = StringBuffer<2000>;
+
+    using StrBuffer = StringAdapter<2000, Buffer<char, 2000 + 1, false>>;
     using String = DynamicMemory<StrBuffer>;
     using Value = std::variant<std::monostate, Integer, String>;
 
@@ -39,7 +40,6 @@ public:
     template <typename T> T expect(const char* section, const char* key)
     {
         auto v = get(section, key);
-
         if (auto val = std::get_if<T>(&v)) {
             return std::move(*val);
         } else {
@@ -50,5 +50,26 @@ public:
     }
 
 private:
+
+    static constexpr int index_capacity = 33;
+
+    struct IndexEntry {
+        u16 section_off;
+        u16 key_off;
+        u16 value_off;
+        u8 section_len;
+        u8 key_len;
+    };
+
+    struct Index {
+        const char* source = nullptr;
+        int count = 0;
+        bool overflow = false; // file exceeded a representable limit; use a scan
+        IndexEntry entries[index_capacity];
+    };
+
+    const Index& ensure_index(const char* file_data);
+
+    std::optional<DynamicMemory<Index>> index_;
     const char* cached_file_data_ = nullptr;
 };

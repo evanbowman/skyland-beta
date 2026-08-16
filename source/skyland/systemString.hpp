@@ -885,8 +885,10 @@ enum class SystemString {
 };
 
 
-
-using SystemStringBuffer = DynamicMemory<StringBuffer<1900>>;
+template <u32 Capacity>
+using SystemStringMemT = StringAdapter<Capacity, Buffer<char, Capacity + 1, false>>;
+using SystemStringMem = SystemStringMemT<1900>;
+using SystemStringBuffer = DynamicMemory<SystemStringMem>;
 
 
 
