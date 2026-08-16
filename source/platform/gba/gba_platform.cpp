@@ -2996,90 +2996,96 @@ u8 Platform::Screen::fade_amount() const
 
 
 
+// Packed BGR555 SWAR blend. Spread puts R at [0:4], B at [10:14],
+// G at [21:25], giving each lane 10 bits of headroom (max accum
+// 31*32 = 992). The post-shift & mask clears each lane's fractional
+// remainder, which otherwise bleeds into the lane below it.
+static constexpr u32 blend_mask = 0x03E07C1F;
+
+static inline u16 fold_555(u32 v)
+{
+    v = (v >> 5) & blend_mask;
+    return (u16)((v | (v >> 16)) & 0x7FFF);
+}
+
+
+
+static void blend_palette(u16* dst, const u16* src, u32 fa, u32 na)
+{
+    for (int i = 0; i < 16; ++i) {
+        const u32 s = src[i];
+        const u32 b = (s | (s << 16)) & blend_mask;
+        dst[i] = fold_555(fa + b * na);
+    }
+}
+
+
+
+static void copy_palette(u16* dst, const u16* src)
+{
+    for (int i = 0; i < 16; ++i) dst[i] = src[i]; // amt==0 identity
+}
+
+
+
 void Platform::Screen::schedule_fade(Float amount, const FadeProperties& p)
 {
     const u8 amt = amount * 255;
-
     if (amt == last_fade_amt and p.color == last_color and
         last_fade_include_sprites == p.include_sprites) {
         return;
     }
-
     last_fade_amt = amt;
     last_color = p.color;
     last_fade_include_sprites = p.include_sprites;
 
     const auto c = invoke_shader(real_color(p.color), ShaderPalette::tile0, 0);
-
-
     set_gflag(GlobalFlag::palette_sync, true);
 
+    // Precompute shared stuff once for the whole fade.
+    const u32 a  = (amt + 4) >> 3;                 // 0..32, endpoints exact
+    const u32 na = 32 - a;
+    const u16 cp = c.bgr_hex_555();
+    const u32 fa = (((u32)cp | ((u32)cp << 16)) & blend_mask) * a;
 
-    // Sprite palette
+    // include ? fade : copy — the copy path is the amt == 0 identity.
+    auto layer = [&](u16* dst, const u16* src, bool include) {
+        if (include) {
+            blend_palette(dst, src, fa, na);
+        } else {
+            copy_palette(dst, src);
+        }
+    };
+
     if (p.include_sprites or not p.dodge) {
-        for (int i = 0; i < 16; ++i) {
-            auto from = Color::from_bgr_hex_555(sprite_palette[i]);
-            sp_palette_back_buffer[i] =
-                blend(from, c, p.include_sprites ? amt : 0);
-        }
-
-        // Sprite alt palette
-        for (int i = 0; i < 16; ++i) {
-            auto from = Color::from_bgr_hex_555(sprite_alt_palette[i]);
-            sp_palette_back_buffer[i + 32] =
-                blend(from, c, p.include_sprites ? amt : 0);
-        }
+        layer(&sp_palette_back_buffer[0],  sprite_palette,     p.include_sprites);
+        layer(&sp_palette_back_buffer[32], sprite_alt_palette, p.include_sprites);
     }
 
-    // Tile0 palette
     if (p.include_tiles or not p.dodge) {
-        for (int i = 0; i < 16; ++i) {
-            auto from = Color::from_bgr_hex_555(tilesheet_0_palette[i]);
-            bg_palette_back_buffer[i] =
-                blend(from, c, p.include_tiles ? amt : 0);
-        }
-        // Tile0 darkened palette
-        for (int i = 0; i < 16; ++i) {
-            auto from =
-                Color::from_bgr_hex_555(tilesheet_0_darkened_palette[i]);
-            MEM_BG_PALETTE[(9 * 16) + i] = blend(from, c, amt);
-        }
-    }
+        layer(&bg_palette_back_buffer[0], tilesheet_0_palette, p.include_tiles);
 
-    // Custom flag/tile/sprite palette:
-    if (p.include_tiles or not p.dodge) {
+        // Darkened palette: always full amt, straight to VRAM.
+        blend_palette(&MEM_BG_PALETTE[9 * 16], tilesheet_0_darkened_palette, fa, na);
+
+        // Custom flag/tile/sprite: always full amt, written to two slots.
         for (int i = 0; i < 16; ++i) {
-            auto from = Color::from_bgr_hex_555(custom_flag_palette[i]);
-            auto val = blend(from, c, amt);
+            const u32 s = custom_flag_palette[i];
+            const u32 b = (s | (s << 16)) & blend_mask;
+            const u16 val = fold_555(fa + b * na);
             bg_palette_back_buffer[16 * 12 + i] = val;
-            sp_palette_back_buffer[16 + i] = val;
+            sp_palette_back_buffer[16 + i]      = val;
         }
-    }
 
-    // Tile1 palette
-    if (p.include_tiles or not p.dodge) {
-        for (int i = 0; i < 16; ++i) {
-            auto from = Color::from_bgr_hex_555(tilesheet_1_palette[i]);
-            bg_palette_back_buffer[32 + i] =
-                blend(from, c, p.include_tiles ? amt : 0);
-        }
+        layer(&bg_palette_back_buffer[32], tilesheet_1_palette, p.include_tiles);
     }
 
     if (p.include_background or not p.dodge) {
-        for (int i = 0; i < 16; ++i) {
-            auto from = Color::from_bgr_hex_555(background_palette[i]);
-            bg_palette_back_buffer[16 * 11 + i] =
-                blend(from, c, p.include_background ? amt : 0);
-        }
+        layer(&bg_palette_back_buffer[16 * 11], background_palette, p.include_background);
     }
 
-    // Overlay palette
     if (p.include_overlay or not p.dodge) {
-        for (int i = 0; i < 16; ++i) {
-            auto from = Color::from_bgr_hex_555(overlay_palette[i]);
-            bg_palette_back_buffer[16 + i] =
-                blend(from, c, p.include_overlay ? amt : 0);
-        }
+        layer(&bg_palette_back_buffer[16], overlay_palette, p.include_overlay);
     }
 }
 
