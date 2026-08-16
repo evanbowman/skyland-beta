@@ -374,9 +374,8 @@ void EnemyAI::update_room(Room& room,
                          it not_eq boarded_ai_characters.end();) {
                         if ((*it).first->health() < 25 and
                             not(*it).first->is_replicant()) {
-                            auto pos = (*it).first->grid_position();
                             it = boarded_ai_characters.erase(it);
-                            return pos;
+                            return (*it).first->grid_position();
                         } else {
                             ++it;
                         }
