@@ -385,7 +385,6 @@ void EnemyAI::update_room(Room& room,
                                 // See comment in else block.
                                 return pos;
                             } else {
-                                } else {
                                 // NOTE: FIXME!!!! (maybe?) This logic has been
                                 // essentially broken for years. Because of how
                                 // Buffer::erase() works, plus the fact that the
