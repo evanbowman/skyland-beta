@@ -1124,21 +1124,10 @@ static void place_offensive_drone(DroneBay& db,
     }
 
     ATP top_row_weights[16];
+    u8  top_row_y[16];   // hover y per column; meaningful only where weight > 0
     for (int i = 0; i < 16; ++i) {
-        if (restrict_columns[i]) {
-            top_row_weights[i] = ATP::from_integer(-10000);
-        } else {
-            top_row_weights[i] = 0.0_atp;
-        }
-    }
-
-    // Find lowest available slot y-value, into which we may place a drone.
-    u8 min_y = 15;
-    for (int y = 15; y > 0; --y) {
-        if (slot[1][y]) {
-            min_y = y;
-            break;
-        }
+        top_row_weights[i] = restrict_columns[i] ? ATP::from_integer(-10000) : 0.0_atp;
+        top_row_y[i] = 0;
     }
 
     if (left_anchor) {
@@ -1227,27 +1216,45 @@ static void place_offensive_drone(DroneBay& db,
         }
     }
 
-    // top row: check vertically down
-    // NOTE: += 2 because we don't want to place two drones directly adjacent,
-    // as they might accidentally shoot eachother.
+    // top row: hover directly above each column's topmost room.
+    // += 2 so we don't place two drones in adjacent columns (they might
+    // shoot each other).
     for (u8 x = 0; x < 16; x += 2) {
-        if (not restrict_columns[x]) {
-            for (int yy = 14; yy > 0; --yy) {
-                if (slot[x][yy]) {
-                    for (u8 y = yy; y < 15; ++y) {
-                        if (player_rooms.get(x, y)) {
-                            if (auto room = player_island.get_room({x, y})) {
-                                top_row_weights[x] = room->get_atp();
-                            }
-                            break;
-                        }
-                    }
-                    if (top_row_weights[x] == 0.0_atp) {
-                        top_row_weights[x] = 0.5_atp;
-                    }
-                }
+        if (restrict_columns[x]) {
+            continue;
+        }
+
+        // Topmost room = smallest y with a room.
+        Optional<u8> top_room_y;
+        for (u8 y = construction_zone_min_y; y < 15; ++y) {
+            if (player_rooms.get(x, y)) {
+                top_room_y = y;
+                break;
             }
         }
+
+        // No room, or room is flush against the ceiling (no space above).
+        if (not top_room_y or *top_room_y == 0) {
+            continue;
+        }
+
+        const u8 hover_y = *top_room_y - 1;
+
+        // The hover position must itself be an eligible slot.
+        if (not slot[x][hover_y]) {
+            continue;
+        }
+
+        ATP w = 0.0_atp;
+        if (auto room = player_island.get_room({x, *top_room_y})) {
+            w = room->get_atp();
+        }
+        if (w == 0.0_atp) {
+            w = 0.5_atp;
+        }
+
+        top_row_weights[x] = w;
+        top_row_y[x] = hover_y;
     }
 
     Optional<RoomCoord> ideal_coord;
@@ -1266,7 +1273,7 @@ static void place_offensive_drone(DroneBay& db,
 
     for (u8 x = 0; x < 16; ++x) {
         if (top_row_weights[x] > max_weight) {
-            ideal_coord = {x, min_y};
+            ideal_coord = {x, top_row_y[x]};
             max_weight = top_row_weights[x];
         }
     }
