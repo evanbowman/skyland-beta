@@ -368,14 +368,56 @@ void EnemyAI::update_room(Room& room,
                 }
             }
 
+            const bool hard_mode =
+                APP.gp_.difficulty_ == GlobalPersistentData::Difficulty::expert;
+
             if (found_infirmary) {
                 auto recover_pos = [&]() -> Optional<RoomCoord> {
                     for (auto it = boarded_ai_characters.begin();
                          it not_eq boarded_ai_characters.end();) {
                         if ((*it).first->health() < 25 and
                             not(*it).first->is_replicant()) {
+                            auto pos = (*it).first->grid_position();
                             it = boarded_ai_characters.erase(it);
-                            return (*it).first->grid_position();
+                            if (it == boarded_ai_characters.end()) {
+                                return pos;
+                            } else if (hard_mode) {
+                                // See comment in else block.
+                                return pos;
+                            } else {
+                                } else {
+                                // NOTE: FIXME!!!! (maybe?) This logic has been
+                                // essentially broken for years. Because of how
+                                // Buffer::erase() works, plus the fact that the
+                                // buffer holds only primitive types, reading
+                                // the position off the iterator after the erase
+                                // isn't actually a memory safety problem -- the
+                                // returned iterator is always still in bounds,
+                                // and the end() case gets caught above, so we
+                                // only ever land here on a live pointer. It's
+                                // just the _wrong_ live pointer: we end up
+                                // recovering whichever crewmember got shifted
+                                // down into the erased slot instead of the
+                                // injured one we actually found. So the game
+                                // sometimes withdraws completely the wrong
+                                // crewmember. And if the opponent has more than
+                                // one transporter it gets weirder -- the next
+                                // ready transporter rebuilds a now-shorter
+                                // list, and the injured crew is more likely to
+                                // fall at the end of it, where the read comes
+                                // out correct, so it finally gets pulled
+                                // home. Net effect is the opponent tends to
+                                // yank a bunch of crew off a boarding action at
+                                // once when only one or two are hurt. Fixing it
+                                // (see the expert branch) makes raids a good
+                                // deal more committed and ruthless, which is
+                                // why it's gated. Careful if you ever swap out
+                                // Buffer or put a non-trivial type in here --
+                                // both the safety and the end() guard lean on
+                                // the current erase behavior. Maybe I'll fix it
+                                // for real someday...
+                                return (*it).first->grid_position();
+                            }
                         } else {
                             ++it;
                         }
