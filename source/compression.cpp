@@ -17,14 +17,10 @@
 
 void compress(const Vector<char>& input, Vector<char>& output)
 {
-    struct Window
-    {
-        Buffer<char, 1000> input_;
-        Buffer<char, 1000> output_;
-    };
-
-    auto win_in = allocate<Buffer<char, 1000>>("compr-window-in");
-    auto win_out = allocate<Buffer<char, 1400>>("compr-window-out");
+    using BufIn = Buffer<char, 1000>;
+    using BufOut = Buffer<char, 1400>;
+    auto win_in = allocate<BufIn>("compr-window-in", BufIn::SkipZeroFill{});
+    auto win_out = allocate<BufOut>("compr-window-out", BufOut::SkipZeroFill{});
 
     heatshrink_encoder enc;
     heatshrink_encoder_reset(&enc);
@@ -60,14 +56,11 @@ void compress(const Vector<char>& input, Vector<char>& output)
 
 void decompress(const Vector<char>& input, Vector<char>& output)
 {
-    struct Window
-    {
-        Buffer<char, 1000> input_;
-        Buffer<char, 1000> output_;
-    };
+    using BufIn = Buffer<char, 256>;
+    using BufOut = Buffer<char, 2000>;
 
-    auto win_in = allocate<Buffer<char, 256>>("dcompr-window-in");
-    auto win_out = allocate<Buffer<char, 2000>>("dcompr-window-out");
+    auto win_in = allocate<BufIn>("dcompr-window-in", BufIn::SkipZeroFill{});
+    auto win_out = allocate<BufOut>("dcompr-window-out", BufOut::SkipZeroFill{});
 
     heatshrink_decoder enc;
     heatshrink_decoder_reset(&enc);

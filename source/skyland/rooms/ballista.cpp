@@ -166,7 +166,7 @@ Optional<u8> Ballista::recalc_arc_height(const Vec2<Fixnum>& start,
 {
     Fixnum arc_height;
 
-    Buffer<std::pair<Fixnum, Vec2<Fixnum>>, 16> arc_test_buffer;
+    Buffer<std::pair<Fixnum, Vec2<Fixnum>>, 16, false> arc_test_buffer;
 
     for (int i = 1; i < 16; i += 2) {
 

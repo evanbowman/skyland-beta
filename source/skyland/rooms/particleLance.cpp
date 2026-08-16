@@ -276,7 +276,7 @@ void ParticleLance::project_damage(Health damage)
 {
     // NOTE: map is 16 wide, so for two islands, the max intersecting blocks
     // would be 32, I suppose minus the size of this room....
-    Buffer<Room*, 32> rooms;
+    Buffer<Room*, 32, false> rooms;
 
     dmg_count_ += damage;
     if (dmg_count_ >= max_health()) {

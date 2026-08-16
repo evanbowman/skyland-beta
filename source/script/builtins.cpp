@@ -1240,7 +1240,7 @@ Value* builtin_sort(int argc)
         return make_error("sort parameter must be list!");
     }
 
-    using TempBuffer = Buffer<Value*, 509>;
+    using TempBuffer = Buffer<Value*, 509, false>;
     auto buf = allocate_fast<TempBuffer>("sort-buffer");
 
     l_foreach(get_op1(), [&buf](Value* v) { buf->push_back(v); });
@@ -1343,7 +1343,7 @@ Value* builtin_map(int argc)
 
     // I've never seen map used with so many input lists, but who knows,
     // someone might try to call this with more than six inputs...
-    Buffer<Value*, 6> inp_lats;
+    Buffer<Value*, 6, false> inp_lats;
 
     if (argc < static_cast<int>(inp_lats.size())) {
         return get_nil(); // TODO: return error

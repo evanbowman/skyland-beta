@@ -107,8 +107,8 @@ private:
 
     struct Data
     {
-        Buffer<Coord, 48> construction_sites_;
-        Buffer<MetaclassIndex, 100> available_buildings_;
+        Buffer<Coord, 48, false> construction_sites_;
+        Buffer<MetaclassIndex, 100, false> available_buildings_;
         Optional<MetaclassIndex> last_constructed_building_;
     };
 

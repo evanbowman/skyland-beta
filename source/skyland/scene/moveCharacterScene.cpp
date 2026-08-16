@@ -404,7 +404,7 @@ u32 flood_fill(u8 matrix[16][16], u8 replace, u8 x, u8 y)
 
     ScratchBufferBulkAllocator mem;
 
-    using CoordStack = Buffer<Coord, 16 * 16>;
+    using CoordStack = Buffer<Coord, 16 * 16, false>;
     auto stack = mem.alloc<CoordStack>(CoordStack::SkipZeroFill{});
 
     if (UNLIKELY(not stack)) {

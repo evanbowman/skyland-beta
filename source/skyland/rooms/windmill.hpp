@@ -100,7 +100,7 @@ public:
     }
 
 
-    void collect_sprites(Buffer<Sprite, 4>& out) const;
+    void collect_sprites(Buffer<Sprite, 4, false>& out) const;
 
 
     static const constexpr char* name()

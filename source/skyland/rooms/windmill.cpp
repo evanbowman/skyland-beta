@@ -157,7 +157,7 @@ static constexpr const auto rotation_lut = make_rotation_lut(0.f);
 
 
 
-void Windmill::collect_sprites(Buffer<Sprite, 4>& out) const
+void Windmill::collect_sprites(Buffer<Sprite, 4, false>& out) const
 {
     auto pos = visual_center();
     pos.x -= 8.0_fixed;
@@ -216,7 +216,7 @@ void Windmill::collect_sprites(Buffer<Sprite, 4>& out) const
 
 void Windmill::display(Platform::Screen& screen)
 {
-    Buffer<Sprite, 4> buf;
+    Buffer<Sprite, 4, false> buf;
     collect_sprites(buf);
 
     for (auto& spr : buf) {
@@ -295,7 +295,7 @@ void Windmill::finalize()
         parent()->origin().y + 16.0_fixed * 16.0_fixed + 32.0_fixed;
 
     if (health() == 0) {
-        Buffer<Sprite, 4> sails;
+        Buffer<Sprite, 4, false> sails;
         collect_sprites(sails);
 
         for (const auto& spr : sails) {

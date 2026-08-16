@@ -263,7 +263,7 @@ private:
 
 
 template <u32 Capacity>
-using StringBuffer = StringAdapter<Capacity, Buffer<char, Capacity + 1>>;
+using StringBuffer = StringAdapter<Capacity, Buffer<char, Capacity + 1, false>>;
 
 
 

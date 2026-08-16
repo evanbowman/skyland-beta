@@ -754,7 +754,7 @@ static void compact()
 
     // FIXME: do not hard-code this size. file breaks should be some sort of
     // list?
-    Buffer<u32, 100> breaks;
+    Buffer<u32, 100, false> breaks;
 
     auto offset = start_offset;
     offset += sizeof(Root);

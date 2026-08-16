@@ -5359,7 +5359,7 @@ static bool apply_tail_funcall(Value* fn, int argc, EvalStack& eval_stack)
 
         // NOTE: at this point, both the prior function call's arguments and our
         // own arguments are ont the stack. Remove intermediate args.
-        Buffer<Value*, 32> saved_args;
+        Buffer<Value*, 32, false> saved_args;
         for (int i = 0; i < argc; ++i) {
             saved_args.push_back(get_op0());
             pop_op();
@@ -5661,7 +5661,7 @@ void eval_loop(EvalStack& eval_stack)
             ListBuilder binding_list;
 
             // Pop values in reverse order and pair with symbols
-            Buffer<Value*, 32> values;
+            Buffer<Value*, 32, false> values;
             for (int i = 0; i < frame.install_let_.binding_count_; i++) {
                 values.push_back(get_op0());
                 pop_op();
