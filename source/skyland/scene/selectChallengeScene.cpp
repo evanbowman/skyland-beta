@@ -290,6 +290,7 @@ ScenePtr SelectChallengeScene::update(Time delta)
             PLATFORM.fill_overlay(0);
             PLATFORM.screen().clear();
             PLATFORM.screen().display();
+            APP.set_coins(0);
             auto script = selected_script_name();
             timer_ += preload_script_during_fade(fade_duration, script.c_str(), {
                     .initial_fade_ = default_fade,
@@ -315,8 +316,6 @@ ScenePtr SelectChallengeScene::update(Time delta)
             if (file_name->type() not_eq lisp::Value::Type::string) {
                 PLATFORM.fatal("challenge list format invalid");
             }
-
-            APP.set_coins(0);
 
             prep_level();
 
