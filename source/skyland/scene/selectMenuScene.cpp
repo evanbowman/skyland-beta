@@ -71,12 +71,44 @@ static const auto specific_colors =
     FontColors{custom_color(0xead873), ColorConstant::rich_black};
 
 
+static const auto grayed_out_colors =
+    FontColors{ColorConstant::med_blue_gray, ColorConstant::rich_black};
+
+
 
 void SelectMenuScene::redraw_line(int line, bool highlight)
 {
-    auto clr = highlight ? highlight_colors
-                         : (opts_->specific_.get(line) ? specific_colors
-                                                       : Text::OptColors{});
+    auto clr = Text::OptColors{};
+    if (highlight) {
+        clr = highlight_colors;
+        if (opts_->show_coins_hint_.get(line)) {
+            auto hint_str = format<64>("(🪙%)", APP.coins());
+            SpriteText::Configuration conf{.shade_bg_index_ = 12};
+
+            opts_->coins_hint_.emplace(hint_str.c_str(), conf);
+            opts_->coins_hint_->position_absolute();
+            opts_->coins_hint_->set_position({8.0_fixed, 16.0_fixed});
+        }
+        if (opts_->show_power_hint_.get(line)) {
+            auto power_supply = island()->power_supply();
+            auto power_drain = island()->power_drain();
+            auto power_str = format<64>("(⚡%/%)", power_drain, power_supply);
+            SpriteText::Configuration conf{.shade_bg_index_ = 12};
+
+            opts_->power_hint_.emplace(power_str.c_str(), conf);
+            opts_->power_hint_->position_absolute();
+            opts_->power_hint_->set_position({8.0_fixed, 8.0_fixed});
+        }
+    } else if (opts_->specific_.get(line)) {
+        clr = specific_colors;
+    } else if (opts_->grayed_out_.get(line)) {
+        clr = grayed_out_colors;
+    }
+
+    if (not highlight) {
+        opts_->coins_hint_.reset();
+        opts_->power_hint_.reset();
+    }
 
     enable_text_icon_glyphs(false);
     opts_->lines_[line].assign(loadstr(opts_->strings_[line])->c_str(), clr);
@@ -201,11 +233,25 @@ static ScenePtr set_gamespeed_setup()
 
 void SelectMenuScene::add_line(SystemString str,
                                const char* suffix,
-                               bool specific,
+                               Function<4 * sizeof(void*), ScenePtr()> callback)
+{
+    add_line(str, suffix, {}, callback);
+}
+
+
+
+void SelectMenuScene::add_line(SystemString str,
+                               const char* suffix,
+                               Parameters params,
                                Function<4 * sizeof(void*), ScenePtr()> callback)
 {
     auto line = loadstr(str);
+    const auto specific = params.coloring_ == LineColoring::specific;
+    const auto grayed_out = params.coloring_ == LineColoring::grayed_out;
     opts_->specific_.set(opts_->lines_.size(), specific);
+    opts_->grayed_out_.set(opts_->lines_.size(), grayed_out);
+    opts_->show_coins_hint_.set(opts_->lines_.size(), params.show_coins_hint_);
+    opts_->show_power_hint_.set(opts_->lines_.size(), params.show_power_hint_);
     u8 y = opts_->lines_.size() + 1;
     opts_->lines_.emplace_back(OverlayCoord{1, y});
     enable_text_icon_glyphs(false);
@@ -213,7 +259,12 @@ void SelectMenuScene::add_line(SystemString str,
         opts_->lines_.back().assign(line->c_str(), highlight_colors);
         opts_->lines_.back().append(suffix);
     } else {
-        auto clr = specific ? specific_colors : Text::OptColors{};
+        auto clr = Text::OptColors{};
+        if (specific) {
+            clr = specific_colors;
+        } else if (grayed_out) {
+            clr = grayed_out_colors;
+        }
         opts_->lines_.back().assign(line->c_str(), clr);
         opts_->lines_.back().append(suffix, clr);
     }
@@ -229,7 +280,7 @@ void SelectMenuScene::add_line(SystemString str,
 
 void SelectMenuScene::register_option(SystemString name, SelMenuCallback cb)
 {
-    add_line(name, "", true, cb);
+    add_line(name, "", {.coloring_ = LineColoring::specific}, cb);
 }
 
 
@@ -269,7 +320,6 @@ void SelectMenuScene::enter(Scene& scene)
             if (isle->interior_visible()) {
                 add_line(SystemString::sel_menu_view_exterior,
                          "",
-                         false,
                          []() -> ScenePtr {
                              show_island_exterior(&APP.player_island());
                              return null_scene();
@@ -277,7 +327,6 @@ void SelectMenuScene::enter(Scene& scene)
             } else {
                 add_line(SystemString::sel_menu_view_interior,
                          "",
-                         false,
                          []() -> ScenePtr {
                              show_island_interior(&APP.player_island());
                              return null_scene();
@@ -290,7 +339,6 @@ void SelectMenuScene::enter(Scene& scene)
                 APP.game_mode() == App::GameMode::sandbox) {
                 add_line(SystemString::sel_menu_move_blocks,
                          "",
-                         false,
                          [far = is_far_camera()]() {
                              return move_blocks_setup(far);
                          });
@@ -302,7 +350,7 @@ void SelectMenuScene::enter(Scene& scene)
             if (not is_far_camera() and
                 APP.game_mode() not_eq App::GameMode::tutorial) {
                 add_line(
-                    SystemString::sel_menu_inspect, "", false, [this, cursor] {
+                    SystemString::sel_menu_inspect, "", [this, cursor] {
                         auto cb =
                             APP.invoke_script("/scripts/inspect/inspect.lisp");
                         if (cb->type() == lisp::Value::Type::function) {
@@ -315,18 +363,23 @@ void SelectMenuScene::enter(Scene& scene)
                         return null_scene();
                     });
 
-
                 auto room = island()->get_room(cursor);
-                if (room) {
+                if (room and room->health() not_eq room->max_health()) {
+                    auto cost = repair_cost(*room);
                     StringBuffer<64> cost_str = " ";
-                    cost_str += stringify(repair_cost(*room));
+                    cost_str += stringify(cost);
                     cost_str += "🪙";
-                    add_line(SystemString::sel_menu_repair, cost_str.c_str(), true, [this, cursor] {
-                        if (auto room = island()->get_room(cursor)) {
-                            return repair(*room);
-                        }
-                        return null_scene();
-                    });
+                    add_line(SystemString::sel_menu_repair, cost_str.c_str(),
+                             {
+                                 .coloring_ = LineColoring::specific,
+                                 .show_coins_hint_ = true,
+                             },
+                             [this, cursor] {
+                                 if (auto room = island()->get_room(cursor)) {
+                                     return repair(*room);
+                                 }
+                                 return null_scene();
+                             });
                 }
             }
 
@@ -343,7 +396,7 @@ void SelectMenuScene::enter(Scene& scene)
                 if (chr->is_superpinned()) {
                     add_line(SystemString::sel_menu_unpin_crewmember,
                              "",
-                             true,
+                             {.coloring_ = LineColoring::specific},
                              [id = chr->id()] {
                                  auto chr = Character::find_by_id(id);
                                  if (chr.first) {
@@ -355,7 +408,7 @@ void SelectMenuScene::enter(Scene& scene)
                 } else {
                     add_line(SystemString::sel_menu_pin_crewmember,
                              "",
-                             true,
+                             {.coloring_ = LineColoring::specific},
                              [id = chr->id()] {
                                  auto chr = Character::find_by_id(id);
                                  if (chr.first) {
@@ -367,7 +420,7 @@ void SelectMenuScene::enter(Scene& scene)
 
                 add_line(SystemString::sel_menu_crewmember_stats,
                          "",
-                         true,
+                         {.coloring_ = LineColoring::specific},
                          [id = chr->id(), far = is_far_camera()]() {
                              auto next = make_scene<CrewStatsScene>(id);
                              return next;
@@ -383,7 +436,9 @@ void SelectMenuScene::enter(Scene& scene)
         }
         if (bird_found) {
             add_line(
-                SystemString::sel_menu_spook_bird, "", true, [this, cursor]() {
+                SystemString::sel_menu_spook_bird, "",
+                {.coloring_ = LineColoring::specific},
+                [this, cursor]() {
                     for (auto& bird : APP.birds()) {
                         if (bird->island() == island() and
                             bird->coordinate() == cursor) {
@@ -403,7 +458,7 @@ void SelectMenuScene::enter(Scene& scene)
             if (scn and opp) {
                 add_line(SystemString::sel_menu_flag_info,
                          "",
-                         true,
+                         {.coloring_ = LineColoring::specific},
                          [this]() -> ScenePtr {
                              return lookup_flag_in_glossary_appendix(
                                  island()->custom_flag_graphics());
@@ -419,7 +474,7 @@ void SelectMenuScene::enter(Scene& scene)
                     add_line(
                         SystemString::sel_menu_upgrade_block,
                         "",
-                        true,
+                        {.coloring_ = LineColoring::specific},
                         [this, cursor]() -> ScenePtr {
                             auto room = island()->get_room(cursor);
                             if (not room) {
@@ -441,7 +496,7 @@ void SelectMenuScene::enter(Scene& scene)
                 add_line(
                     SystemString::sel_menu_describe_block,
                     "",
-                    true,
+                    {.coloring_ = LineColoring::specific},
                     [this, cursor]() -> ScenePtr {
                         if (auto room = island()->get_room(cursor)) {
                             auto mt = room->metaclass_index();
@@ -468,7 +523,7 @@ void SelectMenuScene::enter(Scene& scene)
                 if (is_player_island(island())) {
                     add_line(SystemString::sel_menu_adjust_power,
                              "",
-                             true,
+                             {.coloring_ = LineColoring::specific},
                              []() { return make_scene<AdjustPowerScene>(); });
                 }
             }
@@ -480,7 +535,10 @@ void SelectMenuScene::enter(Scene& scene)
                         SystemString::sel_menu_poweron,
                         format(" +%⚡", (*room->metaclass())->consumes_power())
                             .c_str(),
-                        true,
+                        {
+                            .coloring_ = LineColoring::specific,
+                            .show_power_hint_ = true
+                        },
                         [this, c = cursor]() {
                             if (auto room = island()->get_room(c)) {
                                 room->set_powerdown(false);
@@ -495,7 +553,10 @@ void SelectMenuScene::enter(Scene& scene)
                         SystemString::sel_menu_powerdown,
                         format(" -%⚡", (*room->metaclass())->consumes_power())
                             .c_str(),
-                        true,
+                        {
+                            .coloring_ = LineColoring::specific,
+                            .show_power_hint_ = true
+                        },
                         [this, c = cursor]() {
                             if (auto room = island()->get_room(c)) {
                                 room->set_powerdown(true);
@@ -515,7 +576,7 @@ void SelectMenuScene::enter(Scene& scene)
                     if (room->get_target()) {
                         add_line(SystemString::sel_menu_weapon_halt,
                                  "",
-                                 true,
+                                 {.coloring_ = LineColoring::specific},
                                  [this, c = cursor]() {
                                      if (auto room = island()->get_room(c)) {
                                          room->unset_target();
@@ -528,7 +589,7 @@ void SelectMenuScene::enter(Scene& scene)
                        room->cast<Bridge>()) {
                 add_line(SystemString::sel_menu_resize_bridge,
                          "",
-                         true,
+                         {.coloring_ = LineColoring::specific},
                          [this, c = cursor] {
                              auto room = island()->get_room(c);
                              if (not room) {
@@ -549,13 +610,13 @@ void SelectMenuScene::enter(Scene& scene)
 
                     add_line(SystemString::sel_menu_drone_stats,
                              "",
-                             true,
+                             {.coloring_ = LineColoring::specific},
                              [d]() { return make_scene<DroneStatsScene>(d); });
 
                     if ((*drone)->get_target()) {
                         add_line(SystemString::sel_menu_weapon_halt,
                                  "",
-                                 true,
+                                 {.coloring_ = LineColoring::specific},
                                  [d]() {
                                      d->clear_target_queue();
                                      return null_scene();
@@ -567,7 +628,7 @@ void SelectMenuScene::enter(Scene& scene)
                 if (not PLATFORM.network_peer().is_connected()) {
                     add_line(SystemString::sel_menu_select_all,
                              "",
-                             true,
+                             {.coloring_ = LineColoring::specific},
                              [this, c = cursor]() -> ScenePtr {
                                  if (auto room = island()->get_room(c)) {
                                      auto mti = room->metaclass_index();
@@ -587,7 +648,10 @@ void SelectMenuScene::enter(Scene& scene)
     if (not PLATFORM.network_peer().is_connected()) {
 
         if (not is_far_camera() and cursor == *APP.player_island().flag_pos()) {
-            add_line(SystemString::sel_menu_edit_flag, "", true, []() {
+            add_line(SystemString::sel_menu_edit_flag,
+                     "",
+                     {.coloring_ = LineColoring::specific},
+                     []() {
                 auto ret = make_scene<FlagDesignerModule>();
                 ret->editing_ingame_ = true;
                 return ret;
@@ -595,31 +659,31 @@ void SelectMenuScene::enter(Scene& scene)
         }
 
         if (state_bit_load(StateBit::minimap_on)) {
-            add_line(SystemString::sel_menu_hide_minimap, "", false, []() {
+            add_line(SystemString::sel_menu_hide_minimap, "", []() {
                 state_bit_store(StateBit::minimap_on, false);
                 return null_scene();
             });
         } else {
-            add_line(SystemString::sel_menu_show_minimap, "", false, []() {
+            add_line(SystemString::sel_menu_show_minimap, "", []() {
                 PLATFORM.speaker().play_sound("minimap_open.raw", 3);
                 state_bit_store(StateBit::minimap_on, true);
                 return null_scene();
             });
         }
 
-        add_line(SystemString::sel_menu_pause, "", false, []() {
+        add_line(SystemString::sel_menu_pause, "", []() {
             return set_gamespeed_setup();
         });
     }
 
     if (PLATFORM.network_peer().is_connected()) {
         if (not state_bit_load(StateBit::show_ping)) {
-            add_line(SystemString::sel_menu_show_ping, "", false, []() {
+            add_line(SystemString::sel_menu_show_ping, "", []() {
                 state_bit_store(StateBit::show_ping, true);
                 return null_scene();
             });
         } else {
-            add_line(SystemString::sel_menu_hide_ping, "", false, []() {
+            add_line(SystemString::sel_menu_hide_ping, "", []() {
                 state_bit_store(StateBit::show_ping, false);
                 return null_scene();
             });
@@ -627,7 +691,7 @@ void SelectMenuScene::enter(Scene& scene)
     }
 
     add_line(
-        SystemString::sel_menu_back, "", false, []() { return null_scene(); });
+        SystemString::sel_menu_back, "", []() { return null_scene(); });
 
     for (int i = 0; i < opts_->longest_line_ + 1; ++i) {
         PLATFORM.set_overlay_tile(i, 0, 425);
@@ -643,7 +707,7 @@ void SelectMenuScene::enter(Scene& scene)
         }
     }
     for (u32 y = 0; y < opts_->lines_.size(); ++y) {
-        if (opts_->specific_.get(y)) {
+        if (opts_->specific_.get(y) or opts_->grayed_out_.get(y)) {
             PLATFORM.set_overlay_tile(0, y + 1, 159);
         } else {
             PLATFORM.set_overlay_tile(0, y + 1, 112);
@@ -715,7 +779,7 @@ ScenePtr SelectMenuScene::update(Time delta)
     if (test_button(Button::right)) {
         PLATFORM.speaker().play_sound("cursor_tick", 0);
         auto prev_sel = sel_;
-        if (opts_->specific_.get(sel_)) {
+        if (opts_->specific_.get(sel_) or opts_->grayed_out_.get(sel_)) {
             PLATFORM.set_overlay_tile(0, sel_ + 1, 159);
         } else {
             PLATFORM.set_overlay_tile(0, sel_ + 1, 112);
@@ -724,7 +788,7 @@ ScenePtr SelectMenuScene::update(Time delta)
         int tries = 0;
         sel_ = (sel_ + 1) % opts_->lines_.size();
         while (tries < Options::cap) {
-            if (opts_->specific_.get(sel_)) {
+            if (opts_->specific_.get(sel_) or opts_->grayed_out_.get(sel_)) {
                 break;
             }
             sel_ = (sel_ + 1) % opts_->lines_.size();
@@ -737,7 +801,7 @@ ScenePtr SelectMenuScene::update(Time delta)
         redraw_line(sel_, true);
     } else if (test_button(Button::down)) {
         PLATFORM.speaker().play_sound("cursor_tick", 0);
-        if (opts_->specific_.get(sel_)) {
+        if (opts_->specific_.get(sel_) or opts_->grayed_out_.get(sel_)) {
             PLATFORM.set_overlay_tile(0, sel_ + 1, 159);
         } else {
             PLATFORM.set_overlay_tile(0, sel_ + 1, 112);
@@ -752,7 +816,7 @@ ScenePtr SelectMenuScene::update(Time delta)
         redraw_line(sel_, true);
     } else if (test_button(Button::up)) {
         PLATFORM.speaker().play_sound("cursor_tick", 0);
-        if (opts_->specific_.get(sel_)) {
+        if (opts_->specific_.get(sel_) or opts_->grayed_out_.get(sel_)) {
             PLATFORM.set_overlay_tile(0, sel_ + 1, 159);
         } else {
             PLATFORM.set_overlay_tile(0, sel_ + 1, 112);
@@ -828,6 +892,14 @@ void SelectMenuScene::display()
 
     auto origin = APP.player_island().visual_origin();
     auto cursor_loc = globals().near_cursor_loc_;
+
+    if (opts_->coins_hint_) {
+        opts_->coins_hint_->draw();
+    }
+
+    if (opts_->power_hint_) {
+        opts_->power_hint_->draw();
+    }
 
     if (is_far_camera()) {
         if (APP.opponent_island()) {

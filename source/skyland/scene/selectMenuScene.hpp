@@ -13,6 +13,7 @@
 
 #include "allocator.hpp"
 #include "graphics/overlay.hpp"
+#include "graphics/spriteText.hpp"
 #include "skyland/island.hpp"
 #include "skyland/systemString.hpp"
 #include "worldScene.hpp"
@@ -50,26 +51,48 @@ public:
     using SelMenuCallback = Function<4 * sizeof(void*), ScenePtr()>;
     void register_option(SystemString name, SelMenuCallback cb);
 
-
 private:
+
+    enum class LineColoring {
+        none,
+        specific,
+        grayed_out,
+    };
+
     struct Options
     {
         static constexpr int cap = 10;
 
         Buffer<Text, cap> lines_;
         Buffer<SystemString, cap> strings_;
-        Buffer<StringBuffer<8>, cap> suffixes_;
+        Buffer<StringBuffer<16>, cap> suffixes_;
         Buffer<Function<4 * sizeof(void*), ScenePtr()>, cap> callbacks_;
         u8 longest_line_;
 
         Bitvector<cap> specific_;
+        Bitvector<cap> grayed_out_;
+        Bitvector<cap> show_coins_hint_;
+        Bitvector<cap> show_power_hint_;
 
+        Optional<SpriteText> hint_;
+        Optional<SpriteText> power_hint_;
         Buffer<SystemString, cap> pushed_strings_;
+    };
+
+    struct Parameters
+    {
+        LineColoring coloring_ = LineColoring::none;
+        bool show_coins_hint_ = false;
+        bool show_power_hint_ = false;
     };
 
     void add_line(SystemString str,
                   const char* suffix,
-                  bool specific,
+                  Parameters params,
+                  Function<4 * sizeof(void*), ScenePtr()> callback);
+
+    void add_line(SystemString str,
+                  const char* suffix,
                   Function<4 * sizeof(void*), ScenePtr()> callback);
 
     void redraw_line(int line, bool highlight);

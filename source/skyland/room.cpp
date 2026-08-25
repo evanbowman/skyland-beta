@@ -1978,21 +1978,15 @@ SHARED_VARIABLE(repair_plunder_penalty);
 
 Coins repair_cost(Room& room)
 {
-    auto full_health = room.max_health();
-
     bool is_contested = false;
 
     Player* room_owner = &room.parent()->owner();
 
-    if (room.health() not_eq full_health) {
-        for (auto& chr : room.characters()) {
-            bool active_plunder = chr->owner() not_eq room_owner;
-            if (active_plunder) {
-                is_contested = true;
-            }
+    for (auto& chr : room.characters()) {
+        bool active_plunder = chr->owner() not_eq room_owner;
+        if (active_plunder) {
+            is_contested = true;
         }
-    } else {
-        return 0;
     }
 
     Coins penalty = 0;
@@ -2002,7 +1996,11 @@ Coins repair_cost(Room& room)
 
     auto meta = room.metaclass();
     auto rebuild_cost = get_room_cost(room.parent(), *meta);
-    return std::max(Coins(0), rebuild_cost - salvage_value(room)) + penalty;
+
+    auto hp = room.health();
+    auto max_hp = room.max_health();
+
+    return rebuild_cost * (Float(max_hp - hp) / max_hp) + penalty;
 }
 
 
@@ -2016,6 +2014,19 @@ ScenePtr repair(Room& room)
     auto isle = room.parent();
 
     if (not is_constructible(isle, room.metaclass_index())) {
+        auto props = (*room.metaclass())->properties();
+        const auto f_count = isle->manufactory_count();
+        const auto w_count =
+            isle->workshop_count() + isle->manufactory_count();
+
+        if ((props & RoomProperties::workshop_required) and w_count == 0) {
+            return notify_error(SystemString::repair_denied_workshop);
+        }
+
+        if ((props & RoomProperties::manufactory_required) and f_count == 0) {
+            return notify_error(SystemString::repair_denied_manufactory);
+        }
+
         return notify_error(SystemString::construction_missing_dependencies);
     }
 

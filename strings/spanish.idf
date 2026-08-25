@@ -722,6 +722,8 @@ banana
 ¿mejorar a %? 
 ¡la mejora requiere manufactura!
 ¡la mejora requiere taller!
+¡reparación requiere manufactura!
+¡reparación requiere taller!
 SEL: plantillas
 START: inundar
 ¿incendiar?

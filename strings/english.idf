@@ -722,6 +722,8 @@ banana
 upgrade to %? 
 upgrade requires manufactory!
 upgrade requires workshop!
+repair requires manufactory!
+repair requires workshop!
 SEL: presets
 START: flood
 ignite?

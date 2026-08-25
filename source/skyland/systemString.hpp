@@ -867,6 +867,9 @@ enum class SystemString {
     upgrade_denied_manufactory,
     upgrade_denied_workshop,
 
+    repair_denied_manufactory,
+    repair_denied_workshop,
+
     flag_designer_presets,
     flag_designer_flood,
 
