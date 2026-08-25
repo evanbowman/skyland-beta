@@ -2067,6 +2067,10 @@ void Platform::fill_overlay(u16 tile_desc)
 
 
 
+static std::map<std::string, SDL_Surface*> sprite_chunk_source_cache;
+
+
+
 void cleanup_charset_surfaces()
 {
     for (auto& [name, surface] : charset_surfaces) {
@@ -2078,6 +2082,11 @@ void cleanup_charset_surfaces()
         SDL_FreeSurface(surface);
     }
     overlay_source_cache.clear();
+
+    for (auto& [name, surface] : sprite_chunk_source_cache) {
+        SDL_FreeSurface(surface);
+    }
+    sprite_chunk_source_cache.clear();
 }
 
 
@@ -2850,6 +2859,57 @@ static int FIXME_get_metatile_size(const char* texture_name)
 
 
 
+// ---- Sprite-chunk (dynamic 8x8 sprite tile) storage ----
+//
+// GBA sprite VRAM is writable; SDL's isn't. current_sprite_texture is baked
+// from the spritesheet, and dynamic textures only redirect indices to existing
+// spritesheet offsets. SpriteText needs real, recolored glyph pixels, so we
+// keep a dedicated surface/texture that acts as sprite VRAM for chunk-loaded
+// 8x8 tiles, laid out as a horizontal strip indexed by destination tile. The
+// sprite draw path samples this for any w8_h8 sprite index populated here.
+
+static constexpr int sprite_chunk_tile_count =
+    Platform::dynamic_texture_count * 16; // 16 glyph slots per dynamic texture
+
+static SDL_Surface* sprite_chunk_surface = nullptr;
+static SDL_Texture* sprite_chunk_texture = nullptr;
+static bool sprite_chunk_loaded[sprite_chunk_tile_count] = {};
+static StringBuffer<256> last_sprite_texture;
+
+
+static bool is_loaded_sprite_chunk(u16 texture_index)
+{
+    return texture_index < sprite_chunk_tile_count and
+           sprite_chunk_loaded[texture_index];
+}
+
+
+static SDL_Rect sprite_chunk_source_rect(u16 texture_index)
+{
+    return SDL_Rect{texture_index * 8, 0, 8, 8};
+}
+
+
+static bool ensure_sprite_chunk_surface()
+{
+    if (sprite_chunk_surface) {
+        return true;
+    }
+    sprite_chunk_surface = SDL_CreateRGBSurfaceWithFormat(
+        0, sprite_chunk_tile_count * 8, 8, 32, SDL_PIXELFORMAT_RGBA32);
+    if (not sprite_chunk_surface) {
+        error(format("load_sprite_chunk: failed to alloc surface: %",
+                     SDL_GetError()));
+        return false;
+    }
+    // Start fully transparent (magenta / alpha 0).
+    SDL_FillRect(sprite_chunk_surface,
+                 nullptr,
+                 SDL_MapRGBA(sprite_chunk_surface->format, 255, 0, 255, 0));
+    return true;
+}
+
+
 void Platform::load_sprite_chunk(TileDesc dst,
                                  TileDesc src,
                                  u16 count,
@@ -2857,7 +2917,90 @@ void Platform::load_sprite_chunk(TileDesc dst,
                                  u8 shade_bg_idx,
                                  u8 shade_fg_idx)
 {
-    fatal("load_sprite_chunk() implementation missing for SDL platform!");
+    // Glyph recoloring (shade_bg_idx / shade_fg_idx) not handled yet on SDL;
+    // glyphs render with their source palette for now.
+    (void)shade_bg_idx;
+    (void)shade_fg_idx;
+
+    if (not renderer or not ensure_sprite_chunk_surface()) {
+        return;
+    }
+
+    // SpriteText always passes a named charset; null means current spritesheet.
+    const char* source_name =
+        image_file ? image_file : last_sprite_texture.c_str();
+    if (not source_name or source_name[0] == '\0') {
+        error("load_sprite_chunk: no source image");
+        return;
+    }
+
+    SDL_Surface* source_surface = nullptr;
+    std::string cache_key = source_name;
+    auto it = sprite_chunk_source_cache.find(cache_key);
+    if (it != sprite_chunk_source_cache.end()) {
+        source_surface = it->second;
+    } else {
+        std::string full_path =
+            resource_path() + "images" + PATH_DELIMITER + source_name + ".png";
+        source_surface = load_png_with_stb(
+            full_path, source_name, ShaderPalette::spritesheet);
+        if (not source_surface) {
+            error(format("load_sprite_chunk: failed to load %", source_name));
+            return;
+        }
+        sprite_chunk_source_cache[cache_key] = source_surface;
+    }
+
+    const int tile_size = 8;
+    const int tiles_per_row_src = source_surface->w / tile_size;
+    if (tiles_per_row_src <= 0) {
+        return;
+    }
+
+    for (u16 i = 0; i < count; ++i) {
+        const TileDesc src_tile = src + i;
+        const TileDesc dst_tile = dst + i;
+
+        if (dst_tile >= (TileDesc)sprite_chunk_tile_count) {
+            error(format("load_sprite_chunk: dst tile % out of range",
+                         dst_tile));
+            continue;
+        }
+
+        SDL_Rect src_rect{(src_tile % tiles_per_row_src) * tile_size,
+                          (src_tile / tiles_per_row_src) * tile_size,
+                          tile_size,
+                          tile_size};
+        SDL_Rect dst_rect{dst_tile * tile_size, 0, tile_size, tile_size};
+
+        // Clear to transparent, then blit (source magenta is color-keyed out).
+        SDL_FillRect(sprite_chunk_surface,
+                     &dst_rect,
+                     SDL_MapRGBA(sprite_chunk_surface->format, 255, 0, 255, 0));
+        if (SDL_BlitSurface(source_surface,
+                            &src_rect,
+                            sprite_chunk_surface,
+                            &dst_rect) != 0) {
+            error(format("load_sprite_chunk: blit failed for tile %: %",
+                         i,
+                         SDL_GetError()));
+        }
+        sprite_chunk_loaded[dst_tile] = true;
+    }
+
+    // Rebuild the sampled texture from the modified surface (mirrors the
+    // overlay-chunk path; magenta keyed to transparent, alpha blending on).
+    if (sprite_chunk_texture) {
+        SDL_DestroyTexture(sprite_chunk_texture);
+    }
+    SDL_SetColorKey(sprite_chunk_surface,
+                    SDL_TRUE,
+                    SDL_MapRGB(sprite_chunk_surface->format, 0xFF, 0x00, 0xFF));
+    sprite_chunk_texture =
+        SDL_CreateTextureFromSurface(renderer, sprite_chunk_surface);
+    if (sprite_chunk_texture) {
+        SDL_SetTextureBlendMode(sprite_chunk_texture, SDL_BLENDMODE_BLEND);
+    }
 }
 
 
@@ -3506,6 +3649,8 @@ void Platform::load_sprite_texture(const char* name)
 
     sprite_texture_width = surface->w;
     sprite_texture_height = surface->h;
+
+    last_sprite_texture = name;
 
     SDL_FreeSurface(surface);
 }
@@ -5218,8 +5363,15 @@ void draw_sprite_group(int prio)
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
             SDL_RenderDrawRect(renderer, &rect);
         } else {
-            SDL_Rect src =
-                get_sprite_source_rect(sprite.texture_index, sprite.size);
+            SDL_Texture* sprite_source_texture = current_sprite_texture;
+            SDL_Rect src;
+            if (sprite.size == Sprite::Size::w8_h8 and sprite_chunk_texture and
+                is_loaded_sprite_chunk(sprite.texture_index)) {
+                sprite_source_texture = sprite_chunk_texture;
+                src = sprite_chunk_source_rect(sprite.texture_index);
+            } else {
+                src = get_sprite_source_rect(sprite.texture_index, sprite.size);
+            }
 
             SDL_Rect dst;
             dst.w = src.w * sprite.scale.x; // Apply scale
@@ -5243,7 +5395,8 @@ void draw_sprite_group(int prio)
                 (sprite.alpha == Sprite::Alpha::translucent) ? 127 : 255;
 
             if (sprite.color != ColorConstant::null && sprite.mix_amount > 0 and
-                sprite_mask_texture) {
+                sprite_mask_texture and
+                sprite_source_texture == current_sprite_texture) {
                 // Dual-pass rendering with scaling
                 float mix_ratio = sprite.mix_amount / 255.0f;
 
@@ -5276,18 +5429,11 @@ void draw_sprite_group(int prio)
                 SDL_SetTextureColorMod(current_sprite_texture, 255, 255, 255);
                 SDL_SetTextureAlphaMod(current_sprite_texture, 255);
             } else {
-                SDL_SetTextureColorMod(current_sprite_texture, 255, 255, 255);
-                SDL_SetTextureAlphaMod(current_sprite_texture, base_alpha);
-
-                SDL_RenderCopyEx(renderer,
-                                 current_sprite_texture,
-                                 &src,
-                                 &dst,
-                                 sprite.rotation,
-                                 nullptr,
-                                 flip);
-
-                SDL_SetTextureAlphaMod(current_sprite_texture, 255);
+                SDL_SetTextureColorMod(sprite_source_texture, 255, 255, 255);
+                SDL_SetTextureAlphaMod(sprite_source_texture, base_alpha);
+                SDL_RenderCopyEx(renderer, sprite_source_texture, &src, &dst,
+                                 sprite.rotation, nullptr, flip);
+                SDL_SetTextureAlphaMod(sprite_source_texture, 255);
             }
         }
     }

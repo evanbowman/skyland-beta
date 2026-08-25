@@ -133,10 +133,6 @@ void BoxedDialogScene::process_command()
 
     case 'a': {
         auto anim = parse_command_str();
-        if (PLATFORM.device_name() not_eq "GameboyAdvance") {
-            // TODO: implement sprite text for desktop port!
-            break;
-        }
         auto it = text_state_.current_word_;
         StringBuffer<96> anim_text;
         while (*it not_eq '\0' and not punctuation_or_whitespace(*it)) {
