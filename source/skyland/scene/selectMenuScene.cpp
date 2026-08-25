@@ -72,7 +72,7 @@ static const auto specific_colors =
 
 
 static const auto grayed_out_colors =
-    FontColors{ColorConstant::med_blue_gray, ColorConstant::rich_black};
+    FontColors{ColorConstant::med_blue_gray, custom_color(0x2a2a42)};
 
 
 
@@ -116,7 +116,7 @@ void SelectMenuScene::redraw_line(int line, bool highlight)
 
     for (int i = opts_->lines_[line].len(); i < opts_->longest_line_; ++i) {
         opts_->lines_[line].append(
-            " ", highlight ? highlight_colors : Text::OptColors{});
+            " ", highlight ? highlight_colors : clr);
     }
     enable_text_icon_glyphs(true);
 }
@@ -369,9 +369,13 @@ void SelectMenuScene::enter(Scene& scene)
                     StringBuffer<64> cost_str = " ";
                     cost_str += stringify(cost);
                     cost_str += "🪙";
+                    auto coloring = LineColoring::specific;
+                    if (not is_constructible(island(), room->metaclass_index())) {
+                        coloring = LineColoring::grayed_out;
+                    }
                     add_line(SystemString::sel_menu_repair, cost_str.c_str(),
                              {
-                                 .coloring_ = LineColoring::specific,
+                                 .coloring_ = coloring,
                                  .show_coins_hint_ = true,
                              },
                              [this, cursor] {
@@ -697,15 +701,19 @@ void SelectMenuScene::enter(Scene& scene)
         PLATFORM.set_overlay_tile(i, 0, 425);
     }
 
-    for (auto& line : opts_->lines_) {
+    for (u32 y = 0; y < opts_->lines_.size(); ++y) {
+        auto& line = opts_->lines_[y];
         for (int i = line.len(); i < opts_->longest_line_; ++i) {
             if (&line == opts_->lines_.begin()) {
                 line.append(" ", highlight_colors);
+            } else if (opts_->grayed_out_.get(y)) {
+                line.append(" ", grayed_out_colors);
             } else {
                 line.append(" ");
             }
         }
     }
+
     for (u32 y = 0; y < opts_->lines_.size(); ++y) {
         if (opts_->specific_.get(y) or opts_->grayed_out_.get(y)) {
             PLATFORM.set_overlay_tile(0, y + 1, 159);
