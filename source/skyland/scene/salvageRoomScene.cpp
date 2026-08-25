@@ -31,7 +31,7 @@ Coins get_room_cost(Island* island, const RoomMeta& meta);
 
 
 
-static Coins salvage_value(Room& room)
+Coins salvage_value(Room& room)
 {
     if (str_eq(room.name(), "gold")) {
         return (*room.metaclass())->cost();

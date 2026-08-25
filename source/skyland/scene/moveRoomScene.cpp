@@ -85,11 +85,7 @@ ScenePtr MoveRoomScene::update(Time delta)
 
         if (skip or player().button_down(Button::action_1)) {
             if (not skip and APP.coins() < 800) {
-                auto future_scene = make_deferred_scene<ReadyScene>();
-                auto str = SYSTR(construction_insufficient_funds);
-                PLATFORM.speaker().play_sound("beep_error", 2);
-                return make_scene<NotificationScene>(str->c_str(),
-                                                     future_scene);
+                return notify_error(SystemString::construction_insufficient_funds);
             }
             unpersist_ui();
             if (not skip) {

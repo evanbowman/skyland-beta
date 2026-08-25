@@ -11,6 +11,7 @@
 
 #include "notificationScene.hpp"
 #include "skyland/skyland.hpp"
+#include "readyScene.hpp"
 
 
 
@@ -61,6 +62,16 @@ void NotificationScene::exit(Scene& next)
 
     description_.reset();
     PLATFORM.fill_overlay(0);
+}
+
+
+
+ScenePtr notify_error(SystemString message)
+{
+    auto future_scene = []() { return make_scene<ReadyScene>(); };
+    PLATFORM.speaker().play_sound("beep_error", 2);
+    auto str = loadstr(message);
+    return make_scene<NotificationScene>(str->c_str(), future_scene);
 }
 
 

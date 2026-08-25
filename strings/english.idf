@@ -217,6 +217,7 @@ insufficient power supply!
 too many blocks
 not enough space!
 only one allowed!
+cannot repair: not buildable
 size
 walls
 weapons
@@ -696,6 +697,7 @@ describe flag
 show ping
 hide ping
 inspect
+repair
 -- Drone Service Log --
 technician's notes:
 -- Crewmember Passport --

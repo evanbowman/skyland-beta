@@ -901,10 +901,7 @@ ScenePtr reject_if_friendly()
         // always be bound to the opponent island.
         (static_cast<Opponent&>(APP.opponent_island()->owner()))
             .is_friendly()) {
-        auto future_scene = []() { return make_scene<ReadyScene>(); };
-        PLATFORM.speaker().play_sound("beep_error", 3);
-        auto str = SYSTR(error_friendly);
-        return make_scene<NotificationScene>(str->c_str(), future_scene);
+        return notify_error(SystemString::error_friendly);
     }
 
     return null_scene();

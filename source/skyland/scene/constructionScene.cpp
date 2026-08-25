@@ -13,7 +13,6 @@
 #include "globals.hpp"
 #include "inspectP2Scene.hpp"
 #include "modules/glossaryViewerModule.hpp"
-#include "modules/sandboxLoaderModule.hpp"
 #include "platform/platform.hpp"
 #include "readyScene.hpp"
 #include "salvageRoomScene.hpp"
@@ -1418,75 +1417,15 @@ bool ConstructionScene::collect_available_buildings()
 {
     data_->available_buildings_.clear();
 
-    const auto w_count =
-        island()->workshop_count() + island()->manufactory_count();
-
-    const auto f_count = island()->manufactory_count();
-
     auto metatable = room_metatable();
     for (MetaclassIndex i = 0; i < metatable.second; ++i) {
         auto& meta = metatable.first[i];
 
-        if (not is_enabled(i)) {
+        if (not is_constructible(island(), i)) {
             continue;
         }
 
-        const bool workshop_required =
-            (meta->properties() & RoomProperties::workshop_required);
-
-        const bool manufactory_required =
-            (meta->properties() & RoomProperties::manufactory_required);
-
-        const bool sandbox_dependencies_off =
-            not SandboxLoaderModule::get_setting(3);
-
-        if (APP.game_mode() not_eq App::GameMode::sandbox) {
-            if ((meta->properties() & RoomProperties::human_only) and
-                APP.faction() not_eq Faction::human) {
-                continue;
-            }
-
-            if ((meta->properties() & RoomProperties::sylph_only) and
-                APP.faction() not_eq Faction::sylph) {
-                continue;
-            }
-
-            if ((meta->properties() & RoomProperties::goblin_only) and
-                APP.faction() not_eq Faction::goblin) {
-                continue;
-            }
-        }
-
-        const bool dependencies_satisfied =
-            (not manufactory_required or
-             (manufactory_required and f_count > 0) or
-             (APP.game_mode() == App::GameMode::sandbox and
-              sandbox_dependencies_off)) and
-            (not workshop_required or (workshop_required and w_count > 0) or
-             (APP.game_mode() == App::GameMode::sandbox and
-              sandbox_dependencies_off));
-
-        const bool explicitly_disabled =
-            (APP.game_mode() == App::GameMode::tutorial and
-             meta->properties() & RoomProperties::disabled_in_tutorials) or
-            (meta->properties() & RoomProperties::not_constructible) or
-            (APP.game_mode() not_eq App::GameMode::tutorial and
-             room_hidden(i)) or
-            (APP.game_mode() not_eq App::GameMode::adventure and
-             meta->properties() & RoomProperties::adventure_mode_only) or
-            (APP.game_mode() not_eq App::GameMode::sandbox and
-             meta->properties() &
-                 RoomProperties::only_constructible_in_sandbox) or
-            (PLATFORM.network_peer().is_connected() and
-             meta->properties() & RoomProperties::multiplayer_unsupported) or
-            (APP.game_mode() == App::GameMode::skyland_forever and
-             meta->properties() &
-                 RoomProperties::skyland_forever_unsupported) or
-            (state_bit_load(StateBit::multiboot) and
-             not(meta->properties() & RoomProperties::multiboot_compatible));
-
-        if (not explicitly_disabled and dependencies_satisfied and
-            (not constrain_ or (constrain_ and site_has_space(i))) and
+        if ((not constrain_ or (constrain_ and site_has_space(i))) and
             (APP.game_mode() not_eq App::GameMode::tutorial or
              // NOTE: for backwards compatibility with tutorials: The game used
              // to only display blocks that would fit into the selected

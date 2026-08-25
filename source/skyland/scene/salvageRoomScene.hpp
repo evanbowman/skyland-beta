@@ -69,4 +69,8 @@ static const Float salvage_factor = 0.65f;
 
 
 
+Coins salvage_value(Room& room);
+
+
+
 } // namespace skyland

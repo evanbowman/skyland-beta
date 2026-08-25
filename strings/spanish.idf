@@ -217,6 +217,7 @@ hacer :añadir terreno
 demasiados bloques
 ¡no hay suficiente espacio!
 ¡solo se permite uno!
+no se puede: no construible
 tamaño
 muros
 armas
@@ -696,6 +697,7 @@ describir bandera
 mostrar ping
 ocultar ping
 inspeccionar
+reparar
 -- Registro del dron --
 notas del técnico:
 -- Pasaporte tripulante --

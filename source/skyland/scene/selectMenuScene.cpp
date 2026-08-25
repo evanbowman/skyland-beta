@@ -78,6 +78,7 @@ void SelectMenuScene::redraw_line(int line, bool highlight)
                          : (opts_->specific_.get(line) ? specific_colors
                                                        : Text::OptColors{});
 
+    enable_text_icon_glyphs(false);
     opts_->lines_[line].assign(loadstr(opts_->strings_[line])->c_str(), clr);
     opts_->lines_[line].append(opts_->suffixes_[line].c_str(), clr);
 
@@ -85,6 +86,7 @@ void SelectMenuScene::redraw_line(int line, bool highlight)
         opts_->lines_[line].append(
             " ", highlight ? highlight_colors : Text::OptColors{});
     }
+    enable_text_icon_glyphs(true);
 }
 
 
@@ -206,6 +208,7 @@ void SelectMenuScene::add_line(SystemString str,
     opts_->specific_.set(opts_->lines_.size(), specific);
     u8 y = opts_->lines_.size() + 1;
     opts_->lines_.emplace_back(OverlayCoord{1, y});
+    enable_text_icon_glyphs(false);
     if (opts_->lines_.size() == 1) {
         opts_->lines_.back().assign(line->c_str(), highlight_colors);
         opts_->lines_.back().append(suffix);
@@ -214,6 +217,7 @@ void SelectMenuScene::add_line(SystemString str,
         opts_->lines_.back().assign(line->c_str(), clr);
         opts_->lines_.back().append(suffix, clr);
     }
+    enable_text_icon_glyphs(true);
     opts_->longest_line_ =
         std::max(utf8::len(line->c_str()), size_t(opts_->longest_line_));
     opts_->strings_.push_back(str);
@@ -310,6 +314,20 @@ void SelectMenuScene::enter(Scene& scene)
                         }
                         return null_scene();
                     });
+
+
+                auto room = island()->get_room(cursor);
+                if (room) {
+                    StringBuffer<64> cost_str = " ";
+                    cost_str += stringify(repair_cost(*room));
+                    cost_str += "🪙";
+                    add_line(SystemString::sel_menu_repair, cost_str.c_str(), true, [this, cursor] {
+                        if (auto room = island()->get_room(cursor)) {
+                            return repair(*room);
+                        }
+                        return null_scene();
+                    });
+                }
             }
 
             Character* chr = nullptr;

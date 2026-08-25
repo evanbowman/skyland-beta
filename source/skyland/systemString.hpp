@@ -271,6 +271,7 @@ enum class SystemString {
     construction_too_many_rooms,
     construction_not_enough_space,
     construciton_one_allowed,
+    construction_missing_dependencies,
 
     size,
 
@@ -835,6 +836,7 @@ enum class SystemString {
     sel_menu_hide_ping,
 
     sel_menu_inspect,
+    sel_menu_repair,
 
     drone_info_heading,
     drone_info_notes,

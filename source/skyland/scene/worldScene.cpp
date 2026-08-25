@@ -666,14 +666,8 @@ ScenePtr WorldScene::update(Time delta)
             if (PLATFORM.network_peer().is_connected()) {
                 if (not g.multiplayer_pauses_remaining_) {
                     can_pause = false;
-                    PLATFORM.speaker().play_sound("beep_error", 3);
                     set_gamespeed(GameSpeed::normal);
-                    auto future_scene = []() {
-                        return make_scene<ReadyScene>();
-                    };
-                    auto str = SYSTR(error_no_more_pauses);
-                    ret = make_scene<NotificationScene>(str->c_str(),
-                                                        future_scene);
+                    ret = notify_error(SystemString::error_no_more_pauses);
                 } else {
                     g.multiplayer_pause_owner_ = true;
                     g.multiplayer_pauses_remaining_--;

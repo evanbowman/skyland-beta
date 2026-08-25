@@ -303,13 +303,7 @@ ScenePtr GroupSelectionScene::update(Time delta)
                 }
                 if (APP.player_island().power_supply() <
                     APP.player_island().power_drain()) {
-                    auto future_scene = []() {
-                        return make_scene<ReadyScene>();
-                    };
-                    PLATFORM.speaker().play_sound("beep_error", 2);
-                    auto str = SYSTR(error_power_out);
-                    return make_scene<NotificationScene>(str->c_str(),
-                                                         future_scene);
+                    return notify_error(SystemString::error_power_out);
                 }
                 return make_scene<WeaponSetTargetScene>(**group_selection_);
 

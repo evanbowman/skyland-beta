@@ -46,4 +46,8 @@ public:
 
 
 
+ScenePtr notify_error(SystemString message);
+
+
+
 } // namespace skyland

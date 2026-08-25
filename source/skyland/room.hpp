@@ -941,4 +941,16 @@ Time cold_boot_penalty();
 
 
 
+bool is_constructible(Island* isle, MetaclassIndex mti);
+
+
+
+Coins repair_cost(Room& room);
+
+
+
+ScenePtr repair(Room& room);
+
+
+
 } // namespace skyland

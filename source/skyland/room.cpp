@@ -20,8 +20,10 @@
 #include "skyland/entity/ghost.hpp"
 #include "skyland/network.hpp"
 #include "skyland/rooms/plunderedRoom.hpp"
+#include "skyland/scene/modules/sandboxLoaderModule.hpp"
 #include "skyland/scene/multiplayerCoOpAwaitLockScene.hpp"
 #include "skyland/scene/notificationScene.hpp"
+#include "skyland/scene/salvageRoomScene.hpp"
 #include "skyland/sharedVariable.hpp"
 #include "skyland/tile.hpp"
 #include "skyland/weather/solarStorm.hpp"
@@ -1893,6 +1895,142 @@ void Room::on_salvage()
 
 void Room::amplify(bool enabled)
 {
+}
+
+
+
+bool is_constructible(Island* isle, MetaclassIndex mti)
+{
+    auto metatable = room_metatable();
+
+    if (not is_enabled(mti)) {
+        return false;
+    }
+
+    auto& meta = metatable.first[mti];
+
+    const bool workshop_required =
+        (meta->properties() & RoomProperties::workshop_required);
+
+    const bool manufactory_required =
+        (meta->properties() & RoomProperties::manufactory_required);
+
+    const bool sandbox_dependencies_off =
+        not SandboxLoaderModule::get_setting(3);
+
+    if (APP.game_mode() not_eq App::GameMode::sandbox) {
+        if ((meta->properties() & RoomProperties::human_only) and
+            APP.faction() not_eq Faction::human) {
+            return false;
+        }
+
+        if ((meta->properties() & RoomProperties::sylph_only) and
+            APP.faction() not_eq Faction::sylph) {
+            return false;
+        }
+
+        if ((meta->properties() & RoomProperties::goblin_only) and
+            APP.faction() not_eq Faction::goblin) {
+            return false;
+        }
+    }
+
+    const auto f_count = isle->manufactory_count();
+    const auto w_count =
+        isle->workshop_count() + isle->manufactory_count();
+
+    const bool dependencies_satisfied =
+        (not manufactory_required or
+         (manufactory_required and f_count > 0) or
+         (APP.game_mode() == App::GameMode::sandbox and
+          sandbox_dependencies_off)) and
+        (not workshop_required or (workshop_required and w_count > 0) or
+         (APP.game_mode() == App::GameMode::sandbox and
+          sandbox_dependencies_off));
+
+    const bool explicitly_disabled =
+        (APP.game_mode() == App::GameMode::tutorial and
+         meta->properties() & RoomProperties::disabled_in_tutorials) or
+        (meta->properties() & RoomProperties::not_constructible) or
+        (APP.game_mode() not_eq App::GameMode::tutorial and
+         room_hidden(mti)) or
+        (APP.game_mode() not_eq App::GameMode::adventure and
+         meta->properties() & RoomProperties::adventure_mode_only) or
+        (APP.game_mode() not_eq App::GameMode::sandbox and
+         meta->properties() &
+         RoomProperties::only_constructible_in_sandbox) or
+        (PLATFORM.network_peer().is_connected() and
+         meta->properties() & RoomProperties::multiplayer_unsupported) or
+        (APP.game_mode() == App::GameMode::skyland_forever and
+         meta->properties() &
+         RoomProperties::skyland_forever_unsupported) or
+        (state_bit_load(StateBit::multiboot) and
+         not(meta->properties() & RoomProperties::multiboot_compatible));
+
+    return dependencies_satisfied and not explicitly_disabled;
+}
+
+
+
+SHARED_VARIABLE(repair_plunder_penalty);
+
+
+
+Coins repair_cost(Room& room)
+{
+    auto full_health = room.max_health();
+
+    bool is_contested = false;
+
+    Player* room_owner = &room.parent()->owner();
+
+    if (room.health() not_eq full_health) {
+        for (auto& chr : room.characters()) {
+            bool active_plunder = chr->owner() not_eq room_owner;
+            if (active_plunder) {
+                is_contested = true;
+            }
+        }
+    } else {
+        return 0;
+    }
+
+    Coins penalty = 0;
+    if (is_contested) {
+        penalty = repair_plunder_penalty;
+    }
+
+    auto meta = room.metaclass();
+    auto rebuild_cost = get_room_cost(room.parent(), *meta);
+    return std::max(Coins(0), rebuild_cost - salvage_value(room)) + penalty;
+}
+
+
+
+void make_construction_effect(Vec2<Fixnum> pos);
+
+
+
+ScenePtr repair(Room& room)
+{
+    auto isle = room.parent();
+
+    if (not is_constructible(isle, room.metaclass_index())) {
+        return notify_error(SystemString::construction_missing_dependencies);
+    }
+
+    auto cost = repair_cost(room);
+    if (APP.coins() < cost) {
+        return notify_error(SystemString::construction_insufficient_funds);
+    }
+
+    APP.set_coins(APP.coins() - cost);
+    room.heal(room.max_health() - room.health());
+    make_construction_effect(room.visual_center());
+    room.schedule_repaint();
+    PLATFORM.speaker().play_sound("build0", 3);
+
+    return null_scene();
 }
 
 
