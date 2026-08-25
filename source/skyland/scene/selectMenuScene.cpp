@@ -115,8 +115,7 @@ void SelectMenuScene::redraw_line(int line, bool highlight)
     opts_->lines_[line].append(opts_->suffixes_[line].c_str(), clr);
 
     for (int i = opts_->lines_[line].len(); i < opts_->longest_line_; ++i) {
-        opts_->lines_[line].append(
-            " ", highlight ? highlight_colors : clr);
+        opts_->lines_[line].append(" ", highlight ? highlight_colors : clr);
     }
     enable_text_icon_glyphs(true);
 }
@@ -318,19 +317,17 @@ void SelectMenuScene::enter(Scene& scene)
         if (is_player_island(isle) or
             APP.game_mode() == App::GameMode::sandbox) {
             if (isle->interior_visible()) {
-                add_line(SystemString::sel_menu_view_exterior,
-                         "",
-                         []() -> ScenePtr {
-                             show_island_exterior(&APP.player_island());
-                             return null_scene();
-                         });
+                add_line(
+                    SystemString::sel_menu_view_exterior, "", []() -> ScenePtr {
+                        show_island_exterior(&APP.player_island());
+                        return null_scene();
+                    });
             } else {
-                add_line(SystemString::sel_menu_view_interior,
-                         "",
-                         []() -> ScenePtr {
-                             show_island_interior(&APP.player_island());
-                             return null_scene();
-                         });
+                add_line(
+                    SystemString::sel_menu_view_interior, "", []() -> ScenePtr {
+                        show_island_interior(&APP.player_island());
+                        return null_scene();
+                    });
             }
         }
 
@@ -349,19 +346,18 @@ void SelectMenuScene::enter(Scene& scene)
 
             if (not is_far_camera() and
                 APP.game_mode() not_eq App::GameMode::tutorial) {
-                add_line(
-                    SystemString::sel_menu_inspect, "", [this, cursor] {
-                        auto cb =
-                            APP.invoke_script("/scripts/inspect/inspect.lisp");
-                        if (cb->type() == lisp::Value::Type::function) {
-                            lisp::push_op(wrap_island(this->island()));
-                            lisp::push_op(L_INT(cursor.x));
-                            lisp::push_op(L_INT(cursor.y));
-                            lisp::safecall(cb, 3);
-                            lisp::pop_op();
-                        }
-                        return null_scene();
-                    });
+                add_line(SystemString::sel_menu_inspect, "", [this, cursor] {
+                    auto cb =
+                        APP.invoke_script("/scripts/inspect/inspect.lisp");
+                    if (cb->type() == lisp::Value::Type::function) {
+                        lisp::push_op(wrap_island(this->island()));
+                        lisp::push_op(L_INT(cursor.x));
+                        lisp::push_op(L_INT(cursor.y));
+                        lisp::safecall(cb, 3);
+                        lisp::pop_op();
+                    }
+                    return null_scene();
+                });
 
                 auto room = island()->get_room(cursor);
                 if (room and room->health() not_eq room->max_health()) {
@@ -370,10 +366,12 @@ void SelectMenuScene::enter(Scene& scene)
                     cost_str += stringify(cost);
                     cost_str += "🪙";
                     auto coloring = LineColoring::specific;
-                    if (not is_constructible(island(), room->metaclass_index())) {
+                    if (not is_constructible(island(),
+                                             room->metaclass_index())) {
                         coloring = LineColoring::grayed_out;
                     }
-                    add_line(SystemString::sel_menu_repair, cost_str.c_str(),
+                    add_line(SystemString::sel_menu_repair,
+                             cost_str.c_str(),
                              {
                                  .coloring_ = coloring,
                                  .show_coins_hint_ = true,
@@ -439,19 +437,20 @@ void SelectMenuScene::enter(Scene& scene)
             }
         }
         if (bird_found) {
-            add_line(
-                SystemString::sel_menu_spook_bird, "",
-                {.coloring_ = LineColoring::specific},
-                [this, cursor]() {
-                    for (auto& bird : APP.birds()) {
-                        if (bird->island() == island() and
-                            bird->coordinate() == cursor) {
-                            PLATFORM.speaker().play_sound("seagull_1.raw", 0);
-                            bird->signal();
-                        }
-                    }
-                    return null_scene();
-                });
+            add_line(SystemString::sel_menu_spook_bird,
+                     "",
+                     {.coloring_ = LineColoring::specific},
+                     [this, cursor]() {
+                         for (auto& bird : APP.birds()) {
+                             if (bird->island() == island() and
+                                 bird->coordinate() == cursor) {
+                                 PLATFORM.speaker().play_sound("seagull_1.raw",
+                                                               0);
+                                 bird->signal();
+                             }
+                         }
+                         return null_scene();
+                     });
         }
 
         const auto flag_pos = island()->flag_pos();
@@ -539,10 +538,8 @@ void SelectMenuScene::enter(Scene& scene)
                         SystemString::sel_menu_poweron,
                         format(" +%⚡", (*room->metaclass())->consumes_power())
                             .c_str(),
-                        {
-                            .coloring_ = LineColoring::specific,
-                            .show_power_hint_ = true
-                        },
+                        {.coloring_ = LineColoring::specific,
+                         .show_power_hint_ = true},
                         [this, c = cursor]() {
                             if (auto room = island()->get_room(c)) {
                                 room->set_powerdown(false);
@@ -557,10 +554,8 @@ void SelectMenuScene::enter(Scene& scene)
                         SystemString::sel_menu_powerdown,
                         format(" -%⚡", (*room->metaclass())->consumes_power())
                             .c_str(),
-                        {
-                            .coloring_ = LineColoring::specific,
-                            .show_power_hint_ = true
-                        },
+                        {.coloring_ = LineColoring::specific,
+                         .show_power_hint_ = true},
                         [this, c = cursor]() {
                             if (auto room = island()->get_room(c)) {
                                 room->set_powerdown(true);
@@ -656,10 +651,10 @@ void SelectMenuScene::enter(Scene& scene)
                      "",
                      {.coloring_ = LineColoring::specific},
                      []() {
-                auto ret = make_scene<FlagDesignerModule>();
-                ret->editing_ingame_ = true;
-                return ret;
-            });
+                         auto ret = make_scene<FlagDesignerModule>();
+                         ret->editing_ingame_ = true;
+                         return ret;
+                     });
         }
 
         if (state_bit_load(StateBit::minimap_on)) {
@@ -694,8 +689,7 @@ void SelectMenuScene::enter(Scene& scene)
         }
     }
 
-    add_line(
-        SystemString::sel_menu_back, "", []() { return null_scene(); });
+    add_line(SystemString::sel_menu_back, "", []() { return null_scene(); });
 
     for (int i = 0; i < opts_->longest_line_ + 1; ++i) {
         PLATFORM.set_overlay_tile(i, 0, 425);

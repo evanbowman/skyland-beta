@@ -4327,10 +4327,10 @@ template <typename T> u32 read_impl(T& code, int offset)
     push_op(get_nil());
 
     constexpr bool contiguous = std::is_same_v<T, BasicCharSequence>;
-    [[maybe_unused]] const char* p   = nullptr;
-    [[maybe_unused]] int         len = 0;
+    [[maybe_unused]] const char* p = nullptr;
+    [[maybe_unused]] int len = 0;
     if constexpr (contiguous) {
-        p   = code.data();
+        p = code.data();
         len = (int)code.length();
     }
     auto at = [&](int pos) -> char {
@@ -4343,7 +4343,7 @@ template <typename T> u32 read_impl(T& code, int offset)
 
     int i = 0;
     while (true) {
-        const char c = at(offset + i);       // dispatch char, kept for the guard
+        const char c = at(offset + i); // dispatch char, kept for the guard
         switch (c) {
         case '\0':
             return i;
@@ -4361,7 +4361,8 @@ template <typename T> u32 read_impl(T& code, int offset)
         case ';':
             while (true) {
                 const char d = at(offset + i);
-                if (d == '\0' or d == '\r' or d == '\n') break;
+                if (d == '\0' or d == '\r' or d == '\n')
+                    break;
                 ++i;
             }
             break;
@@ -4382,8 +4383,7 @@ template <typename T> u32 read_impl(T& code, int offset)
                 __negate_number(get_op0());
                 return i;
             }
-            if (at(offset + i + 1) == '.' and
-                at(offset + i + 2) >= '0' and
+            if (at(offset + i + 1) == '.' and at(offset + i + 2) >= '0' and
                 at(offset + i + 2) <= '9') {
                 ++i;
                 pop_op(); // nil
@@ -4393,13 +4393,25 @@ template <typename T> u32 read_impl(T& code, int offset)
             }
             goto READ_SYMBOL;
 
-        case '0': case '1': case '2': case '3': case '4':
-        case '5': case '6': case '7': case '8': case '9':
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
             pop_op(); // nil
             i += read_number(code, offset + i);
             return i;
 
-        case '\n': case '\r': case '\v': case '\t': case ' ':
+        case '\n':
+        case '\r':
+        case '\v':
+        case '\t':
+        case ' ':
             ++i;
             break;
 
@@ -4428,7 +4440,7 @@ template <typename T> u32 read_impl(T& code, int offset)
             if ((c == '\'' or c == '`') and
                 get_op0()->type() == Value::Type::symbol) {
                 const char* nm = get_op0()->symbol().name();
-                if (nm[0] == c and nm[1] == '\0') {   // == str_cmp(nm, quote)==0
+                if (nm[0] == c and nm[1] == '\0') { // == str_cmp(nm, quote)==0
                     auto pair = make_cons(get_op0(), get_nil());
                     push_op(pair);
                     i += read_impl(code, offset + i);

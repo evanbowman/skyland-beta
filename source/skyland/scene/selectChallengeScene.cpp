@@ -292,10 +292,10 @@ ScenePtr SelectChallengeScene::update(Time delta)
             PLATFORM.screen().display();
             APP.set_coins(0);
             auto script = selected_script_name();
-            timer_ += preload_script_during_fade(fade_duration, script.c_str(), {
-                    .initial_fade_ = default_fade,
-                    .title_menu_fade_ = true
-                });
+            timer_ += preload_script_during_fade(
+                fade_duration,
+                script.c_str(),
+                {.initial_fade_ = default_fade, .title_menu_fade_ = true});
         } else if (APP.player().button_down(Button::action_2)) {
             text_.clear();
             PLATFORM.fill_overlay(0);

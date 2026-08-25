@@ -1936,12 +1936,10 @@ bool is_constructible(Island* isle, MetaclassIndex mti)
     }
 
     const auto f_count = isle->manufactory_count();
-    const auto w_count =
-        isle->workshop_count() + isle->manufactory_count();
+    const auto w_count = isle->workshop_count() + isle->manufactory_count();
 
     const bool dependencies_satisfied =
-        (not manufactory_required or
-         (manufactory_required and f_count > 0) or
+        (not manufactory_required or (manufactory_required and f_count > 0) or
          (APP.game_mode() == App::GameMode::sandbox and
           sandbox_dependencies_off)) and
         (not workshop_required or (workshop_required and w_count > 0) or
@@ -1952,18 +1950,15 @@ bool is_constructible(Island* isle, MetaclassIndex mti)
         (APP.game_mode() == App::GameMode::tutorial and
          meta->properties() & RoomProperties::disabled_in_tutorials) or
         (meta->properties() & RoomProperties::not_constructible) or
-        (APP.game_mode() not_eq App::GameMode::tutorial and
-         room_hidden(mti)) or
+        (APP.game_mode() not_eq App::GameMode::tutorial and room_hidden(mti)) or
         (APP.game_mode() not_eq App::GameMode::adventure and
          meta->properties() & RoomProperties::adventure_mode_only) or
         (APP.game_mode() not_eq App::GameMode::sandbox and
-         meta->properties() &
-         RoomProperties::only_constructible_in_sandbox) or
+         meta->properties() & RoomProperties::only_constructible_in_sandbox) or
         (PLATFORM.network_peer().is_connected() and
          meta->properties() & RoomProperties::multiplayer_unsupported) or
         (APP.game_mode() == App::GameMode::skyland_forever and
-         meta->properties() &
-         RoomProperties::skyland_forever_unsupported) or
+         meta->properties() & RoomProperties::skyland_forever_unsupported) or
         (state_bit_load(StateBit::multiboot) and
          not(meta->properties() & RoomProperties::multiboot_compatible));
 
@@ -2016,8 +2011,7 @@ ScenePtr repair(Room& room)
     if (not is_constructible(isle, room.metaclass_index())) {
         auto props = (*room.metaclass())->properties();
         const auto f_count = isle->manufactory_count();
-        const auto w_count =
-            isle->workshop_count() + isle->manufactory_count();
+        const auto w_count = isle->workshop_count() + isle->manufactory_count();
 
         if ((props & RoomProperties::workshop_required) and w_count == 0) {
             return notify_error(SystemString::repair_denied_workshop);

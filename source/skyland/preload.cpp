@@ -167,8 +167,10 @@ ElapsedTime preload_script_during_fade(Time fade_out_duration,
             temp += frame_step;
             // NOTE: the interrupt handler that's running this fade sequence
             // cannot run heavy functions like smoothstep.
-            u8 amount =
-                max_fade_amount * (opts.initial_fade_ + (1.f - opts.initial_fade_) * smoothstep(0.f, fade_out_duration, temp));
+            u8 amount = max_fade_amount *
+                        (opts.initial_fade_ +
+                         (1.f - opts.initial_fade_) *
+                             smoothstep(0.f, fade_out_duration, temp));
             fade_state.background_fade_amounts_.push_back(amount);
         }
 
@@ -177,8 +179,7 @@ ElapsedTime preload_script_during_fade(Time fade_out_duration,
             task = background_title_menu_fade_task;
         }
 
-        old_task =
-            PLATFORM.set_background_task(task, &fade_state);
+        old_task = PLATFORM.set_background_task(task, &fade_state);
     }
 
     LoadLevelScene::update_weather();

@@ -3023,7 +3023,8 @@ static void blend_palette(u16* dst, const u16* src, u32 fa, u32 na)
 
 static void copy_palette(u16* dst, const u16* src)
 {
-    for (int i = 0; i < 16; ++i) dst[i] = src[i]; // amt==0 identity
+    for (int i = 0; i < 16; ++i)
+        dst[i] = src[i]; // amt==0 identity
 }
 
 
@@ -3043,7 +3044,7 @@ void Platform::Screen::schedule_fade(Float amount, const FadeProperties& p)
     set_gflag(GlobalFlag::palette_sync, true);
 
     // Precompute shared stuff once for the whole fade.
-    const u32 a  = (amt + 4) >> 3;                 // 0..32, endpoints exact
+    const u32 a = (amt + 4) >> 3; // 0..32, endpoints exact
     const u32 na = 32 - a;
     const u16 cp = c.bgr_hex_555();
     const u32 fa = (((u32)cp | ((u32)cp << 16)) & blend_mask) * a;
@@ -3058,15 +3059,17 @@ void Platform::Screen::schedule_fade(Float amount, const FadeProperties& p)
     };
 
     if (p.include_sprites or not p.dodge) {
-        layer(&sp_palette_back_buffer[0],  sprite_palette,     p.include_sprites);
-        layer(&sp_palette_back_buffer[32], sprite_alt_palette, p.include_sprites);
+        layer(&sp_palette_back_buffer[0], sprite_palette, p.include_sprites);
+        layer(
+            &sp_palette_back_buffer[32], sprite_alt_palette, p.include_sprites);
     }
 
     if (p.include_tiles or not p.dodge) {
         layer(&bg_palette_back_buffer[0], tilesheet_0_palette, p.include_tiles);
 
         // Darkened palette: always full amt, straight to VRAM.
-        blend_palette(&MEM_BG_PALETTE[9 * 16], tilesheet_0_darkened_palette, fa, na);
+        blend_palette(
+            &MEM_BG_PALETTE[9 * 16], tilesheet_0_darkened_palette, fa, na);
 
         // Custom flag/tile/sprite: always full amt, written to two slots.
         for (int i = 0; i < 16; ++i) {
@@ -3074,14 +3077,17 @@ void Platform::Screen::schedule_fade(Float amount, const FadeProperties& p)
             const u32 b = (s | (s << 16)) & blend_mask;
             const u16 val = fold_555(fa + b * na);
             bg_palette_back_buffer[16 * 12 + i] = val;
-            sp_palette_back_buffer[16 + i]      = val;
+            sp_palette_back_buffer[16 + i] = val;
         }
 
-        layer(&bg_palette_back_buffer[32], tilesheet_1_palette, p.include_tiles);
+        layer(
+            &bg_palette_back_buffer[32], tilesheet_1_palette, p.include_tiles);
     }
 
     if (p.include_background or not p.dodge) {
-        layer(&bg_palette_back_buffer[16 * 11], background_palette, p.include_background);
+        layer(&bg_palette_back_buffer[16 * 11],
+              background_palette,
+              p.include_background);
     }
 
     if (p.include_overlay or not p.dodge) {

@@ -50,10 +50,10 @@ public:
     }
 
 private:
-
     static constexpr int index_capacity = 33;
 
-    struct IndexEntry {
+    struct IndexEntry
+    {
         u16 section_off;
         u16 key_off;
         u16 value_off;
@@ -61,10 +61,12 @@ private:
         u8 key_len;
     };
 
-    struct Index {
+    struct Index
+    {
         const char* source = nullptr;
         int count = 0;
-        bool overflow = false; // file exceeded a representable limit; use a scan
+        bool overflow =
+            false; // file exceeded a representable limit; use a scan
         IndexEntry entries[index_capacity];
     };
 

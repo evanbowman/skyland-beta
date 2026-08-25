@@ -60,7 +60,8 @@ void decompress(const Vector<char>& input, Vector<char>& output)
     using BufOut = Buffer<char, 2000>;
 
     auto win_in = allocate<BufIn>("dcompr-window-in", BufIn::SkipZeroFill{});
-    auto win_out = allocate<BufOut>("dcompr-window-out", BufOut::SkipZeroFill{});
+    auto win_out =
+        allocate<BufOut>("dcompr-window-out", BufOut::SkipZeroFill{});
 
     heatshrink_decoder enc;
     heatshrink_decoder_reset(&enc);

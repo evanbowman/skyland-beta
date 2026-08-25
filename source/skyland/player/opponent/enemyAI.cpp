@@ -1165,9 +1165,10 @@ static void place_offensive_drone(DroneBay& db,
     }
 
     ATP top_row_weights[16];
-    u8  top_row_y[16];   // hover y per column; meaningful only where weight > 0
+    u8 top_row_y[16]; // hover y per column; meaningful only where weight > 0
     for (int i = 0; i < 16; ++i) {
-        top_row_weights[i] = restrict_columns[i] ? ATP::from_integer(-10000) : 0.0_atp;
+        top_row_weights[i] =
+            restrict_columns[i] ? ATP::from_integer(-10000) : 0.0_atp;
         top_row_y[i] = 0;
     }
 

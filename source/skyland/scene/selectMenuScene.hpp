@@ -52,7 +52,6 @@ public:
     void register_option(SystemString name, SelMenuCallback cb);
 
 private:
-
     enum class LineColoring {
         none,
         specific,

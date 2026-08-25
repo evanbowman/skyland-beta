@@ -13,7 +13,8 @@
 #include "platform/platform.hpp"
 
 
-namespace {
+namespace
+{
 
 
 bool is_space(char c)
@@ -61,8 +62,7 @@ const char* value_end(const char* v)
 }
 
 
-template <typename Visitor>
-void enumerate(const char* p, Visitor&& visit)
+template <typename Visitor> void enumerate(const char* p, Visitor&& visit)
 {
     const char* section = "";
     int section_len = 0;
@@ -206,29 +206,27 @@ const Conf::Index& Conf::ensure_index(const char* file_data)
 
     const char* const base = file_data;
 
-    enumerate(file_data,
-              [&idx, base](const char* sec,
-                           int sl,
-                           const char* key,
-                           int kl,
-                           const char* val) {
-                  if (idx.count >= index_capacity) {
-                      idx.overflow = true;
-                      return false;
-                  }
-                  const u32 value_off = (u32)(val - base);
-                  if (value_off > 0xffff or sl > 0xff or kl > 0xff) {
-                      idx.overflow = true;
-                      return false;
-                  }
-                  auto& e = idx.entries[idx.count++];
-                  e.section_off = (u16)(sec - base);
-                  e.key_off = (u16)(key - base);
-                  e.value_off = (u16)value_off;
-                  e.section_len = (u8)sl;
-                  e.key_len = (u8)kl;
-                  return true;
-              });
+    enumerate(
+        file_data,
+        [&idx, base](
+            const char* sec, int sl, const char* key, int kl, const char* val) {
+            if (idx.count >= index_capacity) {
+                idx.overflow = true;
+                return false;
+            }
+            const u32 value_off = (u32)(val - base);
+            if (value_off > 0xffff or sl > 0xff or kl > 0xff) {
+                idx.overflow = true;
+                return false;
+            }
+            auto& e = idx.entries[idx.count++];
+            e.section_off = (u16)(sec - base);
+            e.key_off = (u16)(key - base);
+            e.value_off = (u16)value_off;
+            e.section_len = (u8)sl;
+            e.key_len = (u8)kl;
+            return true;
+        });
 
     return idx;
 }
@@ -263,20 +261,16 @@ Conf::get(const char* file_data, const char* section, const char* key)
     }
 
     Value result{};
-    enumerate(file_data,
-              [&](const char* sec,
-                  int sl,
-                  const char* k,
-                  int kl,
-                  const char* val) {
-                  if (sl == section_len and kl == key_len and
-                      bytes_equal(sec, section, sl) and
-                      bytes_equal(k, key, kl)) {
-                      result = make_value(val);
-                      return false;
-                  }
-                  return true;
-              });
+    enumerate(
+        file_data,
+        [&](const char* sec, int sl, const char* k, int kl, const char* val) {
+            if (sl == section_len and kl == key_len and
+                bytes_equal(sec, section, sl) and bytes_equal(k, key, kl)) {
+                result = make_value(val);
+                return false;
+            }
+            return true;
+        });
     return result;
 }
 

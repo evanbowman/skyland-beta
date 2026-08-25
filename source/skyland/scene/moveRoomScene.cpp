@@ -85,7 +85,8 @@ ScenePtr MoveRoomScene::update(Time delta)
 
         if (skip or player().button_down(Button::action_1)) {
             if (not skip and APP.coins() < 800) {
-                return notify_error(SystemString::construction_insufficient_funds);
+                return notify_error(
+                    SystemString::construction_insufficient_funds);
             }
             unpersist_ui();
             if (not skip) {
