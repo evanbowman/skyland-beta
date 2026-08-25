@@ -2034,7 +2034,7 @@ ScenePtr repair(Room& room)
     APP.set_coins(APP.coins() - cost);
     room.heal(room.max_health() - room.health());
     make_construction_effect(room.visual_center());
-    room.schedule_repaint();
+    room.parent()->schedule_repaint();
     PLATFORM.speaker().play_sound("build0", 3);
 
     return null_scene();
