@@ -45,12 +45,34 @@ void NotificationScene::enter(Scene& prev)
 {
     ActiveWorldScene::enter(prev);
 
-    description_.emplace(OverlayCoord{0, u8(calc_screen_tiles().y - 1)});
+    description_.emplace();
 
-    description_->assign(msg_.c_str());
+    u8 place_y = u8(calc_screen_tiles().y - 1);
+    u8 box_width = 30;
 
-    for (int i = 0; i < description_->len(); ++i) {
-        PLATFORM.set_overlay_tile(i, 18, 425);
+    auto text_length = utf8::len(msg_.c_str());
+    if (text_length < box_width) {
+        box_width = text_length;
+    }
+
+    const auto lines = description_->assign(msg_.c_str(),
+                                            OverlayCoord{0, place_y},
+                                            {box_width, 5},
+                                            0);
+
+    if (lines > 1) {
+        description_.emplace();
+
+        place_y -= (lines - 1);
+
+        description_->assign(msg_.c_str(),
+                             OverlayCoord{0, place_y},
+                             {30, 5},
+                             0);
+    }
+
+    for (int i = 0; i < box_width; ++i) {
+        PLATFORM.set_overlay_tile(i, place_y - 1, 425);
     }
 }
 

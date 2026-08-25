@@ -600,7 +600,7 @@ ScenePtr UpgradePromptScene::update(Time delta)
 
             auto notify_err = [&]() {
                 PLATFORM.speaker().play_sound("beep_error", 3);
-                return make_scene<NotificationScene>(err, next);
+                return make_scene<NotificationScene>(err.c_str(), next);
             };
 
             if (room->metaclass_index() == upgrade_from_) {
@@ -632,7 +632,7 @@ ScenePtr UpgradePromptScene::update(Time delta)
                 if (APP.coins() < cost) {
                     PLATFORM.speaker().play_sound("beep_error", 3);
                     err = SYS_CSTR(construction_insufficient_funds);
-                    return make_scene<NotificationScene>(err, next);
+                    return make_scene<NotificationScene>(err.c_str(), next);
                 }
 
                 if (size_diff_x) {
