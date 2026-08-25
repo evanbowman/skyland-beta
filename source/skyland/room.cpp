@@ -1995,7 +1995,9 @@ Coins repair_cost(Room& room)
     auto hp = room.health();
     auto max_hp = room.max_health();
 
-    return rebuild_cost * (Float(max_hp - hp) / max_hp) + penalty;
+    return std::min((Coins)(rebuild_cost * (Float(max_hp - hp) / max_hp)),
+                    rebuild_cost - salvage_value(room)) +
+           penalty;
 }
 
 
