@@ -74,7 +74,7 @@ private:
         Bitvector<cap> show_coins_hint_;
         Bitvector<cap> show_power_hint_;
 
-        Optional<SpriteText> hint_;
+        Optional<SpriteText> coins_hint_;
         Optional<SpriteText> power_hint_;
         Buffer<SystemString, cap> pushed_strings_;
     };
