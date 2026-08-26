@@ -1107,7 +1107,8 @@ struct IslandTerrainChanged
     Header header_;
     u8 previous_terrain_size_ : 4;
     u8 near_ : 1;
-    u8 unused_ : 3;
+    u8 constructed_left_ : 1;
+    u8 unused_ : 2;
 
     static constexpr const auto t = Type::island_terrain_changed;
 };

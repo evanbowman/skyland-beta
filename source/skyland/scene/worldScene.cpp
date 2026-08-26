@@ -745,6 +745,8 @@ ScenePtr WorldScene::update(Time delta)
         auto opp_pos = opp_isle->get_position();
 
         auto pl_terrain = (int)APP.player_island().terrain().size();
+        auto pl_x_origin = APP.player_island().get_position().x.as_integer();
+        auto threshold = pl_x_origin + (int)pl_terrain * 16 + 48;
 
         // Hey, I threw this code together in a panic for a game jam, I know
         // this is illegible. Drift opponent island toward the player, until
@@ -752,12 +754,12 @@ ScenePtr WorldScene::update(Time delta)
         // island, drift the opponent island away to maintain the ideal
         // distance between the two.
         if ((opp_drift < 0.0_fixed and
-             opp_pos.x.as_integer() <= pl_terrain * 16 + 48) or
+             opp_pos.x.as_integer() <= threshold) or
             (opp_drift > 0.0_fixed and
-             opp_pos.x.as_integer() > (int)pl_terrain * 16 + 48)) {
+             opp_pos.x.as_integer() > threshold)) {
 
             opp_isle->set_position(
-                {Fixnum(pl_terrain * 16 + 48), Fixnum(opp_pos.y)});
+                {Fixnum(threshold), Fixnum(opp_pos.y)});
             opp_isle->set_drift(0.0_fixed);
 
             APP.on_timeout(milliseconds(500),
@@ -765,8 +767,7 @@ ScenePtr WorldScene::update(Time delta)
         }
 
         if (opp_drift == 0.0_fixed) {
-            if (opp_pos.x.as_integer() <
-                (int)APP.player_island().terrain().size() * 16 + 48) {
+            if (opp_pos.x.as_integer() < (int)threshold) {
                 opp_isle->set_drift(0.00003_fixed);
             }
         }

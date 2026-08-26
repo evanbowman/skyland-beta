@@ -235,6 +235,45 @@ void shift_rooms_right(Island& island)
 
 
 
+void terrain_added_left(Island& island)
+{
+    if (is_player_island(&island)) {
+        auto pos = island.get_position();
+        pos.x -= 16.0_fixed;
+        island.set_position(pos);
+
+        if (PLATFORM.has_slow_cpu() and not PLATFORM.network_peer().is_connected()) {
+            auto prev_task = PLATFORM.set_background_task(parallax_background_task);
+            auto pos = island.get_position();
+            PLATFORM.set_scroll(island.layer(),
+                                -pos.x.as_integer(),
+                                -pos.y.as_integer() - island.get_ambient_movement());
+
+            PLATFORM.screen().clear();
+            island.render_terrain();
+
+            APP.scene().display();
+
+            PLATFORM.screen().display();
+            for (int x = 31; x > 0; --x) {
+                for (int y = 0; y < 30; ++y) {
+                    if (x < 2) {
+                        PLATFORM.set_raw_tile(Layer::map_0, x, y, 0);
+                    } else {
+                        auto prev = PLATFORM.get_raw_tile(Layer::map_0, x - 2, y);
+                        PLATFORM.set_raw_tile(Layer::map_0, x, y, prev);
+                    }
+                }
+            }
+            PLATFORM.set_background_task(prev_task);
+        }
+    }
+
+    shift_rooms_right(island);
+}
+
+
+
 ScenePtr ConstructionScene::update(Time delta)
 {
     auto& cursor_loc =
@@ -801,9 +840,12 @@ ScenePtr ConstructionScene::update(Time delta)
 
             APP.set_coins(APP.coins() - APP.terrain_cost(*island()));
 
+            bool left_edge = data_->construction_sites_[selector_].x == -1;
+
             time_stream::event::IslandTerrainChanged e;
             e.previous_terrain_size_ = island()->terrain().size();
             e.near_ = is_player_island(island());
+            e.constructed_left_ = left_edge;
             APP.push_time_stream(e);
 
 
@@ -816,9 +858,12 @@ ScenePtr ConstructionScene::update(Time delta)
 
             island()->schedule_repaint();
 
+            find_construction_sites();
+            state_ = State::select_loc;
 
-            if (data_->construction_sites_[selector_].x == -1) {
-                shift_rooms_right(*island());
+            if (left_edge) {
+                selector_ = 1;
+                terrain_added_left(*island());
                 network::packet::TerrainConstructedLeft packet;
                 packet.new_terrain_size_ = island()->terrain().size();
                 network::transmit(packet);
@@ -827,9 +872,6 @@ ScenePtr ConstructionScene::update(Time delta)
                 packet.new_terrain_size_ = island()->terrain().size();
                 network::transmit(packet);
             }
-
-            find_construction_sites();
-            state_ = State::select_loc;
 
             msg(SYSTR(construction_build)->c_str());
         }

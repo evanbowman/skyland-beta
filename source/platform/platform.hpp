@@ -306,6 +306,7 @@ public:
 
 
     void set_raw_tile(Layer layer, u16 x, u16 y, TileDesc val);
+    u16 get_raw_tile(Layer layer, u16 x, u16 y);
 
 
     void set_palette(Layer layer, u16 x, u16 y, u16 palette);
@@ -959,6 +960,7 @@ public:
         void (*quit)();
         void (*apply_color_correction)(const char* table_name);
         void (*enable_translucence)(const Buffer<Layer, 4>& layers);
+        void (*enable_map_0_1_overscroll)(bool enabled);
 
         void (*psg_play_note)(Speaker::Channel c, Speaker::NoteDesc note);
         void (*psg_stop_note)(Speaker::Channel c);

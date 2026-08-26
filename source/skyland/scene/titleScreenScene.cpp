@@ -242,6 +242,7 @@ void TitleScreenScene::enter(Scene& prev)
 
     init_clouds();
     PLATFORM_EXTENSION(vertical_parallax_enable, false);
+    PLATFORM_EXTENSION(enable_map_0_1_overscroll, true);
 
     APP.player_island().clear();
 
@@ -390,6 +391,7 @@ void TitleScreenScene::exit(Scene& next)
     text_.reset();
 
     PLATFORM_EXTENSION(vertical_parallax_enable, true);
+    PLATFORM_EXTENSION(enable_map_0_1_overscroll, false);
 
     APP.effects().clear();
     PLATFORM.screen().clear();

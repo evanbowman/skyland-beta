@@ -384,14 +384,14 @@ void CoOpTeam::receive(const network::packet::TerrainConstructed& packet)
 
 
 
-void shift_rooms_right(Island& island);
+void terrain_added_left(Island& island);
 
 
 
 void CoOpTeam::receive(const network::packet::TerrainConstructedLeft& packet)
 {
     player_island().init_terrain(packet.new_terrain_size_);
-    shift_rooms_right(player_island());
+    terrain_added_left(player_island());
 }
 
 

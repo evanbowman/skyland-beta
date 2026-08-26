@@ -1735,6 +1735,12 @@ void Platform::set_raw_tile(Layer layer, u16 x, u16 y, TileDesc val)
 }
 
 
+u16 Platform::get_raw_tile(Layer layer, u16 x, u16 y)
+{
+    fatal("get_raw_tile unimplemented for sdl platform!");
+}
+
+
 void Platform::blit_t0_erase(u16 index)
 {
 }

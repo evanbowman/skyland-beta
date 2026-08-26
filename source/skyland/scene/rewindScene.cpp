@@ -325,14 +325,15 @@ ScenePtr RewindScene::update(Time)
 
     bool move_region = false;
 
+    Vec2<u8>* cursor_loc;
     if (far_camera_) {
-        auto& cursor_loc = globals().far_cursor_loc_;
+        cursor_loc = &globals().far_cursor_loc_;
         APP.with_opponent_island([&](auto& isle) {
-            APP.camera()->update(isle, cursor_loc, delta, false);
+            APP.camera()->update(isle, *cursor_loc, delta, false);
         });
     } else {
-        auto& cursor_loc = globals().near_cursor_loc_;
-        APP.camera()->update(APP.player_island(), cursor_loc, delta, true);
+        cursor_loc = &globals().near_cursor_loc_;
+        APP.camera()->update(APP.player_island(), *cursor_loc, delta, true);
     }
 
 
@@ -1690,7 +1691,16 @@ ScenePtr RewindScene::update(Time)
 
             if (island) {
                 island->init_terrain(e->previous_terrain_size_);
+                if (is_player_island(island) and e->constructed_left_) {
+                    auto pos = island->get_position();
+                    pos.x += 16.0_fixed;
+                    island->set_position(pos);
+                }
                 island->repaint();
+
+                if (far_camera_ == not e->near_) {
+                    cursor_loc->x = clamp(cursor_loc->x, (u8)0, (u8)island->terrain().size());
+                }
             }
 
             APP.time_stream().pop(sizeof *e);

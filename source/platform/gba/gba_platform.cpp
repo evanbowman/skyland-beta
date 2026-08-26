@@ -251,6 +251,7 @@ enum class GlobalFlag {
     effect_window_mode,
     iris_effect_mode,
     skyland_custom_mgba,
+    map_0_1_overscroll,
     count
 };
 
@@ -855,6 +856,7 @@ void window_init_default()
 {
     set_gflag(GlobalFlag::effect_window_mode, false);
     set_gflag(GlobalFlag::iris_effect_mode, false);
+    set_gflag(GlobalFlag::map_0_1_overscroll, false);
 
     REG_WININ = WIN_ALL | WIN_BLD;
     // Outside the window, display the background and the overlay, also objects.
@@ -881,6 +883,7 @@ void window_init_inverse_effectmode()
 {
     set_gflag(GlobalFlag::effect_window_mode, true);
     set_gflag(GlobalFlag::iris_effect_mode, true);
+    set_gflag(GlobalFlag::map_0_1_overscroll, false);
 
     REG_WINOUT = WIN_ALL;
     REG_WININ = WIN_BG1 | WIN_BG3 | WIN_BG0 | WIN_OBJ;
@@ -2404,19 +2407,69 @@ void Platform::Screen::display()
     // Civilization clone, but for BlindJump, it doesn't make sense to display
     // the wrapped area).
 
+    // if (not get_gflag(GlobalFlag::effect_window_mode)) {
+    //     const s32 scroll_limit_x_max = 512 - size().x;
+    //     // const s32 scroll_limit_y_max = 480 - size().y;
+    //     if (view_offset.x > scroll_limit_x_max) {
+    //         REG_WIN0H =
+    //             (0 << 8) | (size().x - (view_offset.x - scroll_limit_x_max));
+    //     } else if (view_offset.x < 0) {
+    //         if (button_down<Button::down>()) {
+    //             info(format("% % %", (s16)x0_scroll, (s16)x3_scroll, view_offset.x * -1));
+    //         }
+    //         // if ((s16)x3_scroll >= -266) {
+    //         //     REG_WININ = (WIN_ALL) | WIN_BLD;
+    //         // } else {
+    //         //     REG_WININ = (WIN_ALL & ~WIN_BG3) | WIN_BLD;
+    //         // }
+
+    //         auto vo = view_offset.x * -1;
+    //         auto x0_ss = (s16)x0_scroll;
+    //         if (x0_ss < vo) {
+    //             REG_WIN0H = ((vo - x0_ss) << 8) | (0);
+    //         } else {
+    //             REG_WIN0H = (0 << 8) | (size().x);
+    //         }
+    //     } else {
+    //         REG_WIN0H = (0 << 8) | (size().x);
+    //     }
+
+    //     REG_WIN0V = (0 << 8) | (size().y);
+    // }
+
     if (not get_gflag(GlobalFlag::effect_window_mode)) {
-        const s32 scroll_limit_x_max = 512 - size().x;
-        // const s32 scroll_limit_y_max = 480 - size().y;
-        if (view_offset.x > scroll_limit_x_max) {
-            REG_WIN0H =
-                (0 << 8) | (size().x - (view_offset.x - scroll_limit_x_max));
-        } else if (view_offset.x < 0) {
-            REG_WIN0H = ((view_offset.x * -1) << 8) | (0);
+        if (get_gflag(GlobalFlag::map_0_1_overscroll)) {
+            REG_WININ = WIN_ALL | WIN_BLD;
+            // NOTE: the below is legacy code that I wrote in 2019 or earlier
+            // for a different project, and some parts of the codebase depend on
+            // it.
+            const s32 scroll_limit_x_max = 512 - size().x;
+            if (view_offset.x > scroll_limit_x_max) {
+                REG_WIN0H =
+                    (0 << 8) | (size().x - (view_offset.x - scroll_limit_x_max));
+            } else if (view_offset.x < 0) {
+                REG_WIN0H = ((view_offset.x * -1) << 8) | (0);
+            } else {
+                REG_WIN0H = (0 << 8) | (size().x);
+            }
+
+            REG_WIN0V = (0 << 8) | (size().y);
+
         } else {
             REG_WIN0H = (0 << 8) | (size().x);
-        }
+            REG_WIN0V = (0 << 8) | (size().y);
 
-        REG_WIN0V = (0 << 8) | (size().y);
+            auto visible_mask = WIN_ALL | WIN_BLD;
+            if (abs(view_offset.x + (s16)x3_scroll) > 255) {
+                visible_mask &= ~WIN_BG3;
+            }
+
+            if (abs(view_offset.x + (s16)x0_scroll) > 255) {
+                visible_mask &= ~WIN_BG0;
+            }
+
+            REG_WININ = visible_mask;
+        }
     }
 
     if (not get_gflag(GlobalFlag::parallax_clouds)) {
@@ -5824,6 +5877,18 @@ void Platform::set_raw_tile(Layer layer, u16 x, u16 y, TileDesc val)
 
 
 
+u16 Platform::get_raw_tile(Layer layer, u16 x, u16 y)
+{
+    if (layer == Layer::map_1) {
+        return MEM_SCREENBLOCKS[sbb_t1_tiles][x + y * 32] & ~SE_PALBANK_MASK;
+    } else if (layer == Layer::map_0) {
+        return MEM_SCREENBLOCKS[sbb_t0_tiles][x + y * 32] & ~SE_PALBANK_MASK;
+    }
+    return 0;
+}
+
+
+
 void Platform::set_overlay_tile(u16 x, u16 y, u16 val)
 {
     if (x > 31 or y > 31) {
@@ -7291,6 +7356,10 @@ static const Platform::Extensions extensions{
 
             REG_BLENDCNT = BLD_BUILD(bld, BLD_BG0 | BLD_BG1 | BLD_BG3, mode);
         },
+    .enable_map_0_1_overscroll =
+    [](bool enabled) {
+        set_gflag(GlobalFlag::map_0_1_overscroll, enabled);
+    },
     .psg_play_note =
         [](Platform::Speaker::Channel channel,
            Platform::Speaker::NoteDesc note_desc) {
