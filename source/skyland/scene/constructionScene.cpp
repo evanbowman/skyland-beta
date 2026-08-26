@@ -242,6 +242,14 @@ void terrain_added_left(Island& island)
         pos.x -= 16.0_fixed;
         island.set_position(pos);
 
+        for (auto& bird : APP.birds()) {
+            // NOTE: because birds are pinned to coordinates, and we're shifting
+            // everything over, it looks strange otherwise.
+            if (bird->island() == &island) {
+                bird->signal();
+            }
+        }
+
         if (PLATFORM.has_slow_cpu() and not PLATFORM.network_peer().is_connected()) {
             auto prev_task = PLATFORM.set_background_task(parallax_background_task);
             auto pos = island.get_position();
@@ -260,7 +268,7 @@ void terrain_added_left(Island& island)
                     if (x < 2) {
                         PLATFORM.set_raw_tile(Layer::map_0, x, y, 0);
                     } else {
-                        auto prev = PLATFORM.get_raw_tile(Layer::map_0, x - 2, y);
+                        auto prev = PLATFORM.get_raw_m0_tile(x - 2, y);
                         PLATFORM.set_raw_tile(Layer::map_0, x, y, prev);
                     }
                 }

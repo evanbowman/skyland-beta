@@ -306,7 +306,7 @@ public:
 
 
     void set_raw_tile(Layer layer, u16 x, u16 y, TileDesc val);
-    u16 get_raw_tile(Layer layer, u16 x, u16 y);
+    u16 get_raw_m0_tile(u16 x, u16 y);
 
 
     void set_palette(Layer layer, u16 x, u16 y, u16 palette);

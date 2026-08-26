@@ -5877,14 +5877,9 @@ void Platform::set_raw_tile(Layer layer, u16 x, u16 y, TileDesc val)
 
 
 
-u16 Platform::get_raw_tile(Layer layer, u16 x, u16 y)
+u16 Platform::get_raw_m0_tile(u16 x, u16 y)
 {
-    if (layer == Layer::map_1) {
-        return MEM_SCREENBLOCKS[sbb_t1_tiles][x + y * 32] & ~SE_PALBANK_MASK;
-    } else if (layer == Layer::map_0) {
-        return MEM_SCREENBLOCKS[sbb_t0_tiles][x + y * 32] & ~SE_PALBANK_MASK;
-    }
-    return 0;
+    return MEM_SCREENBLOCKS[sbb_t0_tiles][x + y * 32] & ~SE_PALBANK_MASK;
 }
 
 
