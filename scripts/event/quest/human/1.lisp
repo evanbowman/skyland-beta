@@ -52,6 +52,7 @@
 
 (setq on-converge
       (lambda ()
+        (setq on-converge nil)
         (dialog
          (tr "<c:Banana Man:8>Waaa! My precious b'nanas! Stolen by goblins! Why do I need them, you ask!? That's TOP SECRET! Help me teach those goblins a lesson?"))
         (dialog-setup-binary-q (tr "Of course!") (tr "I'm kind of busy…"))

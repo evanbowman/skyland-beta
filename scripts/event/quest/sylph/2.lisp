@@ -47,6 +47,7 @@
 
 
 (defn on-converge ()
+  (setq on-converge nil)
   (let ((m (eval-file "/scripts/event/quest/make_quest_marker.lisp")))
     (if m
         (progn
