@@ -746,7 +746,7 @@ ScenePtr WorldScene::update(Time delta)
 
         auto pl_terrain = (int)APP.player_island().terrain().size();
         auto pl_x_origin = APP.player_island().get_position().x.as_integer();
-        auto threshold = pl_x_origin + (int)pl_terrain * 16 + 48;
+        auto threshold = pl_x_origin + (int)pl_terrain * 16 + 48 - 10;
 
         // Hey, I threw this code together in a panic for a game jam, I know
         // this is illegible. Drift opponent island toward the player, until
