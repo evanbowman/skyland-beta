@@ -2968,8 +2968,8 @@ void Platform::load_sprite_chunk(TileDesc dst,
         const TileDesc dst_tile = dst + i;
 
         if (dst_tile >= (TileDesc)sprite_chunk_tile_count) {
-            error(format("load_sprite_chunk: dst tile % out of range",
-                         dst_tile));
+            error(
+                format("load_sprite_chunk: dst tile % out of range", dst_tile));
             continue;
         }
 
@@ -2983,10 +2983,9 @@ void Platform::load_sprite_chunk(TileDesc dst,
         SDL_FillRect(sprite_chunk_surface,
                      &dst_rect,
                      SDL_MapRGBA(sprite_chunk_surface->format, 255, 0, 255, 0));
-        if (SDL_BlitSurface(source_surface,
-                            &src_rect,
-                            sprite_chunk_surface,
-                            &dst_rect) != 0) {
+        if (SDL_BlitSurface(
+                source_surface, &src_rect, sprite_chunk_surface, &dst_rect) !=
+            0) {
             error(format("load_sprite_chunk: blit failed for tile %: %",
                          i,
                          SDL_GetError()));
@@ -5437,8 +5436,13 @@ void draw_sprite_group(int prio)
             } else {
                 SDL_SetTextureColorMod(sprite_source_texture, 255, 255, 255);
                 SDL_SetTextureAlphaMod(sprite_source_texture, base_alpha);
-                SDL_RenderCopyEx(renderer, sprite_source_texture, &src, &dst,
-                                 sprite.rotation, nullptr, flip);
+                SDL_RenderCopyEx(renderer,
+                                 sprite_source_texture,
+                                 &src,
+                                 &dst,
+                                 sprite.rotation,
+                                 nullptr,
+                                 flip);
                 SDL_SetTextureAlphaMod(sprite_source_texture, 255);
             }
         }

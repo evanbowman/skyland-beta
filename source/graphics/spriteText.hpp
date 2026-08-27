@@ -83,6 +83,11 @@ public:
         ++show_chars_;
     }
 
+    void set_palette(u8 sprite_palette_bank)
+    {
+        palette_ = sprite_palette_bank;
+    }
+
 private:
     void release();
 
@@ -99,6 +104,7 @@ private:
     u8 pixel_width_ = 0;
     bool position_absolute_ = false;
     u8 show_chars_ = 0;
+    u8 palette_ = 0;
 };
 
 

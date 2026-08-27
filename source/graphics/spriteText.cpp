@@ -277,6 +277,7 @@ void SpriteText::draw()
     for (u32 i = 0; i < entries_.size() and i < (u32)show_chars_; ++i) {
         auto& entry = entries_[i];
         Sprite spr;
+        spr.set_palette(palette_);
         spr.set_priority(0);
         spr.set_size(Sprite::Size::w8_h8);
         spr.set_texture_index(entry.tile_index_);

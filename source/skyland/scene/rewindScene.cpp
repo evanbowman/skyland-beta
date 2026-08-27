@@ -29,7 +29,6 @@
 #include "skyland/entity/projectile/ionBurst.hpp"
 #include "skyland/entity/projectile/missile.hpp"
 #include "skyland/entity/projectile/nemesisBlast.hpp"
-#include "skyland/entity/projectile/pluginProjectile.hpp"
 #include "skyland/entity/projectile/projectile.hpp"
 #include "skyland/minimap.hpp"
 #include "skyland/room_metatable.hpp"
@@ -74,32 +73,6 @@ T* respawn_basic_projectile(Island* parent,
         return ret;
     }
     return nullptr;
-}
-
-
-
-void respawn_plugin_projectile(
-    Island* parent,
-    const time_stream::event::PluginProjectileDestroyed& e)
-{
-    auto c = APP.alloc_entity<PluginProjectile>(
-
-        Vec2<Fixnum>{Fixnum::from_integer(e.x_pos_.get()),
-                     Fixnum::from_integer(e.y_pos_.get())},
-        Vec2<Fixnum>{},
-        parent,
-        RoomCoord{e.x_origin_, e.y_origin_},
-        e.tile_.get(),
-        e.damage_.get(),
-        e.hflip_);
-    if (c) {
-        Vec2<Fixnum> step_vector{Fixnum::create(e.x_speed__data_.get()),
-                                 Fixnum::create(e.y_speed__data_.get())};
-        c->set_step_vector(step_vector);
-        c->set_timer(e.timer_.get());
-        medium_explosion_inv(c->sprite().get_position());
-        parent->projectiles().push(std::move(c));
-    }
 }
 
 
@@ -811,26 +784,6 @@ ScenePtr RewindScene::update(Time)
                 }
             });
             APP.time_stream().pop(sizeof *e);
-            break;
-        }
-
-
-        case time_stream::event::Type::player_plugin_projectile_destroyed: {
-            auto e = (time_stream::event::PlayerPluginProjectileDestroyed*)end;
-            respawn_plugin_projectile(&APP.player_island(), *e);
-            APP.time_stream().pop(sizeof *e);
-            APP.camera()->shake(8);
-            break;
-        }
-
-
-        case time_stream::event::Type::opponent_plugin_projectile_destroyed: {
-            auto e =
-                (time_stream::event::OpponentPluginProjectileDestroyed*)end;
-            APP.with_opponent_island(
-                [&e](auto& isle) { respawn_plugin_projectile(&isle, *e); });
-            APP.time_stream().pop(sizeof *e);
-            APP.camera()->shake(8);
             break;
         }
 
@@ -1699,7 +1652,8 @@ ScenePtr RewindScene::update(Time)
                 island->repaint();
 
                 if (far_camera_ == not e->near_) {
-                    cursor_loc->x = clamp(cursor_loc->x, (u8)0, (u8)island->terrain().size());
+                    cursor_loc->x = clamp(
+                        cursor_loc->x, (u8)0, (u8)island->terrain().size());
                 }
             }
 

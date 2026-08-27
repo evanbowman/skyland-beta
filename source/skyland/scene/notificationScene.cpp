@@ -55,20 +55,16 @@ void NotificationScene::enter(Scene& prev)
         box_width = text_length;
     }
 
-    const auto lines = description_->assign(msg_.c_str(),
-                                            OverlayCoord{0, place_y},
-                                            {box_width, 5},
-                                            0);
+    const auto lines = description_->assign(
+        msg_.c_str(), OverlayCoord{0, place_y}, {box_width, 5}, 0);
 
     if (lines > 1) {
         description_.emplace();
 
         place_y -= (lines - 1);
 
-        description_->assign(msg_.c_str(),
-                             OverlayCoord{0, place_y},
-                             {30, 5},
-                             0);
+        description_->assign(
+            msg_.c_str(), OverlayCoord{0, place_y}, {30, 5}, 0);
     }
 
     for (int i = 0; i < box_width; ++i) {

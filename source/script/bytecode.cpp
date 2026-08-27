@@ -152,7 +152,7 @@ void disassemble(ScratchBuffer* data,
         case DestructureAssertList::op():
             out += DestructureAssertList::name();
             out += "(";
-            out += stringify((u32)*(data->data_ + i + 1));
+            out += stringify((u32)(*(data->data_ + i + 1)));
             out += ")";
             i += sizeof(DestructureAssertList);
             break;

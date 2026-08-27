@@ -2445,8 +2445,8 @@ void Platform::Screen::display()
             // it.
             const s32 scroll_limit_x_max = 512 - size().x;
             if (view_offset.x > scroll_limit_x_max) {
-                REG_WIN0H =
-                    (0 << 8) | (size().x - (view_offset.x - scroll_limit_x_max));
+                REG_WIN0H = (0 << 8) |
+                            (size().x - (view_offset.x - scroll_limit_x_max));
             } else if (view_offset.x < 0) {
                 REG_WIN0H = ((view_offset.x * -1) << 8) | (0);
             } else {
@@ -3145,6 +3145,7 @@ void Platform::Screen::schedule_fade(Float amount, const FadeProperties& p)
 
     if (p.include_overlay or not p.dodge) {
         layer(&bg_palette_back_buffer[16], overlay_palette, p.include_overlay);
+        memcpy16(&sp_palette_back_buffer[16], &bg_palette_back_buffer[16], 16);
     }
 }
 
@@ -5447,10 +5448,13 @@ bool Platform::load_overlay_texture(const char* name)
                 auto from = Color::from_bgr_hex_555(overlay_palette[i]);
                 if (not overlay_was_faded) {
                     MEM_BG_PALETTE[16 + i] = from.bgr_hex_555();
+                    MEM_PALETTE[16 + i] = from.bgr_hex_555();
                 } else {
                     const auto c = invoke_shader(
                         real_color(last_color), ShaderPalette::overlay, i);
-                    MEM_BG_PALETTE[16 + i] = blend(from, c, last_fade_amt);
+                    auto blended = blend(from, c, last_fade_amt);
+                    MEM_BG_PALETTE[16 + i] = blended;
+                    MEM_PALETTE[16 + i] = blended;
                 }
             }
 
@@ -7000,12 +7004,6 @@ void setup_hardcoded_palettes()
                 auto c = inp.bgr_hex_555();
                 MEM_BG_PALETTE[(12 * 16) + i] = c;
                 custom_flag_palette[i] = c;
-
-                // When we started allowing players to design custom sprites, we
-                // needed to reserve a sprite palette and fill it with the same
-                // color values as the image editor uses for custom tile
-                // graphics.
-                MEM_PALETTE[16 + i] = info.palette_data_[i];
             }
         }
     }
@@ -7352,9 +7350,9 @@ static const Platform::Extensions extensions{
             REG_BLENDCNT = BLD_BUILD(bld, BLD_BG0 | BLD_BG1 | BLD_BG3, mode);
         },
     .enable_map_0_1_overscroll =
-    [](bool enabled) {
-        set_gflag(GlobalFlag::map_0_1_overscroll, enabled);
-    },
+        [](bool enabled) {
+            set_gflag(GlobalFlag::map_0_1_overscroll, enabled);
+        },
     .psg_play_note =
         [](Platform::Speaker::Channel channel,
            Platform::Speaker::NoteDesc note_desc) {

@@ -352,7 +352,6 @@ add_library(FASTPATH
   ${SOURCE_DIR}/skyland/entity/projectile/ballistaBolt.cpp
   ${SOURCE_DIR}/skyland/entity/projectile/arcBolt.cpp
   ${SOURCE_DIR}/skyland/entity/projectile/ionBurst.cpp
-  ${SOURCE_DIR}/skyland/entity/projectile/pluginProjectile.cpp
   ${SOURCE_DIR}/skyland/entity/projectile/decimatorBurst.cpp)
 
 

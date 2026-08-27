@@ -48,6 +48,8 @@ ArcBolt::ArcBolt(const Vec2<Fixnum>& position,
     step_vector_ = Vec2<Fixnum>{Fixnum(step.x), Fixnum(step.y)};
 
     if (source == &player_island()) {
+        // NOTE: palette bank 2 is used for alternative glowing sprites (via the
+        // tuning crystal block).
         sprite_.set_palette(2);
     }
 }

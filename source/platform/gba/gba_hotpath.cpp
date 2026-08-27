@@ -135,7 +135,7 @@ void audio_update_fast_isr()
             *(out++) += (s8)(snd1);
             *(out++) += (s8)(snd1 >> 8);
             *(out++) += (s8)(snd1 >> 16);
-            *(out)   += (s8)(snd1 >> 24);
+            *(out) += (s8)(snd1 >> 24);
             ++it;
         }
     }

@@ -166,6 +166,10 @@ public:
     }
 
 
+    // NOTE:
+    // Palette 0: the default palette loaded from the current spritesheet.
+    // Palette 1: a mirror of the current overlay layer's palette.
+    // Palette 2: the current spritesheet palette, with glow effects applied.
     void set_palette(u8 palette)
     {
         palette_ = palette;

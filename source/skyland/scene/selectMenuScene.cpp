@@ -83,9 +83,11 @@ void SelectMenuScene::redraw_line(int line, bool highlight)
         clr = highlight_colors;
         if (opts_->show_coins_hint_.get(line)) {
             auto hint_str = format<64>("(🪙%)", APP.coins());
-            SpriteText::Configuration conf{.shade_bg_index_ = 12};
+            SpriteText::Configuration conf{.shade_bg_index_ = 3,
+                                           .shade_fg_index_ = 2};
 
             opts_->coins_hint_.emplace(hint_str.c_str(), conf);
+            opts_->coins_hint_->set_palette(1);
             opts_->coins_hint_->position_absolute();
             opts_->coins_hint_->set_position({8.0_fixed, 16.0_fixed});
         }
@@ -93,9 +95,11 @@ void SelectMenuScene::redraw_line(int line, bool highlight)
             auto power_supply = island()->power_supply();
             auto power_drain = island()->power_drain();
             auto power_str = format<64>("(⚡%/%)", power_drain, power_supply);
-            SpriteText::Configuration conf{.shade_bg_index_ = 12};
+            SpriteText::Configuration conf{.shade_bg_index_ = 3,
+                                           .shade_fg_index_ = 2};
 
             opts_->power_hint_.emplace(power_str.c_str(), conf);
+            opts_->power_hint_->set_palette(1);
             opts_->power_hint_->position_absolute();
             opts_->power_hint_->set_position({8.0_fixed, 8.0_fixed});
         }

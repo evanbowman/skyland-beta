@@ -250,12 +250,15 @@ void terrain_added_left(Island& island)
             }
         }
 
-        if (PLATFORM.has_slow_cpu() and not PLATFORM.network_peer().is_connected()) {
-            auto prev_task = PLATFORM.set_background_task(parallax_background_task);
+        if (PLATFORM.has_slow_cpu() and
+            not PLATFORM.network_peer().is_connected()) {
+            auto prev_task =
+                PLATFORM.set_background_task(parallax_background_task);
             auto pos = island.get_position();
             PLATFORM.set_scroll(island.layer(),
                                 -pos.x.as_integer(),
-                                -pos.y.as_integer() - island.get_ambient_movement());
+                                -pos.y.as_integer() -
+                                    island.get_ambient_movement());
 
             PLATFORM.screen().clear();
             island.render_terrain();

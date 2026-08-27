@@ -753,13 +753,10 @@ ScenePtr WorldScene::update(Time delta)
         // a certain distance. If the player extends the terrain on his own
         // island, drift the opponent island away to maintain the ideal
         // distance between the two.
-        if ((opp_drift < 0.0_fixed and
-             opp_pos.x.as_integer() <= threshold) or
-            (opp_drift > 0.0_fixed and
-             opp_pos.x.as_integer() > threshold)) {
+        if ((opp_drift < 0.0_fixed and opp_pos.x.as_integer() <= threshold) or
+            (opp_drift > 0.0_fixed and opp_pos.x.as_integer() > threshold)) {
 
-            opp_isle->set_position(
-                {Fixnum(threshold), Fixnum(opp_pos.y)});
+            opp_isle->set_position({Fixnum(threshold), Fixnum(opp_pos.y)});
             opp_isle->set_drift(0.0_fixed);
 
             APP.on_timeout(milliseconds(500),
