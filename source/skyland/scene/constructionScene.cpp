@@ -260,6 +260,10 @@ void terrain_added_left(Island& island)
                                 -pos.y.as_integer() -
                                     island.get_ambient_movement());
 
+            APP.camera()->update(APP.player_island(),
+                                 globals().near_cursor_loc_,
+                                 PLATFORM.delta_clock().reset(),
+                                 true);
             PLATFORM.screen().clear();
             island.render_terrain();
 
