@@ -263,7 +263,7 @@ void terrain_added_left(Island& island)
             APP.scene().display();
 
             PLATFORM.screen().display();
-            for (int x = island.terrain().size() * 2 - 1; x > 0; --x) {
+            for (int x = island.terrain().size() * 2 - 1; x >= 0; --x) {
                 for (int y = 8; y < 30; ++y) {
                     if (x < 2) {
                         PLATFORM.set_raw_tile(Layer::map_0, x, y, 0);
