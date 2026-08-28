@@ -488,6 +488,12 @@ ScenePtr DataCartModule::boot_cart(int cart_index)
         PLATFORM_EXTENSION(restart);
         return make_scene<IntroCreditsScene>();
     } else if (*type == "checkers") {
+        if (PLATFORM.device_name() == "PC") {
+            auto next = make_scene<DataCartModule>(true);
+            next->skip_dialog_ = true;
+            next->set_index(cart_index);
+            return next;
+        }
         return make_scene<CheckersModule>();
     } else if (*type == "image") {
         PLATFORM.speaker().play_sound("tw_bell", 2);
