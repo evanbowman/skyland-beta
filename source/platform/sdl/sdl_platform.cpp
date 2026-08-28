@@ -596,6 +596,13 @@ static void constrain_window_to_scale()
         return; // Don't constrain in fullscreen
     }
 
+    // Never resize a maximized window: on Windows that pins it to the
+    // top-left and lets the taskbar overlap it. The maximize button is
+    // handled as a fullscreen request instead (see the event loop).
+    if (SDL_GetWindowFlags(window) & SDL_WINDOW_MAXIMIZED) {
+        return;
+    }
+
     int current_w, current_h;
     SDL_GetWindowSize(window, &current_w, &current_h);
 
@@ -676,50 +683,64 @@ static void update_viewport()
 
 
 
-static void toggle_fullscreen()
+static void enter_fullscreen()
 {
-    if (not window) {
+    if (not window or is_fullscreen) {
         return;
     }
 
-    is_fullscreen = !is_fullscreen;
+    is_fullscreen = true;
 
-    if (is_fullscreen) {
-        // Store current windowed size
-        SDL_GetWindowSize(window, &last_window_width, &last_window_height);
+    // Remember the windowed size so we can restore it on exit.
+    SDL_GetWindowSize(window, &last_window_width, &last_window_height);
 
-        // Get desktop display mode for current display
-        SDL_DisplayMode display_mode;
-        int display_index = SDL_GetWindowDisplayIndex(window);
-        SDL_GetDesktopDisplayMode(display_index, &display_mode);
+    SDL_DisplayMode display_mode;
+    int display_index = SDL_GetWindowDisplayIndex(window);
+    SDL_GetDesktopDisplayMode(display_index, &display_mode);
 
-        // On macOS, use native fullscreen for better behavior
-#ifdef __APPLE__
-        SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
-#else
-        SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
-#endif
+    SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
 
-        info(format(
-            "Entered fullscreen mode: %x%", display_mode.w, display_mode.h));
-    } else {
-        SDL_SetWindowFullscreen(window, 0);
-
-        if (last_window_width > 0 && last_window_height > 0) {
-            SDL_SetWindowSize(window, last_window_width, last_window_height);
-        } else {
-            // Default to current scale
-            SDL_SetWindowSize(window,
-                              logical_width * window_scale,
-                              logical_height * window_scale);
-        }
-
-        info("Exited fullscreen mode");
-    }
+    info(format(
+        "Entered fullscreen mode: %x%", display_mode.w, display_mode.h));
 
     update_viewport();
 }
 
+
+static void exit_fullscreen()
+{
+    if (not window or not is_fullscreen) {
+        return;
+    }
+
+    is_fullscreen = false;
+
+    SDL_SetWindowFullscreen(window, 0);
+
+    if (last_window_width > 0 && last_window_height > 0) {
+        SDL_SetWindowSize(window, last_window_width, last_window_height);
+    }
+    else {
+        SDL_SetWindowSize(window,
+            logical_width * window_scale,
+            logical_height * window_scale);
+    }
+
+    info("Exited fullscreen mode");
+
+    update_viewport();
+}
+
+
+static void toggle_fullscreen()
+{
+    if (is_fullscreen) {
+        exit_fullscreen();
+    }
+    else {
+        enter_fullscreen();
+    }
+}
 
 
 static void handle_window_resize(int w, int h)
@@ -810,7 +831,7 @@ int main(int argc, char** argv)
             return 1;
         }
         SDL_SetHint(SDL_HINT_VIDEO_HIGHDPI_DISABLED, "0");
-        SDL_ShowCursor(0);
+        // SDL_ShowCursor(0);
     } else {
         SDL_Init(0);
     }
@@ -1142,6 +1163,15 @@ void Platform::Input::poll()
                     window_size_initialized = true;
                 }
                 break;
+            case SDL_WINDOWEVENT_MAXIMIZED:
+                // Treat the OS maximize button as "go fullscreen". Restore first so
+                // that leaving fullscreen returns to a normal window rather than
+                // snapping back to maximized (which would just re-fire this event).
+                if (not is_fullscreen) {
+                    SDL_RestoreWindow(window);
+                    enter_fullscreen();
+                }
+                break;
             }
             break;
 
@@ -1165,6 +1195,13 @@ void Platform::Input::poll()
         }
 
         case SDL_KEYDOWN: {
+            // Esc backs out of fullscreen — matches browsers, video players, and
+            // most games. Only swallow it while fullscreen; otherwise let it
+            // reach the game as a normal mapped button.
+            if (e.key.keysym.scancode == SDL_SCANCODE_ESCAPE && is_fullscreen) {
+                exit_fullscreen();
+                break;
+            }
             // F11 or Cmd+F (macOS) or Alt+Enter for fullscreen
             if (e.key.keysym.scancode == SDL_SCANCODE_F11 ||
                 (e.key.keysym.scancode == SDL_SCANCODE_F &&

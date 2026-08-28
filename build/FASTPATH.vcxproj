@@ -358,7 +358,6 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     <ClCompile Include="C:\Users\evana\Documents\skyland-beta\source\skyland\entity\projectile\ballistaBolt.cpp" />
     <ClCompile Include="C:\Users\evana\Documents\skyland-beta\source\skyland\entity\projectile\arcBolt.cpp" />
     <ClCompile Include="C:\Users\evana\Documents\skyland-beta\source\skyland\entity\projectile\ionBurst.cpp" />
-    <ClCompile Include="C:\Users\evana\Documents\skyland-beta\source\skyland\entity\projectile\pluginProjectile.cpp" />
     <ClCompile Include="C:\Users\evana\Documents\skyland-beta\source\skyland\entity\projectile\decimatorBurst.cpp" />
   </ItemGroup>
   <ItemGroup>
