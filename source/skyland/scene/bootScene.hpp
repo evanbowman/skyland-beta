@@ -592,6 +592,7 @@ public:
             if (PLATFORM.device_name() == "PC") {
                 auto next = make_scene<ControllerSetupModule>();
                 next->next_ = make_deferred_scene<LanguageSelectScene>();
+                next->rebind_hint_ = true;
                 return next;
             } else {
                 return make_scene<LanguageSelectScene>();
@@ -608,6 +609,7 @@ public:
             if (PLATFORM.device_name() == "PC") {
                 auto next = make_scene<ControllerSetupModule>();
                 next->next_ = make_deferred_scene<IntroCreditsScene>();
+                next->rebind_hint_ = true;
                 return next;
             } else {
                 return make_scene<IntroCreditsScene>();

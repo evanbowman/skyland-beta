@@ -49,7 +49,6 @@ void ControllerSetupModule::enter(Scene& prev)
 {
     PLATFORM.speaker().set_music_volume(8);
 
-
     PLATFORM.screen().set_shader(passthrough_shader);
     PLATFORM.load_tile0_texture("button_mapping_flattened");
     PLATFORM.screen().schedule_fade(0.f, {custom_color(0x163061)});
@@ -64,6 +63,15 @@ void ControllerSetupModule::enter(Scene& prev)
 
     settings::load(settings_);
     repaint();
+
+    if (rebind_hint_) {
+        auto msg = format("%: Play, %: Remap",
+                          settings_.get("key_action1"),
+                          settings_.get("key_start"));
+
+        u8 margin = centered_text_margins(utf8::len(msg.c_str()));
+        Text::print(msg.c_str(), {margin, 18});
+    }
 
     auto title_systr = SystemString::button_mapping_show;
     if (button_index_ > 0) {
@@ -156,6 +164,13 @@ ScenePtr ControllerSetupModule::update(Time delta)
         } else {
             return make_scene<TitleScreenScene>(3);
         }
+    }
+
+    if (rebind_hint_ and button_index_ == -1 and button_down<Button::start>()) {
+        rebind_hint_ = false;
+        button_index_ = 0;
+        repaint();
+        return null_scene();
     }
 
     if (button_index_ > -1) {

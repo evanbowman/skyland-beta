@@ -92,6 +92,7 @@ public:
     bool exit_ = false;
 
     bool option_ = false;
+    bool rebind_hint_ = false;
 };
 
 
