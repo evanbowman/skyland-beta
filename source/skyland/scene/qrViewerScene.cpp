@@ -142,7 +142,6 @@ void QRViewerScene::enter(Scene& prev)
 
                 if (PLATFORM.get_extensions().open_url and text_ and
                     not overworld_) {
-                    info((**text_));
                     Text::print(SYS_CSTR(qr_start_open_url),
                                 OverlayCoord{0, 19},
                                 OptColors{{fg_clr, bg_clr}});
@@ -202,7 +201,6 @@ ScenePtr QRViewerScene::update(Time delta)
     if (auto open_url = PLATFORM.get_extensions().open_url) {
         if (text_ and player().button_down(Button::start) and not overworld_) {
             auto url = (*text_)->c_str();
-            info(url);
             open_url(url);
         }
     }
