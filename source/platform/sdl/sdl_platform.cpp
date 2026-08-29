@@ -477,6 +477,102 @@ struct RectInfo
 std::vector<RectInfo> rect_draw_queue;
 
 
+
+////////////////////////////////////////////////////////////////////////////////
+// PSG (DMG) software synthesizer
+//
+// On the GBA these channels were the hardware DMG sound generators. Here we
+// emulate them and mix their output into the same buffer as the sampled
+// music/sfx. State is written from the game thread via the psg_* extension
+// hooks under SDL_LockAudio(), and read from the audio callback thread, the
+// same locking discipline used everywhere else in this file.
+////////////////////////////////////////////////////////////////////////////////
+
+
+static constexpr unsigned psg_snd_rates[13] = {
+    0,
+    8013, 7566, 7144, 6742, 6362, 6005, 5666, 5346, 5048, 4766, 4499, 4246,
+};
+
+
+static constexpr struct
+{
+    u8 shift_;
+    u8 ratio_;
+} psg_noise_table[57] = {
+    {0, 0},  {1, 0},  {2, 0},  {0, 3},  {3, 0},  {0, 5},  {1, 3},  {0, 7},
+    {4, 0},  {1, 5},  {2, 3},  {1, 7},  {5, 0},  {2, 5},  {3, 3},  {2, 7},
+    {6, 0},  {3, 5},  {4, 3},  {3, 7},  {7, 0},  {4, 5},  {5, 3},  {4, 7},
+    {8, 0},  {5, 5},  {6, 3},  {5, 7},  {9, 0},  {6, 5},  {7, 3},  {6, 7},
+    {10, 0}, {7, 5},  {8, 3},  {7, 7},  {11, 0}, {8, 5},  {9, 3},  {8, 7},
+    {12, 0}, {9, 5},  {10, 3}, {9, 7},  {13, 0}, {10, 5}, {11, 3}, {10, 7},
+    {11, 5}, {12, 3}, {11, 7}, {12, 5}, {13, 3}, {12, 7}, {13, 5}, {13, 7}};
+
+
+static constexpr int psg_sample_rate = 16000; // must match initialize_audio()
+
+static constexpr double psg_pi = 3.14159265358979323846;
+
+static constexpr int psg_channel_amplitude = 28;
+
+static constexpr double psg_vibrato_circle = 65536.0;
+
+static const double psg_duty_fraction[4] = {0.125, 0.25, 0.5, 0.75};
+
+
+struct PsgSynth
+{
+    struct Channel
+    {
+        bool active = false;
+
+        // Square/wave pitch, stored as the GBA integer period divisor
+        // (2048 - n). base_divisor is the note; vibrato offsets it.
+        double base_divisor = 1.0;
+        double phase = 0.0; // [0,1)
+
+        u8 duty = 2; // 0..3 -> 12.5/25/50/75 %
+
+        // Envelope, mirroring NRx2.
+        u8 env_initial_volume = 0; // reload value 0..15
+        u8 env_direction = 0;      // 0 = decrease, 1 = increase
+        u8 env_step = 0;           // 0 disables the sweep
+        int env_volume = 0;        // current 0..15
+        int env_timer = 0;         // samples until next envelope tick
+
+        // Vibrato LFO.
+        Microseconds effect_timer_us = 0;
+        int vib_amplitude = 0;
+        int vib_divisor = 1;
+
+        // Noise.
+        double noise_hz = 0.0;
+        double noise_acc = 0.0;
+        u16 lfsr = 0x7fff;
+        bool lfsr_7bit = false;
+    };
+
+    Channel square_1;
+    Channel square_2;
+    Channel noise;
+    Channel wave;
+
+    Channel* channel(Platform::Speaker::Channel c)
+    {
+        switch (c) {
+        case Platform::Speaker::Channel::square_1: return &square_1;
+        case Platform::Speaker::Channel::square_2: return &square_2;
+        case Platform::Speaker::Channel::noise:    return &noise;
+        case Platform::Speaker::Channel::wave:     return &wave;
+        default:                                   return nullptr;
+        }
+    }
+};
+
+
+static PsgSynth psg_synth;
+
+
 StringBuffer<28> get_username()
 {
     StringBuffer<28> result;
@@ -561,6 +657,162 @@ static const Platform::Extensions extensions{
                     tile1_translucent = true;
                 }
             }
+        },
+        .psg_play_note =
+        [](Platform::Speaker::Channel channel,
+           Platform::Speaker::NoteDesc note_desc) {
+            if (not window) {
+                return;
+            }
+            auto* ch = psg_synth.channel(channel);
+            if (not ch) {
+                return;
+            }
+
+            // Same guards as the GBA path.
+            if (channel == Platform::Speaker::Channel::noise) {
+                if (note_desc.noise_freq_.frequency_select_ == 0) {
+                    return;
+                }
+            } else {
+                const auto note = note_desc.regular_.note_;
+                if ((u8)note >= (u8)Platform::Speaker::Note::count or
+                    note == Platform::Speaker::Note::invalid) {
+                    return;
+                }
+            }
+
+            SDL_LockAudio();
+
+            ch->effect_timer_us = 0;
+            ch->vib_amplitude = 0;
+            ch->env_volume = ch->env_initial_volume; // retrigger envelope
+            ch->env_timer =
+                ch->env_step ? ch->env_step * (psg_sample_rate / 64) : 0;
+
+            if (channel == Platform::Speaker::Channel::noise) {
+                const auto sel = note_desc.noise_freq_.frequency_select_;
+                const auto& e = psg_noise_table[sel];
+                const double r = (e.ratio_ == 0) ? 0.5 : (double)e.ratio_;
+                ch->noise_hz = 524288.0 / r / (double)(1 << (e.shift_ + 1));
+                ch->noise_acc = 0.0;
+                ch->lfsr_7bit = note_desc.noise_freq_.wide_mode_;
+                ch->lfsr = ch->lfsr_7bit ? 0x7f : 0x7fff;
+            } else {
+                const auto note = note_desc.regular_.note_;
+                const u8 octave = note_desc.regular_.octave_;
+                double d = (double)(psg_snd_rates[(u8)note] >> (2 + octave));
+                ch->base_divisor = (d < 1.0) ? 1.0 : d;
+                ch->phase = 0.0;
+            }
+
+            ch->active = true;
+
+            SDL_UnlockAudio();
+        },
+    .psg_stop_note =
+        [](Platform::Speaker::Channel channel) {
+            if (not window) {
+                return;
+            }
+            auto* ch = psg_synth.channel(channel);
+            if (not ch) {
+                return;
+            }
+            SDL_LockAudio();
+            ch->active = false;
+            SDL_UnlockAudio();
+        },
+    .psg_apply_effect =
+        [](Platform::Speaker::Channel channel,
+           Platform::Speaker::Effect effect,
+           u8 argument,
+           Microseconds delta) {
+            if (not window) {
+                return;
+            }
+            auto* ch = psg_synth.channel(channel);
+            if (not ch) {
+                return;
+            }
+
+            SDL_LockAudio();
+
+            switch (effect) {
+            case Platform::Speaker::Effect::vibrato:
+                // vibrato only affects the squares' pitch; harmless no-op on
+                // noise/wave since those renderers ignore base_divisor.
+                ch->vib_amplitude = argument & 0x0f;
+                ch->vib_divisor = ((argument & 0xf0) >> 4) + 1; // 0 not valid
+                ch->effect_timer_us += delta;
+                break;
+
+            case Platform::Speaker::Effect::none:
+                ch->vib_amplitude = 0;
+                ch->effect_timer_us = 0;
+                break;
+
+            case Platform::Speaker::Effect::duty:
+                ch->duty = (argument >> 4) & 0x03;
+                break;
+
+            case Platform::Speaker::Effect::envelope:
+                // LSDJ mapping (matches the GBA): high nibble = volume, low
+                // nibble 1-7 => decreasing / 8-f => increasing, low 3 = step.
+                ch->env_initial_volume = (argument & 0xf0) >> 4;
+                ch->env_direction = ((argument & 0x0f) < 8) ? 0 : 1;
+                ch->env_step = argument & 0x07;
+                ch->env_volume = ch->env_initial_volume;
+                ch->env_timer =
+                    ch->env_step ? ch->env_step * (psg_sample_rate / 64) : 0;
+                break;
+            }
+
+            SDL_UnlockAudio();
+        },
+    .psg_init_square_1 =
+        [](Platform::Speaker::ChannelSettings s) {
+            if (not window) {
+                return;
+            }
+            SDL_LockAudio();
+            auto& ch = psg_synth.square_1;
+            ch.duty = s.duty_;
+            ch.env_initial_volume = s.volume_;
+            ch.env_direction = s.envelope_direction_;
+            ch.env_step = s.envelope_step_;
+            SDL_UnlockAudio();
+        },
+    .psg_init_square_2 =
+        [](Platform::Speaker::ChannelSettings s) {
+            if (not window) {
+                return;
+            }
+            SDL_LockAudio();
+            auto& ch = psg_synth.square_2;
+            ch.duty = s.duty_;
+            ch.env_initial_volume = s.volume_;
+            ch.env_direction = s.envelope_direction_;
+            ch.env_step = s.envelope_step_;
+            SDL_UnlockAudio();
+        },
+    .psg_init_wave =
+        [](Platform::Speaker::ChannelSettings) {
+            // No-op, matching the GBA. The wave channel is unused (silent in
+            // psg_next_sample).
+        },
+    .psg_init_noise =
+        [](Platform::Speaker::ChannelSettings s) {
+            if (not window) {
+                return;
+            }
+            SDL_LockAudio();
+            auto& ch = psg_synth.noise;
+            ch.duty = s.duty_;
+            ch.env_initial_volume = s.volume_;
+            ch.env_direction = s.envelope_direction_;
+            ch.env_step = s.envelope_step_;
+            SDL_UnlockAudio();
         },
 #ifdef SKYLAND_STEAM
     .unlock_achievement =
@@ -6455,13 +6707,116 @@ static AudioMixerFunc current_mixer = audio_mix_normal;
 
 
 
+static void psg_envelope_tick(PsgSynth::Channel& ch)
+{
+    if (not ch.env_step) {
+        return;
+    }
+    if (--ch.env_timer <= 0) {
+        ch.env_timer = ch.env_step * (psg_sample_rate / 64); // 64 Hz clock
+        if (ch.env_direction) {
+            if (ch.env_volume < 15) {
+                ch.env_volume++;
+            }
+        } else {
+            if (ch.env_volume > 0) {
+                ch.env_volume--;
+            }
+        }
+    }
+}
+
+
+static s16 psg_render_square(PsgSynth::Channel& ch)
+{
+    if (not ch.active) {
+        return 0;
+    }
+
+    psg_envelope_tick(ch);
+
+    // Vibrato deviates the integer period divisor, exactly like the GBA which
+    // added the LFO to the 11-bit rate register n, i.e. divisor == (2048 - n).
+    double divisor = ch.base_divisor;
+    if (ch.vib_amplitude) {
+        const double angle = 2.0 * psg_pi *
+                             (ch.effect_timer_us / (double)ch.vib_divisor) /
+                             psg_vibrato_circle;
+        divisor -= std::cos(angle) * (double)(ch.vib_amplitude << 2);
+    }
+    if (divisor < 1.0) {
+        divisor = 1.0;
+    }
+
+    const double freq = 131072.0 / divisor;
+    ch.phase += freq / psg_sample_rate;
+    ch.phase -= std::floor(ch.phase);
+
+    const double amp = (double)psg_channel_amplitude * (ch.env_volume / 15.0);
+    const bool high = ch.phase < psg_duty_fraction[ch.duty & 0x03];
+    return (s16)(high ? amp : -amp);
+}
+
+
+static s16 psg_render_noise(PsgSynth::Channel& ch)
+{
+    if (not ch.active) {
+        return 0;
+    }
+
+    psg_envelope_tick(ch);
+
+    // Clock the LFSR at the hardware noise rate.
+    ch.noise_acc += ch.noise_hz / psg_sample_rate;
+    while (ch.noise_acc >= 1.0) {
+        ch.noise_acc -= 1.0;
+        const u16 bit = (ch.lfsr ^ (ch.lfsr >> 1)) & 1;
+        ch.lfsr = (ch.lfsr >> 1) | (bit << 14);
+        if (ch.lfsr_7bit) {
+            ch.lfsr = (u16)((ch.lfsr & ~0x0040) | (bit << 6));
+        }
+    }
+
+    const double amp = (double)psg_channel_amplitude * (ch.env_volume / 15.0);
+    return (s16)((ch.lfsr & 1) ? -amp : amp); // DMG-style inverted low bit
+}
+
+
+// Advance every PSG channel by one output sample and return the summed value.
+static s16 psg_next_sample()
+{
+    s16 mix = 0;
+    mix += psg_render_square(psg_synth.square_1);
+    mix += psg_render_square(psg_synth.square_2);
+    mix += psg_render_noise(psg_synth.noise);
+    // The GBA's psg_play_note / psg_init_wave leave the wave channel with no
+    // frequency and no wave RAM, so it is silent on hardware. We match that.
+    // Drop a wavetable oscillator here if you ever fill the wave channel in.
+    return mix;
+}
+
+
+// Single integration point: layer the PSG on top of whatever the sampled-audio
+// mixer produced. (Double clamp — see the note in my message. For single-clamp
+// precision, add `mixed += psg_next_sample();` before each mixer's clamp and
+// delete this pass.)
+static void psg_mix_into(s8* output, int len)
+{
+    for (int i = 0; i < len; ++i) {
+        s16 v = (s16)output[i] + psg_next_sample();
+        output[i] = (s8)std::clamp(v, (s16)-128, (s16)127);
+    }
+}
+
+
+
 void audio_callback(void* userdata, Uint8* stream, int len)
 {
     AudioState* state = (AudioState*)userdata;
     s8* output = (s8*)stream;
     current_mixer(state, output, len);
+    psg_mix_into(output, len);
 }
-
 
 
 StringBuffer<48> Platform::Speaker::current_music()
