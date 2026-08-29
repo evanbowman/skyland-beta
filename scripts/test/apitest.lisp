@@ -279,7 +279,9 @@
                                       ;; appended to ROM, have trailing null
                                       ;; bytes for padding purposes. Also,
                                       ;; filter out the ending newline.
-                                      (and (> c 0) (not (equal c 10))))
+                                      (and (> c 0)
+                                           (not (equal c 10))
+                                           (not (equal c 13)))) ;; carriage return
                                     (file-read temp 0 (file-size temp)))))
 
 
