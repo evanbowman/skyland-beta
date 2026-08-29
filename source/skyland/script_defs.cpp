@@ -143,36 +143,37 @@ std::pair<App*, Platform*> interp_get_context()
 DynamicMemory<FileLine> get_line_from_file(const char* file_name, int line)
 {
     --line; // From the caller's perspective, file lines start from 1.
-
     auto result = allocate<FileLine>("file-line");
-
     if (!result) {
         return result;
     }
-
     if (auto contents = PLATFORM.load_file_contents("", file_name)) {
-
         while (line) {
+            // Advance to the end of the current line.
             while (*contents not_eq '\n' and *contents not_eq '\r') {
                 if (*contents == '\0') {
                     return result;
                 }
                 ++contents;
             }
-            ++contents;
-
+            // Consume the terminator: \r\n, lone \r, or lone \n.
+            if (*contents == '\r' and *(contents + 1) == '\n') {
+                contents += 2;
+            }
+            else {
+                ++contents;
+            }
             --line;
         }
-
-        while (*contents not_eq '\0' and *contents not_eq '\n') {
+        while (*contents not_eq '\0' and
+            *contents not_eq '\n' and
+            *contents not_eq '\r') {
             result->push_back(*contents);
             ++contents;
         }
     }
-
     return result;
 }
-
 
 
 void restore_overworld_textures();
