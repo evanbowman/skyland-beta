@@ -237,6 +237,107 @@ SDL_Color color_to_sdl(ColorConstant k)
 
 
 
+#ifdef SKYLAND_STEAM
+#include "steam/steam_api.h"
+#include <string>
+#include <vector>
+
+
+class SteamManager
+{
+public:
+    SteamManager()
+        : stats_received_cb_(this, &SteamManager::on_user_stats_received)
+    {
+    }
+
+    bool init()
+    {
+        if (not SteamAPI_Init()) {
+            return false;
+        }
+        initialized_ = true;
+        if (SteamUserStats()) {
+            SteamUserStats()->RequestCurrentStats();
+        }
+        return true;
+    }
+
+    void run_callbacks()
+    {
+        if (initialized_) {
+            SteamAPI_RunCallbacks();
+        }
+    }
+
+    void shutdown()
+    {
+        if (initialized_) {
+            SteamAPI_Shutdown();
+            initialized_ = false;
+        }
+    }
+
+    void unlock(const char* api_name)
+    {
+        if (not initialized_ or api_name == nullptr) {
+            return;
+        }
+        if (not stats_ready_) {
+            // Stats still loading; defer until UserStatsReceived_t arrives.
+            pending_.emplace_back(api_name);
+            return;
+        }
+        push(api_name);
+    }
+
+private:
+    void push(const char* api_name)
+    {
+        auto stats = SteamUserStats();
+        if (not stats) {
+            return;
+        }
+        bool already = false;
+        // Only commit on a real state change, to avoid needless StoreStats.
+        if (stats->GetAchievement(api_name, &already) and already) {
+            return;
+        }
+        stats->SetAchievement(api_name);
+        stats->StoreStats();
+    }
+
+    STEAM_CALLBACK(SteamManager,
+                   on_user_stats_received,
+                   UserStatsReceived_t,
+                   stats_received_cb_);
+
+    bool initialized_ = false;
+    bool stats_ready_ = false;
+    std::vector<std::string> pending_;
+};
+
+
+void SteamManager::on_user_stats_received(UserStatsReceived_t* cb)
+{
+    if (cb->m_nGameID not_eq SteamUtils()->GetAppID()) {
+        return;
+    }
+    if (cb->m_eResult not_eq k_EResultOK) {
+        return;
+    }
+    stats_ready_ = true;
+    for (auto& name : pending_) {
+        push(name.c_str());
+    }
+    pending_.clear();
+}
+
+static SteamManager steam_manager;
+#endif // SKYLAND_STEAM
+
+
+
 static std::map<SDL_Scancode, Button> buttonmap;
 
 
@@ -461,6 +562,10 @@ static const Platform::Extensions extensions{
                 }
             }
         },
+#ifdef SKYLAND_STEAM
+    .unlock_achievement =
+        [](const char* api_name) { steam_manager.unlock(api_name); },
+#endif
     .sprite_overlapping_supported = [](bool& result) { result = true; },
     .has_startup_opt = [](const char* opt) -> const char* {
         for (int i = 0; i < process_argc; ++i) {
@@ -798,6 +903,13 @@ int main(int argc, char** argv)
     process_argc = argc;
     process_argv = argv;
 
+#ifdef SKYLAND_STEAM
+    if (SteamAPI_RestartAppIfNecessary(SKYLAND_STEAM_APPID)) {
+        return EXIT_FAILURE; // Steam is relaunching us with the right context.
+    }
+    steam_manager.init(); // Failure is fine — extension calls just no-op.
+#endif
+
 #ifdef __APPLE__
     setpriority(PRIO_PROCESS, 0, -10);
 #endif
@@ -883,6 +995,10 @@ int main(int argc, char** argv)
     Platform& pf = Platform::create();
 
     start(pf);
+
+#ifdef SKYLAND_STEAM
+    steam_manager.shutdown();
+#endif
 
     if (renderer) {
         SDL_DestroyRenderer(renderer);
@@ -1141,6 +1257,10 @@ const char* Platform::Input::check_button()
 void Platform::Input::poll()
 {
     std::copy(std::begin(states_), std::end(states_), std::begin(prev_));
+
+#ifdef SKYLAND_STEAM
+    steam_manager.run_callbacks();
+#endif
 
     SDL_Event e;
     while (SDL_PollEvent(&e)) {
@@ -6956,3 +7076,4 @@ Platform::TaskInfo Platform::set_background_task(Platform::TaskPointer task,
 {
     return {no_op_task, nullptr};
 }
+[]

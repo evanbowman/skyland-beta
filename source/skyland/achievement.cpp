@@ -35,6 +35,8 @@ struct AchievementInfo
 
     bool (*match_)();
     void (*award_)(bool);
+
+    const char* steam_api_key_;
 };
 
 
@@ -44,7 +46,8 @@ static const AchievementInfo info[Achievement::count] = {
      SystemString::empty,
      "none",
      []() { return false; },
-     [](bool) {}},
+     [](bool) {},
+     ""},
 
     {SystemString::achievement_builder_name,
      SystemString::achievement_builder_description,
@@ -52,7 +55,8 @@ static const AchievementInfo info[Achievement::count] = {
      []() { return APP.player_island().rooms().size() > 10; },
      [](bool awarded) {
          set_enabled(metaclass_index(info[builder].reward_), awarded);
-     }},
+     },
+     "ACH_BUILDER"},
 
     {SystemString::achievement_architect_name,
      SystemString::achievement_architect_description,
@@ -60,7 +64,8 @@ static const AchievementInfo info[Achievement::count] = {
      []() { return APP.player_island().rooms().size() > 20; },
      [](bool awarded) {
          set_enabled(metaclass_index(info[architect].reward_), awarded);
-     }},
+     },
+     "ACH_ARCHITECT"},
 
     {SystemString::achievement_architect2_name,
      SystemString::achievement_architect2_description,
@@ -68,7 +73,8 @@ static const AchievementInfo info[Achievement::count] = {
      []() { return APP.player_island().rooms().size() > 20; },
      [](bool awarded) {
          set_enabled(metaclass_index(info[architect_2].reward_), awarded);
-     }},
+     },
+     "ACH_ARCHITECT2"},
 
     {SystemString::achievement_explorer_name,
      SystemString::achievement_explorer_description,
@@ -76,7 +82,8 @@ static const AchievementInfo info[Achievement::count] = {
      []() { return APP.zone() > 1; },
      [](bool awarded) {
          set_enabled(metaclass_index(info[explorer].reward_), awarded);
-     }},
+     },
+     "ACH_EXPLORER"},
 
     {SystemString::achievement_strategist_name,
      SystemString::achievement_strategist_description,
@@ -84,7 +91,8 @@ static const AchievementInfo info[Achievement::count] = {
      []() { return APP.zone() > 2; },
      [](bool awarded) {
          set_enabled(metaclass_index(info[strategist].reward_), awarded);
-     }},
+     },
+     "ACH_STRATEGIST"},
 
     {SystemString::achievement_stronghold_name,
      SystemString::achievement_stronghold_description,
@@ -92,7 +100,8 @@ static const AchievementInfo info[Achievement::count] = {
      []() { return APP.player_island().core_count() > 3; },
      [](bool awarded) {
          set_enabled(metaclass_index(info[stronghold].reward_), awarded);
-     }},
+     },
+     "ACH_STRONGHOLD"},
 
     {SystemString::achievement_dynamite_name,
      SystemString::achievement_dynamite_description,
@@ -100,7 +109,8 @@ static const AchievementInfo info[Achievement::count] = {
      []() { return APP.gp_.challenge_flags_.get() not_eq 0; },
      [](bool awarded) {
          set_enabled(metaclass_index(info[dynamite].reward_), awarded);
-     }},
+     },
+     "ACH_DYNAMITE"},
 
     {SystemString::achievement_maestro1_name,
      SystemString::achievement_maestro1_description,
@@ -108,7 +118,8 @@ static const AchievementInfo info[Achievement::count] = {
      []() { return count_ones(APP.gp_.challenge_flags_.get()) > 2; },
      [](bool awarded) {
          set_enabled(metaclass_index(info[maestro_1].reward_), awarded);
-     }},
+     },
+     "ACH_VIRTUOSO_1"},
 
     {SystemString::achievement_maestro2_name,
      SystemString::achievement_maestro2_description,
@@ -116,7 +127,8 @@ static const AchievementInfo info[Achievement::count] = {
      []() { return count_ones(APP.gp_.challenge_flags_.get()) > 2; },
      [](bool awarded) {
          set_enabled(metaclass_index(info[maestro_2].reward_), awarded);
-     }},
+     },
+     "ACH_VIRTUOSO_2"},
 
     {SystemString::achievement_triage_name,
      SystemString::achievement_triage_description,
@@ -127,7 +139,8 @@ static const AchievementInfo info[Achievement::count] = {
      },
      [](bool awarded) {
          set_enabled(metaclass_index(info[triage].reward_), awarded);
-     }},
+     },
+     "ACH_TRIAGE"},
 
     {SystemString::achievement_banana_man_name,
      SystemString::achievement_banana_man_description,
@@ -138,7 +151,8 @@ static const AchievementInfo info[Achievement::count] = {
      },
      [](bool awarded) {
          set_enabled(metaclass_index(info[banana_man].reward_), awarded);
-     }},
+     },
+     "ACH_BANANA_MAN"},
 
     {SystemString::achievement_end_of_line_name,
      SystemString::achievement_end_of_line_description,
@@ -161,7 +175,8 @@ static const AchievementInfo info[Achievement::count] = {
      },
      [](bool awarded) {
          set_enabled(metaclass_index(info[edge_of_world].reward_), awarded);
-     }},
+     },
+     "ACH_EDGE_OF_THE_WORLD"},
 
     {SystemString::achievement_ship_of_theseus_name,
      SystemString::achievement_ship_of_theseus_description,
@@ -172,7 +187,8 @@ static const AchievementInfo info[Achievement::count] = {
      },
      [](bool awarded) {
          set_enabled(metaclass_index(info[ship_of_theseus].reward_), awarded);
-     }},
+     },
+     "ACH_SHIP_OF_THESEUS"},
 
     {SystemString::achievement_lemons_name,
      SystemString::achievement_lemons_description,
@@ -183,7 +199,8 @@ static const AchievementInfo info[Achievement::count] = {
      },
      [](bool awarded) {
          set_enabled(metaclass_index(info[lemons].reward_), awarded);
-     }},
+     },
+     "ACH_LEMONS_RESCUED"},
 
     {SystemString::achievement_new_colossus_name,
      SystemString::achievement_new_colossus_description,
@@ -205,7 +222,8 @@ static const AchievementInfo info[Achievement::count] = {
      },
      [](bool awarded) {
          set_enabled(metaclass_index(info[new_colossus].reward_), awarded);
-     }},
+     },
+     "ACH_THE_NEW_COLOSSUS"},
 
     {SystemString::achievement_meltdown_name,
      SystemString::achievement_meltdown_description,
@@ -216,7 +234,8 @@ static const AchievementInfo info[Achievement::count] = {
      },
      [](bool awarded) {
          set_enabled(metaclass_index(info[meltdown].reward_), awarded);
-     }},
+     },
+     "ACH_MELTDOWN"},
 
     {SystemString::achievement_completionist_name,
      SystemString::achievement_completionist_description,
@@ -231,7 +250,8 @@ static const AchievementInfo info[Achievement::count] = {
      },
      [](bool awarded) {
          set_enabled(metaclass_index(info[completionist].reward_), awarded);
-     }},
+     },
+     "ACH_COMPLETIONIST"},
 
     {SystemString::achievement_mycelium_name,
      SystemString::achievement_mycelium_description,
@@ -242,7 +262,8 @@ static const AchievementInfo info[Achievement::count] = {
      },
      [](bool awarded) {
          set_enabled(metaclass_index(info[mycelium].reward_), awarded);
-     }},
+     },
+     "ACH_SYMBIOSIS"},
 
     {SystemString::achievement_primitive_name,
      SystemString::achievement_primitive_description,
@@ -254,7 +275,8 @@ static const AchievementInfo info[Achievement::count] = {
      },
      [](bool awarded) {
          set_enabled(metaclass_index(info[primitive].reward_), awarded);
-     }},
+     },
+     "ACH_PRIMITIVE"},
 
     {SystemString::achievement_hero_name,
      SystemString::achievement_hero_description,
@@ -265,7 +287,8 @@ static const AchievementInfo info[Achievement::count] = {
      },
      [](bool awarded) {
          set_enabled(metaclass_index(info[hero].reward_), awarded);
-     }},
+     },
+     "ACH_HERO"},
 
     {SystemString::achievement_core_technician_name,
      SystemString::achievement_core_technician_description,
@@ -276,7 +299,8 @@ static const AchievementInfo info[Achievement::count] = {
      },
      [](bool awarded) {
          set_enabled(metaclass_index(info[core_technician].reward_), awarded);
-     }},
+     },
+     "ACH_CORE_TECHNICIAN"},
 
     // {SystemString::achievement_pacifist_name,
     //  SystemString::achievement_pacifist_description,
@@ -293,6 +317,13 @@ static const AchievementInfo info[Achievement::count] = {
 
 
 
+void push_to_steam(Achievement ach_id)
+{
+    PLATFORM_EXTENSION(unlock_achievement, info[ach_id].steam_api_key_);
+}
+
+
+
 void init()
 {
     auto flags = APP.gp_.achievement_flags_;
@@ -306,6 +337,7 @@ void init()
 
         if (flags.get() & flag) {
             info[i].award_(true);
+            push_to_steam((Achievement)i);
         }
     }
 }
@@ -361,6 +393,7 @@ Achievement update()
             raised_achievements.set(check_achievement, false);
             flags.set(flags.get() | flag);
             save::store_global_data(APP.gp_);
+            push_to_steam((Achievement)check_achievement);
             return static_cast<Achievement>(check_achievement);
         }
     }

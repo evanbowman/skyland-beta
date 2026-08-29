@@ -20,6 +20,8 @@ option(PSP "PlayStationPortable" OFF)
 option(GAMEBOY_ADVANCE "GameboyAdvance" ON)
 option(NINTENDO_DS "NintendoDS" OFF)
 option(GBA_AUTOBUILD_IMG "AutobuildImg" OFF)
+option(SKYLAND_STEAM "Enable Steamworks integration" OFF)
+
 
 
 if(GAMEBOY_ADVANCE AND NOT DEVKITARM)
@@ -581,6 +583,23 @@ else()
     ${SOURCES}
     ${SOURCE_DIR}/platform/sdl/sdl_platform.cpp
     ${SOURCE_DIR}/platform/desktop/resource_path.cpp)
+
+  if (SKYLAND_STEAM)
+    target_compile_definitions(Skyland PRIVATE
+      SKYLAND_STEAM SKYLAND_STEAM_APPID=2263050)
+    target_include_directories(Skyland PRIVATE ${STEAMWORKS_SDK}/public)
+    if (APPLE)
+      target_link_libraries(Skyland
+        ${STEAMWORKS_SDK}/redistributable_bin/osx/libsteam_api.dylib)
+    elseif (WIN32)
+      target_link_libraries(Skyland
+        ${STEAMWORKS_SDK}/redistributable_bin/win64/steam_api64.lib)
+    else()
+      target_link_libraries(Skyland
+        ${STEAMWORKS_SDK}/redistributable_bin/linux64/libsteam_api.so)
+    endif()
+  endif()
+
 endif()
 
 
