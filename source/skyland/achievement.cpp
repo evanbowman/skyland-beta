@@ -36,7 +36,7 @@ struct AchievementInfo
     bool (*match_)();
     void (*award_)(bool);
 
-    const char* steam_api_key_;
+    const char* steam_api_ref_;
 };
 
 
@@ -319,7 +319,7 @@ static const AchievementInfo info[Achievement::count] = {
 
 void push_to_steam(Achievement ach_id)
 {
-    PLATFORM_EXTENSION(unlock_achievement, info[ach_id].steam_api_key_);
+    PLATFORM_EXTENSION(unlock_achievement, info[ach_id].steam_api_ref_);
 }
 
 
