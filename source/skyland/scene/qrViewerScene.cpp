@@ -130,12 +130,23 @@ void QRViewerScene::enter(Scene& prev)
 
                 u8 next_start = st.x - utf8::len(next_str->c_str());
                 next_text_.emplace(OverlayCoord{next_start, 19});
-                next_text_->assign(
-                    next_str->c_str(),
-                    OptColors{{overworld_ ? custom_color(0x4e4e73)
-                                          : ColorConstant::silver_white,
-                               overworld_ ? custom_color(0xd2d9a7)
-                                          : custom_color(0x006ea6)}});
+
+                auto fg_clr = overworld_ ? custom_color(0x4e4e73)
+                                         : ColorConstant::silver_white;
+
+                auto bg_clr = overworld_ ? custom_color(0xd2d9a7)
+                                         : custom_color(0x006ea6);
+
+                next_text_->assign(next_str->c_str(),
+                                   OptColors{{fg_clr, bg_clr}});
+
+                if (PLATFORM.get_extensions().open_url and text_ and
+                    not overworld_) {
+                    info((**text_));
+                    Text::print(SYS_CSTR(qr_start_open_url),
+                                OverlayCoord{0, 19},
+                                OptColors{{fg_clr, bg_clr}});
+                }
             }
 
             qr_->draw({2, (u8)margin}, (int)format_);
@@ -185,6 +196,14 @@ ScenePtr QRViewerScene::update(Time delta)
             PLATFORM.screen().schedule_fade(1.f, {.color = exit_color_});
             PLATFORM.screen().clear();
             PLATFORM.screen().display();
+        }
+    }
+
+    if (auto open_url = PLATFORM.get_extensions().open_url) {
+        if (text_ and player().button_down(Button::start) and not overworld_) {
+            auto url = (*text_)->c_str();
+            info(url);
+            open_url(url);
         }
     }
 

@@ -540,6 +540,7 @@ enum class SystemString {
 
     a_next,
     qr_prep,
+    qr_start_open_url,
 
     modifier_keys_title,
     modifier_keys_opt_1,

@@ -566,6 +566,20 @@ static const Platform::Extensions extensions{
     .unlock_achievement =
         [](const char* api_name) { steam_manager.unlock(api_name); },
 #endif
+    .open_url =
+        [](const char* url) {
+            std::string full = url;
+
+            // QR-code URLs are stored without a scheme (phone scanners add one
+            // automatically); OS URL launchers require an explicit scheme.
+            if (full.find("://") == std::string::npos) {
+                full = "https://" + full;
+            }
+
+            if (SDL_OpenURL(full.c_str()) not_eq 0) {
+                warning(format("failed to open url: %", SDL_GetError()));
+            }
+        },
     .sprite_overlapping_supported = [](bool& result) { result = true; },
     .has_startup_opt = [](const char* opt) -> const char* {
         for (int i = 0; i < process_argc; ++i) {
@@ -805,8 +819,8 @@ static void enter_fullscreen()
 
     SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
 
-    info(format(
-        "Entered fullscreen mode: %x%", display_mode.w, display_mode.h));
+    info(
+        format("Entered fullscreen mode: %x%", display_mode.w, display_mode.h));
 
     update_viewport();
 }
@@ -824,11 +838,10 @@ static void exit_fullscreen()
 
     if (last_window_width > 0 && last_window_height > 0) {
         SDL_SetWindowSize(window, last_window_width, last_window_height);
-    }
-    else {
+    } else {
         SDL_SetWindowSize(window,
-            logical_width * window_scale,
-            logical_height * window_scale);
+                          logical_width * window_scale,
+                          logical_height * window_scale);
     }
 
     info("Exited fullscreen mode");
@@ -841,8 +854,7 @@ static void toggle_fullscreen()
 {
     if (is_fullscreen) {
         exit_fullscreen();
-    }
-    else {
+    } else {
         enter_fullscreen();
     }
 }

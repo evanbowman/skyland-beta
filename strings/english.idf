@@ -452,6 +452,7 @@ Step 1: Scan to request a login token!
 Scan to upload score!
 A: next 
 Preparing QR Code...
+START: open URL
 combos: START + ?
 set weapon groups
 weapon group 1

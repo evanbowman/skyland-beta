@@ -976,6 +976,7 @@ public:
         void (*override_palette)(Layer l, u8 index, ColorConstant c);
         void (*override_sprite_palette)(u8 index, ColorConstant c);
         void (*unlock_achievement)(const char* api_name);
+        void (*open_url)(const char* url);
 
         bool (*__test_compare_sound)(const char* sound_name);
 
