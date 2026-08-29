@@ -7076,4 +7076,3 @@ Platform::TaskInfo Platform::set_background_task(Platform::TaskPointer task,
 {
     return {no_op_task, nullptr};
 }
-[]
