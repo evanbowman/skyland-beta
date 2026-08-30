@@ -159,15 +159,13 @@ DynamicMemory<FileLine> get_line_from_file(const char* file_name, int line)
             // Consume the terminator: \r\n, lone \r, or lone \n.
             if (*contents == '\r' and *(contents + 1) == '\n') {
                 contents += 2;
-            }
-            else {
+            } else {
                 ++contents;
             }
             --line;
         }
-        while (*contents not_eq '\0' and
-            *contents not_eq '\n' and
-            *contents not_eq '\r') {
+        while (*contents not_eq '\0' and *contents not_eq '\n' and
+               *contents not_eq '\r') {
             result->push_back(*contents);
             ++contents;
         }

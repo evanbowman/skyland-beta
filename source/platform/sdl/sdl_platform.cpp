@@ -490,7 +490,18 @@ std::vector<RectInfo> rect_draw_queue;
 
 static constexpr unsigned psg_snd_rates[13] = {
     0,
-    8013, 7566, 7144, 6742, 6362, 6005, 5666, 5346, 5048, 4766, 4499, 4246,
+    8013,
+    7566,
+    7144,
+    6742,
+    6362,
+    6005,
+    5666,
+    5346,
+    5048,
+    4766,
+    4499,
+    4246,
 };
 
 
@@ -559,11 +570,16 @@ struct PsgSynth
     Channel* channel(Platform::Speaker::Channel c)
     {
         switch (c) {
-        case Platform::Speaker::Channel::square_1: return &square_1;
-        case Platform::Speaker::Channel::square_2: return &square_2;
-        case Platform::Speaker::Channel::noise:    return &noise;
-        case Platform::Speaker::Channel::wave:     return &wave;
-        default:                                   return nullptr;
+        case Platform::Speaker::Channel::square_1:
+            return &square_1;
+        case Platform::Speaker::Channel::square_2:
+            return &square_2;
+        case Platform::Speaker::Channel::noise:
+            return &noise;
+        case Platform::Speaker::Channel::wave:
+            return &wave;
+        default:
+            return nullptr;
         }
     }
 };
@@ -657,7 +673,7 @@ static const Platform::Extensions extensions{
                 }
             }
         },
-        .psg_play_note =
+    .psg_play_note =
         [](Platform::Speaker::Channel channel,
            Platform::Speaker::NoteDesc note_desc) {
             if (not window) {
@@ -815,9 +831,10 @@ static const Platform::Extensions extensions{
         },
 #ifdef SKYLAND_STEAM
     .unlock_achievement =
-        [](const char* api_name) { 
+        [](const char* api_name) {
             info(format("unlock %", api_name));
-            steam_manager.unlock(api_name); },
+            steam_manager.unlock(api_name);
+        },
 #endif
     .open_url =
         [](const char* url) {
