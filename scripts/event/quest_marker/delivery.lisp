@@ -20,6 +20,7 @@
 
 (setq on-converge
       (lambda ()
+        (seq on-converge nil)
         (let ((c (cargo-bays (player))))
           (let ((p (filter (lambda (xy)
                              (equal (tr "parcel")

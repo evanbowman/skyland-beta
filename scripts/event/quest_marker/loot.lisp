@@ -19,6 +19,7 @@
 
 (setq on-converge
       (lambda ()
+        (setq on-converge nil)
         (let ((c (cargo-bays (player))))
           (let ((p (filter (lambda (xy)
                              (equal (tr "loot")

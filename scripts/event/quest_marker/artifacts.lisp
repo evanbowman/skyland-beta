@@ -27,6 +27,7 @@
 
 
 (defn on-converge ()
+  (setq on-converge nil)
   (let ((c (cargo-bays (player))))
     (let ((p (filter
               (lambda (xy)

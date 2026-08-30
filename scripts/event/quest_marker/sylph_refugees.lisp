@@ -19,6 +19,7 @@
 
 
 (defn on-converge ()
+  (setq on-converge nil)
   (dialog
    (tr "<c:Sylph Facilities Staff:53>Good, you're here. <B:0> This is the third facility evacuation this month. Transport resources are stretched thin across all sectors. <B:0> The lead researchers departed on the priority vessel - their work continues elsewhere. We stayed to secure the equipment. <B:0> The system works, but... it's good to see an independent operator. 1500@ authorized."))
   (coins-add 1500))

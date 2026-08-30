@@ -16,6 +16,7 @@
 (weather-set weather-id-ash)
 
 (defn on-converge ()
+  (setq on-converge nil)
   (dialog (tr "You arrive, but the Ashwalker Apprentice seems disturbed..."))
 
   (defn on-dialog-closed ()

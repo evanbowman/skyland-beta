@@ -50,6 +50,7 @@
 
 
 (defn on-converge ()
+  (setq on-converge nil)
   (dialog
    (tr "<c:Passengers:10>We were starting to wonder if anyone would show up! How about we join up, it'll be safer to travel together! Here's 1500@ as a tip."))
   (coins-add 1500))
