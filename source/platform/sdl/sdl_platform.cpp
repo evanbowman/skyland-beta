@@ -236,12 +236,10 @@ SDL_Color color_to_sdl(ColorConstant k)
 }
 
 
-
 #ifdef SKYLAND_STEAM
 #include "steam/steam_api.h"
 #include <string>
 #include <vector>
-
 
 class SteamManager
 {
@@ -257,9 +255,11 @@ public:
             return false;
         }
         initialized_ = true;
-        if (SteamUserStats()) {
-            SteamUserStats()->RequestCurrentStats();
-        }
+        // SDK 1.61+ removed RequestCurrentStats(). The Steam client syncs
+        // stats and achievements before the process starts, so they're
+        // already available here — no request, nothing to wait on.
+        stats_ready_ = true;
+        flush_pending();
         return true;
     }
 
@@ -284,7 +284,8 @@ public:
             return;
         }
         if (not stats_ready_) {
-            // Stats still loading; defer until UserStatsReceived_t arrives.
+            // Shouldn't normally trigger post-1.61, but keep the queue as a
+            // safety net in case some client hasn't synced yet.
             pending_.emplace_back(api_name);
             return;
         }
@@ -301,42 +302,40 @@ private:
         bool already = false;
         // Only commit on a real state change, to avoid needless StoreStats.
         if (stats->GetAchievement(api_name, &already) and already) {
+            info(format("has achievement %", api_name));
             return;
         }
         stats->SetAchievement(api_name);
         stats->StoreStats();
+        info(format("raise achievement %", api_name));
     }
 
-    STEAM_CALLBACK(SteamManager,
-                   on_user_stats_received,
-                   UserStatsReceived_t,
-                   stats_received_cb_);
+    void flush_pending()
+    {
+        for (auto& name : pending_) {
+            push(name.c_str());
+        }
+        pending_.clear();
+    }
 
+    void on_user_stats_received(UserStatsReceived_t* cb)
+    {
+        // Retained as a belt-and-suspenders flush; ignore stats belonging to
+        // a different app. Idempotent with the init path.
+        if (cb->m_nGameID != SteamUtils()->GetAppID()) {
+            return;
+        }
+        stats_ready_ = true;
+        flush_pending();
+    }
+
+    CCallback<SteamManager, UserStatsReceived_t> stats_received_cb_;
     bool initialized_ = false;
     bool stats_ready_ = false;
     std::vector<std::string> pending_;
 };
-
-
-void SteamManager::on_user_stats_received(UserStatsReceived_t* cb)
-{
-    if (cb->m_nGameID not_eq SteamUtils()->GetAppID()) {
-        return;
-    }
-    if (cb->m_eResult not_eq k_EResultOK) {
-        return;
-    }
-    stats_ready_ = true;
-    for (auto& name : pending_) {
-        push(name.c_str());
-    }
-    pending_.clear();
-}
-
-static SteamManager steam_manager;
+SteamManager steam_manager;
 #endif // SKYLAND_STEAM
-
-
 
 static std::map<SDL_Scancode, Button> buttonmap;
 
@@ -816,7 +815,9 @@ static const Platform::Extensions extensions{
         },
 #ifdef SKYLAND_STEAM
     .unlock_achievement =
-        [](const char* api_name) { steam_manager.unlock(api_name); },
+        [](const char* api_name) { 
+            info(format("unlock %", api_name));
+            steam_manager.unlock(api_name); },
 #endif
     .open_url =
         [](const char* url) {

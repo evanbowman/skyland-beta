@@ -583,23 +583,6 @@ else()
     ${SOURCES}
     ${SOURCE_DIR}/platform/sdl/sdl_platform.cpp
     ${SOURCE_DIR}/platform/desktop/resource_path.cpp)
-
-  if (SKYLAND_STEAM)
-    target_compile_definitions(Skyland PRIVATE
-      SKYLAND_STEAM SKYLAND_STEAM_APPID=2263050)
-    target_include_directories(Skyland PRIVATE ${STEAMWORKS_SDK}/public)
-    if (APPLE)
-      target_link_libraries(Skyland
-        ${STEAMWORKS_SDK}/redistributable_bin/osx/libsteam_api.dylib)
-    elseif (WIN32)
-      target_link_libraries(Skyland
-        ${STEAMWORKS_SDK}/redistributable_bin/win64/steam_api64.lib)
-    else()
-      target_link_libraries(Skyland
-        ${STEAMWORKS_SDK}/redistributable_bin/linux64/libsteam_api.so)
-    endif()
-  endif()
-
 endif()
 
 
@@ -616,6 +599,18 @@ elseif(GAMEBOY_ADVANCE)
 elseif(WIN32)
   set(EXECUTABLE_NAME Skyland)
   add_executable(Skyland WIN32 ${SOURCES})
+
+  if (SKYLAND_STEAM)
+    #FIXME!
+    set(STEAMWORKS_SDK "C:/steamworks_sdk")
+
+    target_compile_definitions(Skyland PRIVATE
+      SKYLAND_STEAM SKYLAND_STEAM_APPID=2263050)
+    target_include_directories(Skyland PRIVATE ${STEAMWORKS_SDK}/public)
+    target_link_libraries(Skyland PRIVATE
+        ${STEAMWORKS_SDK}/redistributable_bin/win64/steam_api64.lib)
+  endif()
+
 else()
   set(EXECUTABLE_NAME Skyland)
   add_executable(Skyland ${SOURCES})
