@@ -835,27 +835,6 @@ static const Platform::Extensions extensions{
             ch.env_step = s.envelope_step_;
             SDL_UnlockAudio();
         },
-#ifdef SKYLAND_STEAM
-    .unlock_achievement =
-        [](const char* api_name) {
-            info(format("unlock %", api_name));
-            steam_manager.unlock(api_name);
-        },
-#endif
-    .open_url =
-        [](const char* url) {
-            std::string full = url;
-
-            // QR-code URLs are stored without a scheme (phone scanners add one
-            // automatically); OS URL launchers require an explicit scheme.
-            if (full.find("://") == std::string::npos) {
-                full = "https://" + full;
-            }
-
-            if (SDL_OpenURL(full.c_str()) not_eq 0) {
-                warning(format("failed to open url: %", SDL_GetError()));
-            }
-        },
         .override_palette =
         [](Layer layer, u8 index, ColorConstant color) {
             if (not renderer) {
@@ -1004,6 +983,27 @@ static const Platform::Extensions extensions{
             if (current_sprite_texture) {
                 SDL_SetTextureBlendMode(current_sprite_texture,
                                         SDL_BLENDMODE_BLEND);
+            }
+        },
+#ifdef SKYLAND_STEAM
+    .unlock_achievement =
+        [](const char* api_name) {
+            info(format("unlock %", api_name));
+            steam_manager.unlock(api_name);
+        },
+#endif
+    .open_url =
+        [](const char* url) {
+            std::string full = url;
+
+            // QR-code URLs are stored without a scheme (phone scanners add one
+            // automatically); OS URL launchers require an explicit scheme.
+            if (full.find("://") == std::string::npos) {
+                full = "https://" + full;
+            }
+
+            if (SDL_OpenURL(full.c_str()) not_eq 0) {
+                warning(format("failed to open url: %", SDL_GetError()));
             }
         },
     .sprite_overlapping_supported = [](bool& result) { result = true; },
