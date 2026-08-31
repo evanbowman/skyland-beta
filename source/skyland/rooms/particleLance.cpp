@@ -29,6 +29,7 @@ namespace skyland
 
 
 
+extern SharedVariable energy_glow_color;
 static const u8 particle_lance_charge_frames = 4;
 
 
@@ -262,7 +263,7 @@ void ParticleLance::display(Platform::Screen& screen)
                     pos.y + 8.0_fixed,
                 },
                 50 + rng::choice<8>(rng::utility_state),
-                custom_color(0xafe3f2),
+                custom_color(energy_glow_color),
                 40);
             pos.x += 16.0_fixed;
             dist -= 16.0_fixed;

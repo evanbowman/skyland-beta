@@ -148,6 +148,12 @@ static SDL_Surface* background_surface = nullptr;
 static int background_texture_width = 0;
 static int background_texture_height = 0;
 
+static SDL_Texture* current_sprite_texture = nullptr;
+static SDL_Texture* sprite_mask_texture = nullptr;
+static SDL_Surface* current_sprite_surface = nullptr; // retained for palette overrides
+static int sprite_texture_width = 0;
+static int sprite_texture_height = 0;
+
 static SDL_Texture* current_overlay_texture = nullptr;
 static int overlay_texture_width = 0;
 static int overlay_texture_height = 0;
@@ -544,10 +550,10 @@ struct PsgSynth
         u8 duty = 2; // 0..3 -> 12.5/25/50/75 %
 
         // Envelope, mirroring NRx2.
-        u8 env_initial_volume = 0; // reload value 0..15
+        u8 env_initial_volume = 15;// reload value 0..15
         u8 env_direction = 0;      // 0 = decrease, 1 = increase
         u8 env_step = 0;           // 0 disables the sweep
-        int env_volume = 0;        // current 0..15
+        int env_volume = 15;       // current 0..15
         int env_timer = 0;         // samples until next envelope tick
 
         // Vibrato LFO.
@@ -848,6 +854,156 @@ static const Platform::Extensions extensions{
 
             if (SDL_OpenURL(full.c_str()) not_eq 0) {
                 warning(format("failed to open url: %", SDL_GetError()));
+            }
+        },
+        .override_palette =
+        [](Layer layer, u8 index, ColorConstant color) {
+            if (not renderer) {
+                return;
+            }
+            // Only the tile0 (map_0) layer is driven by the game here — this
+            // is the energy-glow color at palette index 11. map_0 and
+            // map_0_ext share tile0_surface, so recoloring it covers both.
+            if (layer not_eq Layer::map_0_ext and layer not_eq Layer::map_0) {
+                return;
+            }
+            if (not tile0_surface or not tile0_transformed_palette.found or
+                index >= tile0_transformed_palette.count) {
+                return;
+            }
+
+            SDL_Color new_color = color_to_sdl(color);
+            // Preserve the transparency classification of the entry (0 alpha =
+            // transparent index); overwrite_t0_tile keys off colors[i].a.
+            SDL_Color old_color = tile0_transformed_palette.colors[index];
+            new_color.a = old_color.a;
+
+            // set_glow_color() runs every repaint. When the color is unchanged
+            // there's nothing to recolor, and skipping here avoids rebuilding
+            // the GPU texture on every frame.
+            if (new_color.r == old_color.r and new_color.g == old_color.g and
+                new_color.b == old_color.b) {
+                return;
+            }
+
+            if (SDL_MUSTLOCK(tile0_surface)) {
+                if (SDL_LockSurface(tile0_surface) not_eq 0) {
+                    error(format("override_palette: lock failed: %",
+                                 SDL_GetError()));
+                    return;
+                }
+            }
+
+            Uint8* pixels = (Uint8*)tile0_surface->pixels;
+            const int pitch = tile0_surface->pitch;
+            const int bpp = tile0_surface->format->BytesPerPixel;
+
+            for (int y = 0; y < tile0_surface->h; ++y) {
+                Uint8* row = pixels + y * pitch;
+                for (int x = 0; x < tile0_surface->w; ++x) {
+                    Uint32* p = (Uint32*)(row + x * bpp);
+                    Uint8 r, g, b, a;
+                    SDL_GetRGBA(*p, tile0_surface->format, &r, &g, &b, &a);
+                    // Skip transparent pixels; recolor only the entry's color.
+                    if (a not_eq 0 and r == old_color.r and
+                        g == old_color.g and b == old_color.b) {
+                        *p = SDL_MapRGBA(tile0_surface->format,
+                                         new_color.r,
+                                         new_color.g,
+                                         new_color.b,
+                                         a);
+                    }
+                }
+            }
+
+            if (SDL_MUSTLOCK(tile0_surface)) {
+                SDL_UnlockSurface(tile0_surface);
+            }
+
+            // Keep the transformed palette in sync so future overwrite_t0_tile
+            // re-bakes (and the next color-change scan) use this as the
+            // reference color.
+            tile0_transformed_palette.colors[index] = new_color;
+
+            if (tile0_texture) {
+                SDL_DestroyTexture(tile0_texture);
+            }
+            tile0_texture =
+                SDL_CreateTextureFromSurface(renderer, tile0_surface);
+            if (tile0_texture) {
+                SDL_SetTextureBlendMode(tile0_texture, SDL_BLENDMODE_BLEND);
+            }
+        },
+        .override_sprite_palette =
+        [](u8 index, ColorConstant color) {
+            if (not renderer) {
+                return;
+            }
+
+            static constexpr u8 sprite_alt_palette_base = 0;
+            const int pal_index = sprite_alt_palette_base + index;
+
+            if (not current_sprite_surface or
+                not sprite_transformed_palette.found or
+                pal_index >= sprite_transformed_palette.count) {
+                return;
+            }
+
+            SDL_Color new_color = color_to_sdl(color);
+            SDL_Color old_color = sprite_transformed_palette.colors[pal_index];
+            new_color.a = old_color.a;
+
+            // set_glow_color() runs every repaint; skip the scan + GPU rebuild
+            // when nothing changed.
+            if (new_color.r == old_color.r and new_color.g == old_color.g and
+                new_color.b == old_color.b) {
+                return;
+            }
+
+            if (SDL_MUSTLOCK(current_sprite_surface)) {
+                if (SDL_LockSurface(current_sprite_surface) not_eq 0) {
+                    error(format("override_sprite_palette: lock failed: %",
+                                 SDL_GetError()));
+                    return;
+                }
+            }
+
+            Uint8* pixels = (Uint8*)current_sprite_surface->pixels;
+            const int pitch = current_sprite_surface->pitch;
+            const int bpp = current_sprite_surface->format->BytesPerPixel;
+
+            for (int y = 0; y < current_sprite_surface->h; ++y) {
+                Uint8* row = pixels + y * pitch;
+                for (int x = 0; x < current_sprite_surface->w; ++x) {
+                    Uint32* p = (Uint32*)(row + x * bpp);
+                    Uint8 r, g, b, a;
+                    SDL_GetRGBA(
+                        *p, current_sprite_surface->format, &r, &g, &b, &a);
+                    if (a not_eq 0 and r == old_color.r and
+                        g == old_color.g and b == old_color.b) {
+                        *p = SDL_MapRGBA(current_sprite_surface->format,
+                                         new_color.r,
+                                         new_color.g,
+                                         new_color.b,
+                                         a);
+                    }
+                }
+            }
+
+            if (SDL_MUSTLOCK(current_sprite_surface)) {
+                SDL_UnlockSurface(current_sprite_surface);
+            }
+
+            sprite_transformed_palette.colors[pal_index] = new_color;
+
+            if (current_sprite_texture) {
+                SDL_DestroyTexture(current_sprite_texture);
+            }
+            current_sprite_texture =
+                SDL_CreateTextureFromSurface(renderer, current_sprite_surface);
+            if (current_sprite_texture) {
+                SDL_SetTextureBlendMode(current_sprite_texture,
+                                        SDL_BLENDMODE_BLEND);
             }
         },
     .sprite_overlapping_supported = [](bool& result) { result = true; },
@@ -3989,17 +4145,15 @@ void Platform::set_overlay_origin(Float x, Float y)
 
 
 
-static SDL_Texture* current_sprite_texture = nullptr;
-static SDL_Texture* sprite_mask_texture = nullptr;
-static int sprite_texture_width = 0;
-static int sprite_texture_height = 0;
-
-
-
 void Platform::load_sprite_texture(const char* name)
 {
     if (not renderer) {
         return;
+    }
+
+    if (current_sprite_surface) {
+        SDL_FreeSurface(current_sprite_surface);
+        current_sprite_surface = nullptr;
     }
 
     // Clean up old texture if it exists
@@ -4096,7 +4250,7 @@ void Platform::load_sprite_texture(const char* name)
 
     last_sprite_texture = name;
 
-    SDL_FreeSurface(surface);
+    current_sprite_surface = surface;
 }
 
 

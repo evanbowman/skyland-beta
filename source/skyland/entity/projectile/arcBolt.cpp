@@ -27,6 +27,7 @@ namespace skyland
 
 
 
+extern SharedVariable energy_glow_color;
 SHARED_VARIABLE(arcbolt_damage);
 
 
@@ -287,7 +288,7 @@ void ArcBolt::project_glow()
     APP.environment().render_glow_effect(sprite_.get_position(),
                                          50 +
                                              rng::choice<8>(rng::utility_state),
-                                         custom_color(0xafe3f2),
+                                         custom_color(energy_glow_color),
                                          30);
 }
 
