@@ -203,6 +203,8 @@ private:
 
 void restore_overworld_textures()
 {
+    environment_apply();
+
     auto& isle = APP.player_island();
     if (isle.interior_visible()) {
         auto t = APP.environment().player_island_interior_texture();
