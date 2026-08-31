@@ -1,8 +1,20 @@
 
+* SDL Port Feature Requests (beginning August, 2026)
+** TODO Add more button shortcuts to take full advantage of the gba keyboard
+** TODO Support color profiles switcher in SDL port
+** TODO The engineer encounter in zone 1 is missing graphics in the SDL port. I thought I fixed that...
+** TODO The checkers minigame doesn't work in SDL, as it relies on the unimplemented macro stuff
+** TODO Investigate Steam Workshop
+*** Q: how feasible is it to restructure scripting interface to allow mods to stack
+*** Q: what is a mod in the first place?
+**** The game allows you to edit the scripts, but...
+**** modders will expect mods to be, sort of... modular and stackable.
+** TODO Finish LAN multiplayer for SDL port
+*** I think it was sort of almost working, but fragile and succeptible to desync during latency spikes.
+** DONE Connect in-game achievements to steam achievements
 
 * Bugfixes
-** TODO Color palette bugfix after selecting continue-building
-** TODO 
+** DONE Color palette bugfix after selecting continue-building
 * September 2022
 ** ???
 * July 2022
@@ -11,7 +23,7 @@
 **** If not matching, then give up loading files and reformat disk
 **** See whether adjustments to CRC allows loading the corrupted sample data
 ** DONE Write lots of unit tests for flash fs!
-** TODO Add new type of ion weapon?
+** DONE Add new type of ion weapon? (added, annihilator)
 *** Extra-strong against forcefields?
 *** Causes forcefields to explode on contact
 **** Would need to be a reward for completing the challenge levels, as it would make them too easy
@@ -29,22 +41,4 @@
 ** DONE Auto-pause & rewind option when island destroyed in easy mode
 ** DONE Add dialog boxes, description for macro mode
 ** DONE Ending? Opening cutscene for adventure mode?
-** TODO Random encounters in macrocosm, stuff to explore
-*** TODO Begin by selecting the positions of generated sectors and placing them on the map
-**** Q: how many to generate? Place them at small random offsets from fixed positions
-**** Begin by using a hard-coded seed value
-*** TODO Add scripted-sectors to macrocosm
-**** A scripted sector should appear as a question mark, or some other icon, on the world map
-**** Scripted sectors should be mapped into memory as needed, and all should be equally-sized (8x8x8?)
-**** Scripted sectors must be immutable, players cannot build on them
-**** Use some sort of hash to generate the positions of scripted sectors randomly
-**** Use random encounters to add story elements to macrocosm mode
-**** Add some means of storing which islands that the player previously visited?
-**** Player can optionally colonize an uninhabited island?
-***** Add commands to skyland LISP api for adopting an uninhabited scripted sector
-**** Ideas for script scenarios?
-***** TODO Discover ruins of an abandoned civilization (award N coins)
-***** TODO Discover volcanic island, adopt?
-***** TODO Abandoned castle, bit of lore
-** TODO Add a tech tree to macro mode
 
