@@ -2022,10 +2022,60 @@ const std::string& get_save_file_dir()
     has_save_file_dir = true;
     return save_path;
 }
+#elif defined(_WIN32)
+const std::string& get_save_file_dir()
+{
+    static std::string save_path;
+    static bool resolved = false;
+
+    if (not resolved) {
+        resolved = true;
+
+        // Roaming AppData is the conventional home for user save data on
+        // Windows, mirroring the ~/Library/Application Support location used on
+        // macOS. %APPDATA% expands to e.g. C:\Users\<name>\AppData\Roaming.
+        if (const char* appdata = getenv("APPDATA")) {
+            const std::string dir = std::string(appdata) + "\\Skyland\\";
+
+            std::error_code ec;
+            std::filesystem::create_directories(dir, ec);
+
+            if (not ec) {
+                // Backwards compatibility: older builds wrote save.dat next to
+                // the executable (i.e. the current working directory). If such
+                // a save exists and AppData doesn't have one yet, migrate it so
+                // existing players keep their progress. Copy rather than move,
+                // so the original is left intact if anything goes wrong.
+                const std::filesystem::path legacy = save_file_name;
+                const std::filesystem::path migrated = dir + save_file_name;
+
+                if (std::filesystem::exists(legacy, ec) and
+                    not std::filesystem::exists(migrated, ec)) {
+                    std::filesystem::copy_file(
+                        legacy,
+                        migrated,
+                        std::filesystem::copy_options::overwrite_existing,
+                        ec);
+                }
+
+                save_path = dir;
+            }
+        }
+
+        if (save_path.empty()) {
+            info("Save file location: current directory (AppData unavailable)");
+        } else {
+            info(format("Save file location: %", save_path.c_str()));
+        }
+    }
+
+    has_save_file_dir = true;
+    return save_path;
+}
 #else
 const std::string& get_save_file_dir()
 {
-    static std::string save_path = ""; // Current directory for Linux/Windows
+    static std::string save_path = ""; // Current directory for Linux
     has_save_file_dir = true;
     return save_path;
 }
