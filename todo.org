@@ -12,6 +12,8 @@
 ** TODO Finish LAN multiplayer for SDL port
 *** I think it was sort of almost working, but fragile and succeptible to desync during latency spikes.
 ** DONE Connect in-game achievements to steam achievements
+** DONE Support tuning-crystal color switcher
+
 
 * Bugfixes
 ** DONE Color palette bugfix after selecting continue-building
