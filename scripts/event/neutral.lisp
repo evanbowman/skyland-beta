@@ -10,10 +10,8 @@
 (if (and (> (zone) 2) (not (cart-found? 0)) (not (choice 3)))
     (eval-file "scripts/event/neutral/3/dev_cameo.lisp")
   (let ((lvs (difference friendlies-seen
-                         (range
-                          ;; Number of levels to select from based on
-                          ;; current zone.
-                          (get '(6 11 7 2) (zone))))))
+                         (eval-file (format "/scripts/event/neutral/%/include.lisp"
+                                            (zone))))))
 
     (when (equal (length lvs) 1)
       (setq friendlies-seen '()))

@@ -9,9 +9,8 @@
                 (not (filter (lambda (lv)
                                (equal cmp lv))
                              enemies-seen))))
-            (range
-             ;; Number of levels to select from based on current zone.
-             (get '(8 8 7 3) (zone))))))
+            (eval-file (format "/scripts/event/hostile/%/include.lisp"
+                               (zone))))))
 
   (if lvs
       (let ((lv (sample lvs)))

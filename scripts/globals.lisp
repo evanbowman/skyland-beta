@@ -47,7 +47,6 @@
 (defconstant difficulty-beginner 0)
 (defconstant difficulty-normal 1)
 (defconstant difficulty-hard 2)
-(defconstant quest-count 9)
 (defconstant surprise-count 3)
 
 (defconstant weather-id-clear 1)
