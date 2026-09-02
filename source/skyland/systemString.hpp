@@ -794,6 +794,7 @@ enum class SystemString {
     gamespeed_prompt,
     sel_menu_prompt,
     repair_help_prompt,
+    repair_button_hint,
     ok,
     do_not_show_again,
 

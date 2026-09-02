@@ -24,7 +24,7 @@ namespace skyland
 
 ScenePtr simple_prompt_once(GlobalPersistentData::Flags check_flag,
                             StateBit runtime_flag,
-                            SystemString prompt,
+                            const char* msg,
                             DeferredScene next);
 
 
@@ -34,15 +34,21 @@ class MenuPromptScene : public Scene
 public:
     using OptCallback = Function<4, void()>;
 
+    using Message = SystemStringMem;
 
-    MenuPromptScene(SystemString msg,
+
+    MenuPromptScene(const char* msg,
                     SystemString opt_1,
                     SystemString opt_2,
                     DeferredScene next,
                     OptCallback opt_1_callback,
                     OptCallback opt_2_callback)
-        : next_(next), msg_(msg), opt_1_(opt_1), opt_2_(opt_2),
-          opt_1_callback_(opt_1_callback), opt_2_callback_(opt_2_callback)
+        : msg_(allocate<Message>({"prompt-mem"}, msg)),
+          next_(next),
+          opt_1_(opt_1),
+          opt_2_(opt_2),
+          opt_1_callback_(opt_1_callback),
+          opt_2_callback_(opt_2_callback)
     {
     }
 
@@ -60,8 +66,8 @@ public:
     ScenePtr update(Time delta) override;
 
 private:
+    DynamicMemory<Message> msg_;
     DeferredScene next_;
-    SystemString msg_;
     SystemString opt_1_;
     SystemString opt_2_;
 

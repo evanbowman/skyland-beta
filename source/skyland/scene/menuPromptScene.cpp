@@ -25,7 +25,7 @@ void MenuPromptScene::enter(Scene& prev)
     PLATFORM.screen().schedule_fade(1);
 
     text_.emplace();
-    text_->assign(loadstr(msg_)->c_str(), {1, 1}, {28, 14}, 0);
+    text_->assign(msg_->c_str(), {1, 1}, {28, 14}, 0);
 
     t1_.emplace(OverlayCoord{3, 16});
 
@@ -95,7 +95,7 @@ ScenePtr MenuPromptScene::update(Time delta)
 
 ScenePtr simple_prompt_once(GlobalPersistentData::Flags check_flag,
                             StateBit runtime_flag,
-                            SystemString prompt,
+                            const char* prompt,
                             DeferredScene next)
 {
     const bool skip_prompt = APP.gp_.stateflags_.get(check_flag) or

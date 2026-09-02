@@ -79,6 +79,9 @@ private:
     };
 
 
+    ScenePtr make_repair_hint() const;
+
+
     bool site_has_space(MetaclassIndex m);
 
 

@@ -141,7 +141,7 @@ static ScenePtr select_menu_help(bool far)
     auto flag = GlobalPersistentData::sel_menu_help_prompt_dont_remind_me;
     return simple_prompt_once(flag,
                               StateBit::sel_menu_help_prompt,
-                              SystemString::sel_menu_prompt,
+                              SYS_CSTR(sel_menu_prompt),
                               next);
 }
 
@@ -154,7 +154,7 @@ static ScenePtr move_blocks_setup(bool far)
     auto flag = GlobalPersistentData::move_blocks_help_prompt_dont_remind_me;
     if (auto scn = simple_prompt_once(flag,
                                       StateBit::move_blocks_help_prompt,
-                                      SystemString::move_blocks_prompt,
+                                      SYS_CSTR(move_blocks_prompt),
                                       next)) {
         return scn;
     }
@@ -174,7 +174,7 @@ static ScenePtr set_gamespeed_setup()
     auto flag = GlobalPersistentData::gamespeed_help_prompt_dont_remind_me;
     auto scn = simple_prompt_once(flag,
                                   StateBit::gamespeed_help_prompt,
-                                  SystemString::gamespeed_prompt,
+                                  SYS_CSTR(gamespeed_prompt),
                                   next);
     if (scn) {
         return scn;

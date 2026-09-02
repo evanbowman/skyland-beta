@@ -27,6 +27,7 @@
 #include "skyland/timeStreamEvent.hpp"
 #include "worldScene.hpp"
 #include "menuPromptScene.hpp"
+#include "skyland/settings.hpp"
 
 
 
@@ -286,6 +287,34 @@ void terrain_added_left(Island& island)
     }
 
     shift_rooms_right(island);
+}
+
+
+
+ScenePtr ConstructionScene::make_repair_hint() const
+{
+    auto flag = GlobalPersistentData::repair_prompt_dont_remind_me;
+
+    StringBuffer<96> substitution_str;
+
+    bool supports_remapping = PLATFORM.get_extensions().map_button;
+    if (supports_remapping) {
+        settings::Settings settings;
+        settings::load(settings);
+        StringBuffer<96> btn_fmt = SYS_CSTR(repair_button_hint);
+        make_format(substitution_str,
+                    btn_fmt.c_str(),
+                    settings.get("key_select"));
+    }
+
+    auto msg = format<250>(SYS_CSTR(repair_help_prompt),
+                           substitution_str);
+
+    auto next = make_deferred_scene<ConstructionScene>(near_);
+    return simple_prompt_once(flag,
+                              StateBit::repair_help_prompt,
+                              msg.c_str(),
+                              next);
 }
 
 
@@ -826,13 +855,7 @@ ScenePtr ConstructionScene::update(Time delta)
                 last_salvaged_block.health_ < target->full_health() and
                 not PLATFORM.network_peer().is_connected()) {
 
-                auto flag = GlobalPersistentData::repair_prompt_dont_remind_me;
-                auto msg = SystemString::repair_help_prompt;
-                auto next = make_deferred_scene<ConstructionScene>(near_);
-                if (auto scn = simple_prompt_once(flag,
-                                                  StateBit::repair_help_prompt,
-                                                  msg,
-                                                  next)) {
+                if (auto scn = make_repair_hint()) {
                     return scn;
                 }
             }

@@ -170,7 +170,7 @@ ScenePtr StartAdventureScene::update(Time delta)
     if (loaded_ and not skip_save_prompt) {
 
         auto ret = make_scene<MenuPromptScene>(
-            SystemString::save_prompt,
+            SYS_CSTR(save_prompt),
             SystemString::ok,
             SystemString::do_not_show_again,
             next,
