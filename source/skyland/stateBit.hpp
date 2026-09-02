@@ -39,6 +39,7 @@ enum class StateBit {
     lighting_enabled,
     console_started,
     script_preload_active,
+    repair_help_prompt,
     count,
 };
 

@@ -793,6 +793,7 @@ enum class SystemString {
     move_blocks_prompt,
     gamespeed_prompt,
     sel_menu_prompt,
+    repair_help_prompt,
     ok,
     do_not_show_again,
 

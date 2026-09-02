@@ -13,6 +13,7 @@
 #include "fatalErrorScene.hpp"
 #include "inspectP2Scene.hpp"
 #include "readyScene.hpp"
+#include "salvageRoomScene.hpp"
 #include "skyland/entity/birds/genericBird.hpp"
 #include "skyland/entity/drones/droneMeta.hpp"
 #include "skyland/entity/explosion/coreExplosion.hpp"
@@ -236,6 +237,8 @@ ScenePtr RewindScene::update(Time)
         ++speed_;
         speed_changed = true;
     }
+
+    last_salvaged_block = {};
 
     if (speed_changed) {
         switch (speed_) {

@@ -26,6 +26,7 @@
 #include "skyland/tile.hpp"
 #include "skyland/timeStreamEvent.hpp"
 #include "worldScene.hpp"
+#include "menuPromptScene.hpp"
 
 
 
@@ -819,6 +820,24 @@ ScenePtr ConstructionScene::update(Time delta)
                 }
             }
 
+            if (mt_index == last_salvaged_block.class_ and
+                dest_x == last_salvaged_block.x_ and
+                dest_y == last_salvaged_block.y_ and
+                last_salvaged_block.health_ < target->full_health() and
+                not PLATFORM.network_peer().is_connected()) {
+
+                auto flag = GlobalPersistentData::repair_prompt_dont_remind_me;
+                auto msg = SystemString::repair_help_prompt;
+                auto next = make_deferred_scene<ConstructionScene>(near_);
+                if (auto scn = simple_prompt_once(flag,
+                                                  StateBit::repair_help_prompt,
+                                                  msg,
+                                                  next)) {
+                    return scn;
+                }
+            }
+
+            last_salvaged_block = {};
 
             find_construction_sites();
 

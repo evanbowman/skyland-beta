@@ -128,19 +128,9 @@ void SelectMenuScene::redraw_line(int line, bool highlight)
 
 static ScenePtr select_menu_help(bool far)
 {
-    const auto flag = GlobalPersistentData::sel_menu_help_prompt_dont_remind_me;
-
-    const bool skip_prompt = APP.gp_.stateflags_.get(flag) or
-                             state_bit_load(StateBit::sel_menu_help_prompt) or
-                             PLATFORM.network_peer().is_connected();
-
-    // MSVC says that flag needs to be explicitly captured, clang complians it
-    // doesn't and breaks builds due to werror. hence copying the flag var...
-    auto dont_remind = [flag = flag]() {
-        APP.gp_.stateflags_.set(flag, true);
-        save::store_global_data(APP.gp_);
-    };
-
+    if (PLATFORM.network_peer().is_connected()) {
+        return null_scene();
+    }
     auto next = [far] {
         auto ret = make_scene<SelectMenuScene>();
         if (far) {
@@ -148,85 +138,46 @@ static ScenePtr select_menu_help(bool far)
         }
         return ret;
     };
-
-    if (not skip_prompt) {
-        state_bit_store(StateBit::sel_menu_help_prompt, true);
-        return make_scene<MenuPromptScene>(
-            SystemString::sel_menu_prompt,
-            SystemString::ok,
-            SystemString::do_not_show_again,
-            next,
-            []() {},
-            dont_remind);
-    } else {
-        return null_scene();
-    }
+    auto flag = GlobalPersistentData::sel_menu_help_prompt_dont_remind_me;
+    return simple_prompt_once(flag,
+                              StateBit::sel_menu_help_prompt,
+                              SystemString::sel_menu_prompt,
+                              next);
 }
 
 
 
 static ScenePtr move_blocks_setup(bool far)
 {
-    const auto flag =
-        GlobalPersistentData::move_blocks_help_prompt_dont_remind_me;
-
-    const bool skip_prompt =
-        APP.gp_.stateflags_.get(flag) or
-        state_bit_load(StateBit::move_blocks_help_prompt) or
-        APP.game_mode() == App::GameMode::tutorial;
-
-    auto dont_remind = [flag = flag]() {
-        APP.gp_.stateflags_.set(flag, true);
-        save::store_global_data(APP.gp_);
-    };
-
     auto next = [far] { return make_scene<MoveRoomScene>(not far); };
 
-    if (not skip_prompt) {
-        state_bit_store(StateBit::move_blocks_help_prompt, true);
-        return make_scene<MenuPromptScene>(
-            SystemString::move_blocks_prompt,
-            SystemString::ok,
-            SystemString::do_not_show_again,
-            next,
-            []() {},
-            dont_remind);
-    } else {
-        return next();
+    auto flag = GlobalPersistentData::move_blocks_help_prompt_dont_remind_me;
+    if (auto scn = simple_prompt_once(flag,
+                                      StateBit::move_blocks_help_prompt,
+                                      SystemString::move_blocks_prompt,
+                                      next)) {
+        return scn;
     }
+    return next();
 }
 
 
 
 static ScenePtr set_gamespeed_setup()
 {
-    const auto flag =
-        GlobalPersistentData::gamespeed_help_prompt_dont_remind_me;
-
-    const bool skip_prompt = APP.gp_.stateflags_.get(flag) or
-                             state_bit_load(StateBit::gamespeed_help_prompt) or
-                             APP.game_mode() == App::GameMode::tutorial;
-
-    auto dont_remind = [flag = flag]() {
-        APP.gp_.stateflags_.set(flag, true);
-        save::store_global_data(APP.gp_);
-    };
-
     auto next = [] {
         auto ret = make_scene<SetGamespeedScene>();
         ret->button_mode_ = 1;
         return ret;
     };
 
-    if (not skip_prompt) {
-        state_bit_store(StateBit::gamespeed_help_prompt, true);
-        return make_scene<MenuPromptScene>(
-            SystemString::gamespeed_prompt,
-            SystemString::ok,
-            SystemString::do_not_show_again,
-            next,
-            []() {},
-            dont_remind);
+    auto flag = GlobalPersistentData::gamespeed_help_prompt_dont_remind_me;
+    auto scn = simple_prompt_once(flag,
+                                  StateBit::gamespeed_help_prompt,
+                                  SystemString::gamespeed_prompt,
+                                  next);
+    if (scn) {
+        return scn;
     } else {
         return next();
     }

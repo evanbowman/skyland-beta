@@ -26,6 +26,7 @@
 #include "skyland/weather/blizzard.hpp"
 #include "skyland/weather/slightlyOvercast.hpp"
 #include "skyland/weather/typhoon.hpp"
+#include "salvageRoomScene.hpp"
 
 
 
@@ -182,6 +183,8 @@ void prep_level()
         APP.player_island().set_position(
             {Fixnum::from_integer(10), Fixnum::from_integer(374)});
     }
+
+    last_salvaged_block = {};
 }
 
 

@@ -51,6 +51,7 @@ struct GlobalPersistentData
         goblin_faction,
         sylph_faction,
         random_faction,
+        repair_prompt_dont_remind_me,
     };
 
     enum class Difficulty : u8 {

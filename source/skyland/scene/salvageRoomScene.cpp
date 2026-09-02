@@ -19,11 +19,16 @@
 #include "skyland/scene/notificationScene.hpp"
 #include "skyland/skyland.hpp"
 #include "skyland/timeStreamEvent.hpp"
+#include "ext_workram_data.hpp"
 
 
 
 namespace skyland
 {
+
+
+
+EXT_WORKRAM_DATA SalvageHistory last_salvaged_block;
 
 
 
@@ -240,6 +245,11 @@ ScenePtr SalvageRoomScene::update(Time delta)
                             e.group_ = (u8)room->group();
                             e.health_.set(room->health());
                         };
+
+                        last_salvaged_block.class_ = mt_index;
+                        last_salvaged_block.health_ = room->health();
+                        last_salvaged_block.x_ = room_x;
+                        last_salvaged_block.y_ = room_y;
 
                         room->on_salvage();
                         island()->destroy_room(cursor_loc);
