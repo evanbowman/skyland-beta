@@ -38,10 +38,6 @@ Coins get_room_cost(Island* island, const RoomMeta& meta);
 
 Coins salvage_value(Room& room)
 {
-    if (str_eq(room.name(), "gold")) {
-        return (*room.metaclass())->cost();
-    }
-
     Coins sv = ((*room.metaclass())->cost() *
                 (not APP.opponent_island() ? 1.f : salvage_factor)) *
                (Float(room.health()) / (*room.metaclass())->full_health());
