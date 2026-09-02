@@ -17,6 +17,7 @@
 #include "skyland/rooms/flakGun.hpp"
 #include "skyland/rooms/incinerator.hpp"
 #include "skyland/rooms/rocketSilo.hpp"
+#include "scene/constructionScene.hpp"
 
 
 
@@ -461,7 +462,7 @@ void repaint(const Settings& settings)
     };
 
     auto highlight_block = [&](int x, int y, bool center) {
-        if (x > 13 or y > 14 or y < 4) {
+        if (x > 13 or y > 14 or y < construction_zone_min_y) {
             return;
         }
         const int x_offset = 3 * opp_offset - 2;
