@@ -1,4 +1,7 @@
 
+* General game features
+** DONE People don't know you can repair stuff via the select menu. If someone salvages a damaged block and builds a new one in its place, show a hint that blocks are repairable?
+
 * SDL Port Feature Requests (beginning August, 2026)
 ** TODO Add more button shortcuts to take full advantage of the gba keyboard
 ** TODO Support color profiles switcher in SDL port
