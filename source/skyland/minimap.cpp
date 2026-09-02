@@ -461,7 +461,7 @@ void repaint(const Settings& settings)
     };
 
     auto highlight_block = [&](int x, int y, bool center) {
-        if (x > 13 or y > 14) {
+        if (x > 13 or y > 14 or y < 4) {
             return;
         }
         const int x_offset = 3 * opp_offset - 2;
