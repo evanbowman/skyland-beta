@@ -1,5 +1,5 @@
 ;;;
-;;; scripts/event/quest/goblin/include.lisp
+;;; scripts/event/quest/sylph/include.lisp
 ;;;
 
 ;; TODO: implement quests 0 and 4 for sylph faction
