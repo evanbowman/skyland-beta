@@ -25,9 +25,6 @@ namespace skyland
 
 
 
-void systemstring_drop_index_cache();
-
-
 void systemstring_bind_file(const char* path);
 const char* systemstring_bound_file();
 
@@ -865,6 +862,8 @@ enum class SystemString {
     flag_alt5,
     flag_alt6,
     flag_banana,
+
+    solar_power_hint,
 
     upgrade_prompt,
     upgrade_denied_manufactory,

@@ -115,7 +115,6 @@ public:
 
 
     void display_on_hover(Platform::Screen& screen,
-
                           const RoomCoord& cursor) override;
 
 

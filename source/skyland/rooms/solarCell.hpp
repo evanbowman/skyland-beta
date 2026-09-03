@@ -15,6 +15,7 @@
 #include "skyland/systemString.hpp"
 #include "skyland/tile.hpp"
 #include "skyland/types.hpp"
+#include "graphics/spriteText.hpp"
 
 
 
@@ -102,6 +103,25 @@ public:
         return RoomProperties::workshop_required | RoomProperties::roof_hidden |
                RoomProperties::disallow_chimney | RoomProperties::human_only;
     }
+
+
+    void display_on_hover(Platform::Screen& screen,
+                          const RoomCoord& cursor) override;
+
+
+    void update(Time delta) override;
+
+
+private:
+
+    int factor_power(int value) const;
+
+
+    Optional<DynamicMemory<SpriteText>> power_hint_;
+    Fixnum hint_x_;
+    u8 hint_env_id_ = 0;
+    u8 hint_release_cyc_ = 0;
+    u8 hint_show_cyc_ = 0;
 };
 
 
