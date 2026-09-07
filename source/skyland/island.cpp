@@ -2353,16 +2353,27 @@ u8 Island::instance_count(MetaclassIndex idx) const
 
 
 
+EXT_WORKRAM_DATA static MetaclassIndex workshop_mti;
+EXT_WORKRAM_DATA static MetaclassIndex manufactory_mti;
+
+
+
 u8 Island::workshop_count() const
 {
-    return instance_count(metaclass_index("workshop"));
+    if (not workshop_mti) {
+        workshop_mti = metaclass_index("workshop");
+    }
+    return instance_count(workshop_mti);
 }
 
 
 
 u8 Island::manufactory_count() const
 {
-    return instance_count(metaclass_index("manufactory"));
+    if (not manufactory_mti) {
+        manufactory_mti = metaclass_index("manufactory");
+    }
+    return instance_count(manufactory_mti);
 }
 
 

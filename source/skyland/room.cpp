@@ -318,8 +318,8 @@ public:
         } else if (timer_ < milliseconds(300)) {
             auto pos = sprite_.get_position();
             pos.y -= Fixnum(0.25f);
-            while (delta > 16667) {
-                delta -= 16667;
+            while (delta > FrameRate::fixed_step_60fps) {
+                delta -= FrameRate::fixed_step_60fps;
                 pos.y -= Fixnum(0.25f);
             }
 

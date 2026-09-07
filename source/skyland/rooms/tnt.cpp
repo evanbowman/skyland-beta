@@ -13,6 +13,7 @@
 #include "skyland/entity/explosion/exploSpawner.hpp"
 #include "skyland/entity/explosion/exploTrail.hpp"
 #include "skyland/entity/explosion/explosion.hpp"
+#include "skyland/entity/misc/smokeParticle.hpp"
 #include "skyland/entity/misc/smokePuff.hpp"
 #include "skyland/entity/projectile/fireBolt.hpp"
 #include "skyland/entity/projectile/flak.hpp"
@@ -63,6 +64,9 @@ void Explosive::update(Time delta)
         if (damage_timer_ > milliseconds(200)) {
             apply_damage(5, {});
             damage_timer_ = 0;
+            SmokeParticle::spawn(rng::sample<4>(visual_center(),
+                                                rng::utility_state),
+                                 2);
         }
     }
 }

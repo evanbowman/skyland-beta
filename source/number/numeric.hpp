@@ -273,6 +273,13 @@ using Microseconds = s32; // Therefore, a maximum of ~2147.5 seconds will fit in
 using Time = Microseconds;
 
 
+
+enum FrameRate : Microseconds
+{
+    fixed_step_60fps = 16667,
+};
+
+
 constexpr Time seconds(u32 count)
 {
     return count * 1000000;
@@ -306,6 +313,9 @@ s16 sine(s16 angle);
 s16 cosine(s16 angle);
 
 
+Vec2<Fixnum> make_velocity(Angle angle, Fixnum speed);
+
+
 using UnitVec = Vec2<Float>;
 
 
@@ -328,6 +338,9 @@ inline Vec2<Float> rotate(const Vec2<Float>& input, Float angle)
     return {input.x * cos_theta - input.y * sin_theta,
             input.x * sin_theta + input.y * cos_theta};
 }
+
+
+Vec2<Fixnum> rotation(Angle angle);
 
 
 // Given an angle in degrees, return the corresponding unit vector.

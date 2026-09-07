@@ -158,6 +158,7 @@ set(SOURCES
   ${SOURCE_DIR}/skyland/entity/birds/genericBird.cpp
   ${SOURCE_DIR}/skyland/entity/macro/macrocosmEntity.cpp
   ${SOURCE_DIR}/skyland/entity/misc/smokePuff.cpp
+  ${SOURCE_DIR}/skyland/entity/misc/smokeParticle.cpp
   ${SOURCE_DIR}/skyland/scene/module.cpp
   ${SOURCE_DIR}/skyland/scene/desktopOS.cpp
   ${SOURCE_DIR}/skyland/scene/hintScene.cpp

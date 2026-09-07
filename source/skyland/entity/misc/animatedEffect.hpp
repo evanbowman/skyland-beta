@@ -75,7 +75,7 @@ public:
     }
 
 
-private:
+protected:
     Time timer_ = 0;
     Time rate_;
     u16 begin_tile_;
