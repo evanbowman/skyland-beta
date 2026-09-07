@@ -34,7 +34,9 @@ public:
     void move(Angle dir, Fixnum speed);
 
 
-    static void spawn(const Vec2<Fixnum>& pos, int n = 1);
+    static void spawn(const Vec2<Fixnum>& pos,
+                      int n = 1,
+                      Optional<ColorConstant> color = nullopt());
 
 public:
     Vec2<Fixnum> velocity_;

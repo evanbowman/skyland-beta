@@ -116,7 +116,9 @@ public:
     void finalize() override
     {
         Room::finalize();
-        radial_explosion(center(), {});
+        if (health() == 0) {
+            radial_explosion(center(), {});
+        }
     }
 };
 

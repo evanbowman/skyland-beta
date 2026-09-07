@@ -21,11 +21,16 @@
 #include "skyland/rooms/transporter.hpp"
 #include "skyland/skyland.hpp"
 #include "skyland/timeStreamEvent.hpp"
+#include "skyland/entity/misc/smokeParticle.hpp"
 
 
 
 namespace skyland
 {
+
+
+
+extern SharedVariable energy_glow_color;
 
 
 
@@ -1200,6 +1205,10 @@ void Character::movement_step(Time delta, Room* current_room)
                 if (d not_eq current_room and d->cast<Portal>()) {
                     timer_ = movement_step_duration(race_) + 1;
                     warped = true;
+
+                    SmokeParticle::spawn(current_room->visual_center(),
+                                         3,
+                                         custom_color(energy_glow_color));
 
                     if (auto e = APP.alloc_entity<WarpEffect>(
                             30,

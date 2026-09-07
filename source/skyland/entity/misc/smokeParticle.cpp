@@ -57,7 +57,9 @@ void SmokeParticle::move(Angle dir, Fixnum speed)
 
 
 
-void SmokeParticle::spawn(const Vec2<Fixnum>& pos, int n)
+void SmokeParticle::spawn(const Vec2<Fixnum>& pos,
+                          int n,
+                          Optional<ColorConstant> color)
 {
     for (int i = 0; i < n; ++i) {
         if (auto sp = alloc_entity<SmokeParticle>(pos)) {
@@ -70,6 +72,9 @@ void SmokeParticle::spawn(const Vec2<Fixnum>& pos, int n)
             }
             sp->move(angle, speed);
             sp->ignore_gamespeed_ = true;
+            if (color) {
+                sp->sprite_.set_mix({*color, 255});
+            }
             APP.effects().push(std::move(sp));
         }
     }
