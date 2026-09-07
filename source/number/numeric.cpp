@@ -35,38 +35,6 @@ static constexpr const int16_t sin90[TABLE_SIZE + 1] = {
     0x62f1, 0x66ce, 0x6a6c, 0x6dc9, 0x70e1, 0x73b5, 0x7640, 0x7883, 0x7a7c,
     0x7c29, 0x7d89, 0x7e9c, 0x7f61, 0x7fd7, 0x7fff};
 
-s16 sine(s16 angle)
-{
-    s16 v0, v1;
-    if (angle < 0) {
-        angle += INT16_MAX;
-        angle += 1;
-    }
-    v0 = (angle >> INTERP_BITS);
-    if (v0 & FLIP_BIT) {
-        v0 = ~v0;
-        v1 = ~angle;
-    } else {
-        v1 = angle;
-    }
-    v0 &= TABLE_MASK;
-    v1 = sin90[v0] +
-         (s16)(((int32_t)(sin90[v0 + 1] - sin90[v0]) * (v1 & INTERP_MASK)) >>
-               INTERP_BITS);
-    if ((angle >> INTERP_BITS) & NEGATE_BIT)
-        v1 = -v1;
-    return v1;
-}
-
-s16 cosine(s16 angle)
-{
-    if (angle < 0) {
-        angle += INT16_MAX;
-        angle += 1;
-    }
-    return sine(angle - s16((270.f / 360.f) * INT16_MAX));
-}
-
 
 constexpr inline s16 sine_cxpr(s16 angle)
 {
@@ -101,6 +69,10 @@ constexpr inline s16 cosine_cxpr(s16 angle)
     }
     return sine_cxpr(angle - s16((270.f / 360.f) * INT16_MAX));
 }
+
+
+s16 sine(s16 angle)   { return sine_cxpr(angle); }
+s16 cosine(s16 angle) { return cosine_cxpr(angle); }
 
 
 static const u8 sine8_lut[256] = {
