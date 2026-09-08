@@ -34,6 +34,9 @@ public:
     void move(Angle dir, Fixnum speed);
 
 
+    void set_color(ColorConstant c);
+
+
     static void spawn(const Vec2<Fixnum>& pos,
                       int n = 1,
                       Optional<ColorConstant> color = nullopt());

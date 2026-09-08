@@ -13,10 +13,12 @@
 #include "skyland/alloc_entity.hpp"
 #include "skyland/island.hpp"
 #include "skyland/network.hpp"
+#include "skyland/entity/misc/smokeParticle.hpp"
 #include "skyland/scene/notificationScene.hpp"
 #include "skyland/scene/readyScene.hpp"
 #include "skyland/scene/replicatorSelectionScene.hpp"
 #include "skyland/scene_pool.hpp"
+#include "skyland/sharedVariable.hpp"
 #include "skyland/skyland.hpp"
 #include "skyland/tile.hpp"
 #include "skyland/timeStreamEvent.hpp"
@@ -25,6 +27,10 @@
 
 namespace skyland
 {
+
+
+
+extern SharedVariable energy_glow_color;
 
 
 
@@ -91,6 +97,13 @@ bool Replicator::create_replicant()
             packet.chr_id_.set(chr->id());
             network::transmit(packet);
 
+            auto chr_pos = chr->sprite().get_position();
+            chr_pos.x += 8.0_fixed;
+            chr_pos.y += 8.0_fixed;
+
+            SmokeParticle::spawn(chr_pos,
+                                 8,
+                                 custom_color(energy_glow_color));
 
             time_stream::event::ReplicantCreated e;
             e.x_ = dst.x;

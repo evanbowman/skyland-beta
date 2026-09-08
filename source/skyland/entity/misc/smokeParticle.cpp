@@ -57,6 +57,13 @@ void SmokeParticle::move(Angle dir, Fixnum speed)
 
 
 
+void SmokeParticle::set_color(ColorConstant c)
+{
+    sprite_.set_mix({c, 255});
+}
+
+
+
 void SmokeParticle::spawn(const Vec2<Fixnum>& pos,
                           int n,
                           Optional<ColorConstant> color)
@@ -71,9 +78,8 @@ void SmokeParticle::spawn(const Vec2<Fixnum>& pos,
                 speed -= 0.0000025_fixed;
             }
             sp->move(angle, speed);
-            sp->ignore_gamespeed_ = true;
             if (color) {
-                sp->sprite_.set_mix({*color, 255});
+                sp->set_color(*color);
             }
             APP.effects().push(std::move(sp));
         }
