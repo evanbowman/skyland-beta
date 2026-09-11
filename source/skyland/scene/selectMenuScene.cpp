@@ -382,6 +382,16 @@ void SelectMenuScene::enter(Scene& scene)
                              auto next = make_scene<CrewStatsScene>(id);
                              return next;
                          });
+
+                if (chr->get_race() == Character::Race::dog) {
+                    add_line(SystemString::sel_menu_speak,
+                             "",
+                             {.coloring_ = LineColoring::specific},
+                             []() {
+                                 PLATFORM.speaker().play_sound("argo_bark.raw", 0);
+                                 return null_scene();
+                             });
+                }
             }
         }
 

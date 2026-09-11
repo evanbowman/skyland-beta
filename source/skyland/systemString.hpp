@@ -815,6 +815,7 @@ enum class SystemString {
     sel_menu_build,
     sel_menu_back,
     sel_menu_spook_bird,
+    sel_menu_speak,
     sel_menu_describe_block,
     sel_menu_edit_flag,
     sel_menu_crewmember_icon,
