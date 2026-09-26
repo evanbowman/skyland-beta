@@ -187,7 +187,7 @@ static u32 psg_vis_packed()
 
 void Visualizer::format_description(StringBuffer<512>& buffer)
 {
-    buffer += SYSTR(description_synth)->c_str();
+    buffer += SYSTR(description_visualizer)->c_str();
 }
 
 
