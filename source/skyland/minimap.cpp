@@ -11,13 +11,13 @@
 #include "minimap.hpp"
 #include "ext_workram_data.hpp"
 #include "room_metatable.hpp"
+#include "scene/constructionScene.hpp"
 #include "skyland.hpp"
 #include "skyland/entity/projectile/ballistaBolt.hpp"
 #include "skyland/rooms/ballista.hpp"
 #include "skyland/rooms/flakGun.hpp"
 #include "skyland/rooms/incinerator.hpp"
 #include "skyland/rooms/rocketSilo.hpp"
-#include "scene/constructionScene.hpp"
 
 
 

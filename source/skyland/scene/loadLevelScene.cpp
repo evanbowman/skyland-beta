@@ -14,6 +14,7 @@
 #include "fullscreenDialogScene.hpp"
 #include "globals.hpp"
 #include "platform/platform.hpp"
+#include "salvageRoomScene.hpp"
 #include "script/lisp.hpp"
 #include "skyland/configure_island.hpp"
 #include "skyland/entity/birds/genericBird.hpp"
@@ -26,7 +27,6 @@
 #include "skyland/weather/blizzard.hpp"
 #include "skyland/weather/slightlyOvercast.hpp"
 #include "skyland/weather/typhoon.hpp"
-#include "salvageRoomScene.hpp"
 
 
 

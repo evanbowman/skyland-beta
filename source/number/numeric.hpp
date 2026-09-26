@@ -274,8 +274,7 @@ using Time = Microseconds;
 
 
 
-enum FrameRate : Microseconds
-{
+enum FrameRate : Microseconds {
     fixed_step_60fps = 16667,
 };
 

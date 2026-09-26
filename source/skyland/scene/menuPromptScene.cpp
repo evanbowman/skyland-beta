@@ -9,8 +9,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "menuPromptScene.hpp"
-#include "skyland/skyland.hpp"
 #include "skyland/player/player.hpp"
+#include "skyland/skyland.hpp"
 
 
 
@@ -99,8 +99,8 @@ ScenePtr simple_prompt_once(GlobalPersistentData::Flags check_flag,
                             DeferredScene next)
 {
     const bool skip_prompt = APP.gp_.stateflags_.get(check_flag) or
-        state_bit_load(runtime_flag) or
-        APP.game_mode() == App::GameMode::tutorial;
+                             state_bit_load(runtime_flag) or
+                             APP.game_mode() == App::GameMode::tutorial;
 
     auto dont_remind = [flag = check_flag]() {
         APP.gp_.stateflags_.set(flag, true);
@@ -109,12 +109,13 @@ ScenePtr simple_prompt_once(GlobalPersistentData::Flags check_flag,
 
     if (not skip_prompt) {
         state_bit_store(runtime_flag, true);
-        return make_scene<MenuPromptScene>(prompt,
-                                           SystemString::ok,
-                                           SystemString::do_not_show_again,
-                                           next,
-                                           []() {},
-                                           dont_remind);
+        return make_scene<MenuPromptScene>(
+            prompt,
+            SystemString::ok,
+            SystemString::do_not_show_again,
+            next,
+            []() {},
+            dont_remind);
     } else {
         return null_scene();
     }
@@ -122,4 +123,4 @@ ScenePtr simple_prompt_once(GlobalPersistentData::Flags check_flag,
 
 
 
-}
+} // namespace skyland

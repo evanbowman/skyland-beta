@@ -64,9 +64,8 @@ void Explosive::update(Time delta)
         if (damage_timer_ > milliseconds(200)) {
             apply_damage(5, {});
             damage_timer_ = 0;
-            SmokeParticle::spawn(rng::sample<4>(visual_center(),
-                                                rng::utility_state),
-                                 2);
+            SmokeParticle::spawn(
+                rng::sample<4>(visual_center(), rng::utility_state), 2);
         }
     }
 }

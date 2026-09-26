@@ -139,10 +139,8 @@ static ScenePtr select_menu_help(bool far)
         return ret;
     };
     auto flag = GlobalPersistentData::sel_menu_help_prompt_dont_remind_me;
-    return simple_prompt_once(flag,
-                              StateBit::sel_menu_help_prompt,
-                              SYS_CSTR(sel_menu_prompt),
-                              next);
+    return simple_prompt_once(
+        flag, StateBit::sel_menu_help_prompt, SYS_CSTR(sel_menu_prompt), next);
 }
 
 
@@ -388,7 +386,8 @@ void SelectMenuScene::enter(Scene& scene)
                              "",
                              {.coloring_ = LineColoring::specific},
                              []() {
-                                 PLATFORM.speaker().play_sound("argo_bark.raw", 0);
+                                 PLATFORM.speaker().play_sound("argo_bark.raw",
+                                                               0);
                                  return null_scene();
                              });
                 }

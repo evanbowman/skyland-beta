@@ -150,7 +150,8 @@ static int background_texture_height = 0;
 
 static SDL_Texture* current_sprite_texture = nullptr;
 static SDL_Texture* sprite_mask_texture = nullptr;
-static SDL_Surface* current_sprite_surface = nullptr; // retained for palette overrides
+static SDL_Surface* current_sprite_surface =
+    nullptr; // retained for palette overrides
 static int sprite_texture_width = 0;
 static int sprite_texture_height = 0;
 
@@ -550,11 +551,11 @@ struct PsgSynth
         u8 duty = 2; // 0..3 -> 12.5/25/50/75 %
 
         // Envelope, mirroring NRx2.
-        u8 env_initial_volume = 15;// reload value 0..15
-        u8 env_direction = 0;      // 0 = decrease, 1 = increase
-        u8 env_step = 0;           // 0 disables the sweep
-        int env_volume = 15;       // current 0..15
-        int env_timer = 0;         // samples until next envelope tick
+        u8 env_initial_volume = 15; // reload value 0..15
+        u8 env_direction = 0;       // 0 = decrease, 1 = increase
+        u8 env_step = 0;            // 0 disables the sweep
+        int env_volume = 15;        // current 0..15
+        int env_timer = 0;          // samples until next envelope tick
 
         // Vibrato LFO.
         Microseconds effect_timer_us = 0;
@@ -835,7 +836,7 @@ static const Platform::Extensions extensions{
             ch.env_step = s.envelope_step_;
             SDL_UnlockAudio();
         },
-        .override_palette =
+    .override_palette =
         [](Layer layer, u8 index, ColorConstant color) {
             if (not renderer) {
                 return;
@@ -884,8 +885,8 @@ static const Platform::Extensions extensions{
                     Uint8 r, g, b, a;
                     SDL_GetRGBA(*p, tile0_surface->format, &r, &g, &b, &a);
                     // Skip transparent pixels; recolor only the entry's color.
-                    if (a not_eq 0 and r == old_color.r and
-                        g == old_color.g and b == old_color.b) {
+                    if (a not_eq 0 and r == old_color.r and g == old_color.g and
+                        b == old_color.b) {
                         *p = SDL_MapRGBA(tile0_surface->format,
                                          new_color.r,
                                          new_color.g,
@@ -913,7 +914,7 @@ static const Platform::Extensions extensions{
                 SDL_SetTextureBlendMode(tile0_texture, SDL_BLENDMODE_BLEND);
             }
         },
-        .override_sprite_palette =
+    .override_sprite_palette =
         [](u8 index, ColorConstant color) {
             if (not renderer) {
                 return;
@@ -958,8 +959,8 @@ static const Platform::Extensions extensions{
                     Uint8 r, g, b, a;
                     SDL_GetRGBA(
                         *p, current_sprite_surface->format, &r, &g, &b, &a);
-                    if (a not_eq 0 and r == old_color.r and
-                        g == old_color.g and b == old_color.b) {
+                    if (a not_eq 0 and r == old_color.r and g == old_color.g and
+                        b == old_color.b) {
                         *p = SDL_MapRGBA(current_sprite_surface->format,
                                          new_color.r,
                                          new_color.g,

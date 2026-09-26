@@ -11,11 +11,11 @@
 
 #pragma once
 
+#include "graphics/spriteText.hpp"
 #include "skyland/room.hpp"
 #include "skyland/systemString.hpp"
 #include "skyland/tile.hpp"
 #include "skyland/types.hpp"
-#include "graphics/spriteText.hpp"
 
 
 
@@ -113,7 +113,6 @@ public:
 
 
 private:
-
     int factor_power(int value) const;
 
 

@@ -71,8 +71,14 @@ constexpr inline s16 cosine_cxpr(s16 angle)
 }
 
 
-s16 sine(s16 angle)   { return sine_cxpr(angle); }
-s16 cosine(s16 angle) { return cosine_cxpr(angle); }
+s16 sine(s16 angle)
+{
+    return sine_cxpr(angle);
+}
+s16 cosine(s16 angle)
+{
+    return cosine_cxpr(angle);
+}
 
 
 static const u8 sine8_lut[256] = {
@@ -137,8 +143,6 @@ s8 sine8_signed(u8 v)
 {
     return sine8_table_signed[v];
 }
-
-
 
 
 
@@ -219,5 +223,5 @@ Vec2<Fixnum> rotation(Angle angle)
 Vec2<Fixnum> make_velocity(Angle angle, Fixnum speed)
 {
     auto tab = rotation(angle);
-    return { tab.x * speed, tab.y * speed };
+    return {tab.x * speed, tab.y * speed};
 }

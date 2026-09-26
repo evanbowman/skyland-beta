@@ -12,8 +12,8 @@
 
 #include "graphics/overlay.hpp"
 #include "skyland/scene.hpp"
-#include "skyland/systemString.hpp"
 #include "skyland/stateBit.hpp"
+#include "skyland/systemString.hpp"
 
 
 
@@ -43,11 +43,8 @@ public:
                     DeferredScene next,
                     OptCallback opt_1_callback,
                     OptCallback opt_2_callback)
-        : msg_(allocate<Message>({"prompt-mem"}, msg)),
-          next_(next),
-          opt_1_(opt_1),
-          opt_2_(opt_2),
-          opt_1_callback_(opt_1_callback),
+        : msg_(allocate<Message>({"prompt-mem"}, msg)), next_(next),
+          opt_1_(opt_1), opt_2_(opt_2), opt_1_callback_(opt_1_callback),
           opt_2_callback_(opt_2_callback)
     {
     }

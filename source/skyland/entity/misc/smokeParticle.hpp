@@ -21,7 +21,6 @@ namespace skyland
 class SmokeParticle : public AnimatedEffect
 {
 public:
-
     SmokeParticle(const Vec2<Fixnum>& pos);
 
 
@@ -48,4 +47,4 @@ public:
 
 
 
-}
+} // namespace skyland

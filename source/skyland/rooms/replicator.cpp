@@ -11,9 +11,9 @@
 
 #include "replicator.hpp"
 #include "skyland/alloc_entity.hpp"
+#include "skyland/entity/misc/smokeParticle.hpp"
 #include "skyland/island.hpp"
 #include "skyland/network.hpp"
-#include "skyland/entity/misc/smokeParticle.hpp"
 #include "skyland/scene/notificationScene.hpp"
 #include "skyland/scene/readyScene.hpp"
 #include "skyland/scene/replicatorSelectionScene.hpp"
@@ -101,9 +101,7 @@ bool Replicator::create_replicant()
             chr_pos.x += 8.0_fixed;
             chr_pos.y += 8.0_fixed;
 
-            SmokeParticle::spawn(chr_pos,
-                                 8,
-                                 custom_color(energy_glow_color));
+            SmokeParticle::spawn(chr_pos, 8, custom_color(energy_glow_color));
 
             time_stream::event::ReplicantCreated e;
             e.x_ = dst.x;

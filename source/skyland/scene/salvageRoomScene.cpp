@@ -10,6 +10,7 @@
 
 
 #include "salvageRoomScene.hpp"
+#include "ext_workram_data.hpp"
 #include "globals.hpp"
 #include "inspectP2Scene.hpp"
 #include "readyScene.hpp"
@@ -19,7 +20,6 @@
 #include "skyland/scene/notificationScene.hpp"
 #include "skyland/skyland.hpp"
 #include "skyland/timeStreamEvent.hpp"
-#include "ext_workram_data.hpp"
 
 
 

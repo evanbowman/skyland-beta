@@ -130,10 +130,22 @@ void IncineratorBolt::on_collision(Room& room, Vec2<u8> origin)
             // Because we do not want to include collisions with the originating
             // cannon, or with any blocks directly above or below the cannon.
             return;
-        } else if (room.size().x == 1 and room.position().x == origin_tile_.x + 1) {
-            return;
-        } else if (room.size().x == 2 and room.position().x == origin_tile_.x) {
-            return;
+        }
+        if (source_ == &player_island()) {
+            // NOTE: prevent collisions with adjacent rooms when the target is
+            // at a steep angle of incline/decline. The incinerator bolt has a
+            // large hitbox, and collides with the corner of blocks adjacent to
+            // the incinerator at certain angles.
+            if (room.size().x == 1 and
+                room.position().x == origin_tile_.x + 1) {
+                return;
+            } else if (room.size().x == 2 and
+                       room.position().x == origin_tile_.x) {
+                return;
+            } else if (room.size().x == 3 and
+                       room.position().x == origin_tile_.x - 1) {
+                return;
+            }
         }
         if (auto origin = source_->get_room(origin_tile_)) {
             if (origin == &room) {

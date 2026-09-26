@@ -1,6 +1,6 @@
 #include "smokeParticle.hpp"
-#include "skyland/skyland.hpp"
 #include "number/random.hpp"
+#include "skyland/skyland.hpp"
 
 
 
@@ -9,8 +9,8 @@ namespace skyland
 
 
 
-SmokeParticle::SmokeParticle(const Vec2<Fixnum>& pos) :
-    AnimatedEffect(pos, 0, 0, milliseconds(80))
+SmokeParticle::SmokeParticle(const Vec2<Fixnum>& pos)
+    : AnimatedEffect(pos, 0, 0, milliseconds(80))
 {
     sprite_.set_size(Sprite::Size::w8_h8);
     begin_tile_ = 8 * 93;
@@ -88,4 +88,4 @@ void SmokeParticle::spawn(const Vec2<Fixnum>& pos,
 
 
 
-}
+} // namespace skyland

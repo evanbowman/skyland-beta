@@ -12,6 +12,7 @@
 #include "character.hpp"
 #include "script/lisp.hpp"
 #include "script/listBuilder.hpp"
+#include "skyland/entity/misc/smokeParticle.hpp"
 #include "skyland/island.hpp"
 #include "skyland/room_metatable.hpp"
 #include "skyland/rooms/decimator.hpp"
@@ -21,7 +22,6 @@
 #include "skyland/rooms/transporter.hpp"
 #include "skyland/skyland.hpp"
 #include "skyland/timeStreamEvent.hpp"
-#include "skyland/entity/misc/smokeParticle.hpp"
 
 
 

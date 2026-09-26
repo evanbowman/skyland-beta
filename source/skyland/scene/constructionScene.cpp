@@ -12,6 +12,7 @@
 #include "constructionScene.hpp"
 #include "globals.hpp"
 #include "inspectP2Scene.hpp"
+#include "menuPromptScene.hpp"
 #include "modules/glossaryViewerModule.hpp"
 #include "platform/platform.hpp"
 #include "readyScene.hpp"
@@ -21,13 +22,12 @@
 #include "skyland/network.hpp"
 #include "skyland/room_metatable.hpp"
 #include "skyland/scene_pool.hpp"
+#include "skyland/settings.hpp"
 #include "skyland/skyland.hpp"
 #include "skyland/sound.hpp"
 #include "skyland/tile.hpp"
 #include "skyland/timeStreamEvent.hpp"
 #include "worldScene.hpp"
-#include "menuPromptScene.hpp"
-#include "skyland/settings.hpp"
 
 
 
@@ -302,19 +302,15 @@ ScenePtr ConstructionScene::make_repair_hint() const
         settings::Settings settings;
         settings::load(settings);
         StringBuffer<96> btn_fmt = SYS_CSTR(repair_button_hint);
-        make_format(substitution_str,
-                    btn_fmt.c_str(),
-                    settings.get("key_select"));
+        make_format(
+            substitution_str, btn_fmt.c_str(), settings.get("key_select"));
     }
 
-    auto msg = format<250>(SYS_CSTR(repair_help_prompt),
-                           substitution_str);
+    auto msg = format<250>(SYS_CSTR(repair_help_prompt), substitution_str);
 
     auto next = make_deferred_scene<ConstructionScene>(near_);
-    return simple_prompt_once(flag,
-                              StateBit::repair_help_prompt,
-                              msg.c_str(),
-                              next);
+    return simple_prompt_once(
+        flag, StateBit::repair_help_prompt, msg.c_str(), next);
 }
 
 
