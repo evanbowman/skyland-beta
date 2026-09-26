@@ -130,8 +130,9 @@ void IncineratorBolt::on_collision(Room& room, Vec2<u8> origin)
             // Because we do not want to include collisions with the originating
             // cannon, or with any blocks directly above or below the cannon.
             return;
-        }
-        if (room.size().x == 1 and room.position().x == origin_tile_.x + 1) {
+        } else if (room.size().x == 1 and room.position().x == origin_tile_.x + 1) {
+            return;
+        } else if (room.size().x == 2 and room.position().x == origin_tile_.x) {
             return;
         }
         if (auto origin = source_->get_room(origin_tile_)) {
