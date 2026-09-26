@@ -147,6 +147,7 @@ dynamite
 dynamite-ii
 torch
 transporter
+visualizer
 soil
 atomic-missile
 water
@@ -378,6 +379,7 @@ A power-core, modified to boost its energy output. The jury-rigged modifications
 When activated, causes your reactor crystals to resonate at a matching frequency, changing their energy output color!
 Built by the Sylph for mining dense ore deposits, this particle beam burns though everything in its path horizontally. Due to its age, it will disintigrate after one use.
 An advanced Sylph power supply. Each resonator generates % additional power for every other resonator on your island.
+Visualizes the soundtrack! One allowed at a time...
 paused
 slow
 regular
@@ -581,6 +583,8 @@ Pacifist
 Reach zone 4 without killing any opponent crewmembers!
 Core Technician
 Buy a tuning crystal from a Sylph technician!
+Jam Session
+Play some music with a speaker in adventure mode!
 options
 tips and tricks
 Press and hold the pause button to set the game speed. Slow motion and fast-forward speeds available! You can even rewind!

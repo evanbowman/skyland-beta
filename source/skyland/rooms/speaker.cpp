@@ -10,9 +10,12 @@
 
 
 #include "speaker.hpp"
+#include "skyland/achievement.hpp"
 #include "skyland/island.hpp"
+#include "skyland/skyland.hpp"
 #include "skyland/sound.hpp"
 #include "synth.hpp"
+#include "visualizer.hpp"
 
 
 
@@ -122,29 +125,39 @@ void Speaker::update(Time delta)
 
         timer_ = 0;
 
-        auto play_note = [&](Platform::Speaker::Channel ch, Synth& s) {
+        auto play_note = [&](Platform::Speaker::Channel ch,
+                             Synth& s,
+                             Platform::Speaker::ChannelSettings cs) {
             auto note = s.notes()[index_];
             PLATFORM_EXTENSION(psg_play_note, ch, note);
+            if (APP.game_mode() not_eq App::GameMode::sandbox) {
+                achievements::raise(achievements::Achievement::musician);
+            }
+            Visualizer::psg_note_on(ch, note, cs);
         };
 
 
         if (auto p = square_1()) {
-            play_note(Platform::Speaker::Channel::square_1, *p);
+            play_note(
+                Platform::Speaker::Channel::square_1, *p, settings_.square_1_);
         }
 
 
         if (auto p = square_2()) {
-            play_note(Platform::Speaker::Channel::square_2, *p);
+            play_note(
+                Platform::Speaker::Channel::square_2, *p, settings_.square_2_);
         }
 
 
         if (auto w = wave()) {
-            play_note(Platform::Speaker::Channel::wave, *w);
+            Platform::Speaker::ChannelSettings wave_settings{};
+            wave_settings.volume_ = 12;
+            play_note(Platform::Speaker::Channel::wave, *w, wave_settings);
         }
 
 
         if (auto n = noise()) {
-            play_note(Platform::Speaker::Channel::noise, *n);
+            play_note(Platform::Speaker::Channel::noise, *n, settings_.noise_);
         }
     }
 
@@ -372,6 +385,7 @@ void Speaker::finalize()
 
     if (playing_) {
         psg_stop_all();
+        Visualizer::psg_stop();
     }
 }
 

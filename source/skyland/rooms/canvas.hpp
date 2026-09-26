@@ -26,7 +26,7 @@ namespace skyland
 class Canvas : public Decoration
 {
 public:
-    Canvas(Island* parent, const RoomCoord& position);
+    Canvas(Island* parent, const RoomCoord& position, const char* nm = name());
 
 
     ~Canvas();
@@ -136,11 +136,17 @@ public:
     void append_name_suffix(StringBuffer<32>& result) override;
 
 
-private:
+protected:
+    static int alloc_canvas_texture(Layer layer);
+    static Canvas::ImagePtr alloc_img(Layer layer);
+
+
     TileId tile_;
-    int canvas_texture_slot_ = -1;
+    s16 canvas_texture_slot_ = -1;
 
     Optional<ImagePtr> img_data_;
+
+private:
     Optional<ExtensionField<TinyBuffer<char, 31>>> name_;
 };
 

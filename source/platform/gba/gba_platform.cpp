@@ -5129,6 +5129,13 @@ void Platform::Speaker::set_sounds_volume(u8 volume)
 
 
 
+u32 Platform::Speaker::get_music_offset() const
+{
+    return snd_ctx.music_track_pos;
+}
+
+
+
 static Buffer<ActiveSoundInfo, 3> sound_stash;
 
 

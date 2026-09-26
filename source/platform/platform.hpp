@@ -756,6 +756,7 @@ public:
 
         bool stream_music(const char* filename, Microseconds offset);
 
+        u32 get_music_offset() const;
 
         // By convention, volume ranges from zero to nineteen (twenty volume
         // levels). Maximum performance when volume is zero or nineteen.

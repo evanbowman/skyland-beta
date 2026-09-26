@@ -348,6 +348,7 @@ struct Tile
         unused_res_2,
         unused_res_3,
         unused_res_4,
+        visualizer,
         count
     };
 };
@@ -678,6 +679,7 @@ struct InteriorTile
         resonator_2,
         resonator_3,
         resonator_4,
+        visualizer,
         count
     };
 };

@@ -80,7 +80,7 @@ static void delete_img_layer1(img::Image* ptr)
 
 
 
-Canvas::ImagePtr alloc_img(Layer layer)
+Canvas::ImagePtr Canvas::alloc_img(Layer layer)
 {
     if (layer == Layer::map_0_ext) {
         if (not img_pool_layer0) {
@@ -99,7 +99,7 @@ Canvas::ImagePtr alloc_img(Layer layer)
 
 
 
-static int alloc_canvas_texture(Layer layer)
+int Canvas::alloc_canvas_texture(Layer layer)
 {
     Bitvector<slot_count>* slots = nullptr;
 
@@ -136,8 +136,8 @@ static void free_canvas_texture(int slot, Layer layer)
 
 
 
-Canvas::Canvas(Island* parent, const RoomCoord& position)
-    : Decoration(parent, name(), position)
+Canvas::Canvas(Island* parent, const RoomCoord& position, const char* name)
+    : Decoration(parent, name, position)
 {
     tile_ = Tile::canvas;
 }

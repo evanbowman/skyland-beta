@@ -61,16 +61,15 @@ Synth::Synth(Island* parent, const RoomCoord& position)
 
 Platform::Speaker::Channel Synth::channel() const
 {
-    for (int x = 0; x < 4; ++x) {
-        int coord = position().x;
-        coord -= x + 1;
-        if (coord > 0) {
-            if (auto room = parent()->get_room({u8(coord), position().y})) {
-                if (str_eq(room->name(), "speaker")) {
-                    return (Platform::Speaker::Channel)(x);
-                }
-            }
-        }
+    auto spkr = speaker();
+    if (this == spkr->square_1()) {
+        return Platform::Speaker::Channel::square_1;
+    } else if (this == spkr->square_2()) {
+        return Platform::Speaker::Channel::square_2;
+    } else if (this == spkr->wave()) {
+        return Platform::Speaker::Channel::wave;
+    } else if (this == spkr->noise()) {
+        return Platform::Speaker::Channel::noise;
     }
 
     return Platform::Speaker::Channel::invalid;

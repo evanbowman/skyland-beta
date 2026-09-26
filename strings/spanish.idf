@@ -147,6 +147,7 @@ dinamita
 dinamita-ii
 antorcha
 transportador
+espectro
 tierra
 misil-atómico
 agua
@@ -378,6 +379,7 @@ Un núcleo de energía modificado para aumentar su producción. Las modificacion
 ¡Al activarse, hace que los cristales de tu reactor resuenen a una frecuencia coincidente, cambiando el color de su producción de energía!
 Construido por los Sylph para minar mineral denso, este rayo de partículas quema todo a su paso horizontalmente. Debido a su antigüedad, se desintegrará tras un uso.
 Un suministro de energía Sylph avanzado. Cada resonador genera % de energía adicional por cada otro resonador en tu isla.
+¡Visualiza la banda sonora! Solo se permite una a la vez...
 pausado
 lento
 normal
@@ -581,6 +583,8 @@ Pacifista
 ¡Alcanza la zona 4 sin matar a ningún tripulante enemigo!
 Técnico de núcleos
 ¡Compra un cristal de afinación a un Sylph!
+Sesión improvisada
+¡Toca chiptunes con altavoz y sintetizador!
 opciones
 trucos y consejos
 ¡Mantén pulsado el botón de pausa para ajustar la velocidad! ¡Cámara lenta y avance rápido disponibles! ¡Incluso puedes rebobinar!

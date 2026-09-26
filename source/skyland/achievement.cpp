@@ -302,17 +302,17 @@ static const AchievementInfo info[Achievement::count] = {
      },
      "ACH_CORE_TECHNICIAN"},
 
-    // {SystemString::achievement_pacifist_name,
-    //  SystemString::achievement_pacifist_description,
-    //  "mind-control",
-    //  []() {
-    //      return APP.zone() > 3 and
-    //          not(APP.persistent_data().state_flags_.get() &
-    //              PersistentData::opponent_crew_died);
-    //  },
-    //  []( bool awarded){
-    //      set_enabled(metaclass_index(info[raid].reward_), awarded);
-    //  }}
+    {SystemString::achievement_musician_name,
+     SystemString::achievement_musician_description,
+     "visualizer",
+     []() {
+         // invoked manually through achievements::raise().
+         return false;
+     },
+     [](bool awarded) {
+         set_enabled(metaclass_index(info[musician].reward_), awarded);
+     },
+     "ACH_CORE_TECHNICIAN"},
 };
 
 

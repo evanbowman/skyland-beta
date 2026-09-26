@@ -183,6 +183,7 @@ enum class SystemString {
     block_dynamite_2,
     block_torch,
     block_transporter,
+    block_visualizer,
     block_volcanic_soil,
     block_warhead,
     block_water,
@@ -446,6 +447,7 @@ enum class SystemString {
     description_tuning_crystal,
     description_particle_lance,
     description_resonance_core,
+    description_visualizer,
 
     gs_paused,
     gs_slow,
@@ -688,6 +690,8 @@ enum class SystemString {
     achievement_pacifist_description,
     achievement_core_technician_name,
     achievement_core_technician_description,
+    achievement_musician_name,
+    achievement_musician_description,
 
     options,
 

@@ -63,7 +63,7 @@ enum Achievement : u8 {
     primitive       = 19,
     hero            = 20,
     core_technician = 21,
-    // pacifist        = 23,
+    musician        = 22,
     count
     // clang-format on
 };

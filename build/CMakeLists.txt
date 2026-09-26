@@ -319,6 +319,7 @@ add_library(FASTPATH
   ${SOURCE_DIR}/skyland/rooms/bronzeHull.cpp
   ${SOURCE_DIR}/skyland/rooms/mirrorHull.cpp
   ${SOURCE_DIR}/skyland/rooms/rocketSilo.cpp
+  ${SOURCE_DIR}/skyland/rooms/visualizer.cpp
   ${SOURCE_DIR}/skyland/rooms/annihilator.cpp
   ${SOURCE_DIR}/skyland/rooms/incinerator.cpp
   ${SOURCE_DIR}/skyland/rooms/poweredHull.cpp

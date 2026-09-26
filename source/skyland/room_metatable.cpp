@@ -95,6 +95,7 @@
 #include "skyland/rooms/torch.hpp"
 #include "skyland/rooms/transporter.hpp"
 #include "skyland/rooms/tuningCrystal.hpp"
+#include "skyland/rooms/visualizer.hpp"
 #include "skyland/rooms/warEngine.hpp"
 #include "skyland/rooms/warhead.hpp"
 #include "skyland/rooms/water.hpp"
@@ -377,6 +378,7 @@ using RoomMetatableType = RoomMetatable< // walls
     TuningCrystal,
     Speaker,
     Synth,
+    Visualizer,
     Statue,
     LadyLiberty,
     Fountain,
