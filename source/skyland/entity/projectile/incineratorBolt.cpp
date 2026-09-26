@@ -17,6 +17,7 @@
 #include "skyland/entity/drones/drone.hpp"
 #include "skyland/entity/explosion/exploSpawner.hpp"
 #include "skyland/entity/explosion/explosion.hpp"
+#include "skyland/entity/misc/smokeParticle.hpp"
 #include "skyland/entity/misc/smokePuff.hpp"
 #include "skyland/entity/projectile/flak.hpp"
 #include "skyland/room.hpp"
@@ -72,6 +73,10 @@ void IncineratorBolt::update(Time delta)
         timer2_ -= milliseconds(60);
 
         auto pos = sprite_.get_position();
+
+        SmokeParticle::spawn(rng::sample<4>(pos, rng::utility_state), 2);
+
+
         pos = rng::sample<4>(pos, rng::utility_state);
 
         if (auto e = alloc_entity<Explosion>(pos)) {
