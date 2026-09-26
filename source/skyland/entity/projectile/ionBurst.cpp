@@ -166,10 +166,12 @@ void IonBurst::on_collision(Room& room, Vec2<u8> origin)
         return;
     }
 
-    if (room.position().x + (room.size().x - 1) == origin_tile_.x) {
-        // Because we do not want to include collisions with the originating
-        // cannon, or with any blocks directly above or below the cannon.
-        return;
+    if (source_ == room.parent()) {
+        if (room.position().x + (room.size().x - 1) == origin_tile_.x) {
+            // Because we do not want to include collisions with the originating
+            // cannon, or with any blocks directly above or below the cannon.
+            return;
+        }
     }
 
     if (not((*room.metaclass())->properties() &
