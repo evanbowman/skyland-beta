@@ -311,20 +311,20 @@ bool Visualizer::bind_texture()
 
 void Visualizer::draw(u32 packed)
 {
-    {
-        int level = (packed >> (0 * 4)) & 0xF;
-        int x;
-        for (x = 0; x < level; ++x) {
-            (**img_data_).set_pixel(0, 15 - x, 2);
-            (**img_data_).set_pixel(1, 15 - x, 11);
-        }
-        for (; x < 15; ++x) {
-            (**img_data_).set_pixel(0, 15 - x, 2);
-            (**img_data_).set_pixel(1, 15 - x, 1);
-        }
-    }
+    // {
+    //     int level = (packed >> (0 * 4)) & 0xF;
+    //     int x;
+    //     for (x = 0; x < level; ++x) {
+    //         (**img_data_).set_pixel(0, 15 - x, 2);
+    //         (**img_data_).set_pixel(1, 15 - x, 11);
+    //     }
+    //     for (; x < 15; ++x) {
+    //         (**img_data_).set_pixel(0, 15 - x, 2);
+    //         (**img_data_).set_pixel(1, 15 - x, 1);
+    //     }
+    // }
 
-    for (int i = 1; i < 7; ++i) {
+    for (int i = 0; i < 8; ++i) {
         int level = (packed >> (i * 4)) & 0xF;
         int x;
         for (x = 1; x < level; ++x) {
@@ -337,18 +337,18 @@ void Visualizer::draw(u32 packed)
         }
     }
 
-    {
-        int level = (packed >> (7 * 4)) & 0xF;
-        int x;
-        for (x = 1; x < level; ++x) {
-            (**img_data_).set_pixel(14, 15 - x, 11);
-            (**img_data_).set_pixel(15, 15 - x, 2);
-        }
-        for (; x < 15; ++x) {
-            (**img_data_).set_pixel(14, 15 - x, 1);
-            (**img_data_).set_pixel(15, 15 - x, 2);
-        }
-    }
+    // {
+    //     int level = (packed >> (7 * 4)) & 0xF;
+    //     int x;
+    //     for (x = 1; x < level; ++x) {
+    //         (**img_data_).set_pixel(14, 15 - x, 11);
+    //         (**img_data_).set_pixel(15, 15 - x, 2);
+    //     }
+    //     for (; x < 15; ++x) {
+    //         (**img_data_).set_pixel(14, 15 - x, 1);
+    //         (**img_data_).set_pixel(15, 15 - x, 2);
+    //     }
+    // }
 
     for (int x = 0; x < 16; ++x) {
         (**img_data_).set_pixel(x, 0, 3);
