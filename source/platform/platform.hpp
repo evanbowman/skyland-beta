@@ -30,6 +30,7 @@
 #include <optional>
 
 
+
 using TileDesc = u16;
 
 
@@ -109,6 +110,7 @@ public:
 
 
     void memset_words(void* dest, u8 byte, u32 word_count);
+    void memcpy_words(void* dest, const void* src, u32 word_count);
     u32 strlen(const char* string) const;
 
 

@@ -342,6 +342,13 @@ void Platform::memset_words(void* dest, u8 byte, u32 word_count)
 
 
 
+void Platform::memcpy_words(void* dest, const void* src, u32 word_count)
+{
+    memcpy32(dest, src, word_count);
+}
+
+
+
 // Used for software rendering, needs to be stored in iwram and heavily
 // optimized.
 __attribute__((section(".iwram"), long_call)) void blit_tile(u16* out, u16* in);

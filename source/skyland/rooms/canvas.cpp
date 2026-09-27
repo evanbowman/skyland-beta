@@ -215,22 +215,98 @@ void Canvas::finalize()
 
 
 
+Platform::EncodedTile encode_tile(const img::Image& image)
+{
+    // NOTE: We needed a faster way to encode images into vram tiles, without
+    // changing the existing format of the Image class, which is not encoded in
+    // a layout that maps directly to gba hardware, because I didn't think that
+    // far ahead.
+
+    static_assert(sizeof(image.data_) == 128);
+
+    u32 src[32];
+    memcpy(src, image.data_, sizeof src);
+
+    u32 out[32];
+
+    // Each input word holds 4 old bytes = pixels x..x+3 for rows 2k and 2k+1.
+    // Produce the 2 output bytes (4 pixels) for the even row, in the low 16 bits.
+    auto even_pair = [](u32 w) -> u32 {
+        const u32 hi = w & 0xf0f0f0f0;
+        const u32 t = (hi >> 4) | (hi >> 8);
+        return (t & 0xff) | ((t >> 8) & 0xff00);
+    };
+
+    // Same, for the odd row.
+    auto odd_pair = [](u32 w) -> u32 {
+        const u32 lo = w & 0x0f0f0f0f;
+        const u32 t = lo | (lo >> 4);
+        return (t & 0xff) | ((t >> 8) & 0xff00);
+    };
+
+    for (int k = 0; k < 8; ++k) {      // pixel rows y = 2k and 2k+1
+        const int ty = k >> 2;         // tile row (0 or 1)
+        const int r = (k & 3) * 2;     // row within tile (even)
+
+        for (int tx = 0; tx < 2; ++tx) {
+            const u32 w0 = src[k * 4 + tx * 2];      // x = tx*8 + 0..3
+            const u32 w1 = src[k * 4 + tx * 2 + 1];  // x = tx*8 + 4..7
+            const int base = (ty * 2 + tx) * 8;      // tile start, in words
+
+            out[base + r]     = even_pair(w0) | (even_pair(w1) << 16);
+            out[base + r + 1] = odd_pair(w0)  | (odd_pair(w1)  << 16);
+        }
+    }
+
+    Platform::EncodedTile t;
+    PLATFORM.memcpy_words(t.bytes_, out, 128 / sizeof(void*));
+    return t;
+}
+
+
+
+// Platform::EncodedTile encode_tile(const img::Image& image)
+// {
+//     Platform::EncodedTile t;
+//     using Buf = Buffer<u8, 128>;
+//     Buf buffer(Buf::SkipZeroFill{});
+
+//     // Each 8x8 quadrant is emitted row by row, two pixels per byte
+//     // (even x in the low nibble, odd x in the high nibble).
+//     auto encode_quadrant = [&](u8 x0, u8 y0) {
+//         for (u8 y = y0; y < y0 + 8; ++y) {
+//             for (u8 x = x0; x < x0 + 8; ++x) {
+//                 const u8 px = image.get_pixel(x, y);
+//                 if (x % 2) {
+//                     buffer.back() |= px << 4;
+//                 } else {
+//                     buffer.push_back(px);
+//                 }
+//             }
+//         }
+//     };
+
+//     encode_quadrant(0, 0);
+//     encode_quadrant(8, 0);
+//     encode_quadrant(0, 8);
+//     encode_quadrant(8, 8);
+
+//     PLATFORM.memcpy_words(t.bytes_, buffer.data(), 128 / sizeof(void*));
+
+//     return t;
+// }
+
+
+
 void Canvas::publish_tiles()
 {
     if (not img_data_ or canvas_texture_slot_ < 0) {
         return;
     }
 
-    u8 buffer[16][16];
-    for (int x = 0; x < 16; ++x) {
-        for (int y = 0; y < 16; ++y) {
-            buffer[x][y] = (**img_data_).get_pixel(x, y);
-        }
-    }
-
     const int sl = canvas_texture_slot_;
 
-    auto enc = PLATFORM.encode_tile(buffer);
+    auto enc = encode_tile(**img_data_);
 
     switch (parent()->layer()) {
     case Layer::map_0_ext:

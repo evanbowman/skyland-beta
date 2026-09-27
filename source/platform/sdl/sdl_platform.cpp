@@ -7655,6 +7655,13 @@ void Platform::memset_words(void* dest, u8 byte, u32 word_count)
 
 
 
+void Platform::memcpy_words(void* dest, const void* src, u32 word_count)
+{
+    memcpy(dest, src, word_count * sizeof(void*));
+}
+
+
+
 u32 Platform::strlen(const char* str) const
 {
     return ::strlen(str);

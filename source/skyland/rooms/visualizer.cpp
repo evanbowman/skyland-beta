@@ -325,14 +325,32 @@ bool Visualizer::bind_texture()
 
 
 
+EXT_WORKRAM_DATA u32 last_bands = 0;
+EXT_WORKRAM_DATA u32 n2_bands = 0;
+
+
+
 void Visualizer::draw(u32 packed)
 {
+    if (packed == last_bands) {
+        return;
+    }
     for (int i = 0; i < 8; ++i) {
         int level = (packed >> (i * 4)) & 0xF;
+        int last_level = (last_bands >> (i * 4)) & 0xF;
+        int n2_level = (n2_bands >> (i * 4)) & 0xF;
         int x;
         for (x = 1; x < level; ++x) {
             (**img_data_).set_pixel(i * 2, 15 - x, 11);
             (**img_data_).set_pixel(i * 2 + 1, 15 - x, 11);
+        }
+        for (; x < last_level; ++x) {
+            (**img_data_).set_pixel(i * 2, 15 - x, 12);
+            (**img_data_).set_pixel(i * 2 + 1, 15 - x, 12);
+        }
+        for (; x < n2_level; ++x) {
+            (**img_data_).set_pixel(i * 2, 15 - x, 12);
+            (**img_data_).set_pixel(i * 2 + 1, 15 - x, 12);
         }
         for (; x < 15; ++x) {
             (**img_data_).set_pixel(i * 2, 15 - x, 1);
@@ -345,6 +363,8 @@ void Visualizer::draw(u32 packed)
         (**img_data_).set_pixel(x, 15, 2);
     }
     publish_tiles();
+    n2_bands = last_bands;
+    last_bands = packed;
 }
 
 
