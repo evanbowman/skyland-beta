@@ -212,27 +212,17 @@ Visualizer::~Visualizer()
 
 
 
-void Visualizer::update(Time delta)
+void Visualizer::rewind(Time delta)
 {
-    Room::update(delta);
-    Room::ready();
+    Room::rewind(delta);
 
-    if (psg_vis_playing) {
-        // NOTE: This advances the shared PSG state, which is only correct
-        // while there's at most one visualizer.
-        psg_vis_idle += delta;
-        for (auto& c : psg_vis_channels) {
-            if (c.on_ and c.elapsed_ < milliseconds(2000)) {
-                c.elapsed_ += delta;
-            }
-        }
+    update_simple(delta);
+}
 
-        // Safety net, in case playback ended without a call to psg_stop().
-        if (psg_vis_idle > milliseconds(1000)) {
-            psg_stop();
-        }
-    }
 
+
+void Visualizer::update_simple(Time delta)
+{
     u32 packed = 0;
 
     if (psg_vis_playing) {
@@ -283,6 +273,32 @@ void Visualizer::update(Time delta)
 
 
 
+void Visualizer::update(Time delta)
+{
+    Room::update(delta);
+    Room::ready();
+
+    if (psg_vis_playing) {
+        // NOTE: This advances the shared PSG state, which is only correct
+        // while there's at most one visualizer.
+        psg_vis_idle += delta;
+        for (auto& c : psg_vis_channels) {
+            if (c.on_ and c.elapsed_ < milliseconds(2000)) {
+                c.elapsed_ += delta;
+            }
+        }
+
+        // Safety net, in case playback ended without a call to psg_stop().
+        if (psg_vis_idle > milliseconds(1000)) {
+            psg_stop();
+        }
+    }
+
+    update_simple(delta);
+}
+
+
+
 bool Visualizer::bind_texture()
 {
     if (img_data_) {
@@ -311,19 +327,6 @@ bool Visualizer::bind_texture()
 
 void Visualizer::draw(u32 packed)
 {
-    // {
-    //     int level = (packed >> (0 * 4)) & 0xF;
-    //     int x;
-    //     for (x = 0; x < level; ++x) {
-    //         (**img_data_).set_pixel(0, 15 - x, 2);
-    //         (**img_data_).set_pixel(1, 15 - x, 11);
-    //     }
-    //     for (; x < 15; ++x) {
-    //         (**img_data_).set_pixel(0, 15 - x, 2);
-    //         (**img_data_).set_pixel(1, 15 - x, 1);
-    //     }
-    // }
-
     for (int i = 0; i < 8; ++i) {
         int level = (packed >> (i * 4)) & 0xF;
         int x;
@@ -336,19 +339,6 @@ void Visualizer::draw(u32 packed)
             (**img_data_).set_pixel(i * 2 + 1, 15 - x, 1);
         }
     }
-
-    // {
-    //     int level = (packed >> (7 * 4)) & 0xF;
-    //     int x;
-    //     for (x = 1; x < level; ++x) {
-    //         (**img_data_).set_pixel(14, 15 - x, 11);
-    //         (**img_data_).set_pixel(15, 15 - x, 2);
-    //     }
-    //     for (; x < 15; ++x) {
-    //         (**img_data_).set_pixel(14, 15 - x, 1);
-    //         (**img_data_).set_pixel(15, 15 - x, 2);
-    //     }
-    // }
 
     for (int x = 0; x < 16; ++x) {
         (**img_data_).set_pixel(x, 0, 3);

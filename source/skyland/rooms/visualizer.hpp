@@ -35,6 +35,10 @@ public:
 
 
     void update(Time delta) override;
+    void rewind(Time delta) override;
+
+
+    void update_simple(Time delta);
 
 
     static RoomProperties::Bitmask properties()
