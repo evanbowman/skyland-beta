@@ -335,33 +335,41 @@ void Visualizer::draw(u32 packed)
     if (packed == last_bands) {
         return;
     }
+
+    auto& img = **img_data_;
+
     for (int i = 0; i < 8; ++i) {
-        int level = (packed >> (i * 4)) & 0xF;
-        int last_level = (last_bands >> (i * 4)) & 0xF;
-        int n2_level = (n2_bands >> (i * 4)) & 0xF;
-        int x;
-        for (x = 1; x < level; ++x) {
-            (**img_data_).set_pixel(i * 2, 15 - x, 11);
-            (**img_data_).set_pixel(i * 2 + 1, 15 - x, 11);
-        }
-        for (; x < last_level; ++x) {
-            (**img_data_).set_pixel(i * 2, 15 - x, 12);
-            (**img_data_).set_pixel(i * 2 + 1, 15 - x, 12);
-        }
-        for (; x < n2_level; ++x) {
-            (**img_data_).set_pixel(i * 2, 15 - x, 12);
-            (**img_data_).set_pixel(i * 2 + 1, 15 - x, 12);
-        }
-        for (; x < 15; ++x) {
-            (**img_data_).set_pixel(i * 2, 15 - x, 1);
-            (**img_data_).set_pixel(i * 2 + 1, 15 - x, 1);
+        const int level = (packed >> (i * 4)) & 0xf;
+        const int last_level = (last_bands >> (i * 4)) & 0xf;
+        const int n2_level = (n2_bands >> (i * 4)) & 0xf;
+        const int trail = last_level > n2_level ? last_level : n2_level;
+
+        auto color = [&](int y) -> u8 {
+            if (y == 0) {
+                return 3;
+            }
+            if (y == 15) {
+                return 2;
+            }
+            const int h = 15 - y;
+            if (h < level) {
+                return 11;
+            }
+            if (h < trail) {
+                return 12;
+            }
+            return 1;
+        };
+
+        // NOTE: Each byte holds rows 2k (high nibble) and 2k+1 (low nibble).
+        // Both columns of a band are identical.
+        for (int k = 0; k < 8; ++k) {
+            const u8 b = (color(2 * k) << 4) | color(2 * k + 1);
+            img.data_[i * 2 + k * 16].data_ = b;
+            img.data_[i * 2 + 1 + k * 16].data_ = b;
         }
     }
 
-    for (int x = 0; x < 16; ++x) {
-        (**img_data_).set_pixel(x, 0, 3);
-        (**img_data_).set_pixel(x, 15, 2);
-    }
     publish_tiles();
     n2_bands = last_bands;
     last_bands = packed;
