@@ -11,3 +11,6 @@ source/platform/psp/glib2d.h linguist-vendored
 
 *.lisp linguist-language=lisp
 *.s linguist-language=Assembly
+
+*.bands binary
+*.raw binary

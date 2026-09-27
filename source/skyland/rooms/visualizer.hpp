@@ -39,7 +39,8 @@ public:
 
     static RoomProperties::Bitmask properties()
     {
-        return (Decoration::properties());
+        return (Decoration::properties() |
+                RoomProperties::disabled_in_tutorials);
     }
 
 

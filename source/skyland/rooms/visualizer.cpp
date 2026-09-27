@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Copyright (c) 2027 Evan Bowman
+// Copyright (c) 2026 Evan Bowman
 //
 // This Source Code Form is subject to the terms of the Mozilla Public License,
 // v. 2.0. If a copy of the MPL was not distributed with this file, You can
@@ -195,6 +195,8 @@ void Visualizer::format_description(StringBuffer<512>& buffer)
 Visualizer::Visualizer(Island* parent, const RoomCoord& position)
     : Canvas(parent, position, name())
 {
+    tile_ = Tile::visualizer;
+
     ++visualizer_count;
     if (visualizer_count > 1) {
         apply_damage(9999);

@@ -312,7 +312,7 @@ static const AchievementInfo info[Achievement::count] = {
      [](bool awarded) {
          set_enabled(metaclass_index(info[musician].reward_), awarded);
      },
-     "ACH_CORE_TECHNICIAN"},
+     "ACH_MUSICIAN"},
 };
 
 

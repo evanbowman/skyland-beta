@@ -7042,6 +7042,12 @@ void audio_callback(void* userdata, Uint8* stream, int len)
 }
 
 
+u32 Platform::Speaker::get_music_offset() const
+{
+    return audio_state.music_position / 4;
+}
+
+
 StringBuffer<48> Platform::Speaker::current_music()
 {
     StringBuffer<48> music_name;
