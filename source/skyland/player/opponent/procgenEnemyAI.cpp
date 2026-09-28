@@ -36,9 +36,9 @@ static SHARED_VARIABLE(sf_p2_coin_yield);
 static SHARED_VARIABLE(sf_p3_coin_yield);
 static SHARED_VARIABLE(sf_p4_coin_yield);
 static SHARED_VARIABLE(chaos_core_placement_chance);
-static SHARED_VARIABLE(enemy_cargo_min_value);
 static SHARED_VARIABLE(enemy_cargo_placement_chance_1);
 static SHARED_VARIABLE(enemy_cargo_placement_chance_2);
+SHARED_VARIABLE(enemy_cargo_min_value);
 
 
 

@@ -141,7 +141,6 @@ void PlayerP1::update(Time delta)
 
 
 SharedVariable score_multiplier("score_multiplier", 1);
-extern SharedVariable enemy_cargo_min_value;
 
 
 
@@ -166,8 +165,16 @@ void PlayerP1::on_room_destroyed(Room& room)
 
         if (auto bay = room.cast<CargoBay>()) {
             auto cargo = bay->cargo();
-            if (cargo) {
-                APP.set_coins(APP.coins() + enemy_cargo_min_value / 2);
+            if (cargo and cargo[0] == '\'') {
+                auto cargo_list = lisp::dostring(cargo);
+                lisp::l_foreach(cargo_list, [](lisp::Value* v) {
+                    if (v->type() == lisp::Value::Type::symbol) {
+                        if (auto mt = load_metaclass(v->symbol().name())) {
+                            auto cost = (*mt)->cost();
+                            APP.set_coins(APP.coins() + cost / 2);
+                        }
+                    }
+                });
             }
         }
 
