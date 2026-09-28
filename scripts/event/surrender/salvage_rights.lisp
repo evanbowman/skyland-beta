@@ -16,7 +16,7 @@
              (let ((content-str (cargo (opponent) x y)))
                (if (equal (get content-str 0) "'")
                    (progn
-                     (on-cargo-plundered (eval (read )))
+                     (on-cargo-plundered (eval (read content-str)))
                      (room-del (opponent) x y)
                      (+= taken 1))
                    (sound "beep_error"))))
