@@ -18,6 +18,7 @@
                    (progn
                      (on-cargo-plundered (eval (read content-str)))
                      (room-del (opponent) x y)
+                     (setq cnt (decr cnt))
                      (+= taken 1))
                    (sound "beep_error"))))
             ((room-is-critical (opponent) x y)
