@@ -75,7 +75,7 @@ Coins salvage_value(Room& room);
 
 struct SalvageHistory
 {
-    MetaclassIndex class_ = -1;
+    MetaclassIndex class_ = (MetaclassIndex)-1;
     Health health_;
     u8 x_ : 4;
     u8 y_ : 4;
