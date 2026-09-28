@@ -141,6 +141,7 @@ void PlayerP1::update(Time delta)
 
 
 SharedVariable score_multiplier("score_multiplier", 1);
+extern SharedVariable enemy_cargo_min_value;
 
 
 
@@ -160,6 +161,13 @@ void PlayerP1::on_room_destroyed(Room& room)
                 // mycelium block. Otherwise you could cheat by running up a
                 // huge score.
                 return;
+            }
+        }
+
+        if (auto bay = room.cast<CargoBay>()) {
+            auto cargo = bay->cargo();
+            if (cargo) {
+                APP.set_coins(APP.coins() + enemy_cargo_min_value / 2);
             }
         }
 

@@ -110,6 +110,7 @@ void CargoBay::display(Platform::Screen& screen)
             pos.y -= 6.0_fixed;
             pos.x -= 8.0_fixed;
             sprite.set_position(pos);
+            sprite.set_alpha(Sprite::Alpha::translucent);
             sprite.set_size(Sprite::Size::w16_h16);
             screen.draw(sprite);
         }

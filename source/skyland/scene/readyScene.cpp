@@ -925,7 +925,7 @@ void describe_room(Island* island,
             }
 
         } else {
-            if (auto bay = room.cast<CargoBay>()) {
+            if (room->cast<CargoBay>()) {
                 room_description->assign(SYSTR(loot)->c_str());
             } else {
                 room_description.emplace(
