@@ -996,6 +996,12 @@ void EnemyAI::assign_boarded_character(Character& character,
                 slot.ai_weight_ /= 2.0_atp;
             }
 
+            if (auto bay = room->cast<CargoBay>()) {
+                if (auto cargo = bay->cargo(); cargo and cargo[0] == '\'') {
+                    slot.ai_weight_ += 400.0_atp;
+                }
+            }
+
             if ((*target_island_).fire_present(slot.coord_)) {
                 // The slot is already on fire! Maybe we can do more damage
                 // elsewhere...
