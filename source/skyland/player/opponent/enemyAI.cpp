@@ -22,6 +22,7 @@
 #include "skyland/rooms/beamGun.hpp"
 #include "skyland/rooms/bulkhead.hpp"
 #include "skyland/rooms/cannon.hpp"
+#include "skyland/rooms/cargoBay.hpp"
 #include "skyland/rooms/clumpBomb.hpp"
 #include "skyland/rooms/core.hpp"
 #include "skyland/rooms/decimator.hpp"

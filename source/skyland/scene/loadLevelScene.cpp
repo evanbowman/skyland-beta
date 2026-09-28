@@ -157,6 +157,10 @@ void prep_level()
                 // don't want to award the player a large amount of coins for
                 // each block spawned.
                 APP.victory_coins() += 100;
+            } else if (str_eq(room->name(), "cargo-bay")) {
+                // Don't give the player anything upon finishing the fight. The
+                // cargo bay already contains something valuable that could be
+                // plundered.
             } else if (APP.zone() < 2) {
                 APP.victory_coins() +=
                     (0.01f * zone1_coin_yield) * (*room->metaclass())->cost();

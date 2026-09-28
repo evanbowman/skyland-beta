@@ -5,11 +5,12 @@
 (tr-bind-current)
 
 (lambda (cargo-list)
-  (if-let ((sel (dialog-await-y/n (format (tr (s+ "You've plundered a cargo bay containing %! "
+  (if-let ((sel (dialog-await-y/n (format (tr (s+ "You've plundered a cargo bay containing: %! "
                                                   "<B:0> Accept the cargo?"))
-                                          (map (lambda (r)
-                                                 (rinfo 'name r))
-                                               cargo-list)))))
+                                          (string-join (map (lambda (r)
+                                                              (rinfo 'name r))
+                                                            cargo-list)
+                                                       ", ")))))
       (foreach (lambda (item)
                  (alloc-space item)
                  (let ((msg (format (tr "Place % where?") (rinfo 'name item))))
