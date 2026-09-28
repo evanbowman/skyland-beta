@@ -14,7 +14,7 @@
       (foreach (lambda (item)
                  (alloc-space item)
                  (let ((msg (format (tr "Place % where?") (rinfo 'name item))))
-                   (let (((x . y) (await (sel-input* item msg))))
+                   (let (([x . y] (await (sel-input* item msg))))
                      (ts-record-enable true)
                      (room-new (player) (list item x y))
                      (ts-record-enable false)
