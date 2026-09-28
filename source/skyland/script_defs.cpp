@@ -61,6 +61,7 @@
 #include "skyland/sound.hpp"
 #include "skyland/tile.hpp"
 #include "version.hpp"
+#include "skyland/timeStreamEvent.hpp"
 
 
 
@@ -80,6 +81,10 @@ u16 external_symtab_count();
 
 namespace skyland
 {
+
+
+
+static bool script_hook_record_timestream = false;
 
 
 
@@ -853,6 +858,13 @@ BINDING_TABLE({
 
           auto& sector = macrocosm().sector();
           return L_INT((int)sector.get_block({x, y, z}).type());
+      }}},
+    {"ts-record-enable",
+     {SIG1(nil, nil),
+      [](int argc) {
+          script_hook_record_timestream =
+              lisp::is_boolean_true(lisp::get_op0());
+          return L_NIL;
       }}},
     {"mcr-blocks",
      {SIG0(cons),
@@ -1786,6 +1798,21 @@ BINDING_TABLE({
           if (auto c = load_metaclass(name)) {
               (*c)->create(island, RoomCoord{x, y}, {.do_repaint_ = false});
               island->schedule_repaint();
+
+              if (script_hook_record_timestream) {
+                  if (island == &player_island()) {
+                      time_stream::event::PlayerRoomCreated p;
+                      p.x_ = x;
+                      p.y_ = y;
+                      APP.push_time_stream(p);
+                  } else {
+                      time_stream::event::OpponentRoomCreated p;
+                      p.x_ = x;
+                      p.y_ = y;
+                      APP.push_time_stream(p);
+                  }
+              }
+
           } else {
               Platform::fatal(name);
           }

@@ -92,4 +92,5 @@
         pickup-cart
         pickup-cart-cb
         place-new-block
-        repairman))
+        repairman
+        on-cargo-plundered))

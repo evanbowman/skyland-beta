@@ -96,6 +96,23 @@ void CargoBay::display(Platform::Screen& screen)
             sprite.set_size(Sprite::Size::w16_h16);
             screen.draw(sprite);
         }
+    } else {
+        if (*cargo() not_eq '\0') {
+            Sprite sprite;
+            sprite.set_tidx_16x16(81, 1);
+            ++sparkle_anim_cnt_;
+            if (sparkle_anim_cnt_ < 8) {
+                sprite.set_flip({true, false});
+            } else if (sparkle_anim_cnt_ == 16) {
+                sparkle_anim_cnt_ = 0;
+            }
+            auto pos = visual_center();
+            pos.y -= 6.0_fixed;
+            pos.x -= 8.0_fixed;
+            sprite.set_position(pos);
+            sprite.set_size(Sprite::Size::w16_h16);
+            screen.draw(sprite);
+        }
     }
 }
 
@@ -149,6 +166,13 @@ void CargoBay::deserialize(lisp::Value* list)
     if (lisp::length(list) >= 5) {
         __set_health(lisp::to_integer(lisp::get_list(list, 4)));
     }
+}
+
+
+
+bool CargoBay::description_visible()
+{
+    return true;
 }
 
 

@@ -1476,7 +1476,7 @@ struct ScoreDecreased
 struct CargoBayContents
 {
     Header header_;
-    char cargo_[19];
+    char cargo_[26];
     u8 count_;
     u8 x_ : 4;
     u8 y_ : 4;

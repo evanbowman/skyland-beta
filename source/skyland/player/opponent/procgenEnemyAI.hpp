@@ -51,6 +51,7 @@ private:
     void generate_radiators();
     void generate_walls_behind_weapons();
     void generate_missile_defenses();
+    void generate_cargo();
 
     void cleanup_unused_terrain();
 

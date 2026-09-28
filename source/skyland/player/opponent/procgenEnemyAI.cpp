@@ -17,6 +17,7 @@
 #include "skyland/roomTable.hpp"
 #include "skyland/room_metatable.hpp"
 #include "skyland/rooms/chaosCore.hpp"
+#include "skyland/rooms/cargoBay.hpp"
 #include "skyland/rooms/core.hpp"
 #include "skyland/rooms/masonry.hpp"
 #include "skyland/scene/constructionScene.hpp"
@@ -35,6 +36,9 @@ static SHARED_VARIABLE(sf_p2_coin_yield);
 static SHARED_VARIABLE(sf_p3_coin_yield);
 static SHARED_VARIABLE(sf_p4_coin_yield);
 static SHARED_VARIABLE(chaos_core_placement_chance);
+static SHARED_VARIABLE(enemy_cargo_min_value);
+static SHARED_VARIABLE(enemy_cargo_placement_chance_1);
+static SHARED_VARIABLE(enemy_cargo_placement_chance_2);
 
 
 
@@ -186,6 +190,7 @@ void ProcgenEnemyAI::generate_level()
     }
 
     generate_secondary_rooms();
+    generate_cargo();
     generate_characters();
     generate_radiators();
 
@@ -1622,6 +1627,50 @@ void ProcgenEnemyAI::generate_secondary_rooms()
 
         for (int i = 0; i < count; ++i) {
             place_room_adjacent("transporter");
+        }
+    }
+}
+
+
+
+void ProcgenEnemyAI::generate_cargo()
+{
+    bool placed_bay = false;
+
+    const int ch1 = enemy_cargo_placement_chance_1;
+    const int ch2 = enemy_cargo_placement_chance_2;
+
+    if (ch1 and levelgen_enemy_count_ > 3 and rng::choice(ch1, rng_source_) == 0) {
+        place_room_adjacent("cargo-bay");
+        placed_bay = true;
+    }
+
+    if (ch2 and levelgen_enemy_count_ > 10 and rng::choice(ch2, rng_source_) == 0) {
+        place_room_adjacent("cargo-bay");
+        placed_bay = true;
+    }
+
+    if (placed_bay) {
+
+        Vector<RoomMeta*> cargo_opts;
+        auto meta = room_metatable();
+
+        for (int i = 0; i < meta.second; ++i) {
+            if ((meta.first[i])->cost() >= enemy_cargo_min_value) {
+                cargo_opts.push_back(&meta.first[i]);
+            }
+        }
+
+        if (cargo_opts.size() == 0) {
+            return;
+        }
+
+        for (auto& room : APP.opponent_island()->rooms()) {
+            if (auto bay = room->cast<CargoBay>()) {
+                auto choice = cargo_opts[rng::choice(cargo_opts.size(), rng_source_)];
+                auto cargo_str = format("'(%)", (*choice)->name());
+                bay->set_cargo(cargo_str.c_str(), cargo_str.length());
+            }
         }
     }
 }

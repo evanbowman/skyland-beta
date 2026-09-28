@@ -13,11 +13,13 @@
 #include "skyland/minimap.hpp"
 #include "skyland/player/opponent/enemyAI.hpp"
 #include "skyland/room_metatable.hpp"
+#include "skyland/rooms/cargoBay.hpp"
 #include "skyland/rooms/mycelium.hpp"
 #include "skyland/rooms/targetingComputer.hpp"
 #include "skyland/rooms/warhead.hpp"
 #include "skyland/sharedVariable.hpp"
 #include "skyland/skyland.hpp"
+#include "script/lisp.hpp"
 
 
 
@@ -207,6 +209,27 @@ void PlayerP1::on_room_plundered(Room& room)
         APP.score().set(
             (APP.score().get() +
              1.5f * (score_multiplier * (*room.metaclass())->cost())));
+
+        auto bay = room.cast<CargoBay>();
+        if (bay and not PLATFORM.network_peer().is_connected()) {
+            auto cargo = bay->cargo();
+            auto cargo_str_len = PLATFORM.strlen(cargo);
+            if (cargo_str_len and
+                cargo[0] == '\'' and
+                cargo[1] == '(' and
+                cargo[cargo_str_len - 1] == ')') {
+
+                lisp::Protected cargo_list = lisp::dostring(cargo);
+                if (not is_error(cargo_list)) {
+                    auto fn = lisp::get_var("on-cargo-plundered");
+                    if (fn->type() == lisp::Value::Type::function) {
+                        lisp::push_op(cargo_list);
+                        lisp::safecall(fn, 1);
+                        lisp::pop_op(); // result
+                    }
+                }
+            }
+        }
     }
 }
 

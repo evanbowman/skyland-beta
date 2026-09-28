@@ -11,6 +11,11 @@
       (let (([x . y] (await (sel-input-opponent* nil (format (tr "Take block: (%/%)") (- blocks cnt) blocks)))))
         (let ((took (car (room-load (opponent) x y))))
           (cond
+            ((and (equal took 'cargo-bay)
+                  (cargo (opponent) x y))
+             (on-cargo-plundered (eval (read (cargo (opponent) x y))))
+             (room-del (opponent) x y)
+             (+= taken 1))
             ((room-is-critical (opponent) x y)
              (when (dialog-await-y/n (tr "This will remove the island's only power source, causing it to become unstable (you won't be able to take any more blocks), are you sure?"))
                (sound "gravel")

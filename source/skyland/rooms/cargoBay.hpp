@@ -106,12 +106,16 @@ public:
     bool set_cargo(const char* cargo, u8 count);
 
 
+    bool description_visible() override;
+
+
     void finalize() override;
 
 
 private:
-    char cargo_[19];
+    char cargo_[26];
     u8 count_;
+    u8 sparkle_anim_cnt_ = 0;
 };
 
 

@@ -859,7 +859,10 @@ void describe_room(Island* island,
 
                 if (str_eq((*metac)->name(), "cargo-bay")) {
                     if (auto cb = room->cast<CargoBay>()) {
-                        if (cb->position().y == cursor_loc.y - 1) {
+                        if (island == APP.opponent_island() and not
+                            island->interior_visible()) {
+                            room_description->assign(SYSTR(loot)->c_str());
+                        } else if (cb->position().y == cursor_loc.y - 1) {
                             room_description->assign(SYSTR(cargo)->c_str());
                             if (*cb->cargo() not_eq '\0') {
                                 room_description->append(cb->cargo());

@@ -257,6 +257,7 @@ enum class SystemString {
     developer_mode_msg_2,
 
     cargo,
+    loot,
 
     none,
 

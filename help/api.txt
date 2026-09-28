@@ -1503,6 +1503,18 @@ o──────────────────────────�
 
 o────────────────────────────o
 
+ (ts-record-enable bool)
+
+ Enables/disables event
+ recording for rewind
+ purposes for certain lisp
+ function. Off by default.
+ Most lisp callbacks clear
+ the recording history anyway.
+
+
+o────────────────────────────o
+
  (version)
 
  Return the engine version,
