@@ -106,9 +106,6 @@ public:
     bool set_cargo(const char* cargo, u8 count);
 
 
-    bool description_visible() override;
-
-
     void finalize() override;
 
 

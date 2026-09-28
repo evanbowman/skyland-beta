@@ -170,13 +170,6 @@ void CargoBay::deserialize(lisp::Value* list)
 
 
 
-bool CargoBay::description_visible()
-{
-    return true;
-}
-
-
-
 void CargoBay::finalize()
 {
     Room::finalize();

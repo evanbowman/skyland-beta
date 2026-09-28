@@ -859,10 +859,7 @@ void describe_room(Island* island,
 
                 if (str_eq((*metac)->name(), "cargo-bay")) {
                     if (auto cb = room->cast<CargoBay>()) {
-                        if (island == APP.opponent_island() and not
-                            island->interior_visible()) {
-                            room_description->assign(SYSTR(loot)->c_str());
-                        } else if (cb->position().y == cursor_loc.y - 1) {
+                        if (cb->position().y == cursor_loc.y - 1) {
                             room_description->assign(SYSTR(cargo)->c_str());
                             if (*cb->cargo() not_eq '\0') {
                                 room_description->append(cb->cargo());
@@ -928,12 +925,16 @@ void describe_room(Island* island,
             }
 
         } else {
-            room_description.emplace(
+            if (auto bay = room.cast<CargoBay>()) {
+                room_description->assign(SYSTR(loot)->c_str());
+            } else {
+                room_description.emplace(
                 OverlayCoord{0, u8(calc_screen_tiles().y - 1)});
 
-            room_description->assign("(??"); // Split to avoid trigraph
-            room_description->append("?) ??");
-            room_description->append("?/???");
+                room_description->assign("(??"); // Split to avoid trigraph
+                room_description->append("?) ??");
+                room_description->append("?/???");
+            }
         }
     } else {
         if (auto drone = island->get_drone(cursor_loc)) {
