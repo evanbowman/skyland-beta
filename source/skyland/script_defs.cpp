@@ -2625,7 +2625,9 @@ BINDING_TABLE({
 
           if (auto room = island->get_room({x, y})) {
               if (auto cb = room->cast<CargoBay>()) {
-                  cb->set_cargo(lisp::get_op(0)->string().value(), 1);
+                  if (not cb->set_cargo(lisp::get_op(0)->string().value())) {
+                      return lisp::make_error("cargo-set string arg too long!");
+                  }
               }
           }
 

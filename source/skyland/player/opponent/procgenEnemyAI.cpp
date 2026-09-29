@@ -1669,7 +1669,7 @@ void ProcgenEnemyAI::generate_cargo()
             if (auto bay = room->cast<CargoBay>()) {
                 auto choice = cargo_opts[rng::choice(cargo_opts.size(), rng_source_)];
                 auto cargo_str = format("'(%)", (*choice)->name());
-                bay->set_cargo(cargo_str.c_str(), cargo_str.length());
+                bay->set_cargo(cargo_str.c_str());
             }
         }
     }

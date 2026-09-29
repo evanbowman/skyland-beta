@@ -13,6 +13,7 @@
 
 #include "skyland/room.hpp"
 #include "skyland/systemString.hpp"
+#include "memory/extension.hpp"
 
 
 
@@ -83,13 +84,13 @@ public:
 
     const char* cargo() const
     {
-        return cargo_;
+        return (*mem_)->text_;
     }
 
 
-    u8 cargo_count() const
+    u8 cargo_length() const
     {
-        return count_;
+        return length_;
     }
 
 
@@ -103,15 +104,19 @@ public:
     virtual void deserialize(lisp::Value*) override;
 
 
-    bool set_cargo(const char* cargo, u8 count);
+    bool set_cargo(const char* cargo);
 
 
     void finalize() override;
 
 
 private:
-    char cargo_[26];
-    u8 count_;
+    struct Memory
+    {
+        char text_[32];
+    };
+    mutable Optional<ExtensionField<Memory>> mem_;
+    u8 length_;
     u8 sparkle_anim_cnt_ = 0;
 };
 

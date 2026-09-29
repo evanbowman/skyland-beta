@@ -29,7 +29,7 @@ namespace skyland
 CargoBay::CargoBay(Island* parent, const RoomCoord& position)
     : Room(parent, name(), position)
 {
-    set_cargo("", 0);
+    set_cargo("");
 }
 
 
@@ -41,19 +41,26 @@ void CargoBay::format_description(StringBuffer<512>& buffer)
 
 
 
-bool CargoBay::set_cargo(const char* cargo, u8 count)
+bool CargoBay::set_cargo(const char* cargo)
 {
-    if (PLATFORM.strlen(cargo) + 1 > sizeof cargo_) {
+    if (cargo[0] == '\0') {
+        mem_.reset();
+        return true;
+    }
+
+    if (PLATFORM.strlen(cargo) + 1 > sizeof(Memory)) {
         return false;
     }
 
-    count_ = 0;
+    length_ = 0;
 
-    auto dest = cargo_;
+    mem_.emplace();
+
+    auto dest = (*mem_)->text_;
     auto src = cargo;
 
     while (*src not_eq '\0') {
-        ++count_;
+        ++length_;
         *dest++ = *src++;
     }
     *dest = '\0';
@@ -69,7 +76,7 @@ void CargoBay::update(Time delta)
 {
     Room::update(delta);
 
-    if (count_) {
+    if (length_) {
         Room::ready();
     }
 }
@@ -158,8 +165,7 @@ void CargoBay::deserialize(lisp::Value* list)
     if (lisp::length(list) >= 4) {
         auto c = lisp::get_list(list, 3);
         if (c->type() == lisp::Value::Type::string) {
-            set_cargo(c->string().value(),
-                      PLATFORM.strlen(c->string().value()));
+            set_cargo(c->string().value());
         }
     }
 
@@ -178,12 +184,12 @@ void CargoBay::finalize()
         ExploSpawner::create(center());
     }
 
-    if (cargo_[0] not_eq '\0') {
+    if (mem_) {
         time_stream::event::CargoBayContents e;
 
-        static_assert(sizeof e.cargo_ == sizeof cargo_);
-        memcpy(e.cargo_, cargo_, sizeof cargo_);
-        e.count_ = count_;
+        static_assert(sizeof e.cargo_ == sizeof(Memory));
+        memcpy(e.cargo_, (*mem_)->text_, sizeof e.cargo_);
+        e.count_ = length_;
         e.x_ = position().x;
         e.y_ = position().y;
         e.near_ = is_player_island(parent());

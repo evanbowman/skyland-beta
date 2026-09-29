@@ -95,7 +95,7 @@ o──────────────────────────�
 
  Store string value in
  cargo-bay on island at
- (x, y). Maximum nineteen
+ (x, y). Maximum 32
  characters.
 
 

@@ -2000,11 +2000,11 @@ ScenePtr RewindScene::update(Time)
             if (island) {
                 if (auto r = island->get_room({e->x_, e->y_})) {
                     if (auto cb = r->cast<CargoBay>()) {
-                        StringBuffer<20> temp;
+                        StringBuffer<32> temp;
                         for (int i = 0; i < e->count_; ++i) {
                             temp.push_back(e->cargo_[i]);
                         }
-                        cb->set_cargo(temp.c_str(), e->count_);
+                        cb->set_cargo(temp.c_str());
                     }
                 }
             }
