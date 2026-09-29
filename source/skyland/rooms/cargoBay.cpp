@@ -176,19 +176,19 @@ void CargoBay::finalize()
 
     if (health() <= 0) {
         ExploSpawner::create(center());
+    }
 
-        if (cargo_[0] not_eq '\0') {
-            time_stream::event::CargoBayContents e;
+    if (cargo_[0] not_eq '\0') {
+        time_stream::event::CargoBayContents e;
 
-            static_assert(sizeof e.cargo_ == sizeof cargo_);
-            memcpy(e.cargo_, cargo_, sizeof cargo_);
-            e.count_ = count_;
-            e.x_ = position().x;
-            e.y_ = position().y;
-            e.near_ = is_player_island(parent());
+        static_assert(sizeof e.cargo_ == sizeof cargo_);
+        memcpy(e.cargo_, cargo_, sizeof cargo_);
+        e.count_ = count_;
+        e.x_ = position().x;
+        e.y_ = position().y;
+        e.near_ = is_player_island(parent());
 
-            APP.push_time_stream(e);
-        }
+        APP.push_time_stream(e);
     }
 }
 
