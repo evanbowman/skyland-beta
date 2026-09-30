@@ -170,7 +170,8 @@ void PlayerIslandDestroyedScene::display()
         PLATFORM_EXTENSION(overlay_circle_effect,
                            circ_effect_radius_,
                            circ_center_x,
-                           circ_center_y);
+                           circ_center_y,
+                           0);
     }
 
 

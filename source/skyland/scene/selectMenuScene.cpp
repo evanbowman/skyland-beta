@@ -20,6 +20,7 @@
 #include "modules/glossaryViewerModule.hpp"
 #include "moveCharacterScene.hpp"
 #include "moveRoomScene.hpp"
+#include "radialTransitionAnimScene.hpp"
 #include "readyScene.hpp"
 #include "salvageRoomScene.hpp"
 #include "script/lisp.hpp"
@@ -426,9 +427,16 @@ void SelectMenuScene::enter(Scene& scene)
                 add_line(SystemString::sel_menu_flag_info,
                          "",
                          {.coloring_ = LineColoring::specific},
-                         [this]() -> ScenePtr {
-                             return lookup_flag_in_glossary_appendix(
-                                 island()->custom_flag_graphics());
+                         [this, cursor]() -> ScenePtr {
+                             auto flag_id = island()->custom_flag_graphics();
+                             return radial_transition_at(
+                                 island(),
+                                 cursor,
+                                 is_far_camera(),
+                                 [flag_id, isle = island()] {
+                                     return lookup_flag_in_glossary_appendix(
+                                         flag_id);
+                                 });
                          });
             }
         }
@@ -467,11 +475,12 @@ void SelectMenuScene::enter(Scene& scene)
                     [this, cursor]() -> ScenePtr {
                         if (auto room = island()->get_room(cursor)) {
                             auto mt = room->metaclass_index();
-                            auto next = make_scene<GlossaryViewerModule>(mt);
-                            next->inspect_ = true;
-                            next->skip_categories();
-                            next->set_next_scene(
-                                [far = is_far_camera()]() -> ScenePtr {
+                            auto next = [mt, far = is_far_camera()] {
+                                auto next =
+                                    make_scene<GlossaryViewerModule>(mt);
+                                next->inspect_ = true;
+                                next->skip_categories();
+                                next->set_next_scene([far]() -> ScenePtr {
                                     PLATFORM.screen().schedule_fade(0);
                                     if (far) {
                                         return make_scene<InspectP2Scene>();
@@ -480,7 +489,10 @@ void SelectMenuScene::enter(Scene& scene)
                                     }
                                     return null_scene();
                                 });
-                            return next;
+                                return next;
+                            };
+                            return radial_transition_at(
+                                island(), cursor, is_far_camera(), next);
                         }
                         return null_scene();
                     });

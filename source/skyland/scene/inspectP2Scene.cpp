@@ -19,6 +19,7 @@
 #include "modules/glossaryViewerModule.hpp"
 #include "moveRoomScene.hpp"
 #include "notificationScene.hpp"
+#include "radialTransitionAnimScene.hpp"
 #include "readyScene.hpp"
 #include "salvageDroneScene.hpp"
 #include "salvageRoomScene.hpp"
@@ -111,6 +112,34 @@ ScenePtr process_exit_condition(App::ExitCondition c);
 
 
 
+Optional<int> get_flag_appendix_page(int custom_flag_graphics)
+{
+    switch ((BuiltinFlagGraphics)custom_flag_graphics) {
+    case BuiltinFlagGraphics::marauder:
+        return 10;
+    case BuiltinFlagGraphics::old_empire:
+        return 8;
+    case BuiltinFlagGraphics::null:
+    case BuiltinFlagGraphics::goblin_horde:
+        return 7;
+    case BuiltinFlagGraphics::second_empire:
+        return 9;
+
+    case BuiltinFlagGraphics::banana:
+    case BuiltinFlagGraphics::merchant:
+        return nullopt();
+
+    case BuiltinFlagGraphics::sylph:
+        return 11;
+    case BuiltinFlagGraphics::colonial:
+        return 6;
+    }
+
+    return nullopt();
+}
+
+
+
 ScenePtr lookup_flag_in_glossary_appendix(int custom_flag_graphics)
 {
     auto open_appendix = [&](int page) -> ScenePtr {
@@ -123,26 +152,10 @@ ScenePtr lookup_flag_in_glossary_appendix(int custom_flag_graphics)
         return ret;
     };
 
-    switch ((BuiltinFlagGraphics)custom_flag_graphics) {
-    case BuiltinFlagGraphics::marauder:
-        return open_appendix(10);
-    case BuiltinFlagGraphics::old_empire:
-        return open_appendix(8);
-    case BuiltinFlagGraphics::null:
-    case BuiltinFlagGraphics::goblin_horde:
-        return open_appendix(7);
-    case BuiltinFlagGraphics::second_empire:
-        return open_appendix(9);
-
-    case BuiltinFlagGraphics::banana:
-    case BuiltinFlagGraphics::merchant:
-        return null_scene();
-
-    case BuiltinFlagGraphics::sylph:
-        return open_appendix(11);
-    case BuiltinFlagGraphics::colonial:
-        return open_appendix(6);
+    if (auto pg = get_flag_appendix_page(custom_flag_graphics)) {
+        return open_appendix(*pg);
     }
+
     return null_scene();
 }
 
@@ -374,6 +387,12 @@ ScenePtr InspectP2Scene::update(Time delta)
             }
         } else if (flag_pos and *flag_pos == cursor_loc) {
             auto gfx = APP.opponent_island()->custom_flag_graphics();
+            if (get_flag_appendix_page(gfx)) {
+                return radial_transition_at(
+                    APP.opponent_island(), cursor_loc, is_far_camera(), [gfx] {
+                        return lookup_flag_in_glossary_appendix(gfx);
+                    });
+            }
             if (auto scn = lookup_flag_in_glossary_appendix(gfx)) {
                 if (not PLATFORM.network_peer().is_connected()) {
                     return scn;

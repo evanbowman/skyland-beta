@@ -339,7 +339,8 @@ void GlossaryViewerModule::enter(Scene& prev)
         }
     }
 
-    if (state_ not_eq State::quickview_appendix) {
+    if (state_ not_eq State::quickview_appendix and
+        state_ not_eq State::quickview) {
         PLATFORM.screen().set_view(View{});
         PLATFORM.set_scroll(Layer::map_0_ext, 0, 0);
     }

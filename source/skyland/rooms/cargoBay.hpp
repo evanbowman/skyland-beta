@@ -11,9 +11,9 @@
 
 #pragma once
 
+#include "memory/extension.hpp"
 #include "skyland/room.hpp"
 #include "skyland/systemString.hpp"
-#include "memory/extension.hpp"
 
 
 

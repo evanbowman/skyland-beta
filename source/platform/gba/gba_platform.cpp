@@ -7221,7 +7221,7 @@ static const Platform::Extensions extensions{
         },
     .force_vsync = [] { VBlankIntrWait(); },
     .overlay_circle_effect =
-        [](int radius, int x, int y) {
+        [](int radius, int x, int y, int color_mode) {
             if (radius == 0 and opt_dma_buffer_) {
                 // Cancel DMA transfer. Important, because we're freeing the buffer
                 // of data used by the hdma when we drop the opt_dma_buffer.
@@ -7244,7 +7244,11 @@ static const Platform::Extensions extensions{
                     REG_SOUNDCNT_H = REG_SOUNDCNT_H | (1 << 8);
                     DMA_TRANSFER(
                         &REG_WIN0H, (*opt_dma_buffer_)->data(), 1, 2, DMA_HDMA);
-                    PLATFORM.fill_overlay(491);
+                    if (color_mode == 0) {
+                        PLATFORM.fill_overlay(491);
+                    } else if (color_mode == 1) {
+                        PLATFORM.fill_overlay(112);
+                    }
                 }
                 vblank_dma_callback = vblank_circle_effect_isr;
                 dma_effect_params[0] = radius;

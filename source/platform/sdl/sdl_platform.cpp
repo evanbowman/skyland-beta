@@ -127,6 +127,7 @@ static SDL_Texture* tile_recolor_buffer = nullptr;
 static int circle_effect_radius = 0;
 static int circle_effect_origin_x = 0;
 static int circle_effect_origin_y = 0;
+static int circle_effect_color_mode = 0;
 
 struct PngPalette
 {
@@ -658,10 +659,11 @@ static const Platform::Extensions extensions{
     .enable_parallax_clouds = [](bool on) { parallax_clouds_enabled = on; },
     .vertical_parallax_enable = [](bool on) { vertical_parallax_enabled = on; },
     .overlay_circle_effect =
-        [](int radius, int x, int y) {
+        [](int radius, int x, int y, int color_mode) {
             circle_effect_radius = radius;
             circle_effect_origin_x = x;
             circle_effect_origin_y = y;
+            circle_effect_color_mode = color_mode;
         },
     .quit = []() { sdl_running = false; },
     .enable_translucence =
@@ -6517,6 +6519,9 @@ void Platform::Screen::display()
         ColorConstant color = custom_color(0xceb282);
         if (circle_effect_radius <= 70) {
             color = custom_color(0xca7f5c);
+        }
+        if (circle_effect_color_mode == 1) {
+            color = ColorConstant::rich_black;
         }
         auto clr = color_to_sdl(color);
         SDL_RenderFillCircle(renderer,

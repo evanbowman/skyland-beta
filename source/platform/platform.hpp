@@ -950,7 +950,7 @@ public:
         void (*enable_parallax_clouds)(bool on);
         void (*vertical_parallax_enable)(bool on);
         void (*force_vsync)();
-        void (*overlay_circle_effect)(int radius, int x, int y);
+        void (*overlay_circle_effect)(int radius, int x, int y, int color_mode);
         void (*iris_wipe_effect)(int radius, int x, int y);
         void (*hibernate)();
         void (*console_write_buffer)(Vector<char>& input);

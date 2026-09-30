@@ -929,7 +929,7 @@ void describe_room(Island* island,
                 room_description->assign(SYSTR(loot)->c_str());
             } else {
                 room_description.emplace(
-                OverlayCoord{0, u8(calc_screen_tiles().y - 1)});
+                    OverlayCoord{0, u8(calc_screen_tiles().y - 1)});
 
                 room_description->assign("(??"); // Split to avoid trigraph
                 room_description->append("?) ??");
