@@ -21,6 +21,7 @@
 
 (opponent-init 7 'neutral)
 
+
 (island-configure
  (opponent)
  '((hull 0 12) (ballista 0 11) (cannon 0 10) (hull 0 13) (masonry 0 14 3) (hull 1 10) (power-core 1 12) (masonry 1 14 3) (missile-silo 2 10) (masonry 2 14 3) (masonry 3 11 3) (masonry 3 12 3) (masonry 3 14 3) (shrubbery 3 9) (hull 3 10) (masonry 3 13 3) (hull 4 11) (canvas 4 12 (64 -536840192 973887664 941621762 1155265 -1318431487 71595039 1149989184 789571075 -281183620 1587057927 -997232256 119726179 1046381783 503348496 1750011868 6 60 16 0)) (windmill 4 14) (hull 4 10) (hull 5 11) (canvas 5 12 (42 -1593804800 -2088697312 469770270 1621229768 1210056818 389277569 254175190 1715241193 13171200 253756484 0 56)) (lemon-tree 5 9) (hull 6 11) (canvas 6 12 (28 -862298880 3184651 1108289 1712167477 -2055305215 2146439166 131 252 30 224)) (masonry 6 14 3) (bronze-hull 6 13) (hull 6 10)))
@@ -83,7 +84,11 @@
         ('hostile
          (dialog-await (tr "<c:Anvil Annie:44>Finally aboard! Let me just... <B:0> <s:3>. . . <s:0>"))
          (dialog-await (tr "<c:Anvil Annie:44>Wait. WAIT. <B:0> Those biosigns... <d:1000> <a:SHAKE>GOBLINS!? <B:0> I KNEW IT! This was a trap all along!"))
-         (attack-player (tr "Anvil Annie has turned hostile!")))
+         (attack-player (tr "Anvil Annie has turned hostile!"))
+         ;; NOTE: clear on-room-destroyed hook, otherwise annie can surrender
+         ;; and board the player's island a second time, effectively cloning
+         ;; her...
+         (setq on-room-destroyed nil))
         ('neutral
          (dialog-await (tr "Anvil Annie joined your crew!"))
          (exit)))

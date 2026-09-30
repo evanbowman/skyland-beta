@@ -725,8 +725,8 @@ ScenePtr RewindScene::update(Time)
                             }
                             for (auto& chr : room->characters()) {
                                 chrs.push_back(std::move(chr));
-                                room->edit_characters().clear();
                             }
+                            room->edit_characters().clear();
                         }
                     }
                 }
