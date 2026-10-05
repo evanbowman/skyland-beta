@@ -1141,13 +1141,16 @@
  * However, compiled functions
    cannot call interpreted
    functions that use await.
- * Built-in functions like
-   map may not call functions
-   that use await:
-   ;; This is an error:
-   (map (lambda (_)
-          (await (op)))
-        '(1 2 3))
+ * Most builtin functions
+   that accept and invoke
+   other functions, like map,
+   filter, apply, are
+   inlined by the runtime and
+   may use await syntax. A
+   handfull of others, like
+   filter, sort, sel-input,
+   may not be passed functions
+   that use await syntax.
 
 
  MEMORY AND DEBUGGING:

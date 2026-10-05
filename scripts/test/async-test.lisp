@@ -53,12 +53,13 @@
 (assert-error-status ((lambda () (await (bad))))
                      "await expects a promise object, got 3")
 
-;; Cannot await from a function called by native code
-(assert-error-status (map (lambda (_) (await (wait* 1))) '(1 2 3))
-                     "await failed: compiled caller <fn:map:2> cannot call functions that await")
-
 (assert-error-status ((compile (lambda (cb) (cb))) (lambda () (await (wait* 1))))
                      "await failed: compiled caller <lambda:1> cannot call functions that await")
+
+;; Cannot await from a function called by native code
+(assert-error-status (filter (lambda (_) (await (wait* 1))) '(1 2 3))
+                     "await failed: compiled caller <fn:filter:2> cannot call functions that await")
+
 
 (defn indirect-call (f)
   (f))

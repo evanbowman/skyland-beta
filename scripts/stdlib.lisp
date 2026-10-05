@@ -118,8 +118,9 @@
 (global 'floor)
 (setq floor int) ; cast to int rounds down
 
-;; Used by the runtime to put something on the callstack when inlining foreach.
+;; Used by the runtime to put something on the callstack when inlining functions.
 (defn --inline-foreach ())
+(defn --inline-map ())
 
 ;; While suboptimal, these functions have the benefit of being small.
 (defn/c min (lat) (car (sort lat <)))

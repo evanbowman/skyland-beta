@@ -1307,11 +1307,19 @@ Value* builtin_filter(int argc)
     Protected result(make_cons(L_NIL, L_NIL));
     auto prev = (Value*)result;
     auto current = (Value*)result;
+    bool err = false;
 
     l_foreach(get_op0(), [&](Value* val) {
+        if (err) {
+            return;
+        }
         push_op(val);
         funcall(fn, 1);
         auto funcall_result = get_op0();
+
+        if (is_error(funcall_result)) {
+            result = funcall_result;
+        }
 
         if (is_boolean_true(funcall_result)) {
             current->cons().set_car(val);
@@ -1322,6 +1330,10 @@ Value* builtin_filter(int argc)
         }
         pop_op(); // funcall result
     });
+
+    if (err) {
+        return result;
+    }
 
     if (current == result) {
         return L_NIL;

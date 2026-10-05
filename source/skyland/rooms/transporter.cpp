@@ -23,6 +23,7 @@
 #include "skyland/skyland.hpp"
 #include "skyland/tile.hpp"
 #include "skyland/timeStreamEvent.hpp"
+#include "skyland/entity/misc/smokeParticle.hpp"
 
 
 
@@ -323,6 +324,10 @@ void make_transport_effect(Character& chr)
 
 
 
+extern SharedVariable energy_glow_color;
+
+
+
 void Transporter::transport_occupant(Optional<RoomCoord> destination)
 {
     if (characters().empty()) {
@@ -340,6 +345,10 @@ void Transporter::transport_occupant(Optional<RoomCoord> destination)
     }
 
     auto chr = characters().begin();
+    auto chr_pos = (*chr)->sprite().get_position();
+    chr_pos.x += 8.0_fixed;
+    chr_pos.y += 8.0_fixed;
+    SmokeParticle::spawn(chr_pos, 4, custom_color(energy_glow_color));
 
     auto island = other_island();
     if (island == nullptr) {

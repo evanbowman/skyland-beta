@@ -1988,6 +1988,8 @@ struct EvalFrame
         foreach_iter_start,
         progn_body,
         progn_discard_result,
+        map_iter_init,
+        map_iter,
     } state_;
 
     struct FuncallApplyParams
@@ -2021,6 +2023,11 @@ struct EvalFrame
 
     using VMResumeParams = ExecutionContext;
 
+    struct MapIterParams
+    {
+        int list_count_;
+    };
+
     union
     {
         FuncallApplyParams funcall_apply_;
@@ -2028,6 +2035,7 @@ struct EvalFrame
         LispFuncallCleanupParams lisp_funcall_cleanup_;
         AwaitResumeParams await_resume_;
         VMResumeParams vm_resume_;
+        MapIterParams map_iter_;
     };
 };
 
@@ -4990,6 +4998,32 @@ eval_iter_start(EvalFrame& frame, EvalStack& eval_stack)
                 eval_stack.push_back({args_list_expr, EvalFrame::start});
                 eval_stack.push_back({fn_expr, EvalFrame::start});
                 return;
+            } else if (id == L_CTX.map_symbol_id_) {
+                // Inline map, so that fn may await. After argument
+                // evaluation, the operand stack holds: [... fn l0 ... ln-1]
+                const int argc = length(code) - 1;
+                if (argc < 2) {
+                    push_op(make_error("insufficent args to map"));
+                    return;
+                }
+                if (argc > 32) {
+                    push_op(make_error("too many lists passed to map"));
+                    return;
+                }
+
+                eval_stack.push_back({.expr_ = L_NIL,
+                                      .state_ = EvalFrame::map_iter_init,
+                                      .map_iter_ = {argc - 1}});
+
+                Buffer<Value*, 32, false> arg_exprs;
+                for (auto a = code->cons().cdr(); a not_eq get_nil();
+                     a = a->cons().cdr()) {
+                    arg_exprs.push_back(a->cons().car());
+                }
+                for (auto e : reversed(arg_exprs)) {
+                    eval_stack.push_back({e, EvalFrame::start});
+                }
+                return;
             }
         }
         push_op(L_CTX.lexical_bindings_);
@@ -5404,6 +5438,56 @@ void inline_foreach_cleanup()
     pop_op(); // list
     pop_op(); // fn
     pop_callstack();
+}
+
+
+static void inline_map_cleanup(int list_count)
+{
+    for (int i = 0; i < list_count + 3; ++i) {
+        pop_op();
+    }
+    pop_callstack();
+}
+
+
+static void inline_map_step(EvalStack& eval_stack, int list_count)
+{
+    auto& stack = *L_CTX.operand_stack_;
+    const u32 lists_begin = stack.size() - 2 - list_count;
+
+    for (int i = 0; i < list_count; ++i) {
+        auto lat = stack[lists_begin + i];
+        if (lat == get_nil()) {
+            auto result = get_op(1); // head
+            inline_map_cleanup(list_count);
+            push_op(result);
+            return;
+        }
+        if (lat->type() not_eq Value::Type::cons) {
+            // Allocate the error while everything is still rooted.
+            auto err = make_error("improper list passed to map");
+            inline_map_cleanup(list_count);
+            push_op(err);
+            return;
+        }
+    }
+
+    auto fn = stack[lists_begin - 1];
+
+    push_op(L_CTX.lexical_bindings_);
+    push_op(fn);
+    for (int i = 0; i < list_count; ++i) {
+        auto lat = stack[lists_begin + i];
+        push_op(lat->cons().car());
+        stack[lists_begin + i] = lat->cons().cdr();
+    }
+
+    eval_stack.push_back({.expr_ = L_NIL,
+                          .state_ = EvalFrame::map_iter,
+                          .map_iter_ = {list_count}});
+    eval_stack.push_back({.expr_ = fn,
+                          .state_ = EvalFrame::funcall_apply,
+                          .funcall_apply_ = {list_count}});
 }
 
 
@@ -6038,6 +6122,66 @@ void eval_loop(EvalStack& eval_stack)
                 push_suspend(eval_stack, op_stack_init);
                 return;
             }
+            break;
+        }
+
+        case EvalFrame::State::map_iter_init: {
+            // Operand stack: [... fn l0 ... ln-1]
+            const int n = frame.map_iter_.list_count_;
+
+            Value* err = nullptr;
+            for (int i = n; i >= 0; --i) { // fn first, then lists in order
+                if (is_error(get_op(i))) {
+                    err = get_op(i);
+                    break;
+                }
+            }
+            if (not err) {
+                auto fn = get_op(n);
+                if (fn->type() not_eq Value::Type::function and
+                    fn->type() not_eq Value::Type::wrapped) {
+                    err = make_error(Error::Code::value_not_callable, fn);
+                }
+            }
+            if (err) {
+                for (int i = 0; i <= n; ++i) {
+                    pop_op();
+                }
+                push_op(err);
+                break;
+            }
+
+            push_callstack(get_var("--inline-map"));
+            push_op(L_NIL); // head
+            push_op(L_NIL); // tail
+            inline_map_step(eval_stack, n);
+            break;
+        }
+
+        case EvalFrame::State::map_iter: {
+            // Operand stack: [... fn l0 ... ln-1 head tail result]
+            const int n = frame.map_iter_.list_count_;
+            auto result = get_op0();
+            if (is_error(result)) {
+                pop_op();
+                inline_map_cleanup(n);
+                push_op(result);
+                break;
+            }
+
+            auto cell = make_cons(result, get_nil()); // result rooted on stack
+            pop_op();                                 // result
+
+            auto& stack = *L_CTX.operand_stack_;
+            const auto top = stack.size() - 1;
+            if (stack[top] == get_nil()) {
+                stack[top - 1] = cell; // head
+            } else {
+                stack[top]->cons().set_cdr(cell);
+            }
+            stack[top] = cell; // tail
+
+            inline_map_step(eval_stack, n);
             break;
         }
         }
