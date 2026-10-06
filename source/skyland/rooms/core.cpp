@@ -23,16 +23,45 @@ namespace skyland
 
 
 
+bool check_faction_restriction(MetaclassIndex mti)
+{
+    auto metatable = room_metatable();
+    auto& meta = metatable.first[mti];
+
+    if ((meta->properties() & RoomProperties::human_only) and
+        APP.faction() not_eq Faction::human) {
+        return false;
+    }
+
+    if ((meta->properties() & RoomProperties::sylph_only) and
+        APP.faction() not_eq Faction::sylph) {
+        return false;
+    }
+
+    if ((meta->properties() & RoomProperties::goblin_only) and
+        APP.faction() not_eq Faction::goblin) {
+        return false;
+    }
+
+    return true;
+}
+
+
+
 Optional<Room::UpgradeList> Core::upgrade_mt_list() const
 {
     UpgradeList upgrades;
-    if (APP.faction() == Faction::goblin) {
-        upgrades.push_back(skyland::metaclass_index("chaos-core"));
-    } else if (APP.faction() == Faction::sylph) {
-        // upgrades.push_back(skyland::metaclass_index("resonator"));
-    } else {
-        upgrades.push_back(skyland::metaclass_index("reactor"));
+    auto cc_mt = skyland::metaclass_index("chaos-core");
+    auto rc_mt = skyland::metaclass_index("reactor");
+
+    if (check_faction_restriction(cc_mt)) {
+        upgrades.push_back(cc_mt);
     }
+
+    if (check_faction_restriction(rc_mt)) {
+        upgrades.push_back(rc_mt);
+    }
+
     upgrades.push_back(skyland::metaclass_index("overdrive-core"));
     return upgrades;
 }
