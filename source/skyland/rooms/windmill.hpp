@@ -94,12 +94,6 @@ public:
     void rewind(Time delta) override;
 
 
-    void plot_walkable_zones(bool matrix[16][16],
-                             Character* for_character) override
-    {
-    }
-
-
     void collect_sprites(Buffer<Sprite, 4, false>& out) const;
 
 

@@ -98,12 +98,6 @@ public:
     }
 
 
-    void plot_walkable_zones(bool matrix[16][16], Character*) override
-    {
-        // one cannot walk through this tile, intentionally do nothing.
-    }
-
-
     struct Node
     {
         struct Pos

@@ -27,12 +27,6 @@ public:
     using Room::Room;
 
 
-    void plot_walkable_zones(bool matrix[16][16],
-                             Character* for_character) override
-    {
-    }
-
-
     void render_scaffolding(TileId buffer[16][16]) override
     {
     }

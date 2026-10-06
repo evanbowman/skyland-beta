@@ -37,13 +37,6 @@ public:
     void render_exterior(App* app, TileId buffer[16][16]) override;
 
 
-    void plot_walkable_zones(bool matrix[16][16],
-                             Character* for_character) override
-    {
-        // one cannot walk through this tile, intentionally do nothing.
-    }
-
-
     void set_target(const RoomCoord& target, bool pinned) override;
 
 

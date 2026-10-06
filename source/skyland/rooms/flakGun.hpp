@@ -89,13 +89,6 @@ public:
     }
 
 
-    void plot_walkable_zones(bool matrix[16][16],
-                             Character* for_character) override
-    {
-        // characters cannot walk through a flak gun.
-    }
-
-
     static Icon icon()
     {
         return 936;

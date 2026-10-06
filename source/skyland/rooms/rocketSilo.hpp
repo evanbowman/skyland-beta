@@ -97,13 +97,6 @@ public:
     {
         return 3256;
     }
-
-
-    void plot_walkable_zones(bool matrix[16][16],
-                             Character* for_character) override
-    {
-        // one cannot walk through this tile, intentionally do nothing.
-    }
 };
 
 
