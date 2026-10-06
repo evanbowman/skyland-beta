@@ -2527,6 +2527,51 @@ BINDING_TABLE({
 
           return L_NIL;
       }}},
+    {"property-configure",
+     {SIG2(nil, integer, cons),
+      [](int argc) {
+          L_EXPECT_OP(1, integer);
+          const u32 prop = L_LOAD_INT(1);
+          auto tab = room_metatable();
+          for (int i = 0; i < tab.second; ++i) {
+              auto& mt = tab.first[i];
+              auto list = mt->properties();
+              list &= ~prop;
+              mt->set_properties(list);
+          }
+          lisp::l_foreach(lisp::get_op0(), [prop](lisp::Value* val) {
+              if (val->type() not_eq lisp::Value::Type::symbol) {
+                  return;
+              }
+              if (auto mt = load_metaclass(val->symbol().name())) {
+                  auto existing_props = (*mt)->properties();
+                  auto new_props = existing_props | prop;
+                  (*mt)->set_properties(new_props);
+              }
+          });
+          if (prop == RoomProperties::locked_by_default) {
+              for (int i = 0; i < tab.second; ++i) {
+                  set_enabled(i, not (tab.first[i]->properties() & prop));
+              }
+              achievements::refresh();
+          }
+          return L_NIL;
+      }}},
+    {"property-match",
+     {SIG1(cons, integer),
+      [](int argc) {
+          L_EXPECT_OP(0, integer);
+          u32 prop = L_LOAD_INT(0);
+          lisp::ListBuilder result;
+          auto tab = room_metatable();
+          for (int i = 0; i < tab.second; ++i) {
+              auto& mt = tab.first[i];
+              if (mt->properties() & prop) {
+                  result.push_back(L_SYM(mt->name()));
+              }
+          }
+          return result.result();
+      }}},
     {"configure-rooms",
      {SIG1(nil, cons),
       [](int argc) {

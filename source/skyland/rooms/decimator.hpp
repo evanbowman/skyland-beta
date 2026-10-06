@@ -126,15 +126,6 @@ public:
     }
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return RoomProperties::manufactory_required |
-               RoomProperties::roof_hidden |
-               RoomProperties::oversize_explosion |
-               RoomProperties::goblin_only | RoomProperties::habitable;
-    }
-
-
     Time reload_time_remaining() const override
     {
         return reload_;

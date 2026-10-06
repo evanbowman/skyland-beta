@@ -53,13 +53,6 @@ public:
     }
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return RoomProperties::roof_hidden | RoomProperties::flag_mount |
-               RoomProperties::multiboot_compatible;
-    }
-
-
     bool description_visible() override
     {
         return true;

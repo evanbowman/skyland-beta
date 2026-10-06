@@ -326,14 +326,21 @@ void push_to_steam(Achievement ach_id)
 
 void init()
 {
-    auto flags = APP.gp_.achievement_flags_;
-
     // Required for an achievement.
     challenge_count =
         lisp::length(APP.invoke_script("/scripts/challenges/levels.lisp"));
 
+    refresh();
+}
+
+
+
+void refresh()
+{
+    auto flags = APP.gp_.achievement_flags_;
+
     for (int i = 0; i < Achievement::count; ++i) {
-        const u64 flag = 1 << i;
+        const u64 flag = 1ull << i;
 
         if (flags.get() & flag) {
             info[i].award_(true);

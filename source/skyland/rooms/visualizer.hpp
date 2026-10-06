@@ -41,13 +41,6 @@ public:
     void update_simple(Time delta);
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return (Decoration::properties() |
-                RoomProperties::disabled_in_tutorials);
-    }
-
-
     static const constexpr char* name()
     {
         return "visualizer";

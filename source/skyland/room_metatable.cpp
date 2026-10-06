@@ -120,8 +120,8 @@ template <typename T> struct InfoImpl : public RoomMeta::Info
     InfoImpl()
         // NOTE: the game will fill in these parameters from configuration
         // later on.
-        : health_(T::default_health()), cost_(T::default_cost()),
-          power_(T::default_power())
+        : properties_(0), health_(T::default_health()),
+          cost_(T::default_cost()), power_(T::default_power())
     {
     }
 
@@ -187,7 +187,12 @@ template <typename T> struct InfoImpl : public RoomMeta::Info
 
     RoomProperties::Bitmask properties() const override
     {
-        return T::properties();
+        return properties_;
+    }
+
+    void set_properties(RoomProperties::Bitmask properties) override
+    {
+        properties_ = properties;
     }
 
     Room::Category category() const override
@@ -226,6 +231,7 @@ template <typename T> struct InfoImpl : public RoomMeta::Info
         power_ = power;
     }
 
+    RoomProperties::Bitmask properties_;
     s16 health_;
     s16 cost_;
     s16 power_;
@@ -264,10 +270,7 @@ public:
         init<0, Rooms...>();
 
         for (MetaclassIndex i = 0; i < sizeof...(Rooms); ++i) {
-            if (not(table_[i]->properties() &
-                    RoomProperties::locked_by_default)) {
-                enabled_rooms_.set(i, true);
-            }
+            enabled_rooms_.set(i, true);
         }
     }
 

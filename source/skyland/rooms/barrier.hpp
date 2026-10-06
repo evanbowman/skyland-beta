@@ -70,14 +70,6 @@ public:
     }
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return RoomProperties::roof_hidden | RoomProperties::flag_mount |
-               RoomProperties::only_constructible_in_sandbox |
-               RoomProperties::fireproof;
-    }
-
-
     static Icon icon()
     {
         return 2088;

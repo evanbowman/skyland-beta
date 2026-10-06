@@ -69,18 +69,6 @@ public:
     }
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return RoomProperties::roof_hidden | RoomProperties::flag_mount |
-               RoomProperties::salvage_disallowed |
-               RoomProperties::locked_by_default |
-               RoomProperties::disabled_in_tutorials |
-               RoomProperties::highly_flammable |
-               RoomProperties::multiboot_compatible |
-               RoomProperties::oversize_explosion;
-    }
-
-
     static ATP atp_value()
     {
         return 2000.0_atp;
@@ -147,13 +135,6 @@ public:
     void finalize() override;
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return Explosive::properties() | RoomProperties::manufactory_required |
-               RoomProperties::locked_by_default;
-    }
-
-
     static const constexpr char* name()
     {
         return "dynamite-ii";
@@ -207,13 +188,6 @@ public:
         } else {
             ignite(2, 100, true);
         }
-    }
-
-
-    static RoomProperties::Bitmask properties()
-    {
-        return (Explosive::properties() & ~RoomProperties::locked_by_default) |
-               RoomProperties::only_constructible_in_sandbox;
     }
 
 

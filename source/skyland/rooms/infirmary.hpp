@@ -59,12 +59,6 @@ public:
     }
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return RoomProperties::habitable | RoomProperties::multiboot_compatible;
-    }
-
-
     static ATP atp_value()
     {
         return 800.0_atp;

@@ -53,13 +53,6 @@ public:
     }
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return (Decoration::properties() & ~RoomProperties::locked_by_default) |
-               RoomProperties::not_constructible | RoomProperties::fireproof;
-    }
-
-
     static const constexpr char* name()
     {
         return "ice";

@@ -93,15 +93,6 @@ public:
     void force_disable_cold_boot_impl() override;
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return RoomProperties::workshop_required | RoomProperties::has_chimney |
-               RoomProperties::habitable | RoomProperties::oversize_explosion |
-               RoomProperties::multiboot_compatible |
-               RoomProperties::not_constructible;
-    }
-
-
     Optional<UpgradeList> upgrade_mt_list() const override;
 };
 

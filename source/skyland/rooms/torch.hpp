@@ -62,16 +62,6 @@ public:
     }
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return (Decoration::properties() &
-                ~(RoomProperties::disallow_chimney |
-                  RoomProperties::locked_by_default)) |
-               RoomProperties::flag_mount | RoomProperties::highly_flammable |
-               RoomProperties::only_constructible_in_sandbox;
-    }
-
-
     static const constexpr char* name()
     {
         return "torch";

@@ -98,16 +98,6 @@ public:
     }
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return RoomProperties::disallow_chimney | RoomProperties::roof_hidden |
-               RoomProperties::only_constructible_in_sandbox |
-               RoomProperties::disabled_in_tutorials |
-               RoomProperties::oversize_explosion |
-               RoomProperties::multiplayer_unsupported;
-    }
-
-
     void plot_walkable_zones(bool matrix[16][16], Character*) override
     {
         // one cannot walk through this tile, intentionally do nothing.

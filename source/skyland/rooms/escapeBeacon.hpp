@@ -95,16 +95,6 @@ public:
     }
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return RoomProperties::roof_hidden |
-               RoomProperties::multiplayer_unsupported |
-               RoomProperties::disabled_in_tutorials |
-               RoomProperties::not_constructible |
-               RoomProperties::skyland_forever_unsupported;
-    }
-
-
     ScenePtr select_impl(const RoomCoord& cursor) override;
 
 

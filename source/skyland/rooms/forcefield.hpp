@@ -117,15 +117,6 @@ public:
     void finalize() override;
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return RoomProperties::workshop_required |
-               RoomProperties::disallow_chimney | RoomProperties::roof_hidden |
-               RoomProperties::accepts_ion_damage | RoomProperties::fireproof |
-               RoomProperties::destroy_quietly |
-               RoomProperties::multiboot_compatible;
-    }
-
 protected:
     TileId last_tile_;
 };
@@ -171,14 +162,6 @@ public:
 
     void render_interior(App* app, TileId buffer[16][16]) override;
     void render_exterior(App* app, TileId buffer[16][16]) override;
-
-
-    static RoomProperties::Bitmask properties()
-    {
-        return (Forcefield::properties() |
-                RoomProperties::manufactory_required) &
-               ~RoomProperties::workshop_required;
-    }
 
 
     static Icon icon()

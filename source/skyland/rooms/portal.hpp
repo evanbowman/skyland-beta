@@ -86,15 +86,6 @@ public:
     }
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return RoomProperties::habitable |
-               RoomProperties::disabled_in_tutorials |
-               RoomProperties::manufactory_required |
-               RoomProperties::multiboot_compatible;
-    }
-
-
     static SystemString ui_name()
     {
         return SystemString::block_portal;

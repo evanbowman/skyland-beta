@@ -107,13 +107,6 @@ public:
     }
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return RoomProperties::habitable |
-               RoomProperties::multiboot_compatible | RoomProperties::fireproof;
-    }
-
-
     Time reload_time_remaining() const override
     {
         return boot_timer_;

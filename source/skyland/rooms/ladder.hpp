@@ -66,14 +66,6 @@ public:
     }
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return RoomProperties::habitable |
-               RoomProperties::disabled_in_tutorials |
-               RoomProperties::multiboot_compatible;
-    }
-
-
     static SystemString ui_name()
     {
         return SystemString::block_ladder;
@@ -132,14 +124,6 @@ public:
     static const constexpr char* name()
     {
         return "ladder+";
-    }
-
-
-    static RoomProperties::Bitmask properties()
-    {
-        return RoomProperties::habitable |
-               RoomProperties::disabled_in_tutorials |
-               RoomProperties::not_constructible;
     }
 };
 

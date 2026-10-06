@@ -39,12 +39,6 @@ public:
     static void format_description(StringBuffer<512>& buffer);
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return Decoration::properties();
-    }
-
-
     static const constexpr char* name()
     {
         return "speaker";

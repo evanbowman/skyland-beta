@@ -71,12 +71,6 @@ public:
     }
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return RoomProperties::habitable | RoomProperties::multiboot_compatible;
-    }
-
-
     static SystemString ui_name()
     {
         return SystemString::block_stairwell;
@@ -136,14 +130,6 @@ public:
 
 
     Optional<UpgradeList> upgrade_mt_list() const override;
-
-
-    static RoomProperties::Bitmask properties()
-    {
-        return RoomProperties::habitable |
-               RoomProperties::disabled_in_tutorials |
-               RoomProperties::not_constructible;
-    }
 };
 
 
@@ -183,14 +169,6 @@ public:
     static const constexpr char* name()
     {
         return "stairwell++";
-    }
-
-
-    static RoomProperties::Bitmask properties()
-    {
-        return RoomProperties::habitable |
-               RoomProperties::disabled_in_tutorials |
-               RoomProperties::not_constructible;
     }
 };
 

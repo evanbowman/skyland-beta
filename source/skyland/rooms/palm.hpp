@@ -45,12 +45,6 @@ public:
     }
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return Decoration::properties() | RoomProperties::highly_flammable;
-    }
-
-
     static const constexpr char* name()
     {
         return "coconut-palm";

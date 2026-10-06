@@ -87,14 +87,6 @@ public:
     {
         return 2824;
     }
-
-
-    static RoomProperties::Bitmask properties()
-    {
-        return RoomProperties::has_chimney |
-               RoomProperties::only_constructible_in_sandbox |
-               RoomProperties::habitable | RoomProperties::destroy_quietly;
-    }
 };
 
 

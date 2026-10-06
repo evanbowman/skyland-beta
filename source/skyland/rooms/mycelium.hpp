@@ -59,16 +59,6 @@ public:
     }
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return RoomProperties::disabled_in_tutorials |
-               RoomProperties::flag_mount | RoomProperties::workshop_required |
-               RoomProperties::locked_by_default | RoomProperties::roof_hidden |
-               RoomProperties::salvage_disallowed |
-               RoomProperties::highly_flammable;
-    }
-
-
     static ATP atp_value()
     {
         return 1.0_atp;

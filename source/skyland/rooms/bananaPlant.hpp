@@ -50,12 +50,6 @@ public:
     }
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return Decoration::properties() | RoomProperties::highly_flammable;
-    }
-
-
     static constexpr const char* name()
     {
         return "banana-plant";

@@ -107,17 +107,6 @@ public:
     }
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return RoomProperties::roof_hidden | RoomProperties::flag_mount |
-               RoomProperties::disabled_in_tutorials |
-               RoomProperties::skyland_forever_unsupported |
-               RoomProperties::adventure_mode_only |
-               RoomProperties::not_constructible |
-               RoomProperties::multiplayer_unsupported;
-    }
-
-
     bool description_visible() override
     {
         return true;

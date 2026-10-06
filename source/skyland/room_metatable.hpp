@@ -64,6 +64,9 @@ struct RoomMeta
         virtual void format_description(StringBuffer<512>& buffer) const = 0;
         virtual Room::WeaponOrientation weapon_orientation() const = 0;
 
+        virtual void set_properties(RoomProperties::Bitmask properties) = 0;
+
+
         virtual void configure(Health health, Coins cost, Power power)
         {
         }
@@ -72,7 +75,7 @@ struct RoomMeta
 
 
     static constexpr int align = 8;
-    static constexpr int max_size = 3 * sizeof(void*);
+    static constexpr int max_size = 4 * sizeof(void*);
 
     alignas(align) u8 buffer_[max_size];
 

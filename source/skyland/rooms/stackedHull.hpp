@@ -67,14 +67,6 @@ public:
     }
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return Hull::properties() | RoomProperties::disabled_in_tutorials |
-               RoomProperties::manufactory_required |
-               RoomProperties::multiboot_compatible;
-    }
-
-
     static Icon icon()
     {
         return 2024;

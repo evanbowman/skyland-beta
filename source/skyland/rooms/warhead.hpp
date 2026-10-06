@@ -95,15 +95,6 @@ public:
     }
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return RoomProperties::disallow_chimney | RoomProperties::roof_hidden |
-               RoomProperties::only_constructible_in_sandbox |
-               RoomProperties::oversize_explosion |
-               RoomProperties::disabled_in_tutorials;
-    }
-
-
     void plot_walkable_zones(bool matrix[16][16],
                              Character* for_character) override
     {

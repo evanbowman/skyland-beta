@@ -70,12 +70,6 @@ public:
     }
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return Decoration::properties() | RoomProperties::not_constructible;
-    }
-
-
     static const constexpr char* name()
     {
         return "market-stall";

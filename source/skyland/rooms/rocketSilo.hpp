@@ -99,17 +99,6 @@ public:
     }
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return RoomProperties::disallow_chimney | RoomProperties::roof_hidden |
-               RoomProperties::manufactory_required |
-               RoomProperties::disabled_in_tutorials |
-               RoomProperties::multiboot_compatible |
-               RoomProperties::oversize_explosion |
-               RoomProperties::multiplayer_unsupported;
-    }
-
-
     void plot_walkable_zones(bool matrix[16][16],
                              Character* for_character) override
     {

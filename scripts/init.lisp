@@ -28,6 +28,7 @@
 ;; Define some common global
 ;; variables.
 (eval-file "/scripts/globals.lisp")
+(eval-file "/scripts/config/properties.lisp")
 
 (if-let ((vn (read-version-file "/save/version.dat")))
     (when (not (equal vn (version)))
@@ -39,7 +40,6 @@
 ;; functions on-dialog-accpted/declined to use await syntax.
 (defn --try-dialog-accept () (if on-dialog-accepted (on-dialog-accepted)))
 (defn --try-dialog-decline () (if on-dialog-declined (on-dialog-declined)))
-
 
 (engine-set "enabled_factions_bitfield"
             (bit-or faction-enable-human-mask

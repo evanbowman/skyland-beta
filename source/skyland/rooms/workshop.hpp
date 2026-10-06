@@ -68,12 +68,6 @@ public:
     }
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return RoomProperties::habitable | RoomProperties::multiboot_compatible;
-    }
-
-
     int debris_tile() override
     {
         return 2;

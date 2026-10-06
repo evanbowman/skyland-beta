@@ -56,14 +56,6 @@ public:
     }
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return RoomProperties::roof_hidden | RoomProperties::flag_mount |
-               RoomProperties::only_constructible_in_sandbox |
-               RoomProperties::not_constructible;
-    }
-
-
     bool description_visible() override
     {
         return true;

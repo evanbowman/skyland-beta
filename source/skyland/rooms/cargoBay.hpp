@@ -94,12 +94,6 @@ public:
     }
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return RoomProperties::habitable | RoomProperties::not_constructible;
-    }
-
-
     virtual lisp::Value* serialize() override;
     virtual void deserialize(lisp::Value*) override;
 

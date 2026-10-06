@@ -53,16 +53,6 @@ public:
     }
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return RoomProperties::roof_hidden | RoomProperties::flag_mount |
-               RoomProperties::disabled_in_tutorials |
-               RoomProperties::disallow_chimney |
-               RoomProperties::multiplayer_unsupported |
-               RoomProperties::locked_by_default;
-    }
-
-
     ScenePtr select_impl(const RoomCoord& cursor) override;
 
 

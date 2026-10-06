@@ -46,15 +46,6 @@ public:
     }
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return RoomProperties::not_constructible | RoomProperties::habitable |
-               RoomProperties::disabled_in_tutorials |
-               RoomProperties::singleton;
-        ;
-    }
-
-
     bool description_visible() override
     {
         return true;

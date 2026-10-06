@@ -84,14 +84,6 @@ public:
 
 
     Optional<UpgradeList> upgrade_mt_list() const override;
-
-
-    static RoomProperties::Bitmask properties()
-    {
-        return RoomProperties::workshop_required | RoomProperties::has_chimney |
-               RoomProperties::habitable | RoomProperties::destroy_quietly |
-               RoomProperties::multiboot_compatible;
-    }
 };
 
 
@@ -126,14 +118,6 @@ public:
     static const constexpr char* name()
     {
         return "backup-core";
-    }
-
-
-    static RoomProperties::Bitmask properties()
-    {
-        return RoomProperties::workshop_required | RoomProperties::has_chimney |
-               RoomProperties::habitable |
-               RoomProperties::disabled_in_tutorials;
     }
 
 

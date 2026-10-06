@@ -74,6 +74,8 @@ enum Achievement : u8 {
 void init();
 
 
+void refresh();
+
 
 // If the library matches a new achievement, return the achievement.
 Achievement update();

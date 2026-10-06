@@ -1156,6 +1156,40 @@ o──────────────────────────�
 
 o────────────────────────────o
 
+ (property-configure
+    property
+    type-list)
+
+ Configure a property for a
+ list of blocks. The property
+ will be cleared for all
+ blocks not appearing in the
+ list of types.
+
+ e.g.:
+
+ (property-configure
+  prop-highly-flammable
+  '(mycelium sunflower shrubbery))
+
+;; Hint: to remove just one
+;; block from a property list:
+ (property-configure
+  prop-highly-flammable
+  (remove (property-match prop-highly-flammable)
+          'shrubbery))
+
+
+o────────────────────────────o
+
+ (property-match property)
+
+ Return a list of rooms with
+ a given property set.
+
+
+o────────────────────────────o
+
  (push-menu menu-name-str params)
 
  Allows you to open up certain

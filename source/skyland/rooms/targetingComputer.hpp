@@ -46,14 +46,6 @@ public:
     }
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return RoomProperties::roof_hidden | RoomProperties::flag_mount |
-               RoomProperties::disabled_in_tutorials |
-               RoomProperties::accepts_ion_damage | RoomProperties::singleton;
-    }
-
-
     bool description_visible() override
     {
         return true;

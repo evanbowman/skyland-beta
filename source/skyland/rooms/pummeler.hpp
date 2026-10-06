@@ -44,13 +44,6 @@ public:
     }
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return RoomProperties::disallow_chimney |
-               RoomProperties::oversize_explosion | RoomProperties::roof_hidden;
-    }
-
-
     bool description_visible() override
     {
         return true;

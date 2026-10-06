@@ -216,13 +216,6 @@ public:
     }
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return RoomProperties::roof_hidden | RoomProperties::flag_mount |
-               RoomProperties::sylph_only | RoomProperties::accepts_ion_damage;
-    }
-
-
     bool description_visible() override
     {
         return true;

@@ -98,12 +98,6 @@ public:
     }
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return RoomProperties::none;
-    }
-
-
     void update(Time delta) override;
 
 

@@ -44,13 +44,6 @@ public:
     }
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return (Decoration::properties() & ~RoomProperties::locked_by_default) |
-               RoomProperties::highly_flammable;
-    }
-
-
     static const constexpr char* name()
     {
         return "sunflower";

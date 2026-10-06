@@ -53,16 +53,6 @@ public:
     }
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return RoomProperties::roof_hidden | RoomProperties::flag_mount |
-               RoomProperties::multiplayer_unsupported |
-               RoomProperties::sylph_only |
-               RoomProperties::manufactory_required |
-               RoomProperties::accepts_ion_damage;
-    }
-
-
     void display_on_hover(Platform::Screen& screen,
                           const RoomCoord& cursor) override;
 

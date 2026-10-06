@@ -39,12 +39,6 @@ public:
     void update(Time delta) override;
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return Decoration::properties();
-    }
-
-
     static const constexpr char* name()
     {
         return "synth";

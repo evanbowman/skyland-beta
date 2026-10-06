@@ -60,16 +60,6 @@ public:
     }
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return RoomProperties::roof_hidden | RoomProperties::flag_mount |
-               RoomProperties::workshop_required |
-               RoomProperties::locked_by_default |
-               RoomProperties::generates_heat |
-               RoomProperties::disabled_in_tutorials;
-    }
-
-
     bool description_visible() override
     {
         return true;

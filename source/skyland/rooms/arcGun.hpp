@@ -104,16 +104,6 @@ public:
     {
         return 1368;
     }
-
-
-    static RoomProperties::Bitmask properties()
-    {
-        return RoomProperties::manufactory_required |
-               RoomProperties::roof_hidden |
-               RoomProperties::oversize_explosion |
-               RoomProperties::multiboot_compatible |
-               RoomProperties::multiboot_compatible;
-    }
 };
 
 

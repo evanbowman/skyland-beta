@@ -87,13 +87,6 @@ public:
     bool create_replicant() override;
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return RoomProperties::workshop_required | RoomProperties::habitable |
-               RoomProperties::multiboot_compatible;
-    }
-
-
 private:
     static const auto recharge_time = seconds(5);
 };

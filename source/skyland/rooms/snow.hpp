@@ -49,14 +49,6 @@ public:
     }
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return RoomProperties::roof_hidden | RoomProperties::fragile |
-               RoomProperties::multiplayer_unsupported |
-               RoomProperties::not_constructible;
-    }
-
-
     static const constexpr char* name()
     {
         return "snow";

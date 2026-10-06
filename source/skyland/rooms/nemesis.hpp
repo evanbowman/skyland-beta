@@ -51,16 +51,6 @@ public:
     static void format_description(StringBuffer<512>& buffer);
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return Weapon::properties() | RoomProperties::roof_hidden |
-               RoomProperties::manufactory_required |
-               RoomProperties::oversize_explosion |
-               RoomProperties::multiboot_compatible |
-               RoomProperties::goblin_only;
-    }
-
-
     bool description_visible() override
     {
         return true;

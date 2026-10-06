@@ -58,16 +58,6 @@ public:
     }
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return RoomProperties::disallow_chimney |
-               RoomProperties::disabled_in_tutorials |
-               RoomProperties::not_constructible | RoomProperties::roof_hidden |
-               RoomProperties::fluid | RoomProperties::fragile |
-               RoomProperties::destroy_quietly | RoomProperties::fireproof;
-    }
-
-
     static ATP atp_value()
     {
         return 0.1_atp;
@@ -163,12 +153,6 @@ public:
     static const constexpr char* name()
     {
         return "water-source";
-    }
-
-
-    static RoomProperties::Bitmask properties()
-    {
-        return Water::properties() & ~RoomProperties::not_constructible;
     }
 };
 

@@ -62,15 +62,6 @@ public:
     }
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return RoomProperties::disallow_chimney | RoomProperties::roof_hidden |
-               RoomProperties::multiboot_compatible |
-               RoomProperties::oversize_explosion |
-               RoomProperties::only_constructible_in_sandbox;
-    }
-
-
     bool description_visible() override
     {
         return true;

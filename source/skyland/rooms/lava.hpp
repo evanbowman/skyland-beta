@@ -58,23 +58,6 @@ public:
     }
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return RoomProperties::disallow_chimney |
-               RoomProperties::disabled_in_tutorials |
-               RoomProperties::not_constructible | RoomProperties::roof_hidden |
-               RoomProperties::fluid | RoomProperties::fragile |
-               RoomProperties::multiplayer_unsupported |
-               RoomProperties::destroy_quietly |
-               RoomProperties::generates_heat |
-               RoomProperties::only_constructible_in_sandbox |
-               RoomProperties::manufactory_required |
-               // lol, fireproof property because the lava just looks strange if
-               // it catches on fire.
-               RoomProperties::fireproof;
-    }
-
-
     static ATP atp_value()
     {
         return 1.0_atp;
@@ -173,13 +156,6 @@ public:
     static SystemString ui_name()
     {
         return SystemString::block_lava_source;
-    }
-
-
-    static RoomProperties::Bitmask properties()
-    {
-        return (Lava::properties() & ~RoomProperties::not_constructible) |
-               RoomProperties::only_constructible_in_sandbox;
     }
 };
 

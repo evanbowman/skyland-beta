@@ -50,14 +50,6 @@ public:
     }
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return RoomProperties::disallow_chimney | RoomProperties::roof_hidden |
-               RoomProperties::only_constructible_in_sandbox |
-               RoomProperties::fragile;
-    }
-
-
     static Vec2<u8> size()
     {
         return {1, 1};

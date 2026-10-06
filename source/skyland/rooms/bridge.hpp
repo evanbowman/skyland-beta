@@ -130,14 +130,6 @@ public:
     }
 
 
-    static RoomProperties::Bitmask properties()
-    {
-        return (Decoration::properties() & ~RoomProperties::roof_hidden) |
-               RoomProperties::disabled_in_tutorials |
-               RoomProperties::habitable;
-    }
-
-
     static const constexpr char* name()
     {
         return "bridge";

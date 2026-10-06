@@ -217,6 +217,142 @@
                          "character_1"
                          "welcomes_9000"))
 
+(assert-eq (property-match prop-workshop-required)
+           '(forcefield radiator mycelium ion-cannon flak-gun annihilator
+             manufactory power-core solar-cell backup-core overdrive-core
+             radar transporter replicator drone-bay))
+
+(assert-eq (property-match prop-not-constructible)
+           '(overdrive-core balloon ladder+ stairwell+ stairwell++ cargo-bay
+             crane water ice escape-beacon code basalt snow market-stall))
+
+(assert-eq (property-match prop-plugin)
+           '())
+
+(assert-eq (property-match prop-manufactory-required)
+           '(forcefield* energized-hull ion-fizzler cloak mirror-hull
+             stacked-hull arc-gun nemesis fire-charge sylph-cannon decimator
+             spark-cannon rocket-bomb reactor chaos-core portal dynamite-ii
+             deflector))
+
+(assert-eq (property-match prop-tutorial-disabled)
+           '(bronze-hull radiator cloak mirror-hull stacked-hull mycelium
+             annihilator spark-cannon rocket-bomb warhead backup-core windmill
+             ladder ladder+ stairwell+ stairwell++ bridge portal crane
+             weather-engine water water-source dynamite dynamite-ii
+             targeting-computer escape-beacon phase-shifter visualizer))
+
+(assert-eq (property-match prop-locked-by-default)
+           '(bronze-hull radiator mirror-hull mycelium annihilator spark-cannon
+             windmill bridge weather-engine dynamite dynamite-ii bell
+             tuning-crystal speaker synth visualizer statue lady-liberty
+             fountain coconut-palm lemon-tree banana-plant masonry market-stall))
+
+(assert-eq (property-match prop-roof-hidden)
+           '(hull bronze-hull forcefield forcefield* energized-hull ion-fizzler
+             radiator cloak mirror-hull stacked-hull mycelium barrier cannon
+             ion-cannon flak-gun arc-gun nemesis fire-charge sylph-cannon
+             decimator annihilator spark-cannon incinerator beam-gun particle-lance
+             ballista missile-silo rocket-bomb splitter warhead solar-cell
+             windmill balloon crane weather-engine water water-source ice
+             dynamite dynamite-ii radar targeting-computer escape-beacon
+             drone-bay deflector amplifier phase-shifter bell tuning-crystal
+             speaker synth visualizer statue lady-liberty fountain torch
+             coconut-palm lemon-tree sunflower shrubbery banana-plant masonry
+             code basalt snow market-stall canvas))
+
+(assert-eq (property-match prop-has-chimney)
+           '(power-core reactor backup-core war-engine chaos-core overdrive-core))
+
+(assert-eq (property-match prop-chimney-hidden)
+           '(forcefield forcefield* ion-fizzler cloak cannon fire-charge sylph-cannon
+             spark-cannon incinerator beam-gun particle-lance ballista missile-silo
+             rocket-bomb splitter warhead solar-cell windmill balloon bridge
+             weather-engine water water-source ice radar bell tuning-crystal
+             speaker synth visualizer statue lady-liberty fountain coconut-palm
+             lemon-tree sunflower shrubbery banana-plant code basalt market-stall
+             canvas))
+
+(assert-eq (property-match prop-takes-ion-damage)
+           '(forcefield forcefield* energized-hull ion-fizzler cloak reactor
+             targeting-computer deflector amplifier phase-shifter))
+
+(assert-eq (property-match prop-cancels-ion-damage)
+           '(ion-fizzler))
+
+(assert-eq (property-match prop-flag-mount)
+           '(hull bronze-hull radiator mirror-hull stacked-hull mycelium barrier
+             crane weather-engine dynamite dynamite-ii targeting-computer
+             deflector amplifier torch))
+
+(assert-eq (property-match prop-fragile)
+           '(windmill balloon bridge water water-source ice bell tuning-crystal
+             speaker synth visualizer statue lady-liberty fountain torch
+             coconut-palm lemon-tree sunflower shrubbery banana-plant masonry
+             code basalt snow market-stall canvas))
+
+(assert-eq (property-match prop-adventure-only)
+           '(crane))
+
+(assert-eq (property-match prop-sandbox-only)
+           '(barrier incinerator beam-gun particle-lance ballista splitter
+             warhead war-engine plundered-room torch canvas))
+
+(assert-eq (property-match prop-fluid)
+           '(water water-source))
+
+(assert-eq (property-match prop-destroy-special)
+           '(forcefield forcefield* power-core reactor war-engine water water-source))
+
+(assert-eq (property-match prop-salvage-disabled)
+           '(mycelium dynamite dynamite-ii))
+
+(assert-eq (property-match prop-multiplayer-disabled)
+           '(fire-charge spark-cannon incinerator rocket-bomb splitter windmill balloon
+             bridge crane weather-engine ice escape-beacon deflector phase-shifter bell
+             tuning-crystal speaker synth visualizer statue lady-liberty fountain torch
+             coconut-palm lemon-tree sunflower shrubbery banana-plant code basalt snow
+             market-stall))
+
+(assert-eq (property-match prop-sk-forever-disabled)
+           '(crane escape-beacon))
+
+(assert-eq (property-match prop-fireproof)
+           '(forcefield forcefield* barrier bulkhead-door water water-source ice
+             masonry basalt))
+
+(assert-eq (property-match prop-highly-flammable)
+           '(mycelium dynamite dynamite-ii torch coconut-palm lemon-tree sunflower
+             shrubbery banana-plant))
+
+(assert-eq (property-match prop-habitable)
+           '(ion-fizzler decimator workshop manufactory power-core reactor
+             backup-core war-engine chaos-core overdrive-core balloon stairwell
+             ladder ladder+ stairwell+ stairwell++ bridge portal bulkhead-door
+             infirmary cargo-bay transporter replicator plundered-room))
+
+(assert-eq (property-match prop-generates-heat)
+            '(radiator))
+
+(assert-eq (property-match prop-big-explosion)
+           '(cannon ion-cannon flak-gun arc-gun nemesis fire-charge sylph-cannon
+             decimator annihilator spark-cannon incinerator beam-gun
+             particle-lance ballista missile-silo rocket-bomb splitter warhead
+             overdrive-core dynamite dynamite-ii))
+
+(assert-eq (property-match prop-singleton)
+            '(windmill targeting-computer))
+
+(assert-eq (property-match prop-human-only)
+           '(reactor solar-cell drone-bay))
+
+(assert-eq (property-match prop-sylph-only)
+           '(cloak sylph-cannon deflector amplifier phase-shifter))
+
+(assert-eq (property-match prop-goblin-only)
+            '(nemesis decimator chaos-core))
+
+
 (end-test)
 
 
