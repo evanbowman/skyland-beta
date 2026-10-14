@@ -30,6 +30,13 @@ namespace skyland
 
 
 
+void clear_room_description(Optional<Text>& room_description);
+void describe_room(Island* island,
+                   const RoomCoord& cursor_loc,
+                   Optional<Text>& room_description);
+
+
+
 ModifyCharacterScene::ModifyCharacterScene(CharacterId chr_id, bool near)
     : matrix_(allocate_small<bool[16][16]>({"chr-movement-slots"})),
       chr_id_(chr_id), near_(near)
@@ -81,7 +88,7 @@ void flood_fill_through_portals(Island& isle,
 void ModifyCharacterScene::exit(Scene& next)
 {
     WorldScene::exit(next);
-
+    clear_room_description(room_description_);
 
     Island* island = nullptr;
 
@@ -242,6 +249,8 @@ ScenePtr ModifyCharacterScene::update(Time delta)
     if (test_button(Button::left)) {
         if (cursor_loc->x > 0) {
             --cursor_loc->x;
+            describe_room_timer_ = milliseconds(300);
+            clear_room_description(room_description_);
             PLATFORM.speaker().play_sound("cursor_tick", 0);
         }
     }
@@ -249,6 +258,8 @@ ScenePtr ModifyCharacterScene::update(Time delta)
     if (test_button(Button::right)) {
         if (cursor_loc->x < island->terrain().size()) {
             ++cursor_loc->x;
+            describe_room_timer_ = milliseconds(300);
+            clear_room_description(room_description_);
             PLATFORM.speaker().play_sound("cursor_tick", 0);
         }
     }
@@ -256,6 +267,8 @@ ScenePtr ModifyCharacterScene::update(Time delta)
     if (test_button(Button::up)) {
         if (cursor_loc->y > construction_zone_min_y) {
             --cursor_loc->y;
+            describe_room_timer_ = milliseconds(300);
+            clear_room_description(room_description_);
             PLATFORM.speaker().play_sound("cursor_tick", 0);
         }
     }
@@ -263,6 +276,8 @@ ScenePtr ModifyCharacterScene::update(Time delta)
     if (test_button(Button::down)) {
         if (cursor_loc->y < 14) {
             ++cursor_loc->y;
+            describe_room_timer_ = milliseconds(300);
+            clear_room_description(room_description_);
             PLATFORM.speaker().play_sound("cursor_tick", 0);
         }
     }
@@ -346,6 +361,15 @@ ScenePtr ModifyCharacterScene::update(Time delta)
         }
     }
 
+    if (describe_room_timer_ > 0) {
+        describe_room_timer_ -= delta;
+        if (describe_room_timer_ <= 0) {
+            describe_room_timer_ = milliseconds(500);
+
+            describe_room(island, *cursor_loc, room_description_);
+        }
+    }
+
     return null_scene();
 }
 
@@ -379,21 +403,15 @@ void ModifyCharacterScene::display()
 
     WorldScene::display();
 
-    // Sprite sprite;
-    // sprite.set_texture_index(19);
-    // sprite.set_size(Sprite::Size::w16_h32);
 
-    // for (int x = 0; x < 16; ++x) {
-    //     for (int y = 0; y < 16; ++y) {
-    //         if ((*matrix_)[x][y]) {
-    //             auto origin = APP.player_island().origin();
-    //             origin.x += x * 16;
-    //             origin.y += (y - 1) * 16;
-    //             sprite.set_position(origin);
-    //             PLATFORM.screen().draw(sprite);
-    //         }
-    //     }
-    // }
+    cursor.set_tidx_16x16(63, 0);
+    auto found = Character::find_by_id(chr_id_);
+    if (found.first and found.second) {
+        auto pos = found.first->sprite().get_position();
+        pos.y -= 14.0_fixed;
+        cursor.set_position(pos);
+        PLATFORM.screen().draw(cursor);
+    }
 }
 
 

@@ -44,8 +44,10 @@ public:
 
 
 private:
+    Optional<Text> room_description_;
     DynamicMemory<bool[16][16], SubBufferMemory> matrix_;
     Time cursor_anim_timer_ = 0;
+    Time describe_room_timer_ = 0;
     BlockChecksum island_checksums_;
     CharacterId chr_id_;
     u8 cursor_anim_frame_ = 0;
