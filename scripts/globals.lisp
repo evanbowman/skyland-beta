@@ -73,6 +73,8 @@
 (defconstant wg-id-visited 2)
 (defconstant wg-id-neutral 2)
 (defconstant wg-id-shop 7)
+(defconstant wg-id-hostile/uncharted 8)
+(defconstant wg-id-neutral/uncharted 9)
 
 (defconstant default-early-gc-thresh 1000)
 

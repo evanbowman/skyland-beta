@@ -223,7 +223,6 @@ const char* LoadLevelScene::target_script_name(WorldGraph::Node::Type t)
 {
     switch (t) {
     case WorldGraph::Node::Type::neutral:
-    case WorldGraph::Node::Type::neutral_hidden:
     default: {
         return "/scripts/event/neutral.lisp";
     }
@@ -237,6 +236,7 @@ const char* LoadLevelScene::target_script_name(WorldGraph::Node::Type t)
     case WorldGraph::Node::Type::quest_marker:
         return "/scripts/event/quest_marker.lisp";
 
+    case WorldGraph::Node::Type::neutral_hidden:
     case WorldGraph::Node::Type::hostile_hidden:
         return "/scripts/event/uncharted.lisp";
 
