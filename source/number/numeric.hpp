@@ -12,7 +12,15 @@
 #pragma once
 
 #include "int.h"
-#include <ciso646> // For MSVC. What an inept excuse for a compiler.
+#if defined(__has_include)
+#  if __has_include(<version>)
+#    include <version>
+#  else
+#    include <ciso646>
+#  endif
+#else
+#  include <ciso646>
+#endif
 
 #include "fixnum.hpp"
 

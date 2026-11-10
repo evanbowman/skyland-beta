@@ -8,7 +8,15 @@
 
 #pragma once
 #include <array>
-#include <ciso646>
+#if defined(__has_include)
+#  if __has_include(<version>)
+#    include <version>
+#  else
+#    include <ciso646>
+#  endif
+#else
+#  include <ciso646>
+#endif
 #include <stdint.h>
 
 
