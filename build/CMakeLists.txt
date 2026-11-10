@@ -1298,7 +1298,6 @@ target_precompile_headers(${EXECUTABLE_NAME}
   PRIVATE
   <algorithm>
   <array>
-  <ciso646>
   <initializer_list>
   <iterator>
   <limits>
