@@ -5,8 +5,6 @@
 ;;;
 
 
-(breakpoint)
-
 (case (wg-current-type)
   (wg-id-neutral/uncharted
    (eval-file "scripts/event/neutral.lisp"))
