@@ -42,6 +42,21 @@ SHARED_VARIABLE(enemy_cargo_min_value);
 
 
 
+static const int adventure_max_level = 16;
+
+static const int escalation_start_level = 20;
+static_assert(escalation_start_level > adventure_max_level);
+
+static const int level_threshold_dual_reactor = escalation_start_level;
+static const int level_threshold_war_engine = 28;
+static const int level_threshold_amplifier = 24;
+static const int level_threshold_second_amplifier = 34;
+
+static const int amplifier_radius = 1;
+static const int deflector_radius = 3;
+
+
+
 void prep_level();
 
 
@@ -212,6 +227,8 @@ void ProcgenEnemyAI::generate_level()
     }
     generate_weapons(weapon_limit);
 
+    generate_support_rooms();
+
     if (core_count_ >= 2) {
         generate_forcefields();
         generate_missile_defenses();
@@ -307,6 +324,13 @@ void ProcgenEnemyAI::set_levelgen_count(int count)
 
 
 
+int ProcgenEnemyAI::escalation() const
+{
+    return std::max(0, levelgen_enemy_count_ - escalation_start_level + 1);
+}
+
+
+
 static const int level_threshold_two_powercores = 4;
 
 
@@ -315,6 +339,7 @@ void ProcgenEnemyAI::generate_power_sources()
 {
     core_count_ = 0;
     int reactor_count = 0;
+    bool war_engine = false;
 
     if (levelgen_enemy_count_ < level_threshold_two_powercores) {
         core_count_ = 1;
@@ -322,34 +347,66 @@ void ProcgenEnemyAI::generate_power_sources()
         core_count_ = 2;
     } else if (levelgen_enemy_count_ < 14) {
         core_count_ = 3;
-    } else {
+    } else if (levelgen_enemy_count_ < level_threshold_dual_reactor) {
         core_count_ = 3;
         reactor_count = 1;
+    } else if (levelgen_enemy_count_ < level_threshold_war_engine) {
+        // 1100 power from four rooms (previously 850).
+        core_count_ = 2;
+        reactor_count = 2;
+    } else {
+        // 1550 power from three rooms. The war-engine carries most of the
+        // island's power in a single 400hp block.
+        core_count_ = 1;
+        reactor_count = 1;
+        war_engine = true;
+    }
+
+    const int x_start = levelgen_size_.x < 4 ? 1 : levelgen_size_.x / 2 - 1;
+
+    if (war_engine) {
+        // Place it first: at 3x4 it's the hardest room to fit.
+        if (not place_room_random_loc(x_start, "war-engine")) {
+            // Fall back to the dual-reactor layout.
+            war_engine = false;
+            ++core_count_;
+            ++reactor_count;
+        }
     }
 
     for (int i = 0; i < core_count_; ++i) {
-        place_room_random_loc(
-            levelgen_size_.x < 4 ? 1 : levelgen_size_.x / 2 - 1, "power-core");
+        place_room_random_loc(x_start, "power-core");
     }
 
     for (int i = 0; i < reactor_count; ++i) {
         const char* core = "reactor";
         if (rng::chance(chaos_core_placement_chance, rng_source_)) {
-            bool player_has_chaos_core = false;
+            bool chaos_core_present = false;
             for (auto& room : APP.player_island().rooms()) {
                 if (room->cast<ChaosCore>()) {
-                    player_has_chaos_core = true;
+                    chaos_core_present = true;
                 }
             }
-            if (not player_has_chaos_core) {
+            // Late levels place two reactors, don't let both be chaos cores.
+            for (auto& room : APP.opponent_island()->rooms()) {
+                if (room->cast<ChaosCore>()) {
+                    chaos_core_present = true;
+                }
+            }
+            if (not chaos_core_present) {
                 core = "chaos-core";
             }
         }
-        place_room_random_loc(
-            levelgen_size_.x < 4 ? 1 : levelgen_size_.x / 2 - 1, core);
+        place_room_random_loc(x_start, core);
     }
 
     core_count_ += reactor_count;
+
+    if (war_engine) {
+        // Keeps core_count_ at 4, so weapon_limit, character count, and
+        // transporter generation match the level 14-19 configuration.
+        core_count_ += 2;
+    }
 }
 
 
@@ -541,6 +598,47 @@ void ProcgenEnemyAI::generate_weapons(int max)
                      50.f * drone_count);
     }
 
+    const int esc = escalation();
+    int antique_limit = 0;
+
+    auto is_antique = [](const char* name) {
+        return str_eq(name, "beam-gun") or str_eq(name, "ballista") or
+               str_eq(name, "incinerator") or
+               str_eq(name, "particle-lance") or str_eq(name, "decimator");
+    };
+
+    // Not in co-op: none of these have been tested over the link cable, and the
+    // incinerator spreads fire (see fire_charge_substitution).
+    if (esc > 0 and not co_op) {
+        // Antique weapons. Each takes the slot of a regular weapon, and most fill
+        // several tiles with one room, so difficulty goes up without raising
+        // the opponent's room count.
+        antique_limit = std::min(1 + esc / 8, 4);
+
+        // Against the regular pool's total weight (roughly 800-900), this
+        // ramps from about 1% at level 20 to about 18% by level 39.
+        const Float w = std::min(esc * 10.f, 200.f);
+
+        Float beam_w = w * 0.35f;
+        Float ballista_w = w * 0.25f;
+        if (player_avg_forward_hull_thickness >= 2) {
+            // The beam damages every block it touches, and the ballista arcs
+            // over forward hull: both are strong against a thick front.
+            beam_w *= 1.5f;
+            ballista_w *= 1.5f;
+        }
+        enq_prob("beam-gun", beam_w);
+        enq_prob("ballista", ballista_w);
+        enq_prob("incinerator", w * 0.25f);
+        // Destroys itself after one shot.
+        enq_prob("particle-lance", w * 0.15f);
+
+        if (levelgen_enemy_count_ >= level_threshold_war_engine) {
+            // 160 power. Only worth it once the war-engine is available.
+            enq_prob("decimator", w * 0.2f);
+        }
+    }
+
     Float total_prob = 0.f;
     for (auto& p : c->pairs_) {
         total_prob += p.probability_;
@@ -594,23 +692,34 @@ void ProcgenEnemyAI::generate_weapons(int max)
     auto place_cannon = [&](RoomMeta* mt) {
         Buffer<RoomCoord, 16> slots;
 
+        // All regular weapons are one tile tall, so the multi-row handling
+        // below only matters for the 2x2 antiques. For height 1 it does
+        // exactly what the original code did.
+        const auto sz = (*mt)->constructed_size();
 
         for (u8 y = construction_zone_min_y; y < 14; ++y) {
             for (u8 x = 0; x < 15; ++x) {
 
-                auto room = APP.opponent_island()->get_room(
-                    {u8(x + (*mt)->constructed_size().x), y});
+                Room* room = nullptr;
+                if (x + sz.x < 16) {
+                    room = APP.opponent_island()->get_room({u8(x + sz.x), y});
+                }
 
                 bool invalid = false;
-                for (int xx = x; xx < x + (*mt)->constructed_size().x; ++xx) {
-                    if (c->invalidated_cannon_cells_[xx][y]) {
-                        invalid = true;
+                for (int xx = x; xx < std::min(16, x + sz.x); ++xx) {
+                    for (int yy = y; yy < std::min(16, y + sz.y); ++yy) {
+                        if (c->invalidated_cannon_cells_[xx][yy]) {
+                            invalid = true;
+                        }
                     }
                 }
 
-                if ((room or
-                     APP.opponent_island()->get_room({x, u8(y + 1)})) and
-                    has_space({x, y}, (*mt)->constructed_size()) and
+                Room* below = nullptr;
+                if (y + sz.y < 16) {
+                    below = APP.opponent_island()->get_room({x, u8(y + sz.y)});
+                }
+
+                if ((room or below) and has_space({x, y}, sz) and
                     not invalid) {
 
                     slots.push_back({x, y});
@@ -635,16 +744,36 @@ void ProcgenEnemyAI::generate_weapons(int max)
             auto s = slots[0];
             (*mt)->create(APP.opponent_island(), {s.x, s.y});
 
-            for (int xx = 0; xx < 15; ++xx) {
-                c->invalidated_cannon_cells_[xx][s.y] = true;
+            for (int yy = s.y; yy < std::min(16, s.y + sz.y); ++yy) {
+                for (int xx = 0; xx < 15; ++xx) {
+                    c->invalidated_cannon_cells_[xx][yy] = true;
+                }
+
+                // Only invalidate the slots in front of the cannon, i.e. it's
+                // fine to place missile-silos behind a cannon-type weapon.
+                for (int xx = 0; xx < s.x; ++xx) {
+                    c->invalidated_missile_cells_[xx][yy] = true;
+                }
             }
 
-            // Only invalidate the slots in front of the cannon, i.e. it's fine
-            // to place missile-silos behind a cannon-type weapon.
-            for (int xx = 0; xx < s.x; ++xx) {
-                c->invalidated_missile_cells_[xx][s.y] = true;
+            if (str_eq((*mt)->name(), "decimator")) {
+                // The decimator only reloads while someone is inside.
+                // generate_characters() runs before weapons exist, so staff it
+                // here. Characters stand on the room's bottom row.
+                const RoomCoord pos{s.x, u8(s.y + sz.y - 1)};
+                if (not APP.opponent_island()->character_at_location(pos)) {
+                    auto e = alloc_entity<Character>(
+                        APP.opponent_island(), &APP.opponent(), pos, false);
+                    if (e) {
+                        APP.opponent_island()->add_character(std::move(e));
+                    }
+                }
             }
+
+            return true;
         }
+
+        return false;
     };
 
     auto place_drone_bay = [&](RoomMeta* mt) {
@@ -693,6 +822,9 @@ void ProcgenEnemyAI::generate_weapons(int max)
 
     [[maybe_unused]] int place_missile_count = 0;
     int placed_ion_cannons = 0;
+    int placed_antiques = 0;
+    int placed_decimators = 0;
+    int placed_lances = 0;
     int fails = 0;
 
     Buffer<u16, 20> missile_silo_mts;
@@ -705,6 +837,31 @@ void ProcgenEnemyAI::generate_weapons(int max)
         if (fails > 40) {
             sel = load_metaclass("cannon");
             fails = 0;
+        }
+
+        if (is_antique((*sel)->name())) {
+            // Antiques only appear in the distribution when escalation() > 0.
+            // Re-roll rather than breaking out of the loop when one doesn't
+            // fit the power budget: the decimator alone draws 160, and a break
+            // would end weapon generation early.
+            if (placed_antiques >= antique_limit or
+                (str_eq((*sel)->name(), "decimator") and placed_decimators) or
+                (str_eq((*sel)->name(), "particle-lance") and
+                 placed_lances) or
+                power_remaining() <= (*sel)->consumes_power()) {
+                ++fails;
+                goto RETRY;
+            }
+
+            if (place_cannon(sel)) {
+                ++placed_antiques;
+                if (str_eq((*sel)->name(), "decimator")) {
+                    ++placed_decimators;
+                } else if (str_eq((*sel)->name(), "particle-lance")) {
+                    ++placed_lances;
+                }
+            }
+            continue;
         }
 
         if (power_remaining() > (*sel)->consumes_power()) {
@@ -744,8 +901,9 @@ void ProcgenEnemyAI::generate_weapons(int max)
 
 void ProcgenEnemyAI::generate_missile_defenses()
 {
-    if (rng::choice<4>(rng_source_) == 0) {
-        // Skip it sometimes.
+    // Skip it sometimes. Late in SKYLAND Forever, always respond to a
+    // missile-heavy player.
+    if (escalation() == 0 and rng::choice<4>(rng_source_) == 0) {
         return;
     }
 
@@ -949,12 +1107,17 @@ void ProcgenEnemyAI::generate_forcefields()
     auto& mt = require_metaclass("forcefield");
     auto& mt2 = require_metaclass("forcefield*");
 
+    // Late in SKYLAND Forever, always upgrade forcefields when there's power for
+    // it. Short-circuits before the rng call, so earlier levels are unchanged.
+    const bool always_upgrade = escalation() > 0;
+
     while (true) {
         const auto power = power_remaining();
 
         RoomMeta* sel = &mt;
 
-        if (core_count_ > 2 and rng::choice<2>(rng_source_) and
+        if (core_count_ > 2 and
+            (always_upgrade or rng::choice<2>(rng_source_)) and
             power > mt2->consumes_power()) {
             sel = &mt2;
         }
@@ -1680,6 +1843,178 @@ void ProcgenEnemyAI::generate_cargo()
 
 
 
+void ProcgenEnemyAI::generate_support_rooms()
+{
+    // Deflectors and amplifiers. Each one goes into an empty tile directly
+    // beneath an existing room, which generate_foundation() would otherwise
+    // fill with masonry, so this doesn't increase the opponent's room count.
+    // It also keeps the amplifier (20hp) covered.
+
+    const int esc = escalation();
+    if (esc == 0) {
+        return;
+    }
+
+    int player_light_weapons = 0;
+    for (auto& room : APP.player_island().rooms()) {
+        if (str_eq(room->name(), "flak-gun") or
+            str_eq(room->name(), "arc-gun") or
+            str_eq(room->name(), "spark-cannon")) {
+            ++player_light_weapons;
+        }
+    }
+
+    int amplifier_count = 0;
+    if (levelgen_enemy_count_ >= level_threshold_second_amplifier) {
+        amplifier_count = 2;
+    } else if (levelgen_enemy_count_ >= level_threshold_amplifier) {
+        amplifier_count = 1;
+    }
+
+    int deflector_count = std::min(1 + esc / 12, 2);
+    if (player_light_weapons >= 4) {
+        // A flat damage reduction hits weapons that deal many small hits the
+        // hardest.
+        ++deflector_count;
+    }
+
+    auto is_launcher = [](const char* name) {
+        return str_eq(name, "missile-silo") or str_eq(name, "rocket-bomb") or
+               str_eq(name, "drone-bay");
+    };
+
+    // True if a block at (x, y) would sit in one of our own weapons' line of
+    // fire.
+    auto blocks_weapon = [&](int x, int y) {
+        for (auto& room : APP.opponent_island()->rooms()) {
+            const bool launcher = is_launcher(room->name());
+            if (not launcher and
+                (*room->metaclass())->category() not_eq Room::Category::weapon) {
+                continue;
+            }
+            const auto pos = room->position();
+            const auto sz = room->size();
+            if (launcher) {
+                if (x >= pos.x and x < pos.x + sz.x and y < pos.y) {
+                    return true;
+                }
+            } else {
+                if (y >= pos.y and y < pos.y + sz.y and x < pos.x) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    };
+
+    // Rooms within radius of (x, y), each counted once even if
+    // it covers several of the neighboring tiles.
+    auto score_neighbors = [&](int x, int y, int radius, auto room_weight) {
+        Buffer<Room*, 49> seen;
+        int score = 0;
+        for (int dx = -radius; dx <= radius; ++dx) {
+            for (int dy = -radius; dy <= radius; ++dy) {
+                const int xx = x + dx;
+                const int yy = y + dy;
+                if ((dx == 0 and dy == 0) or xx < 0 or yy < 0 or xx > 15 or
+                    yy > 15) {
+                    continue;
+                }
+                auto room = APP.opponent_island()->get_room({u8(xx), u8(yy)});
+                if (not room) {
+                    continue;
+                }
+                bool dup = false;
+                for (auto r : seen) {
+                    if (r == room) {
+                        dup = true;
+                    }
+                }
+                if (dup or seen.size() == seen.capacity()) {
+                    continue;
+                }
+                seen.push_back(room);
+                score += room_weight(room);
+            }
+        }
+        return score;
+    };
+
+    auto place = [&](const char* name, int radius, auto room_weight) {
+        auto& mt = require_metaclass(name);
+        if (power_remaining() <= mt->consumes_power()) {
+            return;
+        }
+
+        int best_score = 0;
+        RoomCoord best{};
+
+        for (u8 x = 1; x < levelgen_size_.x; ++x) {
+            for (u8 y = construction_zone_min_y; y < 15; ++y) {
+                // Cheap checks first: this runs once per tile on the GBA.
+                if (not has_space({x, y}, {1, 1})) {
+                    continue;
+                }
+
+                // Only tiles that generate_foundation() would otherwise fill:
+                // a room directly above, and (via blocks_weapon) not in front
+                // of a cannon or above a launcher.
+                if (y == 0 or
+                    not APP.opponent_island()->get_room({x, u8(y - 1)})) {
+                    continue;
+                }
+
+                if (blocks_weapon(x, y)) {
+                    continue;
+                }
+
+                const int effect = score_neighbors(x, y, radius, room_weight);
+                if (effect == 0) {
+                    continue;
+                }
+
+                // Break ties toward tiles further from the player.
+                if (effect > best_score or
+                    (effect == best_score and x > best.x)) {
+                    best_score = effect;
+                    best = {x, y};
+                }
+            }
+        }
+
+        if (best_score > 0) {
+            mt->create(APP.opponent_island(), best);
+        }
+    };
+
+    for (int i = 0; i < amplifier_count; ++i) {
+        // Speeds up recharge for nearby blocks: put it next to weapons.
+        place("amplifier", amplifier_radius, [&](Room* room) {
+            if ((*room->metaclass())->category() == Room::Category::weapon or
+                is_launcher(room->name())) {
+                return 1;
+            }
+            return 0;
+        });
+    }
+
+    for (int i = 0; i < deflector_count; ++i) {
+        // Reduces damage to nearby blocks: protect power and weapons.
+        place("deflector", deflector_radius, [&](Room* room) {
+            if ((*room->metaclass())->category() == Room::Category::power) {
+                return 3;
+            }
+            if ((*room->metaclass())->category() == Room::Category::weapon or
+                is_launcher(room->name())) {
+                return 2;
+            }
+            return 0;
+        });
+    }
+}
+
+
+
 void ProcgenEnemyAI::generate_foundation()
 {
     // Generate filler structures to ensure that no rooms are floating.
@@ -1762,7 +2097,7 @@ void ProcgenEnemyAI::cleanup_unused_terrain()
 
 
 
-void ProcgenEnemyAI::place_room_random_loc(int x_start, const char* room_name)
+bool ProcgenEnemyAI::place_room_random_loc(int x_start, const char* room_name)
 {
     auto mt = load_metaclass(room_name);
 
@@ -1781,11 +2116,13 @@ void ProcgenEnemyAI::place_room_random_loc(int x_start, const char* room_name)
 
         if (has_space({x, y}, (*mt)->constructed_size())) {
             make_room({x, y});
-            return;
+            return true;
         }
 
         ++tries;
     }
+
+    return false;
 }
 
 

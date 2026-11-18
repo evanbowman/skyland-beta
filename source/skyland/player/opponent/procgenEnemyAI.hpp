@@ -52,8 +52,14 @@ private:
     void generate_walls_behind_weapons();
     void generate_missile_defenses();
     void generate_cargo();
+    void generate_support_rooms();
 
     void cleanup_unused_terrain();
+
+
+    // Zero at or below the last level that adventure mode can request, then
+    // counts upward once SKYLAND Forever passes escalation_start_level.
+    int escalation() const;
 
 
     bool has_space(const RoomCoord& loc, const RoomCoord& sz);
@@ -62,7 +68,7 @@ private:
     Power power_remaining() const;
 
 
-    void place_room_random_loc(int x_start, const char* room_name);
+    bool place_room_random_loc(int x_start, const char* room_name);
 
 
     void place_room_adjacent(const char* room_name);
