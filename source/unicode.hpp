@@ -59,6 +59,9 @@ inline bool scan(Callback&& callback, const char* data, size_t len)
             }
             index += 1;
         } else if (parsed[7] == 1 and parsed[6] == 1 and parsed[5] == 0) {
+            if (index + 2 > len) {
+                return false;
+            }
             raw[0] = data[index];
             raw[1] = data[index + 1];
             if (not do_callback()) {
@@ -67,6 +70,9 @@ inline bool scan(Callback&& callback, const char* data, size_t len)
             index += 2;
         } else if (parsed[7] == 1 and parsed[6] == 1 and parsed[5] == 1 and
                    parsed[4] == 0) {
+            if (index + 3 > len) {
+                return false; // Truncated sequence.
+            }
             raw[0] = data[index];
             raw[1] = data[index + 1];
             raw[2] = data[index + 2];
@@ -76,6 +82,9 @@ inline bool scan(Callback&& callback, const char* data, size_t len)
             index += 3;
         } else if (parsed[7] == 1 and parsed[6] == 1 and parsed[5] == 1 and
                    parsed[4] == 1 and parsed[3] == 0) {
+            if (index + 4 > len) {
+                return false; // Truncated sequence.
+            }
             raw[0] = data[index];
             raw[1] = data[index + 1];
             raw[2] = data[index + 2];
