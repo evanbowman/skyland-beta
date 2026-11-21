@@ -1318,7 +1318,12 @@ Value* builtin_filter(int argc)
         auto funcall_result = get_op0();
 
         if (is_error(funcall_result)) {
+            // NOTE: result was the only root for the list under construction,
+            // so stop touching prev/current once we've replaced it.
             result = funcall_result;
+            err = true;
+            pop_op(); // funcall result
+            return;
         }
 
         if (is_boolean_true(funcall_result)) {

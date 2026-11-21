@@ -651,7 +651,11 @@ TOP:
         case LoadVarS::op(): {
             auto inst = read<LoadVarS>(*vm_ctx->code_, vm_ctx->pc_);
             auto index = inst->symtab_index_.get();
-            auto sym = make_symtab_symbol(index);
+            // NOTE: get_var() may allocate (builtin caching, constants,
+            // autoload, errors), so the symbol must be protected, otherwise a
+            // gc could free it before the collect_value() call below frees it
+            // a second time.
+            Protected sym(make_symtab_symbol(index));
             push_op(get_var(sym));
             collect_value(sym);
             break;

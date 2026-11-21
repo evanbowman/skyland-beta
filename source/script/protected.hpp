@@ -64,6 +64,9 @@ public:
     static void mark_all();
     void gc_mark();
 
+    // Returns true if val is directly held by any live Protected wrapper.
+    static bool contains(Value* val);
+
 
     Protected* next() const
     {

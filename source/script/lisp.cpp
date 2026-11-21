@@ -1706,6 +1706,11 @@ bool Array::initialize(u16 size)
         auto ptr = make_scratch_buffer("lisp-array");
         new ((ScratchBufferPtr*)sbr_mem_) ScratchBufferPtr(ptr);
     } else {
+        // NOTE: The array value remains alive until the next gc, at which
+        // point the finalizer runs. Leave the array in a state where the
+        // finalizer will not try to destroy a nonexistent backing buffer.
+        hdr_.mode_bits_ = (u8)BackingMem::undefined;
+        size_ = 0;
         return false;
     }
     return true;
@@ -3397,6 +3402,10 @@ static void gc_mark_value(Value* value)
 
     case Value::Type::error:
         gc_mark_value(dcompr(value->error().context_));
+        // NOTE: the stacktrace is a suffix of the callstack at the time that
+        // the error was raised. After those frames return, the error may be
+        // the only thing referencing the list.
+        gc_mark_value(dcompr(value->error().stacktrace_));
         break;
 
     case Value::Type::cons:
@@ -3463,6 +3472,19 @@ void Protected::mark_all()
 }
 
 
+bool Protected::contains(Value* val)
+{
+    auto p_list = __protected_values;
+    while (p_list) {
+        if (p_list->val_ == val) {
+            return true;
+        }
+        p_list = p_list->next();
+    }
+    return false;
+}
+
+
 static void gc_mark()
 {
     gc_mark_value(L_CTX.nil_);
@@ -3489,9 +3511,23 @@ static void gc_mark()
         gc_mark_value(kvp.tree_kvp().value());
     });
 
-    gc_mark_value(L_CTX.callstack_);
-
     Protected::mark_all();
+
+    // pop_callstack() frees callstack frames eagerly, unless something else
+    // (e.g. an error's stacktrace) may reference them. Before marking the
+    // callstack itself, check whether any other root reached the callstack's
+    // cells. If none did, it's safe to resume eager deallocation.
+    bool callstack_shared = false;
+    for (auto cs = L_CTX.callstack_; cs->type() == Value::Type::cons;
+         cs = cs->cons().cdr()) {
+        if (cs->hdr_.mark_bit_) {
+            callstack_shared = true;
+            break;
+        }
+    }
+    L_CTX.callstack_untouched_ = not callstack_shared;
+
+    gc_mark_value(L_CTX.callstack_);
 }
 
 
@@ -3569,11 +3605,30 @@ int compact_string_memory()
     L_CTX.string_buffer_ = db;
     L_CTX.string_buffer_remaining_ = (SCRATCH_BUFFER_SIZE - (write_offset + 1));
 
+    auto is_directly_rooted = [](Value* buffer) {
+        for (auto& v : *L_CTX.operand_stack_) {
+            if (v == buffer) {
+                return true;
+            }
+        }
+        return Protected::contains(buffer);
+    };
+
+    int collected = 0;
     for (auto& b : recovered_buffers) {
+        // NOTE: a buffer may be rooted even if no live string currently points
+        // into it. For example, make_string() copies string data into the bulk
+        // string buffer, and holds the buffer on the operand stack while
+        // allocating the string value that will point to it. Such a buffer
+        // must not be freed here; the gc will reclaim it once it's unreachable.
+        if (is_directly_rooted(b)) {
+            continue;
+        }
         collect_value(b);
+        ++collected;
     }
 
-    return recovered_buffers.size();
+    return collected;
 }
 
 
@@ -3609,8 +3664,6 @@ static int gc_sweep()
             }
         }
     }
-
-    L_CTX.callstack_untouched_ = true;
 
     if (used_count > L_CTX.alloc_highwater_) {
         L_CTX.alloc_highwater_ = used_count;
@@ -5685,6 +5738,13 @@ void eval_loop(EvalStack& eval_stack)
             auto saved_list = frame.expr_;
             L_CTX.lexical_bindings_ = saved_list->cons().car();
             L_CTX.callstack_ = saved_list->cons().cdr()->cons().car();
+            // NOTE: The restored callstack cells may still be referenced by
+            // the promise's saved eval frames, or by an error's stacktrace. A
+            // gc that ran while suspended only inspected the temporary
+            // callstack installed by push_suspend(), so it may have re-enabled
+            // eager frame deallocation. Disable it until the next gc
+            // re-evaluates sharing against the restored callstack.
+            L_CTX.callstack_untouched_ = false;
             L_CTX.arguments_break_loc_ = frame.await_resume_.saved_break_loc_;
             L_CTX.current_fn_argc_ = frame.await_resume_.saved_argc_;
             break;
@@ -5756,26 +5816,38 @@ void eval_loop(EvalStack& eval_stack)
 
             ListBuilder binding_list;
 
-            // Pop values in reverse order and pair with symbols
-            Buffer<Value*, 32, false> values;
-            for (int i = 0; i < frame.install_let_.binding_count_; i++) {
-                values.push_back(get_op0());
-                pop_op();
-            }
+            // NOTE: The binding values remain on the operand stack (and
+            // therefore remain gc roots) until every binding has been
+            // constructed, as constructing bindings allocates.
+            const int binding_count = frame.install_let_.binding_count_;
 
             auto b = bindings;
-            for (int i = values.size() - 1; i >= 0; i--) {
+            for (int i = 0; i < binding_count; ++i) {
+                // The first binding's value is the deepest on the stack.
+                auto value = get_op((binding_count - 1) - i);
                 auto binding = b->cons().car();
                 auto sym = binding->cons().car();
                 if (sym->type() == Value::Type::symbol) {
-                    binding_list.push_back(make_cons(sym, values[i]));
+                    binding_list.push_back(make_cons(sym, value));
                 } else {
-                    if (not destructure_binding(sym, values[i], binding_list)) {
+                    if (not destructure_binding(sym, value, binding_list)) {
+                        // destructure_binding pushed an error. Discard the
+                        // binding values beneath it.
+                        auto err = get_op0();
+                        pop_op();
+                        for (int j = 0; j < binding_count; ++j) {
+                            pop_op();
+                        }
+                        push_op(err);
                         goto BINDING_ERROR;
                     }
                 }
 
                 b = b->cons().cdr();
+            }
+
+            for (int i = 0; i < binding_count; ++i) {
+                pop_op();
             }
 
             // Install bindings
