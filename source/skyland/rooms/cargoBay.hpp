@@ -84,6 +84,9 @@ public:
 
     const char* cargo() const
     {
+        if (not mem_) {
+            return "";
+        }
         return (*mem_)->text_;
     }
 
