@@ -183,4 +183,25 @@ void store_hidden_rooms();
 
 
 
+// By default, RoomMeta::Info::create() raises a fatal error if the room pool is
+// exhausted. While an instance of this guard is alive, create() instead fails
+// silently, leaving the island unchanged. Intended for procedural generation,
+// which treats room creation as best-effort anyway (create() already does
+// nothing when an island reaches its room capacity).
+class RoomPoolExhaustionTolerance
+{
+public:
+    RoomPoolExhaustionTolerance();
+    ~RoomPoolExhaustionTolerance();
+
+    RoomPoolExhaustionTolerance(const RoomPoolExhaustionTolerance&) = delete;
+
+    static bool active();
+
+private:
+    bool prev_;
+};
+
+
+
 } // namespace skyland

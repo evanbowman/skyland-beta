@@ -155,6 +155,12 @@ void ProcgenEnemyAI::update(Time delta)
 
 void ProcgenEnemyAI::generate_level()
 {
+    // In long Skyland Forever runs, a heavily built-out player island plus a
+    // large generated enemy island can exhaust the shared room pool. Level
+    // generation treats room placement as best-effort, so just generate a
+    // smaller island rather than crashing.
+    RoomPoolExhaustionTolerance pool_tolerance;
+
     for (auto& room : APP.player_island().rooms()) {
         // TODO: gather information about the layout of the player's castle.
         (void)room;

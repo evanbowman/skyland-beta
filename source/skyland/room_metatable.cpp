@@ -115,6 +115,32 @@ namespace skyland
 
 
 
+static bool room_pool_exhaustion_tolerated = false;
+
+
+
+RoomPoolExhaustionTolerance::RoomPoolExhaustionTolerance()
+    : prev_(room_pool_exhaustion_tolerated)
+{
+    room_pool_exhaustion_tolerated = true;
+}
+
+
+
+RoomPoolExhaustionTolerance::~RoomPoolExhaustionTolerance()
+{
+    room_pool_exhaustion_tolerated = prev_;
+}
+
+
+
+bool RoomPoolExhaustionTolerance::active()
+{
+    return room_pool_exhaustion_tolerated;
+}
+
+
+
 template <typename T> struct InfoImpl : public RoomMeta::Info
 {
     InfoImpl()
@@ -139,7 +165,9 @@ template <typename T> struct InfoImpl : public RoomMeta::Info
                 const Island::InsertRoomConf& conf) const override
     {
         if (not parent->add_room<T>(position, conf)) {
-            if (not APP.is_developer_mode() and not parent->rooms().full()) {
+            if (not APP.is_developer_mode() and
+                not parent->rooms().full() and
+                not RoomPoolExhaustionTolerance::active()) {
                 PLATFORM.fatal("room pool exhausted");
             }
         }
