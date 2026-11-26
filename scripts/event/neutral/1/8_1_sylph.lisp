@@ -62,7 +62,7 @@
                            (sound "build0")
                            (room-new (player) `(ladder ,x ,y))
                            (chr-del (opponent) 0 14)
-                           (chr-new (player) x (+ 1 y) 'neutral '((icon . 46) (race . 0)))
+                           (chr-new (player) x (+ 1 y) 'neutral '((icon . 46) (race . 4)))
                            (dialog (tr "<c:Sylph Artisan:46>Thanks! I'll try to help out however I can!"))
                            (defn on-dialog-closed ()
                              (join (tr "The deserter joined your crew!"))

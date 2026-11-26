@@ -21,6 +21,7 @@
 
 (setq on-converge
       (lambda ()
+        (setq on-converge nil)
         (dialog
          (tr "<c:Raider:39>Sssnatched some valuable cargo from a merchant fleet, but our ship took heavy damage in the fight. With that ssstorm approaching, we won't make it to the black market in time. Help usss deliver the goods? We'll sssplit the profit, and our contact paysss well!"))
         (dialog-setup-binary-q (tr "I accept!") (tr "Sorry, but no."))

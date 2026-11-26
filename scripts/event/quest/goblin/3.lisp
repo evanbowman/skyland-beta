@@ -27,6 +27,7 @@
 
 
 (defn on-converge ()
+  (setq on-converge nil)
   (dialog
    (tr "<c:Goblin Scout:38>Ssseeing your flag on the horizon givesss us hope! <B:0> Our clan was ssscattered when the ssstorm changed course. We're too few to sssurvive alone, but together... <B:0> Help gather my crew, and we'll join your ssstrength with oursss!"))
 

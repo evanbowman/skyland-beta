@@ -57,6 +57,7 @@
           (when (> cost 2999)
             (setq opt (cons (car pick) opt))))))
 
+    (alloc-space (car opt))
     (let (((x . y) (await (sel-input* (car opt) (tr "Place item:")))))   ;; paren fixed
       (room-new (player) (list (car opt) x y))
       (sound "build0")

@@ -33,7 +33,7 @@
 
   (setq on-dialog-accepted
         (lambda ()
-          (if (> 500 (coins))
+          (if (> val (coins))
               (progn
                 (opponent-mode 'hostile)
                 (adventure-log-add 42 '())

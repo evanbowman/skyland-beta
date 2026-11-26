@@ -20,6 +20,7 @@
 
 
 (defn on-converge ()
+  (setq on-converge nil)
   (dialog
    (tr "<c:Ashwalker Elder:42>The ssstorm brings change... Our seers have had visionsss of an ancient weapon, buried in the ruinsss of our ancestorsss. <B:0> A relic from before the Great Change that made usss what we are... <B:0> It must not remain below when the ssstorm arrives. <B:0> Will you help retrieve it?"))
 

@@ -53,8 +53,8 @@
                               (format " (%x%):" (car (rinfo 'size item)) (cdr (rinfo 'size item))))
                       (string (tr "Place second ") (rinfo 'name item) ":"))))
       (while msgs
+        (alloc-space item)
         (let ((xy (await (sel-input* item (car msgs)))))
-          (alloc-space item)
           (room-new (player) (list item (car xy) (cdr xy)))
           (sound "build0"))
         (setq msgs (cdr msgs))))
