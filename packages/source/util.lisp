@@ -61,8 +61,8 @@
   (dialog-await-binary-q text (tr "yes") (tr "no")))
 
 
-(defn/c dialog-await ()
-  (await (apply dialog* $V)))
+(defn/c dialog-await args
+  (await (apply dialog* args)))
 
 
 ;; This fairly niche function opens a box of options. The first option being the

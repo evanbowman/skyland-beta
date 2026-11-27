@@ -767,35 +767,22 @@ TOP:
             auto argc = read<TailCall>(*vm_ctx->code_, vm_ctx->pc_)->argc_;
 
 
-            if (fn == get_this()) {
-                pop_op(); // function on stack
+            pop_op(); // function on stack
 
-                if (get_argc() not_eq argc) {
-                    // TODO: raise error: attempted recursive call with
-                    // different number of args than current function.
-                    // Actually...
-                    // The isn't really anything preventing a variadic function
-                    // from being executed recursively with a different number
-                    // of args, right? So maybe shouldn't be isn't an error...
-                    while (true)
-                        ;
-                }
-
-                if (argc == 0) {
-                    unwind_lexical_scope();
-                    vm_ctx->pc_ = vm_ctx->start_offset_;
-                    vm_ctx->registers_.reset();
-                    goto TOP;
-                } else {
-                    // TODO: perform TCO for N-arg function
-                    INVOKE(fn, argc);
-                }
-
-            } else {
-
-                pop_op();
-                INVOKE(fn, argc);
+            // NOTE: A recursive call may pass a different number of arguments
+            // than the current invocation (e.g. a variadic function). The
+            // in-place tail call optimizations below assume that the new
+            // arguments replace the current arguments one-for-one, so fall
+            // back to a regular invocation when the counts differ.
+            if (fn == get_this() and argc == 0 and get_argc() == 0) {
+                unwind_lexical_scope();
+                vm_ctx->pc_ = vm_ctx->start_offset_;
+                vm_ctx->registers_.reset();
+                goto TOP;
             }
+
+            // TODO: perform TCO for N-arg function
+            INVOKE(fn, argc);
 
             break;
         }
@@ -806,15 +793,8 @@ TOP:
             Protected sym(make_symtab_symbol(index));
             Protected fn(get_var(sym));
 
-            if (fn == get_this()) {
+            if (fn == get_this() and get_argc() == 1) {
                 auto arg = get_op0();
-
-                if (get_argc() not_eq 1) {
-                    // TODO: raise error: attempted recursive call with
-                    // different number of args than current function.
-                    while (true)
-                        ;
-                }
 
                 pop_op(); // argument
                 pop_op(); // previous arg
@@ -838,16 +818,9 @@ TOP:
             Protected sym(make_symtab_symbol(index));
             Protected fn(get_var(sym));
 
-            if (fn == get_this()) {
+            if (fn == get_this() and get_argc() == 2) {
                 auto arg0 = get_op0();
                 auto arg1 = get_op1();
-
-                if (get_argc() not_eq 2) {
-                    // TODO: raise error: attempted recursive call with
-                    // different number of args than current function.
-                    while (true)
-                        ;
-                }
 
                 pop_op(); // arg
                 pop_op(); // arg
@@ -874,15 +847,10 @@ TOP:
             Protected sym(make_symtab_symbol(index));
             Protected fn(get_var(sym));
 
-            if (fn == get_this()) {
+            if (fn == get_this() and get_argc() == 3) {
                 auto arg0 = get_op0();
                 auto arg1 = get_op1();
                 auto arg2 = get_op(2);
-
-                if (get_argc() not_eq 3) {
-                    while (true)
-                        ;
-                }
 
                 pop_op(); // arg
                 pop_op(); // arg
@@ -910,15 +878,8 @@ TOP:
             read<TailCall1>(*vm_ctx->code_, vm_ctx->pc_);
             Protected fn(get_op0());
 
-            if (fn == get_this()) {
+            if (fn == get_this() and get_argc() == 1) {
                 auto arg = get_op1();
-
-                if (get_argc() not_eq 1) {
-                    // TODO: raise error: attempted recursive call with
-                    // different number of args than current function.
-                    while (true)
-                        ;
-                }
 
                 pop_op(); // function on stack
                 pop_op(); // argument
@@ -942,16 +903,9 @@ TOP:
             read<TailCall2>(*vm_ctx->code_, vm_ctx->pc_);
             Protected fn(get_op0());
 
-            if (fn == get_this()) {
+            if (fn == get_this() and get_argc() == 2) {
                 auto arg0 = get_op1();
                 auto arg1 = get_op(2);
-
-                if (get_argc() not_eq 2) {
-                    // TODO: raise error: attempted recursive call with
-                    // different number of args than current function.
-                    while (true)
-                        ;
-                }
 
                 pop_op(); // function on stack
                 pop_op(); // arg
@@ -978,15 +932,10 @@ TOP:
             read<TailCall3>(*vm_ctx->code_, vm_ctx->pc_);
             Protected fn(get_op0());
 
-            if (fn == get_this()) {
+            if (fn == get_this() and get_argc() == 3) {
                 auto arg0 = get_op1();
                 auto arg1 = get_op(2);
                 auto arg2 = get_op(3);
-
-                if (get_argc() not_eq 3) {
-                    while (true)
-                        ;
-                }
 
                 pop_op(); // function on stack
                 pop_op(); // arg

@@ -992,10 +992,31 @@ template <typename... Args> void unrecoverable(const char* msg, Args&&... args)
 }
 
 
+// Returns the variadic rest symbol of an argument list, if any, i.e. `rest` in
+// (a b . rest), or `args` in a bare symbol argument list.
+static Value* variadic_rest_symbol(Value* arg_lat)
+{
+    if (arg_lat->type() == Value::Type::symbol) {
+        return arg_lat;
+    }
+    if (arg_lat->type() not_eq Value::Type::cons) {
+        return nullptr;
+    }
+    while (arg_lat->cons().cdr()->type() == Value::Type::cons) {
+        arg_lat = arg_lat->cons().cdr();
+    }
+    auto tail = arg_lat->cons().cdr();
+    if (tail->type() == Value::Type::symbol) {
+        return tail;
+    }
+    return nullptr;
+}
+
+
 static int examine_argument_list(Value* function_impl)
 {
     auto arg_lat = function_impl->cons().car();
-    if (not is_list(arg_lat)) {
+    if (not is_list(arg_lat) and not variadic_rest_symbol(arg_lat)) {
         PLATFORM.fatal("incorrectly formatted argument list!");
     }
 
@@ -1096,6 +1117,93 @@ ArgBindings make_arg_bindings(Value* arg_lat, ArgBindings* parent)
 }
 
 
+// Variadic lambdas: (lambda (a b . rest) body...) is implemented by rewriting
+// the lambda to (lambda (a b) (let ((rest $V2)) body...)), where $V<n> evaluates
+// to the list of arguments starting at index n. Binding the rest list with a
+// let, rather than substituting $V2 for each reference to rest, gives rest
+// ordinary lexical variable semantics: it may be captured by closures and
+// assigned with set, and a $V within a nested lambda won't be confused with
+// the enclosing function's arguments.
+//
+// Splits the rest symbol off of the argument list, leaving a proper list of
+// named arguments in place. Returns the rest symbol, or nullptr if the function
+// is not variadic.
+static Value* split_variadic_args(Value* impl)
+{
+    auto arg_lat = impl->cons().car();
+    auto rest = variadic_rest_symbol(arg_lat);
+    if (not rest) {
+        return nullptr;
+    }
+
+    if (arg_lat == rest) {
+        impl->cons().set_car(get_nil());
+    } else {
+        while (arg_lat->cons().cdr()->type() == Value::Type::cons) {
+            arg_lat = arg_lat->cons().cdr();
+        }
+        arg_lat->cons().set_cdr(get_nil());
+    }
+
+    return rest;
+}
+
+
+static void check_variadic_rest_symbol(Value* rest, ArgBindings& bindings)
+{
+    for (auto& binding : bindings.bindings_) {
+        if (binding.unique_id_ == rest->symbol().unique_id()) {
+            unrecoverable("rest argument % shadows named argument!",
+                          rest->symbol().name());
+        }
+    }
+
+    // NOTE: (lambda (x . int) ...) declares a rest argument named int, which is
+    // almost certainly a mistake for the typed argument syntax ((x . int)).
+    static const char* const type_names[] = {"int",
+                                             "string",
+                                             "pair",
+                                             "symbol",
+                                             "float",
+                                             "error",
+                                             "databuffer",
+                                             "lambda",
+                                             "wrapped",
+                                             "array",
+                                             "tree",
+                                             "rational"};
+    for (auto name : type_names) {
+        if (str_eq(rest->symbol().name(), name)) {
+            unrecoverable("rest argument named after type %! For a typed "
+                          "argument, write ((arg . %))",
+                          name,
+                          name);
+        }
+    }
+}
+
+
+// Rewrites (args . body) to (args (let ((rest $V<argc>)) . body)).
+static void wrap_variadic_body(Value* impl, Value* rest, int named_argc)
+{
+    Protected rest_sym(rest);
+
+    Protected rest_args_sym(L_NIL);
+    if (named_argc == 0) {
+        rest_args_sym = make_symbol("$V");
+    } else {
+        rest_args_sym = make_symbol(::format("$V%", named_argc).c_str());
+    }
+
+    Protected binding(L_CONS(rest_sym, L_CONS(rest_args_sym, L_NIL)));
+    Protected binding_list(L_CONS(binding, L_NIL));
+    Protected let_expr(L_CONS(
+        make_symbol("let"), L_CONS(binding_list, impl->cons().cdr())));
+
+    impl->cons().set_cdr(L_CONS(let_expr, L_NIL));
+}
+
+
 static void arg_substitution_impl(Value* impl, ArgBindings& bindings)
 {
     while (true) {
@@ -1148,13 +1256,36 @@ static void arg_substitution_impl(Value* impl, ArgBindings& bindings)
 
                         auto lambda = val->cons().cdr();
 
+                        // NOTE: once split off, the rest symbol is no longer
+                        // reachable from the source list, and substitution
+                        // allocates.
+                        Protected rest_root(L_NIL);
+                        auto rest = split_variadic_args(lambda);
+                        if (rest) {
+                            rest_root = rest;
+                        }
+
                         auto arg_lat = lambda->cons().car();
                         auto fn_impl = lambda->cons().cdr();
 
                         auto nested_bindings =
                             make_arg_bindings(arg_lat, &bindings);
 
+                        if (rest) {
+                            check_variadic_rest_symbol(rest, nested_bindings);
+                        }
+
                         arg_substitution_impl(fn_impl, nested_bindings);
+
+                        if (rest) {
+                            // NOTE: wrap after substitution, so that the
+                            // synthetic let isn't subject to the let shadowing
+                            // checks (a rest argument may legitimately shadow
+                            // an enclosing function's argument).
+                            wrap_variadic_body(
+                                lambda, rest, nested_bindings.bindings_.size());
+                            fn_impl = lambda->cons().cdr();
+                        }
 
                         val->cons().set_car(make_symbol("fn")); //
                         val->cons().set_cdr(fn_impl);           // very naughty!
@@ -1237,13 +1368,31 @@ ArgBindings perform_argument_substitution(Value* impl)
 {
     Protected gc_root(impl);
 
+    // NOTE: once split off, the rest symbol is no longer reachable from impl,
+    // and substitution allocates.
+    Protected rest_root(L_NIL);
+    auto rest = split_variadic_args(impl);
+    if (rest) {
+        rest_root = rest;
+    }
+
     auto arg_lat = impl->cons().car();
     auto fn_impl = impl->cons().cdr();
 
     auto arguments = make_arg_bindings(arg_lat, nullptr);
 
+    if (rest) {
+        check_variadic_rest_symbol(rest, arguments);
+    }
+
     if (arguments.bindings_.size() > 0) { // Don't bother with no-arg functions
         arg_substitution_impl(fn_impl, arguments);
+    }
+
+    if (rest) {
+        // NOTE: see comment on wrap_variadic_body() call in
+        // arg_substitution_impl().
+        wrap_variadic_body(impl, rest, arguments.bindings_.size());
     }
 
     return arguments;
@@ -2737,12 +2886,18 @@ void lint(Value* expr, Value* variable_list, lisp::Protected& gvar_list)
                         return;
                     }
                     auto args = get_list(expr, 1);
-                    if (not is_list(args)) {
+                    if (not is_list(args) and not variadic_rest_symbol(args)) {
                         push_op(make_error(
                             "lambda expects arg list in position 1!"));
                         return;
                     }
-                    while (args not_eq L_NIL) {
+                    if (auto rest = variadic_rest_symbol(args)) {
+                        // Variadic: (lambda (a b . rest) ...) or
+                        // (lambda rest ...)
+                        variable_list = L_CONS(rest, variable_list);
+                        var_list = variable_list;
+                    }
+                    while (args->type() == Value::Type::cons) {
                         auto arg_name = args->cons().car();
                         auto arg_sym = arg_name;
                         if (arg_name->type() == Value::Type::cons) {
@@ -7140,9 +7295,15 @@ Value* get_var(Value* symbol)
     const char* const symbol_name = symbol->symbol().name();
     if (symbol_name[0] == '$') {
         if (symbol_name[1] == 'V') {
-            // Special case: use '$V' to access arguments as a list.
+            // Special case: use '$V' to access arguments as a list. '$V<n>'
+            // accesses the arguments starting at index n (used to implement
+            // variadic lambdas, e.g. (lambda (a b . rest) ...)).
+            int start = 0;
+            for (u32 i = 2; symbol_name[i] not_eq '\0'; ++i) {
+                start = start * 10 + (symbol_name[i] - '0');
+            }
             ListBuilder lat;
-            for (int i = L_CTX.current_fn_argc_ - 1; i > -1; --i) {
+            for (int i = L_CTX.current_fn_argc_ - 1; i >= start; --i) {
                 lat.push_front(get_arg(i));
             }
             return lat.result();

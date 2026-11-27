@@ -390,6 +390,51 @@
 (end-test)
 
 
+(begin-test "variadic")
+
+(assert-eq '(3 4) ((lambda (a b . rest) rest) 1 2 3 4))
+(assert-eq '() ((lambda (a b . rest) rest) 1 2))
+(assert-eq 1 ((lambda (a . rest) a) 1 2 3))
+(assert-eq '(1 2 3) ((lambda args args) 1 2 3))
+(assert-eq '() ((lambda args args)))
+(assert-v (error? ((lambda (a b . rest) a) 1))) ; named args still required
+(assert-eq '(2 3) ((lambda (a) $V1) 1 2 3))
+
+;; The rest list is an ordinary lexical variable: it may be captured, assigned,
+;; and may shadow an argument of an enclosing function.
+(assert-eq '(2 3) (((lambda (a . rest) (lambda () rest)) 1 2 3)))
+(assert-eq '(0 3) ((lambda (a . rest) (setq rest (cons 0 rest)) rest) 1 3))
+(assert-eq '(1 5 6) (((lambda (a) (lambda (b . more) (cons a more))) 1) 4 5 6))
+(assert-eq '(8 9) (((lambda (x) (lambda (y . x) x)) 1) 7 8 9))
+
+(assert-eq '(3 4) ((compile (lambda (a b . rest) rest)) 1 2 3 4))
+(assert-eq '(1 2) ((compile (lambda args args)) 1 2))
+(assert-eq '(2 3) (((compile (lambda (a . rest) (lambda () rest))) 1 2 3)))
+(assert-eq '(2 3) ((compile (lambda (a) $V1)) 1 2 3))
+
+;; Recursive tail calls with a different number of arguments than the current
+;; invocation.
+(defn vcount (n . rest)
+  (if (> n 0)
+      (vcount (- n 1) n n)
+      (length rest)))
+
+(defn/c vcount-c (n . rest)
+  (if (> n 0)
+      (vcount-c (- n 1) n n)
+      (length rest)))
+
+(assert-eq 2 (vcount 3))
+(assert-eq 2 (vcount-c 3))
+
+(unbind 'vcount 'vcount-c)
+
+(assert-eq nil (lint '(lambda (a . rest) (cons a rest))))
+(assert-eq nil (lint '(lambda args args)))
+
+(end-test)
+
+
 (begin-test "type signature")
 
 (defn foo ((arg . int))

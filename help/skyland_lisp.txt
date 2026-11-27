@@ -401,17 +401,30 @@
 
  FUNCTIONS:
 
- Functions support variadic
- arguments via the special
- $V symbol, which contains
- a list of all arguments
- beyond the named ones:
- ((lambda (a b)
-    (apply + (append
-      (list a b) $V)))
+ Functions can take a
+ variable number of
+ arguments. Put a dot before
+ the last parameter name to
+ collect any remaining
+ arguments into a list:
+ ((lambda (a b . rest)
+    (+ a b (apply + rest)))
   1 2 3 4 5) ; => 15
- ((lambda () (length $V))
+ ((lambda (a . rest) rest)
+  1)         ; => ()
+ To accept any number of
+ arguments, including none,
+ use a bare symbol in place
+ of the argument list:
+ ((lambda args (length args))
   1 2 3 4)   ; => 4
+ (defn sum args
+   (apply + args))
+ The rest list is an ordinary
+ local variable, so closures
+ can capture it. It does not
+ count toward the limit of 5
+ named parameters.
 
  Type signatures:
  Function parameters can be

@@ -62,11 +62,9 @@
              v))
        lat))
 
-(defn/c curry ((fn . lambda))
-  (let ((func fn)
-        (args (cdr $V)))
-    (lambda ()
-      (apply func (append args $V)))))
+(defn/c curry ((func . lambda) . args)
+  (lambda rest
+    (apply func (append args rest))))
 
 ;; Return a predicate that returns true if its argument equals the supplied value.
 ;; e.g.: ((equalto? 2) 2) -> true

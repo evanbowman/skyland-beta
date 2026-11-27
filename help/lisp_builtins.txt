@@ -671,19 +671,6 @@ o──────────────────────────�
 
 o────────────────────────────o
 
- (arg n)
-
- Programatically retrieve
- function argument specified
- by integer n.
-
- If you want to access args
- as a list, use special
- variable $V.
-
-
-o────────────────────────────o
-
  (compile function)
 
  Return a bytecode-compiled
